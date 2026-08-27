@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Dashboard — Smart Computer Maintenance Service</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+</head>
+<body class="dashboard-body">
+
+  <!-- -- Sidebar -- -->
+  <div class="d-flex">
+    <nav id="sidebar" class="sidebar bg-primary text-white d-flex flex-column p-3" style="min-height:100vh;width:240px;">
+      <a href="../index.html" class="text-decoration-none">
+        <div class="sidebar-brand mb-4 text-center">
+          <i class="bi bi-tools fs-3"></i>
+          <div class="small fw-bold mt-1">Smart Computer Maintenance</div>
+        </div>
+      </a>
+      <ul class="nav flex-column gap-1">
+        <li class="nav-item">
+          <a href="dashboard.html" class="nav-link text-white active bg-white bg-opacity-25 rounded">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="request.html" class="nav-link text-white-50">
+            <i class="bi bi-plus-circle me-2"></i>New Request
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="tracking.html" class="nav-link text-white-50">
+            <i class="bi bi-search me-2"></i>Track Request
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="history.html" class="nav-link text-white-50">
+            <i class="bi bi-clock-history me-2"></i>History
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="notifications.html" class="nav-link text-white-50">
+            <i class="bi bi-bell me-2"></i>Notifications
+            <span class="badge bg-danger ms-1" id="sidebarNotifBadge" style="display:none;"></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="feedback.html" class="nav-link text-white-50">
+            <i class="bi bi-star me-2"></i>Feedback
+          </a>
+        </li>
+      </ul>
+      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <i class="bi bi-person-circle fs-5"></i>
+          <span class="small" id="sidebarUserName">User</span>
+        </div>
+        <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
+          <i class="bi bi-box-arrow-right me-1"></i>Logout
+        </a>
+      </div>
+    </nav>
+
+    <!-- -- Main Content -- -->
+    <div class="flex-grow-1">
+      <!-- Topbar -->
+      <header class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
+        <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle">
+          <i class="bi bi-list"></i>
+        </button>
+        <h5 class="mb-0 fw-bold">My Dashboard</h5>
+        <div class="d-flex align-items-center gap-3">
+          <div id="notifBellContainer"></div>
+          <span class="text-muted small" id="topUserName">Welcome, User</span>
+        </div>
+      </header>
+
+      <main class="p-4">
+        <!-- Welcome -->
+        <div class="alert alert-primary border-0 mb-4" role="alert">
+          <i class="bi bi-hand-wave me-2"></i>
+          Welcome back, <strong id="welcomeName">User</strong>! Here is an overview of your maintenance requests.
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <i class="bi bi-send fs-2 text-primary mb-2"></i>
+              <h4 class="fw-bold mb-0" id="totalRequests">0</h4>
+              <small class="text-muted">Total Requests</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <i class="bi bi-hourglass-split fs-2 text-warning mb-2"></i>
+              <h4 class="fw-bold mb-0" id="pendingRequests">0</h4>
+              <small class="text-muted">Pending</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <i class="bi bi-gear-wide-connected fs-2 text-info mb-2"></i>
+              <h4 class="fw-bold mb-0" id="inProgressRequests">0</h4>
+              <small class="text-muted">In Progress</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <i class="bi bi-check-circle fs-2 text-success mb-2"></i>
+              <h4 class="fw-bold mb-0" id="completedRequests">0</h4>
+              <small class="text-muted">Completed</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Requests Table -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h6 class="mb-0 fw-bold">Recent Requests</h6>
+            <a href="request.html" class="btn btn-primary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i>New Request
+            </a>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>#ID</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="requestsTableBody">
+                  <tr><td colspan="7" class="text-center text-muted py-4">Loading requests...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row g-3">
+          <div class="col-md-4">
+            <a href="request.html" class="card border-0 shadow-sm text-decoration-none text-dark p-3 d-flex flex-row align-items-center gap-3">
+              <div class="bg-primary bg-opacity-10 p-3 rounded">
+                <i class="bi bi-plus-circle fs-4 text-primary"></i>
+              </div>
+              <div>
+                <div class="fw-semibold">Submit Request</div>
+                <small class="text-muted">Report a new ICT issue</small>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-4">
+            <a href="tracking.html" class="card border-0 shadow-sm text-decoration-none text-dark p-3 d-flex flex-row align-items-center gap-3">
+              <div class="bg-info bg-opacity-10 p-3 rounded">
+                <i class="bi bi-search fs-4 text-info"></i>
+              </div>
+              <div>
+                <div class="fw-semibold">Track Request</div>
+                <small class="text-muted">View current status</small>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-4">
+            <a href="feedback.html" class="card border-0 shadow-sm text-decoration-none text-dark p-3 d-flex flex-row align-items-center gap-3">
+              <div class="bg-success bg-opacity-10 p-3 rounded">
+                <i class="bi bi-star fs-4 text-success"></i>
+              </div>
+              <div>
+                <div class="fw-semibold">Give Feedback</div>
+                <small class="text-muted">Rate resolved requests</small>
+              </div>
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Request Detail Modal -->
+  <div class="modal fade" id="requestDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold">Request Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body pt-0" id="requestDetailBody"></div>
+        <div class="modal-footer border-0 flex-column align-items-start">
+          <div class="w-100">
+            <div class="small fw-semibold text-muted mb-2">STATUS TIMELINE</div>
+            <div id="statusTimeline" class="d-flex align-items-center flex-wrap gap-1"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/notifications.js"></script>
+  <script src="/assets/js/requests.js"></script>
+</body>
+</html>

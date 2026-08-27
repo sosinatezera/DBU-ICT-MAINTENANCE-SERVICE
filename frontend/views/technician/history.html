@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maintenance History � Technician</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/technician.css" />
+</head>
+<body class="dashboard-body">
+
+  <div class="d-flex">
+    <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3" style="min-height:100vh;width:240px;">
+      <a href="../index.html" class="text-decoration-none">
+        <div class="sidebar-brand mb-4 text-center">
+          <i class="bi bi-wrench-adjustable fs-3 text-warning"></i>
+          <div class="small fw-bold mt-1">Technician Panel</div>
+        </div>
+      </a>
+      <ul class="nav flex-column gap-1">
+        <li><a href="dashboard.html"        class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+        <li><a href="assigned-requests.html" class="nav-link text-white-50"><i class="bi bi-list-task me-2"></i>Assigned Requests</a></li>
+        <li><a href="maintenance.html"       class="nav-link text-white-50"><i class="bi bi-tools me-2"></i>Maintenance Activity</a></li>
+        <li><a href="history.html"           class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-clock-history me-2"></i>History</a></li>
+        <li><a href="notifications.html"     class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a></li>
+      </ul>
+      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+        <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+      </div>
+    </nav>
+
+    <div class="flex-grow-1">
+      <header class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
+        <h5 class="mb-0 fw-bold">My Maintenance History</h5>
+        <div class="d-flex align-items-center gap-2">
+          <div id="notifBellContainer"></div>
+          <span class="text-muted small d-none d-md-block" id="topUserName"></span>
+        </div>
+      </header>
+
+      <main class="p-4">
+        <!-- Summary Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <h4 class="fw-bold text-primary mb-0" id="totalResolved">0</h4>
+              <small class="text-muted">Total Resolved</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <h4 class="fw-bold text-success mb-0" id="avgRating">0.0</h4>
+              <small class="text-muted">Average Rating</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <h4 class="fw-bold text-warning mb-0" id="thisMonth">0</h4>
+              <small class="text-muted">This Month</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <h4 class="fw-bold text-info mb-0" id="avgResolutionTime">0h</h4>
+              <small class="text-muted">Avg. Resolution Time</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-3">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Date From</label>
+                <input type="date" class="form-control" id="dateFrom" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Date To</label>
+                <input type="date" class="form-control" id="dateTo" />
+              </div>
+              <div class="col-md-2">
+                <button class="btn btn-primary w-100" id="filterBtn">
+                  <i class="bi bi-funnel me-1"></i>Filter
+                </button>
+              </div>
+              <div class="col-md-2">
+                <button class="btn btn-outline-secondary w-100" id="exportBtn">
+                  <i class="bi bi-download me-1"></i>Export
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white py-3">
+            <h6 class="mb-0 fw-bold">Completed Tasks</h6>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>#ID</th>
+                    <th>Request Title</th>
+                    <th>Category</th>
+                    <th>Requester</th>
+                    <th>Completed Date</th>
+                    <th>Rating</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                  <tr><td colspan="7" class="text-center text-muted py-4">Loading history...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/notifications.js"></script>
+  <script src="/assets/js/technicians.js"></script>
+</body>
+</html>

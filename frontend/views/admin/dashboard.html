@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Smart Computer Maintenance Service</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/admin.css" />
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
+</head>
+<body class="dashboard-body">
+
+  <div class="d-flex">
+    <!-- -- Admin Sidebar -- -->
+    <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3" style="min-height:100vh;width:250px;">
+      <a href="../index.html" class="text-decoration-none">
+        <div class="sidebar-brand mb-4 text-center">
+          <i class="bi bi-shield-check fs-3 text-info"></i>
+          <div class="small fw-bold mt-1" id="panelLabel">Management Panel</div>
+        </div>
+      </a>
+      <ul class="nav flex-column gap-1">
+        <li><a href="dashboard.html"   class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+        <li><a href="users.html"       class="nav-link text-white-50"><i class="bi bi-people me-2"></i>Users</a></li>
+        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i>Technicians</a></li>
+        <li><a href="assets.html"      class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i>ICT Assets</a></li>
+        <li><a href="requests.html"    class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i>Requests</a></li>
+        <li><a href="categories.html"  class="nav-link text-white-50"><i class="bi bi-tags me-2"></i>Categories</a></li>
+        <li><a href="reports.html"     class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i>Reports</a></li>
+        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications <span class="badge bg-danger ms-1" id="sidebarNotifBadge" style="display:none;"></span></a></li>
+        <li><a href="settings.html"    class="nav-link text-white-50"><i class="bi bi-gear me-2"></i>Settings</a></li>
+      </ul>
+      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <i class="bi bi-person-circle fs-5 text-info"></i>
+          <span class="small" id="sidebarUserName">Administrator</span>
+        </div>
+        <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
+          <i class="bi bi-box-arrow-right me-1"></i>Logout
+        </a>
+      </div>
+    </nav>
+
+    <!-- -- Main -- -->
+    <div class="flex-grow-1">
+      <header class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
+        <h5 class="mb-0 fw-bold">Admin Dashboard</h5>
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge bg-danger" id="pendingBadge">0 Pending</span>
+          <div id="notifBellContainer"></div>
+          <span class="text-muted small" id="topUserName">Administrator</span>
+        </div>
+      </header>
+
+      <main class="p-4">
+
+        <!-- KPI Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+              <div class="bg-primary bg-opacity-10 p-3 rounded"><i class="bi bi-people fs-3 text-primary"></i></div>
+              <div>
+                <h4 class="fw-bold mb-0" id="kpiUsers">0</h4>
+                <small class="text-muted">Total Users</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+              <div class="bg-info bg-opacity-10 p-3 rounded"><i class="bi bi-pc-display fs-3 text-info"></i></div>
+              <div>
+                <h4 class="fw-bold mb-0" id="kpiAssets">0</h4>
+                <small class="text-muted">ICT Assets</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+              <div class="bg-warning bg-opacity-10 p-3 rounded"><i class="bi bi-hourglass-split fs-3 text-warning"></i></div>
+              <div>
+                <h4 class="fw-bold mb-0" id="kpiPending">0</h4>
+                <small class="text-muted">Pending Requests</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+              <div class="bg-success bg-opacity-10 p-3 rounded"><i class="bi bi-check-circle fs-3 text-success"></i></div>
+              <div>
+                <h4 class="fw-bold mb-0" id="kpiCompleted">0</h4>
+                <small class="text-muted">Completed</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+              <div class="bg-danger bg-opacity-10 p-3 rounded"><i class="bi bi-exclamation-triangle fs-3 text-danger"></i></div>
+              <div>
+                <h4 class="fw-bold mb-0" id="kpiOverdue">0</h4>
+                <small class="text-muted">Overdue</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+              <div class="bg-secondary bg-opacity-10 p-3 rounded"><i class="bi bi-gear-wide-connected fs-3 text-secondary"></i></div>
+              <div>
+                <h4 class="fw-bold mb-0" id="kpiInProgress">0</h4>
+                <small class="text-muted">In Progress</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+              <div class="bg-warning bg-opacity-10 p-3 rounded"><i class="bi bi-wrench fs-3 text-warning"></i></div>
+              <div>
+                <h4 class="fw-bold mb-0" id="kpiTechnicians">0</h4>
+                <small class="text-muted">Technicians</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+              <div class="bg-primary bg-opacity-10 p-3 rounded"><i class="bi bi-clipboard-data fs-3 text-primary"></i></div>
+              <div>
+                <h4 class="fw-bold mb-0" id="kpiTotal">0</h4>
+                <small class="text-muted">Total Requests</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+          <!-- Recent Requests -->
+          <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history text-primary me-2"></i>Recent Maintenance Requests</h6>
+                <a href="requests.html" class="btn btn-outline-primary btn-sm">View All</a>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                      <tr>
+                        <th class="ps-3">#ID</th><th>Title / Requester</th><th>Dept</th><th>Priority</th><th>Status</th><th>Date</th><th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="recentRequestsBody">
+                      <tr><td colspan="7" class="text-center text-muted py-4">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading...
+                      </td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right column -->
+          <div class="col-lg-4 d-flex flex-column gap-4">
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-lightning-charge text-warning me-2"></i>Quick Actions</h6>
+              </div>
+              <div class="card-body d-flex flex-column gap-2 p-3">
+                <a href="users.html"       class="btn btn-outline-primary text-start btn-sm"><i class="bi bi-person-plus me-2"></i>Add New User</a>
+                <a href="technicians.html" class="btn btn-outline-warning text-start btn-sm"><i class="bi bi-wrench me-2"></i>Manage Technicians</a>
+                <a href="assets.html"      class="btn btn-outline-info text-start btn-sm"><i class="bi bi-pc-display me-2"></i>Add ICT Asset</a>
+                <a href="requests.html"    class="btn btn-outline-danger text-start btn-sm"><i class="bi bi-clipboard-check me-2"></i>Review Requests</a>
+                <a href="reports.html"     class="btn btn-outline-success text-start btn-sm"><i class="bi bi-bar-chart-line me-2"></i>View Reports</a>
+                <a href="categories.html"  class="btn btn-outline-secondary text-start btn-sm"><i class="bi bi-tags me-2"></i>Manage Categories</a>
+              </div>
+            </div>
+
+            <!-- Status Mini Chart -->
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart text-success me-2"></i>Requests by Status</h6>
+              </div>
+              <div class="card-body p-3" id="statusMiniChart">
+                <div class="text-center text-muted py-2"><div class="spinner-border spinner-border-sm"></div></div>
+              </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card border-0 shadow-sm flex-grow-1">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-activity text-info me-2"></i>Recent Activity</h6>
+              </div>
+              <div class="card-body p-3" id="recentActivityDash">
+                <div class="text-center text-muted py-2"><div class="spinner-border spinner-border-sm"></div></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- -- Settings Section -- -->
+        <div class="row g-4 mb-2">
+
+          <!-- Quick Profile Settings -->
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-person-gear text-primary me-2"></i>My Profile</h6>
+                <a href="settings.html#profile" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-pencil me-1"></i>Edit
+                </a>
+              </div>
+              <div class="card-body p-3">
+                <!-- Avatar + info -->
+                <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded">
+                  <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+                       style="width:52px;height:52px;font-size:1.3rem;" id="profileAvatar">A</div>
+                  <div>
+                    <div class="fw-bold" id="profileFullName">�</div>
+                    <div class="text-muted small" id="profileRoleBadge"></div>
+                    <div class="text-muted small" id="profileEmailDisplay">�</div>
+                  </div>
+                </div>
+                <div class="row g-2 small">
+                  <div class="col-6">
+                    <div class="text-muted">Department</div>
+                    <div class="fw-semibold" id="profileDeptDisplay">�</div>
+                  </div>
+                  <div class="col-6">
+                    <div class="text-muted">Phone</div>
+                    <div class="fw-semibold" id="profilePhoneDisplay">�</div>
+                  </div>
+                </div>
+                <hr class="my-3" />
+                <!-- Inline password change -->
+                <div class="small fw-semibold text-muted mb-2">Change Password</div>
+                <div id="pwdChangeAlert" class="alert d-none py-2 small"></div>
+                <div class="mb-2">
+                  <input type="password" class="form-control form-control-sm" id="dashNewPwd"
+                         placeholder="New password (min 8 chars)" />
+                </div>
+                <div class="mb-2">
+                  <input type="password" class="form-control form-control-sm" id="dashConfirmPwd"
+                         placeholder="Confirm new password" />
+                </div>
+                <button class="btn btn-sm btn-primary w-100" id="dashChangePwdBtn">
+                  <span class="spinner-border spinner-border-sm me-1 d-none" id="dashPwdSpinner"></span>
+                  <i class="bi bi-lock me-1"></i>Update Password
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Settings Summary -->
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-gear text-secondary me-2"></i>System Settings</h6>
+                <a href="settings.html" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-arrow-right me-1"></i>Manage
+                </a>
+              </div>
+              <div class="card-body p-3">
+                <div class="list-group list-group-flush">
+
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="small fw-semibold">Allow Public Registration</div>
+                      <div class="text-muted" style="font-size:.75rem;">Users can self-register</div>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" id="quickRegToggle" checked />
+                    </div>
+                  </div>
+
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="small fw-semibold">Email Notifications</div>
+                      <div class="text-muted" style="font-size:.75rem;">Notify on status changes</div>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" id="quickEmailToggle" checked />
+                    </div>
+                  </div>
+
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="small fw-semibold">Technician Auto-Notify</div>
+                      <div class="text-muted" style="font-size:.75rem;">Notify technicians on new requests</div>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" id="quickTechNotif" checked />
+                    </div>
+                  </div>
+
+                  <div class="list-group-item px-0 py-2">
+                    <div class="small fw-semibold mb-1">SLA Response Time</div>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" id="quickSLA" value="24" min="1" />
+                      <span class="input-group-text">hours</span>
+                    </div>
+                  </div>
+
+                  <div class="list-group-item px-0 py-2">
+                    <div class="small fw-semibold mb-1">Default Priority</div>
+                    <select class="form-select form-select-sm" id="quickPriority">
+                      <option value="low">Low</option>
+                      <option value="medium" selected>Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+
+                </div>
+                <button class="btn btn-sm btn-primary w-100 mt-3" id="saveQuickSettingsBtn">
+                  <i class="bi bi-save me-1"></i>Save Settings
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notification & Security Summary -->
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-shield-lock text-danger me-2"></i>Security & Notifications</h6>
+                <a href="settings.html" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-arrow-right me-1"></i>Full Settings
+                </a>
+              </div>
+              <div class="card-body p-3">
+
+                <!-- Security info -->
+                <div class="small fw-bold text-muted text-uppercase mb-2">Security</div>
+                <div class="list-group list-group-flush mb-3">
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span class="small">Session Timeout</span>
+                    <span class="badge bg-light text-dark border">60 min</span>
+                  </div>
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span class="small">Max Login Attempts</span>
+                    <span class="badge bg-light text-dark border">5 attempts</span>
+                  </div>
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span class="small">Min Password Length</span>
+                    <span class="badge bg-light text-dark border">8 chars</span>
+                  </div>
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span class="small">Strong Password</span>
+                    <span class="badge bg-success">Enabled</span>
+                  </div>
+                </div>
+
+                <!-- Notification summary -->
+                <div class="small fw-bold text-muted text-uppercase mb-2">Notifications</div>
+                <div class="d-flex flex-column gap-2">
+                  <div class="d-flex justify-content-between align-items-center p-2 rounded"
+                       style="background:#f8f9fa;">
+                    <span class="small">On Submission</span>
+                    <span class="badge bg-success">On</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center p-2 rounded"
+                       style="background:#f8f9fa;">
+                    <span class="small">On Assignment</span>
+                    <span class="badge bg-success">On</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center p-2 rounded"
+                       style="background:#f8f9fa;">
+                    <span class="small">On Status Change</span>
+                    <span class="badge bg-success">On</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center p-2 rounded"
+                       style="background:#f8f9fa;">
+                    <span class="small">On Resolution</span>
+                    <span class="badge bg-success">On</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/notifications.js"></script>
+  <script src="/assets/js/reports.js"></script>
+  <script>
+  /* -- Dashboard Settings Widget Logic -- */
+  document.addEventListener('DOMContentLoaded', async () => {
+
+    // Load profile info into settings widget
+    try {
+      const { user } = await apiRequest('/auth/me');
+      const initial = (user.fullName || 'A').charAt(0).toUpperCase();
+
+      // Avatar
+      const avatar = document.getElementById('profileAvatar');
+      if (avatar) avatar.textContent = initial;
+
+      // Profile fields
+      const setText = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val||'�'; };
+      setText('profileFullName',    user.fullName);
+      setText('profileEmailDisplay', user.email);
+      setText('profilePhoneDisplay', user.phone || '�');
+      setText('profileDeptDisplay',  user.department || '�');
+
+      // Role badge
+      const roleEl = document.getElementById('profileRoleBadge');
+      if (roleEl) {
+        const roleC = {'ICT Admin':'danger',Technician:'warning',Requester:'primary'};
+        roleEl.innerHTML = `<span class="badge bg-${roleC[user.role]||'secondary'} text-capitalize">${user.role}</span>`;
+      }
+
+      // Avatar background by role
+      if (avatar) {
+        const bg = {'ICT Admin':'#dc3545',Technician:'#ffc107',Requester:'#0d6efd'};
+        avatar.style.background = bg[user.role] || '#0d6efd';
+        if (user.role === 'Technician') avatar.style.color = '#212529';
+      }
+
+    } catch (_) {}
+
+    // -- Inline Password Change --
+    document.getElementById('dashChangePwdBtn')?.addEventListener('click', async () => {
+      const newPwd     = document.getElementById('dashNewPwd').value;
+      const confirmPwd = document.getElementById('dashConfirmPwd').value;
+      const alert      = document.getElementById('pwdChangeAlert');
+
+      const showPwdMsg = (msg, type) => {
+        alert.className = `alert alert-${type} py-2 small`;
+        alert.textContent = msg;
+        alert.classList.remove('d-none');
+        setTimeout(() => alert.classList.add('d-none'), 4000);
+      };
+
+      if (!newPwd) { showPwdMsg('Please enter a new password.', 'warning'); return; }
+      if (newPwd.length < 8) { showPwdMsg('Password must be at least 8 characters.', 'warning'); return; }
+      if (newPwd !== confirmPwd) { showPwdMsg('Passwords do not match.', 'danger'); return; }
+
+      const btn     = document.getElementById('dashChangePwdBtn');
+      const spinner = document.getElementById('dashPwdSpinner');
+      btn.disabled  = true;
+      spinner.classList.remove('d-none');
+
+      try {
+        const user = Auth.getUser();
+        await apiRequest(`/users/${user.id}/password`, { method:'PUT', body:{ password: newPwd } });
+        showPwdMsg('? Password updated successfully.', 'success');
+        document.getElementById('dashNewPwd').value     = '';
+        document.getElementById('dashConfirmPwd').value = '';
+      } catch (err) {
+        showPwdMsg(err.message, 'danger');
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('d-none');
+      }
+    });
+
+    // -- Load saved quick settings from localStorage --
+    const QS_KEY = 'ict_quick_settings';
+    const saved  = JSON.parse(localStorage.getItem(QS_KEY) || '{}');
+
+    if (saved.registration !== undefined)
+      document.getElementById('quickRegToggle').checked    = saved.registration;
+    if (saved.emailNotif !== undefined)
+      document.getElementById('quickEmailToggle').checked  = saved.emailNotif;
+    if (saved.techNotif !== undefined)
+      document.getElementById('quickTechNotif').checked    = saved.techNotif;
+    if (saved.sla !== undefined)
+      document.getElementById('quickSLA').value            = saved.sla;
+    if (saved.priority !== undefined)
+      document.getElementById('quickPriority').value       = saved.priority;
+
+    // -- Save Quick Settings --
+    document.getElementById('saveQuickSettingsBtn')?.addEventListener('click', () => {
+      const settings = {
+        registration: document.getElementById('quickRegToggle').checked,
+        emailNotif:   document.getElementById('quickEmailToggle').checked,
+        techNotif:    document.getElementById('quickTechNotif').checked,
+        sla:          document.getElementById('quickSLA').value,
+        priority:     document.getElementById('quickPriority').value,
+      };
+      localStorage.setItem(QS_KEY, JSON.stringify(settings));
+      showToast('Settings saved successfully!', 'success');
+    });
+
+  });
+  </script>
+</body>
+</html>

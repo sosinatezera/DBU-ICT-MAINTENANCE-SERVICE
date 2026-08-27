@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maintenance Activity — Smart Computer Maintenance Service</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/technician.css" />
+</head>
+<body class="dashboard-body">
+
+  <div class="d-flex">
+    <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3" style="min-height:100vh;width:240px;">
+      <a href="../index.html" class="text-decoration-none">
+        <div class="sidebar-brand mb-4 text-center">
+          <i class="bi bi-wrench-adjustable fs-3 text-warning"></i>
+          <div class="small fw-bold mt-1">Technician Panel</div>
+        </div>
+      </a>
+      <ul class="nav flex-column gap-1">
+        <li><a href="dashboard.html"        class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+        <li><a href="assigned-requests.html" class="nav-link text-white-50"><i class="bi bi-list-task me-2"></i>Assigned Requests</a></li>
+        <li><a href="maintenance.html"       class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-tools me-2"></i>Maintenance Activity</a></li>
+        <li><a href="history.html"           class="nav-link text-white-50"><i class="bi bi-clock-history me-2"></i>History</a></li>
+        <li><a href="notifications.html"     class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a></li>
+      </ul>
+      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+        <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+      </div>
+    </nav>
+
+    <div class="flex-grow-1">
+      <header class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
+        <h5 class="mb-0 fw-bold">Log Maintenance Activity</h5>
+        <div class="d-flex align-items-center gap-2">
+          <div id="notifBellContainer"></div>
+          <span class="text-muted small d-none d-md-block" id="topUserName"></span>
+        </div>
+      </header>
+
+      <main class="p-4">
+        <div class="row g-4">
+
+          <!-- Log Form -->
+          <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-pencil-square text-warning me-2"></i>New Activity Log</h6>
+              </div>
+              <div class="card-body p-4">
+                <div id="maintenanceAlert" class="alert d-none" role="alert"></div>
+                <form id="maintenanceForm" novalidate>
+                  <!-- Select Request -->
+                  <div class="mb-3">
+                    <label for="requestSelect" class="form-label fw-semibold">Select Request <span class="text-danger">*</span></label>
+                    <select class="form-select" id="requestSelect" required>
+                      <option value="">-- Select Assigned Request --</option>
+                    </select>
+                    <div class="invalid-feedback">Please select a request.</div>
+                  </div>
+
+                  <!-- Status Update -->
+                  <div class="mb-3">
+                    <label for="activityStatus" class="form-label fw-semibold">Update Status <span class="text-danger">*</span></label>
+                    <select class="form-select" id="activityStatus" required>
+                      <option value="">-- Select Status --</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="resolved">Resolved</option>
+                    </select>
+                    <div class="invalid-feedback">Please select a status.</div>
+                  </div>
+
+                  <!-- Action Taken -->
+                  <div class="mb-3">
+                    <label for="actionTaken" class="form-label fw-semibold">Action Taken <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="actionTaken" rows="4"
+                              placeholder="Describe the actions performed..." required minlength="10"></textarea>
+                    <div class="invalid-feedback">Please describe the action taken (min 10 characters).</div>
+                  </div>
+
+                  <!-- Parts Used -->
+                  <div class="mb-3">
+                    <label for="partsUsed" class="form-label fw-semibold">Parts / Materials Used</label>
+                    <input type="text" class="form-control" id="partsUsed"
+                           placeholder="e.g. HDD 1TB, Power Adapter" />
+                  </div>
+
+                  <!-- Notes -->
+                  <div class="mb-4">
+                    <label for="techNotes" class="form-label fw-semibold">Additional Notes</label>
+                    <textarea class="form-control" id="techNotes" rows="3"
+                              placeholder="Any observations or notes..."></textarea>
+                  </div>
+
+                  <button type="submit" class="btn btn-warning w-100 fw-semibold" id="logSubmitBtn">
+                    <span class="spinner-border spinner-border-sm me-2 d-none" id="logSpinner"></span>
+                    <i class="bi bi-save me-1"></i>Save Activity Log
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Timeline -->
+          <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history text-info me-2"></i>Recent Activity</h6>
+                <select class="form-select form-select-sm w-auto" id="activityRequestFilter">
+                  <option value="">All Requests</option>
+                </select>
+              </div>
+              <div class="card-body p-0">
+                <div id="activityTimeline" class="p-3">
+                  <div class="text-center text-muted py-4">Loading activity...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/notifications.js"></script>
+  <script src="/assets/js/technicians.js"></script>
+</body>
+</html>

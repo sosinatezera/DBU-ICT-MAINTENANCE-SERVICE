@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports � Admin</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/admin.css" />
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
+</head>
+<body class="dashboard-body">
+
+  <div class="d-flex">
+    <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3" style="min-height:100vh;width:250px;">
+      <a href="../index.html" class="text-decoration-none">
+        <div class="sidebar-brand mb-4 text-center">
+          <i class="bi bi-shield-check fs-3 text-info"></i>
+          <div class="small fw-bold mt-1" id="panelLabel">Management Panel</div>
+        </div>
+      </a>
+      <ul class="nav flex-column gap-1">
+        <li><a href="dashboard.html"   class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+        <li><a href="users.html"       class="nav-link text-white-50"><i class="bi bi-people me-2"></i>Users</a></li>
+        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i>Technicians</a></li>
+        <li><a href="assets.html"      class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i>ICT Assets</a></li>
+        <li><a href="requests.html"    class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i>Requests</a></li>
+        <li><a href="categories.html"  class="nav-link text-white-50"><i class="bi bi-tags me-2"></i>Categories</a></li>
+        <li><a href="reports.html"     class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-bar-chart-line me-2"></i>Reports</a></li>
+        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a></li>
+        <li><a href="settings.html"    class="nav-link text-white-50"><i class="bi bi-gear me-2"></i>Settings</a></li>
+      </ul>
+      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+        <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+      </div>
+    </nav>
+
+    <div class="flex-grow-1">
+      <header class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
+        <h5 class="mb-0 fw-bold">Reports &amp; Analytics</h5>
+        <div class="d-flex align-items-center gap-2">
+          <div id="notifBellContainer"></div>
+          <button class="btn btn-outline-success btn-sm" id="exportReportBtn">
+            <i class="bi bi-download me-1"></i>Export CSV
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" id="printReportBtn">
+            <i class="bi bi-printer me-1"></i>Print / PDF
+          </button>
+        </div>
+      </header>
+
+      <main class="p-4">
+        <!-- Date Range Filter -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-3">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label small fw-semibold">Date From</label>
+                <input type="date" class="form-control" id="reportDateFrom" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small fw-semibold">Date To</label>
+                <input type="date" class="form-control" id="reportDateTo" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small fw-semibold">Report Type</label>
+                <select class="form-select" id="reportType">
+                  <option value="all">All Reports</option>
+                  <option value="requests">Requests Summary</option>
+                  <option value="technician">Technician Performance</option>
+                  <option value="category">By Category</option>
+                  <option value="department">By Department</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-primary w-100" id="generateReportBtn">
+                  <i class="bi bi-bar-chart-line me-1"></i>Generate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary KPIs -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <h4 class="fw-bold text-primary mb-0" id="rptTotal">0</h4>
+              <small class="text-muted">Total Requests</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <h4 class="fw-bold text-success mb-0" id="rptCompleted">0</h4>
+              <small class="text-muted">Completed</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <h4 class="fw-bold text-warning mb-0" id="rptPending">0</h4>
+              <small class="text-muted">Pending</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+              <h4 class="fw-bold text-info mb-0" id="rptAvgTime">0h</h4>
+              <small class="text-muted">Avg. Resolution Time</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <!-- Requests by Status -->
+          <div class="col-lg-6" id="sectionByStatus">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold">Requests by Status</h6>
+              </div>
+              <div class="card-body">
+                <div id="statusBreakdown"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Requests by Category -->
+          <div class="col-lg-6" id="sectionByCategory">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold">Requests by Category</h6>
+              </div>
+              <div class="card-body">
+                <div id="categoryBreakdown"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Technician Performance -->
+          <div class="col-lg-12" id="sectionTechPerf">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold">Technician Performance</h6>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Technician</th><th>Total Assigned</th><th>Resolved</th>
+                        <th>In Progress</th><th>Avg. Rating</th><th>Performance</th>
+                      </tr>
+                    </thead>
+                    <tbody id="techPerformanceBody">
+                      <tr><td colspan="6" class="text-center text-muted py-4">Loading performance data...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Requests by Department -->
+          <div class="col-lg-12" id="sectionByDept">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold">Requests by Department</h6>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                      <tr><th>Department</th><th>Total Requests</th><th>Completed</th><th>Pending</th><th>% Resolved</th></tr>
+                    </thead>
+                    <tbody id="deptReportBody">
+                      <tr><td colspan="5" class="text-center text-muted py-4">Loading department data...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/notifications.js"></script>
+  <script src="/assets/js/reports.js"></script>
+</body>
+</html>

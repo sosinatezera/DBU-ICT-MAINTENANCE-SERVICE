@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Smart Computer Maintenance Service</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #0d6efd 0%, #0a2540 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    .card { border-radius: 16px; border: none; }
+    .logo-circle {
+      width: 64px; height: 64px; background: #0d6efd; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(13,110,253,.4);
+    }
+    .form-control { border-radius: 8px !important; font-size: .9rem; }
+    .input-group .form-control { border-radius: 0 8px 8px 0 !important; }
+    .input-group-text { border-radius: 8px 0 0 8px !important; background: #f8f9fa; }
+    .btn-outline-secondary { border-radius: 0 8px 8px 0 !important; }
+    .btn-primary { border-radius: 8px; font-weight: 600; padding: .65rem; font-size: .95rem; }
+    #loginAlert { font-size: .875rem; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-sm-10 col-md-6 col-lg-5 col-xl-4">
+
+        <div class="card shadow-lg">
+          <div class="card-body p-4 p-md-5">
+
+            <!-- Logo -->
+            <div class="text-center mb-4">
+              <div class="d-inline-flex align-items-center justify-content-center mb-3"
+                   style="width:72px;height:72px;background:linear-gradient(135deg,#0d6efd,#0a2540);border-radius:18px;box-shadow:0 6px 20px rgba(13,110,253,.35);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 64 64" fill="none">
+                  <rect x="10" y="12" width="44" height="30" rx="3" fill="#fff" fill-opacity=".2" stroke="#fff" stroke-width="2"/>
+                  <rect x="14" y="16" width="36" height="22" rx="2" fill="#fff" fill-opacity=".9"/>
+                  <circle cx="32" cy="27" r="6" fill="#0d6efd"/>
+                  <circle cx="32" cy="27" r="3" fill="#fff"/>
+                  <rect x="30.5" y="19" width="3" height="3" rx="1" fill="#0d6efd"/>
+                  <rect x="30.5" y="33" width="3" height="3" rx="1" fill="#0d6efd"/>
+                  <rect x="19" y="25.5" width="3" height="3" rx="1" fill="#0d6efd"/>
+                  <rect x="42" y="25.5" width="3" height="3" rx="1" fill="#0d6efd"/>
+                  <rect x="28" y="42" width="8" height="5" rx="1" fill="#fff" fill-opacity=".7"/>
+                  <rect x="22" y="47" width="20" height="3" rx="1.5" fill="#fff" fill-opacity=".7"/>
+                  <path d="M44 46 L50 52 M44 46 C42 44 42 41 44 39 C46 37 49 37 51 39 L48 42 L46 40 L44 42 L46 44 Z" stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                  <circle cx="14" cy="56" r="2" fill="#4ade80"/>
+                  <circle cx="20" cy="56" r="2" fill="#4ade80" opacity=".7"/>
+                  <circle cx="26" cy="56" r="2" fill="#fff" opacity=".4"/>
+                </svg>
+              </div>
+              <h4 class="fw-bold mb-1">Smart Computer Maintenance Service</h4>
+              <p class="text-muted small mb-0">Sign in to your account</p>
+            </div>
+
+            <!-- Alert -->
+            <div id="loginAlert" class="alert d-none mb-3" role="alert"></div>
+
+            <form id="loginForm">
+
+              <!-- Email -->
+              <div class="mb-3">
+                <label for="email" class="form-label fw-semibold small">Email Address</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-envelope text-muted"></i></span>
+                  <input type="email" class="form-control" id="email"
+                         placeholder="Enter your email address"
+                         autocomplete="email" required />
+                </div>
+              </div>
+
+              <!-- Password -->
+              <div class="mb-4">
+                <label for="password" class="form-label fw-semibold small">Password</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock text-muted"></i></span>
+                  <input type="password" class="form-control" id="password"
+                         placeholder="Enter your password"
+                         autocomplete="current-password" required />
+                  <button class="btn btn-outline-secondary" type="button" id="togglePwd">
+                    <i class="bi bi-eye" id="eyeIcon"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Remember me -->
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="rememberMe" />
+                  <label class="form-check-label small text-muted" for="rememberMe">Remember me</label>
+                </div>
+                <a href="#" class="small text-primary text-decoration-none">Forgot password?</a>
+              </div>
+
+              <!-- Submit -->
+              <button type="submit" class="btn btn-primary w-100" id="loginBtn">
+                <span id="loginSpinner" class="spinner-border spinner-border-sm me-2 d-none"></span>
+                <i class="bi bi-box-arrow-in-right me-1" id="loginIcon"></i>
+                <span id="loginBtnText">Sign In</span>
+              </button>
+
+            </form>
+
+            <hr class="my-4" />
+            <p class="text-center text-muted small mb-0">
+              Don't have an account?
+              <a href="register.html" class="text-primary fw-semibold text-decoration-none">Register here</a>
+            </p>
+
+          </div>
+        </div>
+
+        <p class="text-center mt-3">
+          <a href="index.html" class="text-white-50 small text-decoration-none">
+            <i class="bi bi-arrow-left me-1"></i>Back to Home
+          </a>
+        </p>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/js/validation.js"></script>
+<script>
+const API = 'http://localhost:5000/api';
+
+/* Auto-redirect if already logged in */
+(function () {
+  const token = localStorage.getItem('ict_token');
+  const user  = JSON.parse(localStorage.getItem('ict_user') || 'null');
+  if (token && user) redirectByRole(user.role);
+})();
+
+function redirectByRole(role) {
+  const routes = {
+    'ICT Admin':  '/views/admin/dashboard.html',
+    'Requester':  '/views/user/dashboard.html',
+    'Technician': '/views/technician/dashboard.html',
+    'student':    '/views/user/dashboard.html',
+  };
+  window.location.href = routes[role] || '/views/user/dashboard.html';
+}
+
+function showAlert(msg, type) {
+  const el    = document.getElementById('loginAlert');
+  const icons = {
+    success: 'bi-check-circle-fill',
+    danger:  'bi-exclamation-triangle-fill',
+    warning: 'bi-exclamation-triangle-fill',
+    info:    'bi-info-circle-fill',
+  };
+  el.className = `alert alert-${type} d-flex align-items-center gap-2`;
+  el.innerHTML = `<i class="bi ${icons[type] || 'bi-info-circle-fill'} flex-shrink-0"></i><span>${msg}</span>`;
+  el.classList.remove('d-none');
+}
+
+function setLoading(on) {
+  document.getElementById('loginBtn').disabled = on;
+  document.getElementById('loginSpinner').classList.toggle('d-none', !on);
+  document.getElementById('loginIcon').classList.toggle('d-none', on);
+  document.getElementById('loginBtnText').textContent = on ? 'Signing in...' : 'Sign In';
+}
+
+/* Real-time field validation */
+attachRealTimeValidation('loginForm', [
+  { fieldId: 'email', checks: [Validators.email] },
+]);
+
+/* Form submit */
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  document.getElementById('loginAlert').classList.add('d-none');
+
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  /* Validate fields */
+  let hasError = false;
+
+  const emailErr = Validators.email(email);
+  if (emailErr) { showFieldError('email', emailErr); hasError = true; }
+  else { showFieldValid('email'); }
+
+  if (!password) {
+    showFieldError('password', 'Password is required.');
+    hasError = true;
+  } else { clearFieldValidation('password'); }
+
+  if (hasError) return;
+
+  setLoading(true);
+  try {
+    const res  = await fetch(`${API}/auth/login`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showAlert(data.message || 'Invalid email or password.', 'danger');
+      setLoading(false);
+      return;
+    }
+
+    /* Save session */
+    localStorage.setItem('ict_token', data.token);
+    localStorage.setItem('ict_user',  JSON.stringify(data.user));
+
+    showAlert(`Welcome, <strong>${data.user.fullName}</strong>! Redirecting...`, 'success');
+    setTimeout(() => window.location.href = data.redirect || redirectByRole(data.user.role), 1200);
+
+  } catch {
+    showAlert('Cannot connect to server. Make sure the backend is running.', 'warning');
+    setLoading(false);
+  }
+});
+
+/* Password toggle */
+document.getElementById('togglePwd').addEventListener('click', () => {
+  const pwd  = document.getElementById('password');
+  const icon = document.getElementById('eyeIcon');
+  const show = pwd.type === 'password';
+  pwd.type       = show ? 'text' : 'password';
+  icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+});
+</script>
+</body>
+</html>

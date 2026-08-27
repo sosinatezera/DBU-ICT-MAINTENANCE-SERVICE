@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings - Admin</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/admin.css" />
+</head>
+<body class="dashboard-body">
+
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3" style="min-height:100vh;width:250px;">
+      <a href="../index.html" class="text-decoration-none">
+        <div class="sidebar-brand mb-4 text-center">
+          <i class="bi bi-shield-check fs-3 text-info"></i>
+          <div class="small fw-bold mt-1" id="panelLabel">Management Panel</div>
+        </div>
+      </a>
+      <ul class="nav flex-column gap-1">
+        <li><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+        <li><a href="users.html" class="nav-link text-white-50"><i class="bi bi-people me-2"></i>Users</a></li>
+        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i>Technicians</a></li>
+        <li><a href="assets.html" class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i>ICT Assets</a></li>
+        <li><a href="requests.html" class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i>Requests</a></li>
+        <li><a href="categories.html" class="nav-link text-white-50"><i class="bi bi-tags me-2"></i>Categories</a></li>
+        <li><a href="reports.html" class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i>Reports</a></li>
+        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a></li>
+        <li><a href="settings.html" class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-gear me-2"></i>Settings</a></li>
+      </ul>
+      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+        <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="flex-grow-1">
+      <header class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm" style="position:sticky;top:0;z-index:100;">
+        <div class="d-flex align-items-center gap-3">
+          <button class="btn btn-sm btn-outline-secondary d-inline-flex d-lg-none" id="sidebarToggle">
+            <i class="bi bi-list fs-5"></i>
+          </button>
+          <h5 class="mb-0 fw-bold">Settings</h5>
+        </div>
+        <div id="notifBellContainer"></div>
+      </header>
+
+      <main class="p-4">
+        <!-- Page-level alert -->
+        <div id="settingsAlert" class="alert d-none" role="alert"></div>
+
+        <!-- Settings Tabs -->
+        <ul class="nav nav-tabs settings-nav mb-4" id="settingsTabs" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#generalTab" type="button">
+              <i class="bi bi-sliders me-1"></i>General
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#notifTab" type="button">
+              <i class="bi bi-bell me-1"></i>Notifications
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#securityTab" type="button">
+              <i class="bi bi-shield-lock me-1"></i>Security
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#profileTab" type="button">
+              <i class="bi bi-person-circle me-1"></i>My Profile
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+
+          <!-- ═══════════════════════════════════════════════════
+               GENERAL SETTINGS
+               ═══════════════════════════════════════════════════ -->
+          <div class="tab-pane fade show active" id="generalTab">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-gear me-2 text-primary"></i>General Configuration</h6>
+                <small class="text-muted">Configure system-wide settings for the Smart Computer Maintenance Service.</small>
+              </div>
+              <div class="card-body p-4">
+                <form id="generalSettingsForm">
+                  <!-- System Identity -->
+                  <div class="settings-section mb-4">
+                    <h6 class="settings-section-title fw-semibold text-muted text-uppercase small mb-3">
+                      <i class="bi bi-info-circle me-1"></i>System Identity
+                    </h6>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label for="settingSystemName" class="form-label fw-semibold">System Name</label>
+                        <input type="text" class="form-control" id="settingSystemName" placeholder="Smart Computer Maintenance Service Request and Tracking System" />
+                        <div class="form-text">Displayed in the browser title and header.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label for="settingOrgName" class="form-label fw-semibold">Organization Name</label>
+                        <input type="text" class="form-control" id="settingOrgName" placeholder="Debre Berhan University" />
+                        <div class="form-text">Name of your institution or organization.</div>
+                      </div>
+                      <div class="col-12">
+                        <label for="settingSystemDesc" class="form-label fw-semibold">System Description</label>
+                        <textarea class="form-control" id="settingSystemDesc" rows="2" placeholder="Brief description of the system..."></textarea>
+                        <div class="form-text">Optional description shown on the public landing page.</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr class="my-4" />
+
+                  <!-- Regional -->
+                  <div class="settings-section mb-4">
+                    <h6 class="settings-section-title fw-semibold text-muted text-uppercase small mb-3">
+                      <i class="bi bi-globe me-1"></i>Regional &amp; Format
+                    </h6>
+                    <div class="row g-3">
+                      <div class="col-md-4">
+                        <label for="settingLanguage" class="form-label fw-semibold">Default Language</label>
+                        <select class="form-select" id="settingLanguage">
+                          <option value="en">English</option>
+                          <option value="am">Amharic</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label for="settingTimezone" class="form-label fw-semibold">Time Zone</label>
+                        <select class="form-select" id="settingTimezone">
+                          <option value="Africa/Addis_Ababa">East Africa Time (EAT)</option>
+                          <option value="Africa/Nairobi">Nairobi</option>
+                          <option value="UTC">UTC</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label for="settingDateFormat" class="form-label fw-semibold">Date Format</label>
+                        <select class="form-select" id="settingDateFormat">
+                          <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                          <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                          <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                          <option value="DD-MM-YYYY">DD-MM-YYYY</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr class="my-4" />
+
+                  <!-- Action Buttons -->
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="submit" class="btn btn-primary px-4" id="saveGeneralBtn">
+                      <span class="spinner-border spinner-border-sm me-2 d-none" id="saveGeneralSpinner"></span>
+                      <i class="bi bi-check-lg me-1"></i>Save Changes
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary">
+                      <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════════════
+               NOTIFICATION SETTINGS
+               ═══════════════════════════════════════════════════ -->
+          <div class="tab-pane fade" id="notifTab">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-bell me-2 text-warning"></i>Notification Preferences</h6>
+                <small class="text-muted">Control which notifications are generated for system events.</small>
+              </div>
+              <div class="card-body p-4">
+                <form id="notifSettingsForm">
+                  <div class="settings-section mb-4">
+                    <h6 class="settings-section-title fw-semibold text-muted text-uppercase small mb-3">
+                      <i class="bi bi-envelope me-1"></i>Event Notifications
+                    </h6>
+
+                    <div class="list-group list-group-flush">
+                      <!-- New Request -->
+                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                        <div>
+                          <div class="fw-semibold">New Maintenance Request</div>
+                          <small class="text-muted">Notify when a new request is submitted</small>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                          <input class="form-check-input" type="checkbox" id="notifNewRequest" checked />
+                        </div>
+                      </div>
+
+                      <!-- Assignment -->
+                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                        <div>
+                          <div class="fw-semibold">Request Assignment</div>
+                          <small class="text-muted">Notify when a technician is assigned to a request</small>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                          <input class="form-check-input" type="checkbox" id="notifAssignment" checked />
+                        </div>
+                      </div>
+
+                      <!-- Status Change -->
+                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                        <div>
+                          <div class="fw-semibold">Status Change</div>
+                          <small class="text-muted">Notify when a request status changes</small>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                          <input class="form-check-input" type="checkbox" id="notifStatusChange" checked />
+                        </div>
+                      </div>
+
+                      <!-- Completion -->
+                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                        <div>
+                          <div class="fw-semibold">Maintenance Completion</div>
+                          <small class="text-muted">Notify when a request is resolved or closed</small>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                          <input class="form-check-input" type="checkbox" id="notifCompletion" checked />
+                        </div>
+                      </div>
+
+                      <!-- System/Security -->
+                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                        <div>
+                          <div class="fw-semibold">System &amp; Security Alerts</div>
+                          <small class="text-muted">Notify on account changes, security events, and system updates</small>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                          <input class="form-check-input" type="checkbox" id="notifSystemSecurity" checked />
+                        </div>
+                      </div>
+
+                      <!-- Email -->
+                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                        <div>
+                          <div class="fw-semibold">Email Notifications</div>
+                          <small class="text-muted">Send email copies for system notifications (requires email server configuration)</small>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                          <input class="form-check-input" type="checkbox" id="emailNotifications" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="alert alert-info small mt-3 mb-0">
+                      <i class="bi bi-info-circle me-1"></i>
+                      <strong>Note:</strong> Email notifications are currently UI-only. The backend generates in-app notifications for all events. Email delivery requires an external SMTP server configuration.
+                    </div>
+                  </div>
+
+                  <hr class="my-4" />
+
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="submit" class="btn btn-primary px-4" id="saveNotifBtn">
+                      <span class="spinner-border spinner-border-sm me-2 d-none" id="saveNotifSpinner"></span>
+                      <i class="bi bi-check-lg me-1"></i>Save Notification Preferences
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary">
+                      <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════════════
+               SECURITY SETTINGS
+               ═══════════════════════════════════════════════════ -->
+          <div class="tab-pane fade" id="securityTab">
+            <!-- Change Password -->
+            <div class="card border-0 shadow-sm mb-4">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-key me-2 text-danger"></i>Change Password</h6>
+                <small class="text-muted">Update your account password. Choose a strong password.</small>
+              </div>
+              <div class="card-body p-4">
+                <div id="passwordAlert" class="alert d-none" role="alert"></div>
+                <form id="changePasswordForm">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <label for="currentPassword" class="form-label fw-semibold">Current Password</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" id="currentPassword" placeholder="Enter current password" required />
+                        <button class="btn btn-outline-secondary" type="button" data-toggle-password="currentPassword">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <label for="newPassword" class="form-label fw-semibold">New Password</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-shield-lock"></i></span>
+                        <input type="password" class="form-control" id="newPassword" placeholder="Enter new password" required minlength="8" />
+                        <button class="btn btn-outline-secondary" type="button" data-toggle-password="newPassword">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                      </div>
+                      <div class="form-text">Minimum 8 characters. Use a mix of letters, numbers, and symbols.</div>
+                    </div>
+                    <div class="col-md-6">
+                      <label for="confirmPassword" class="form-label fw-semibold">Confirm New Password</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-shield-check"></i></span>
+                        <input type="password" class="form-control" id="confirmPassword" placeholder="Re-enter new password" required minlength="8" />
+                        <button class="btn btn-outline-secondary" type="button" data-toggle-password="confirmPassword">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                      </div>
+                      <div class="form-text" id="passwordMatchText"></div>
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <button type="submit" class="btn btn-danger px-4" id="savePasswordBtn">
+                      <span class="spinner-border spinner-border-sm me-2 d-none" id="savePasswordSpinner"></span>
+                      <i class="bi bi-shield-check me-1"></i>Update Password
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Account Security Info -->
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-shield-check me-2 text-success"></i>Account Security</h6>
+                <small class="text-muted">Read-only security information for your account.</small>
+              </div>
+              <div class="card-body p-4">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="security-info-item p-3 rounded bg-light">
+                      <div class="text-muted small mb-1">Account Status</div>
+                      <div class="fw-semibold" id="securityStatus">Active</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="security-info-item p-3 rounded bg-light">
+                      <div class="text-muted small mb-1">Account Role</div>
+                      <div class="fw-semibold" id="securityRole">—</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="security-info-item p-3 rounded bg-light">
+                      <div class="text-muted small mb-1">Last Login</div>
+                      <div class="fw-semibold" id="securityLastLogin">—</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="security-info-item p-3 rounded bg-light">
+                      <div class="text-muted small mb-1">Member Since</div>
+                      <div class="fw-semibold" id="securityMemberSince">—</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="alert alert-info small mt-3 mb-0">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Session timeout, max login attempts, and password policy are enforced by the server. Contact the system administrator for policy changes.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════════════
+               MY PROFILE
+               ═══════════════════════════════════════════════════ -->
+          <div class="tab-pane fade" id="profileTab">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-person-circle me-2 text-info"></i>My Profile</h6>
+                <small class="text-muted">View and update your personal information.</small>
+              </div>
+              <div class="card-body p-4">
+                <div id="profileAlert" class="alert d-none" role="alert"></div>
+
+                <!-- Profile Header -->
+                <div class="d-flex align-items-center gap-4 mb-4 pb-3 border-bottom">
+                  <div class="profile-avatar-lg" id="profileAvatar" style="width:72px;height:72px;border-radius:50%;background:#0d6efd;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700;flex-shrink:0;">A</div>
+                  <div>
+                    <h5 class="fw-bold mb-0" id="profileDisplayName">—</h5>
+                    <div class="text-muted" id="profileDisplayEmail">—</div>
+                    <div class="mt-1" id="profileRoleBadge"></div>
+                  </div>
+                </div>
+
+                <form id="profileForm">
+                  <div class="settings-section mb-4">
+                    <h6 class="settings-section-title fw-semibold text-muted text-uppercase small mb-3">
+                      <i class="bi bi-person me-1"></i>Personal Information
+                    </h6>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label for="profileName" class="form-label fw-semibold">Full Name</label>
+                        <input type="text" class="form-control" id="profileName" required />
+                      </div>
+                      <div class="col-md-6">
+                        <label for="profileEmail" class="form-label fw-semibold">Email Address</label>
+                        <input type="email" class="form-control" id="profileEmail" readonly style="background:#f8f9fa;" />
+                        <div class="form-text">Email cannot be changed from this page.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label for="profilePhone" class="form-label fw-semibold">Phone Number</label>
+                        <input type="tel" class="form-control" id="profilePhone" placeholder="+254 7XX XXX XXX" />
+                      </div>
+                      <div class="col-md-6">
+                        <label for="profileDept" class="form-label fw-semibold">Department</label>
+                        <input type="text" class="form-control" id="profileDept" placeholder="e.g. System Administration" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr class="my-4" />
+
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="submit" class="btn btn-primary px-4" id="saveProfileBtn">
+                      <span class="spinner-border spinner-border-sm me-2 d-none" id="saveProfileSpinner"></span>
+                      <i class="bi bi-check-lg me-1"></i>Save Profile
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary">
+                      <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /tab-content -->
+      </main>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/js/validation.js"></script>
+<script src="/assets/js/main.js"></script>
+<script src="/assets/js/settings.js"></script>
+</body>
+</html>

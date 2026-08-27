@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Computer Maintenance Service Request &amp; Tracking System</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    :root {
+      --nav-height: 68px;
+      --dbu-blue: #0d6efd;
+      --dbu-dark: #0a2540;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      padding-top: var(--nav-height);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #212529;
+    }
+
+    /* ===== Navbar ===== */
+    .main-navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      height: var(--nav-height);
+      background: rgba(13, 110, 253, 0.97);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, .1);
+      transition: all 0.3s ease;
+    }
+
+    .main-navbar.scrolled {
+      background: rgba(10, 88, 202, 0.99);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, .2);
+    }
+
+    .navbar-brand-icon {
+      width: 44px;
+      height: 44px;
+      background: #fff;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .2);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .brand-text-main {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -.2px;
+      line-height: 1.2;
+    }
+
+    .brand-text-sub {
+      font-size: .68rem;
+      font-weight: 400;
+      opacity: .75;
+      letter-spacing: .3px;
+    }
+
+    .nav-link-item {
+      color: rgba(255, 255, 255, .85) !important;
+      font-weight: 500;
+      font-size: .9rem;
+      padding: .5rem .9rem !important;
+      border-radius: 8px;
+      transition: all .2s;
+      position: relative;
+    }
+
+    .nav-link-item::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      width: 0;
+      height: 2px;
+      background: #fff;
+      border-radius: 2px;
+      transition: all .25s ease;
+      transform: translateX(-50%);
+    }
+
+    .nav-link-item:hover {
+      color: #fff !important;
+      background: rgba(255, 255, 255, .1);
+    }
+
+    .nav-link-item:hover::after,
+    .nav-link-item.active::after {
+      width: 60%;
+    }
+
+    .nav-link-item.active {
+      color: #fff !important;
+      background: rgba(255, 255, 255, .12);
+    }
+
+    .btn-nav-login {
+      border: 1.5px solid rgba(255, 255, 255, .5);
+      color: #fff !important;
+      border-radius: 8px;
+      padding: .4rem 1.1rem !important;
+      font-size: .875rem;
+      font-weight: 500;
+      transition: all .2s;
+    }
+
+    .btn-nav-login:hover {
+      background: rgba(255, 255, 255, .15);
+      border-color: #fff;
+    }
+
+    .btn-nav-register {
+      background: #fff;
+      color: #0d6efd !important;
+      border-radius: 8px;
+      padding: .4rem 1.2rem !important;
+      font-size: .875rem;
+      font-weight: 600;
+      transition: all .2s;
+    }
+
+    .btn-nav-register:hover {
+      background: #e8f0fe;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+    }
+
+    .navbar-toggler {
+      border-color: rgba(255, 255, 255, .4);
+    }
+
+    .navbar-toggler-icon {
+      filter: brightness(2);
+    }
+
+    @media (max-width: 991.98px) {
+
+      .main-navbar .collapse.show,
+      .main-navbar .collapsing {
+        background: #0a58ca;
+        border-radius: 0 0 12px 12px;
+        padding: .75rem 1rem 1rem;
+        margin-top: 4px;
+      }
+
+      .nav-link-item::after {
+        display: none;
+      }
+    }
+
+    /* ===== Hero ===== */
+    .hero-section {
+      min-height: 90vh;
+      background: linear-gradient(135deg, #0d6efd 0%, #0a2540 100%);
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 600px;
+      height: 600px;
+      background: rgba(255, 255, 255, .04);
+      border-radius: 50%;
+    }
+
+    .hero-section::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 400px;
+      height: 400px;
+      background: rgba(255, 255, 255, .03);
+      border-radius: 50%;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, .12);
+      border: 1px solid rgba(255, 255, 255, .2);
+      color: #fff;
+      border-radius: 50px;
+      padding: .35rem 1rem;
+      font-size: .8rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, .8);
+      line-height: 1.7;
+      max-width: 580px;
+    }
+
+    /* ===== Stats ===== */
+    .stats-bar {
+      background: #fff;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, .08);
+    }
+
+    .stat-item {
+      padding: 1.5rem 1rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .stat-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 25%;
+      bottom: 25%;
+      width: 1px;
+      background: #e9ecef;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: .8rem;
+      color: #6c757d;
+      margin-top: 4px;
+    }
+
+    /* ===== Section headings ===== */
+    .section-label {
+      display: inline-block;
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #0d6efd;
+      background: #e8f0fe;
+      padding: .3rem .9rem;
+      border-radius: 50px;
+      margin-bottom: .75rem;
+    }
+
+    .section-title {
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-weight: 800;
+    }
+
+    /* ===== Feature / Quick-access cards ===== */
+    .feature-card {
+      border: 1px solid #e9ecef;
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      transition: all .25s ease;
+      background: #fff;
+      height: 100%;
+    }
+
+    .feature-card:hover {
+      border-color: #0d6efd;
+      box-shadow: 0 12px 32px rgba(13, 110, 253, .12);
+      transform: translateY(-4px);
+    }
+
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+
+    /* ===== Workflow ===== */
+    .workflow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      padding: 1.25rem 1.5rem;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e9ecef;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+      transition: all .2s;
+    }
+
+    .workflow-step:hover {
+      border-color: #0d6efd;
+      transform: translateX(6px);
+      box-shadow: 0 4px 16px rgba(13, 110, 253, .1);
+    }
+
+    .step-num {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: .9rem;
+      flex-shrink: 0;
+    }
+
+    .workflow-connector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #adb5bd;
+      font-size: 1.2rem;
+      margin: .25rem 0;
+    }
+
+    /* ===== Service cards ===== */
+    .service-card {
+      border: 1px solid #e9ecef;
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      background: #fff;
+      height: 100%;
+      transition: all .25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .service-card:hover {
+      box-shadow: 0 12px 32px rgba(0, 0, 0, .1);
+      transform: translateY(-4px);
+    }
+
+    .service-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      margin-bottom: 1.2rem;
+    }
+
+    /* ===== Contact ===== */
+    .contact-card {
+      border: 1px solid #e9ecef;
+      border-radius: 16px;
+      padding: 1.5rem;
+      background: #fff;
+      transition: all .25s ease;
+    }
+
+    .contact-card:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+    }
+
+    .contact-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    /* ===== Footer ===== */
+    footer {
+      background: #0a2540;
+    }
+
+    .footer-link {
+      color: rgba(255, 255, 255, .6);
+      font-size: .875rem;
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .footer-link:hover {
+      color: #fff;
+    }
+
+    /* ===== Scroll-to-top ===== */
+    #scrollTopBtn {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #0d6efd;
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 16px rgba(13, 110, 253, .4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      z-index: 999;
+      transition: all .2s;
+    }
+
+    #scrollTopBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(13, 110, 253, .5);
+    }
+
+    #scrollTopBtn.visible {
+      display: flex;
+    }
+
+    /* ===== Metric cards ===== */
+    .metric-card {
+      border: 1px solid #e9ecef;
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      background: #fff;
+      transition: all .25s ease;
+    }
+
+    .metric-card:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+      transform: translateY(-3px);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="main-navbar navbar navbar-expand-lg" id="mainNavbar">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2 text-white text-decoration-none" href="index.html">
+        <span class="navbar-brand-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 64 64" fill="none">
+            <rect width="64" height="64" rx="12" fill="#0d6efd" />
+            <rect x="10" y="12" width="44" height="30" rx="3" fill="#fff" fill-opacity=".15" stroke="#fff"
+              stroke-width="2" />
+            <rect x="14" y="16" width="36" height="22" rx="2" fill="#fff" fill-opacity=".9" />
+            <circle cx="32" cy="27" r="6" fill="#0d6efd" />
+            <circle cx="32" cy="27" r="3" fill="#fff" />
+            <rect x="30.5" y="19" width="3" height="3" rx="1" fill="#0d6efd" />
+            <rect x="30.5" y="33" width="3" height="3" rx="1" fill="#0d6efd" />
+            <rect x="19" y="25.5" width="3" height="3" rx="1" fill="#0d6efd" />
+            <rect x="42" y="25.5" width="3" height="3" rx="1" fill="#0d6efd" />
+            <rect x="28" y="42" width="8" height="5" rx="1" fill="#fff" fill-opacity=".6" />
+            <rect x="22" y="47" width="20" height="3" rx="1.5" fill="#fff" fill-opacity=".6" />
+            <path d="M44 46 L50 52 M44 46 C42 44 42 41 44 39 C46 37 49 37 51 39 L48 42 L46 40 L44 42 L46 44 Z"
+              stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none" />
+            <circle cx="14" cy="56" r="2" fill="#4ade80" />
+            <circle cx="20" cy="56" r="2" fill="#4ade80" opacity=".7" />
+            <circle cx="26" cy="56" r="2" fill="#fff" opacity=".4" />
+          </svg>
+        </span>
+        <div>
+          <div class="brand-text-main">Smart Computer Maintenance</div>
+          <div class="brand-text-sub">Service Request &amp; Tracking</div>
+        </div>
+      </a>
+
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu"
+        aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navMenu">
+        <ul class="navbar-nav mx-auto gap-1">
+          <li class="nav-item"><a class="nav-link nav-link-item active" href="#home"><i
+                class="fa-solid fa-house me-1"></i>Home</a></li>
+          <li class="nav-item"><a class="nav-link nav-link-item" href="#features"><i
+                class="fa-solid fa-grid-2 me-1"></i>Features</a></li>
+          <li class="nav-item"><a class="nav-link nav-link-item" href="#workflow"><i
+                class="fa-solid fa-diagram-project me-1"></i>Workflow</a></li>
+          <li class="nav-item"><a class="nav-link nav-link-item" href="#services"><i
+                class="fa-solid fa-screwdriver-wrench me-1"></i>Services</a></li>
+          <li class="nav-item"><a class="nav-link nav-link-item" href="#contact"><i
+                class="fa-solid fa-envelope me-1"></i>Contact</a></li>
+          <li class="nav-item"><a class="nav-link nav-link-item" href="#about"><i
+                class="fa-solid fa-circle-info me-1"></i>About Us</a></li>
+        </ul>
+        <div class="d-flex align-items-center gap-2 mt-2 mt-lg-0">
+          <a href="/views/login.html" class="btn btn-nav-login"><i
+              class="fa-solid fa-right-to-bracket me-1"></i>Login</a>
+          <a href="/views/register.html" class="btn btn-nav-register"><i
+              class="fa-solid fa-user-plus me-1"></i>Register</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== HOME - HERO ===== -->
+  <section class="hero-section text-white" id="home">
+    <div class="container position-relative" style="z-index:1;">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-6">
+          <div class="hero-badge">
+            <i class="fa-solid fa-shield-halved"></i>
+            Debre Berhan University ICT Platform
+          </div>
+          <h1 class="hero-title text-white mb-4">
+            Smart Computer Maintenance<br>
+            <span style="color:rgba(255,255,255,.7);">Service Request &amp; Tracking System</span>
+          </h1>
+          <p class="hero-subtitle mb-4">
+            Fast, transparent, and reliable computer, printer, and software maintenance support for
+            staff and students.
+          </p>
+          <div class="d-flex flex-wrap gap-3">
+            <a href="/views/register.html" class="btn btn-light btn-lg px-4 fw-semibold" style="border-radius:10px;">
+              <i class="fa-solid fa-paper-plane me-2"></i>Submit Request
+            </a>
+            <a href="/views/login.html" class="btn btn-outline-light btn-lg px-4" style="border-radius:10px;">
+              <i class="fa-solid fa-magnifying-glass me-2"></i>Track Status
+            </a>
+            <a href="#services" class="btn btn-outline-light btn-lg px-4" style="border-radius:10px;">
+              <i class="fa-solid fa-play me-2"></i>Learn More
+            </a>
+          </div>
+          <div class="d-flex gap-4 mt-4 pt-2">
+            <div>
+              <div class="fw-bold fs-5">3</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);">User Roles</div>
+            </div>
+            <div style="width:1px;background:rgba(255,255,255,.2);"></div>
+            <div>
+              <div class="fw-bold fs-5">7</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);">Status Stages</div>
+            </div>
+            <div style="width:1px;background:rgba(255,255,255,.2);"></div>
+            <div>
+              <div class="fw-bold fs-5">24/7</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);">System Access</div>
+            </div>
+            <div style="width:1px;background:rgba(255,255,255,.2);"></div>
+            <div>
+              <div class="fw-bold fs-5">Real-time</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);">Tracking</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 d-none d-lg-block">
+          <div style="border-radius:20px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4);position:relative;">
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=900&q=80&auto=format&fit=crop"
+              alt="ICT technician performing hardware maintenance"
+              style="width:100%;height:360px;object-fit:cover;display:block;" />
+            <div
+              style="position:absolute;bottom:1rem;left:1rem;background:rgba(13,110,253,.92);backdrop-filter:blur(8px);border-radius:10px;padding:.55rem 1rem;display:flex;align-items:center;gap:.6rem;color:#fff;">
+              <i class="fa-solid fa-wrench fs-5"></i>
+              <div>
+                <div style="font-size:.78rem;font-weight:700;">Hardware &amp; Software Support</div>
+                <div style="font-size:.68rem;opacity:.85;">Desktops &#8226; Laptops &#8226; Printers</div>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-2">
+            <div style="flex:1;border-radius:12px;overflow:hidden;height:90px;">
+              <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&q=75&auto=format&fit=crop"
+                alt="Laptop repair"
+                style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;"
+                onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform='scale(1)'" />
+            </div>
+            <div style="flex:1;border-radius:12px;overflow:hidden;height:90px;">
+              <img src="https://images.unsplash.com/photo-1587614382346-4ec70e388b28?w=400&q=75&auto=format&fit=crop"
+                alt="Printer maintenance"
+                style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;"
+                onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform='scale(1)'" />
+            </div>
+            <div style="flex:1;border-radius:12px;overflow:hidden;height:90px;">
+              <img src="https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=400&q=75&auto=format&fit=crop"
+                alt="Desktop PC repair"
+                style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;"
+                onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform='scale(1)'" />
+            </div>
+            <div style="flex:1;border-radius:12px;overflow:hidden;height:90px;">
+              <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=75&auto=format&fit=crop"
+                alt="Software installation"
+                style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;"
+                onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform='scale(1)'" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STATS BAR ===== -->
+  <section class="stats-bar">
+    <div class="container">
+      <div class="row g-0">
+        <div class="col-6 col-md-3 stat-item">
+          <div class="stat-number text-primary" id="countUsers">0</div>
+          <div class="stat-label">Active Users</div>
+        </div>
+        <div class="col-6 col-md-3 stat-item">
+          <div class="stat-number text-success" id="countResolved">0</div>
+          <div class="stat-label">Requests Resolved</div>
+        </div>
+        <div class="col-6 col-md-3 stat-item">
+          <div class="stat-number text-warning" id="countAssets">0</div>
+          <div class="stat-label">Devices Tracked</div>
+        </div>
+        <div class="col-6 col-md-3 stat-item">
+          <div class="stat-number text-info" id="countTechs">0</div>
+          <div class="stat-label">Active Technicians</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== KEY METRICS DASHBOARD PREVIEW ===== -->
+  <section class="py-5 my-2" style="background:#f8faff;">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-label">Key Metrics</div>
+        <h2 class="section-title">Performance Dashboard</h2>
+        <p class="text-muted mx-auto" style="max-width:560px;">Real-time overview of our maintenance operations and
+          service delivery performance.</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="metric-card">
+            <div
+              style="width:60px;height:60px;background:#d1e7dd;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+              <i class="fa-solid fa-circle-check fa-lg" style="color:#198754;"></i>
+            </div>
+            <h3 class="fw-bold mb-1" style="color:#198754;" id="metricResolved">2,450+</h3>
+            <div class="text-muted small fw-semibold">Total Requests Resolved</div>
+            <p class="text-muted small mt-2 mb-0">Successfully completed hardware and software maintenance tasks across
+              all departments.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metric-card">
+            <div
+              style="width:60px;height:60px;background:#e8f0fe;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+              <i class="fa-solid fa-user-gear fa-lg" style="color:#0d6efd;"></i>
+            </div>
+            <h3 class="fw-bold mb-1" style="color:#0d6efd;">12+</h3>
+            <div class="text-muted small fw-semibold">Active Technicians</div>
+            <p class="text-muted small mt-2 mb-0">Skilled ICT professionals dedicated to hardware repair and software
+              configuration.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metric-card">
+            <div
+              style="width:60px;height:60px;background:#fff3cd;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+              <i class="fa-solid fa-clock fa-lg" style="color:#fd7e14;"></i>
+            </div>
+            <h3 class="fw-bold mb-1" style="color:#fd7e14;">2.5 hrs</h3>
+            <div class="text-muted small fw-semibold">Avg. Resolution Time</div>
+            <p class="text-muted small mt-2 mb-0">Average time from ticket assignment to confirmed resolution for
+              standard requests.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== QUICK ACCESS CARDS ===== -->
+  <section class="py-5 my-2">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-label">Quick Access</div>
+        <h2 class="section-title">What Do You Need Help With?</h2>
+        <p class="text-muted mx-auto" style="max-width:560px;">Select a category to quickly access the relevant support
+          service for your issue.</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="feature-card text-center">
+            <div class="feature-icon mx-auto" style="background:#e8f0fe;">
+              <i class="fa-solid fa-desktop" style="color:#0d6efd;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Hardware Maintenance</h5>
+            <p class="text-muted small mb-3">PC and laptop repair, component replacement, printer servicing, monitor and
+              peripheral troubleshooting.</p>
+            <a href="#services" class="btn btn-sm btn-outline-primary" style="border-radius:8px;">
+              <i class="fa-solid fa-arrow-right me-1"></i>View Details
+            </a>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="feature-card text-center">
+            <div class="feature-icon mx-auto" style="background:#d1e7dd;">
+              <i class="fa-solid fa-cube" style="color:#198754;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Software Installation &amp; OS Troubleshooting</h5>
+            <p class="text-muted small mb-3">Operating system reinstallation, antivirus deployment, driver updates, and
+              essential application setup.</p>
+            <a href="#services" class="btn btn-sm btn-outline-success" style="border-radius:8px;">
+              <i class="fa-solid fa-arrow-right me-1"></i>View Details
+            </a>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="feature-card text-center">
+            <div class="feature-icon mx-auto" style="background:#fff3cd;">
+              <i class="fa-solid fa-user-lock" style="color:#fd7e14;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Account &amp; System Access Support</h5>
+            <p class="text-muted small mb-3">Staff portal account creation, password resets, official email
+              configuration, and access restoration.</p>
+            <a href="#contact" class="btn btn-sm btn-outline-warning" style="border-radius:8px;">
+              <i class="fa-solid fa-arrow-right me-1"></i>Contact Support
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FEATURES ===== -->
+  <section id="features" class="py-5 my-2" style="background:#f8faff;">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-label">Features</div>
+        <h2 class="section-title">Platform Capabilities</h2>
+        <p class="text-muted mx-auto" style="max-width:620px;">A comprehensive toolkit designed to streamline the entire
+          ICT hardware and software maintenance lifecycle at Debre Berhan University.</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card">
+            <div class="feature-icon" style="background:#e8f0fe;">
+              <i class="fa-solid fa-file-lines" style="color:#0d6efd;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Online Request Submission</h5>
+            <p class="text-muted small mb-0">Submit maintenance requests with device serial numbers, office location,
+              issue description, and file attachments &#8212; no paper forms required.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card">
+            <div class="feature-icon" style="background:#d1e7dd;">
+              <i class="fa-solid fa-timeline" style="color:#198754;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Real-Time Ticket Tracking</h5>
+            <p class="text-muted small mb-0">Monitor your request through every stage &#8212; Pending, Assigned, In
+              Progress, and Resolved &#8212; with live status updates.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card">
+            <div class="feature-icon" style="background:#fff3cd;">
+              <i class="fa-solid fa-robot" style="color:#fd7e14;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Automated Technician Assignment</h5>
+            <p class="text-muted small mb-0">The system automatically routes requests to specialized technicians based
+              on issue type &#8212; hardware or software &#8212; for faster resolution.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card">
+            <div class="feature-icon" style="background:#f8d7da;">
+              <i class="fa-solid fa-shield-halved" style="color:#dc3545;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Role-Based Access Control</h5>
+            <p class="text-muted small mb-0">Three distinct roles &#8212; Requesters, Technicians, and Administrators
+              &#8212; each with tailored dashboards and permissions secured via JWT.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card">
+            <div class="feature-icon" style="background:#cff4fc;">
+              <i class="fa-solid fa-hard-drive" style="color:#0dcaf0;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Device Inventory &amp; History</h5>
+            <p class="text-muted small mb-0">Track all computers, printers, and peripherals with asset tags, maintenance
+              history, warranty status, and spare parts inventory.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card">
+            <div class="feature-icon" style="background:#e2e3e5;">
+              <i class="fa-solid fa-chart-pie" style="color:#6c757d;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Performance Analytics &amp; Reports</h5>
+            <p class="text-muted small mb-0">Generate detailed reports on resolution times, technician performance,
+              department trends, and issue categories with CSV export.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== WORKFLOW ===== -->
+  <section id="workflow" class="py-5 my-2">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-label">How It Works</div>
+        <h2 class="section-title">Maintenance Workflow</h2>
+        <p class="text-muted mx-auto" style="max-width:560px;">Every request follows a structured, transparent lifecycle
+          &#8212; ensuring accountability and timely resolution at each stage.</p>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-lg-7">
+          <div class="workflow-step mb-1">
+            <div class="step-num" style="background:#e8f0fe;color:#0d6efd;">1</div>
+            <div>
+              <div class="fw-semibold">Submit Request</div>
+              <div class="text-muted small">The user fills in a detailed form including device type, serial number,
+                office location, issue category, and priority level.</div>
+            </div>
+            <span class="badge bg-primary ms-auto">Submitted</span>
+          </div>
+          <div class="workflow-connector"><i class="fa-solid fa-arrow-down"></i></div>
+
+          <div class="workflow-step mb-1">
+            <div class="step-num" style="background:#e8eaf6;color:#5c6bc0;">2</div>
+            <div>
+              <div class="fw-semibold">Ticket Generation</div>
+              <div class="text-muted small">The system automatically generates a unique tracking code and creates a
+                maintenance ticket in the queue.</div>
+            </div>
+            <span class="badge ms-auto" style="background:#5c6bc0;">Generated</span>
+          </div>
+          <div class="workflow-connector"><i class="fa-solid fa-arrow-down"></i></div>
+
+          <div class="workflow-step mb-1">
+            <div class="step-num" style="background:#fff3cd;color:#fd7e14;">3</div>
+            <div>
+              <div class="fw-semibold">Admin Review &amp; Assignment</div>
+              <div class="text-muted small">An administrator reviews the request and assigns it to a specialized
+                technician based on issue type and workload.</div>
+            </div>
+            <span class="badge bg-warning text-dark ms-auto">Assigned</span>
+          </div>
+          <div class="workflow-connector"><i class="fa-solid fa-arrow-down"></i></div>
+
+          <div class="workflow-step mb-1">
+            <div class="step-num" style="background:#cff4fc;color:#0dcaf0;">4</div>
+            <div>
+              <div class="fw-semibold">Physical Inspection &amp; Repair</div>
+              <div class="text-muted small">The technician inspects the device, performs diagnostics, and carries out
+                the necessary hardware repair or software configuration.</div>
+            </div>
+            <span class="badge bg-info text-dark ms-auto">In Progress</span>
+          </div>
+          <div class="workflow-connector"><i class="fa-solid fa-arrow-down"></i></div>
+
+          <div class="workflow-step mb-1">
+            <div class="step-num" style="background:#d1e7dd;color:#198754;">5</div>
+            <div>
+              <div class="fw-semibold">Resolution &amp; Feedback</div>
+              <div class="text-muted small">The user confirms the issue is resolved and provides a star rating to close
+                the maintenance cycle.</div>
+            </div>
+            <span class="badge bg-success ms-auto">Resolved</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SERVICES ===== -->
+  <section id="services" class="py-5 my-2" style="background:#f8faff;">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-label">Our Services</div>
+        <h2 class="section-title">Hardware &amp; Software Maintenance Services</h2>
+        <p class="text-muted mx-auto" style="max-width:620px;">Specialized computer maintenance services exclusively
+          focused on hardware repair and software support for the community.</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="service-card" style="border-top:4px solid #0d6efd;">
+            <div class="service-icon" style="background:#e8f0fe;">
+              <i class="fa-solid fa-wrench" style="color:#0d6efd;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Hardware Repair &amp; Maintenance</h5>
+            <p class="text-muted mb-3" style="font-size:.9rem;line-height:1.7;">
+              Complete diagnostics, repair, and preventive maintenance for desktops, laptops, printers, scanners,
+              monitors, and all PC peripherals.
+            </p>
+            <ul class="list-unstyled mb-0">
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check text-primary" style="font-size:.75rem;"></i>
+                <span class="text-muted small">Desktop &amp; Laptop Repair (Hardware Diagnostics)</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check text-primary" style="font-size:.75rem;"></i>
+                <span class="text-muted small">Printer &amp; Scanner Servicing (Cartridge, Paper Jam, Head
+                  Alignment)</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check text-primary" style="font-size:.75rem;"></i>
+                <span class="text-muted small">Monitor Replacement &amp; Display Troubleshooting</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check text-primary" style="font-size:.75rem;"></i>
+                <span class="text-muted small">Power Supply Repair &amp; UPS Battery Replacement</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check text-primary" style="font-size:.75rem;"></i>
+                <span class="text-muted small">RAM, Hard Drive &amp; SSD Upgrades</span>
+              </li>
+              <li class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-check text-primary" style="font-size:.75rem;"></i>
+                <span class="text-muted small">Keyboard, Mouse &amp; Peripheral Troubleshooting</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="service-card" style="border-top:4px solid #198754;">
+            <div class="service-icon" style="background:#d1e7dd;">
+              <i class="fa-solid fa-cube" style="color:#198754;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Software Support &amp; Configuration</h5>
+            <p class="text-muted mb-3" style="font-size:.9rem;line-height:1.7;">
+              Operating system installation, software deployment, security configuration, and essential application
+              setup for all university workstations.
+            </p>
+            <ul class="list-unstyled mb-0">
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check text-success" style="font-size:.75rem;"></i>
+                <span class="text-muted small">OS Reinstallation (Windows &amp; Linux)</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check text-success" style="font-size:.75rem;"></i>
+                <span class="text-muted small">Antivirus Deployment &amp; Malware Removal</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check text-success" style="font-size:.75rem;"></i>
+                <span class="text-muted small">Driver Updates &amp; Compatibility Fixes</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check text-success" style="font-size:.75rem;"></i>
+                <span class="text-muted small">Essential Software Setup (MS Office, Adobe, etc.)</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check text-success" style="font-size:.75rem;"></i>
+                <span class="text-muted small">System Backup &amp; Data Recovery</span>
+              </li>
+              <li class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-check text-success" style="font-size:.75rem;"></i>
+                <span class="text-muted small">Windows Update &amp; Patch Management</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="service-card" style="border-top:4px solid #fd7e14;">
+            <div class="service-icon" style="background:#fff3cd;">
+              <i class="fa-solid fa-user-gear" style="color:#fd7e14;"></i>
+            </div>
+            <h5 class="fw-bold mb-2">User Account &amp; Portal Support</h5>
+            <p class="text-muted mb-3" style="font-size:.9rem;line-height:1.7;">
+              Account management services for staff portals, email systems, and university application access
+              configurations.
+            </p>
+            <ul class="list-unstyled mb-0">
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check" style="color:#fd7e14;font-size:.75rem;"></i>
+                <span class="text-muted small">Staff Portal Account Creation &amp; Activation</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check" style="color:#fd7e14;font-size:.75rem;"></i>
+                <span class="text-muted small">Password Reset &amp; Account Recovery</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check" style="color:#fd7e14;font-size:.75rem;"></i>
+                <span class="text-muted small">Official Email Setup &amp; Configuration</span>
+              </li>
+              <li class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-check" style="color:#fd7e14;font-size:.75rem;"></i>
+                <span class="text-muted small">University Application Access Restoration</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONTACT ===== -->
+  <section id="contact" class="py-5 my-2">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-label">Get in Touch</div>
+        <h2 class="section-title">Contact &amp; Support</h2>
+        <p class="text-muted mx-auto" style="max-width:560px;">Need assistance? Reach out to our ICT helpdesk or submit
+          an inquiry through the form below.</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="contact-card d-flex align-items-start gap-3">
+                <div class="contact-icon" style="background:#e8f0fe;">
+                  <i class="fa-solid fa-location-dot" style="color:#0d6efd;"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-1">ICT Helpdesk Location</h6>
+                  <p class="text-muted small mb-0">Main Campus, ICT Directorate Building<br>Block 102 (Hardware &amp;
+                    Software Repair Lab)</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="contact-card d-flex align-items-start gap-3">
+                <div class="contact-icon" style="background:#d1e7dd;">
+                  <i class="fa-solid fa-envelope" style="color:#198754;"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-1">Email</h6>
+                  <p class="text-muted small mb-0">ictsupport@dbu.edu.et</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="contact-card d-flex align-items-start gap-3">
+                <div class="contact-icon" style="background:#f8d7da;">
+                  <i class="fa-solid fa-phone" style="color:#dc3545;"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-1">Emergency Line</h6>
+                  <p class="text-muted small mb-0">+251-11-681-XXXX<br>Critical system failure support</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="contact-card d-flex align-items-start gap-3">
+                <div class="contact-icon" style="background:#fff3cd;">
+                  <i class="fa-solid fa-clock" style="color:#fd7e14;"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-1">Working Hours</h6>
+                  <p class="text-muted small mb-0">Monday &#8211; Friday: 8:30 AM &#8211; 5:30 PM<br>Saturday &amp;
+                    Sunday: Closed</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="card border-0 shadow-sm p-4" style="border-radius:16px;">
+            <h5 class="fw-bold mb-1">Submit an Inquiry</h5>
+            <p class="text-muted small mb-4">Describe your issue and our team will respond within 24 working hours.</p>
+            <form id="contactForm">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Full Name</label>
+                  <input type="text" class="form-control" id="inquiryName" placeholder="e.g. John Doe" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Email Address</label>
+                  <input type="email" class="form-control" id="inquiryEmail" placeholder="you@dbu.edu.et" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Department</label>
+                  <input type="text" class="form-control" id="inquiryDept" placeholder="e.g. Computer Science" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Issue Type</label>
+                  <select class="form-select" id="inquiryType" required>
+                    <option value="" selected disabled>Select type</option>
+                    <option>Hardware Problem</option>
+                    <option>Software Problem</option>
+                    <option>Network Problem</option>
+                    <option>Printer Problem</option>
+                    <option>Account / Access Problem</option>
+                    <option>ICT Service Request</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label small fw-semibold">Description</label>
+                  <textarea class="form-control" id="inquiryDesc" rows="4"
+                    placeholder="Describe your issue in detail..." required></textarea>
+                </div>
+                <div class="col-12">
+                  <div id="contactSuccess" class="alert alert-success" role="alert" style="display:none;">
+                    <i class="fa-solid fa-circle-check me-2"></i>Your inquiry has been submitted successfully. Our team
+                    will contact you shortly.
+                  </div>
+                  <div id="contactError" class="alert alert-danger" role="alert" style="display:none;">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i><span id="contactErrorMsg">Something went wrong.
+                      Please try again.</span>
+                  </div>
+                  <button type="submit" id="contactSubmitBtn" class="btn btn-primary px-4 py-2 fw-semibold"
+                    style="border-radius:10px;">
+                    <i class="fa-solid fa-paper-plane me-2"></i>Submit Inquiry
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ABOUT US ===== -->
+  <section id="about" class="py-5 my-2" style="background:#f8faff;">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-label">About Us</div>
+        <h2 class="section-title">About the Platform</h2>
+        <p class="text-muted mx-auto" style="max-width:620px;">The Smart Computer Maintenance Service Request &amp; Tracking
+          System is designed to digitize and improve hardware and software maintenance request
+          management for the community.</p>
+      </div>
+      <div class="row g-4 align-items-start">
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm mb-4 p-4"
+            style="border-left:4px solid #0d6efd!important;border-radius:14px;">
+            <div class="d-flex gap-3 align-items-start">
+              <div
+                style="width:48px;height:48px;background:#e8f0fe;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fa-solid fa-bullseye" style="color:#0d6efd;font-size:1.2rem;"></i>
+              </div>
+              <div>
+                <h5 class="fw-bold mb-2">Our Mission</h5>
+                <p class="text-muted mb-0" style="font-size:.9rem;line-height:1.7;">To provide a reliable and
+                  transparent digital platform for managing hardware and software maintenance requests, improving
+                  response time, accountability, and service delivery across the university community.</p>
+              </div>
+            </div>
+          </div>
+          <div class="card border-0 shadow-sm mb-4 p-4"
+            style="border-left:4px solid #198754!important;border-radius:14px;">
+            <div class="d-flex gap-3 align-items-start">
+              <div
+                style="width:48px;height:48px;background:#d1e7dd;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fa-solid fa-eye" style="color:#198754;font-size:1.2rem;"></i>
+              </div>
+              <div>
+                <h5 class="fw-bold mb-2">Our Vision</h5>
+                <p class="text-muted mb-0" style="font-size:.9rem;line-height:1.7;">To create an efficient, transparent,
+                  and user-friendly digital maintenance workflow that simplifies ICT support and improves the experience
+                  of students, technicians, and administrators.</p>
+              </div>
+            </div>
+          </div>
+          <div class="card border-0 shadow-sm mb-4 p-4"
+            style="border-left:4px solid #fd7e14!important;border-radius:14px;">
+            <div class="d-flex gap-3 align-items-start">
+              <div
+                style="width:48px;height:48px;background:#fff3cd;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fa-solid fa-circle-info" style="color:#fd7e14;font-size:1.2rem;"></i>
+              </div>
+              <div>
+                <h5 class="fw-bold mb-2">System Overview</h5>
+                <p class="text-muted mb-0" style="font-size:.9rem;line-height:1.7;">A web-based maintenance management
+                  platform that replaces manual maintenance request processes with a centralized digital workflow for
+                  submitting, assigning, tracking, and managing ICT maintenance requests.</p>
+              </div>
+            </div>
+          </div>
+          <div class="card border-0 shadow-sm p-4" style="border-radius:14px;">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-gem me-2" style="color:#fd7e14;"></i>Core Values</h5>
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
+                    style="color:#0d6efd;font-size:.85rem;"></i><span class="small fw-semibold">Accountability</span>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
+                    style="color:#198754;font-size:.85rem;"></i><span class="small fw-semibold">Transparency</span>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
+                    style="color:#fd7e14;font-size:.85rem;"></i><span class="small fw-semibold">Speed &amp;
+                    Efficiency</span></div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
+                    style="color:#dc3545;font-size:.85rem;"></i><span class="small fw-semibold">Service
+                    Excellence</span></div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
+                    style="color:#0dcaf0;font-size:.85rem;"></i><span class="small fw-semibold">Reliability</span></div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
+                    style="color:#6c757d;font-size:.85rem;"></i><span class="small fw-semibold">User Satisfaction</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius:14px;">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-layer-group me-2 text-primary"></i>Technology Stack</h5>
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-code"
+                    style="color:#e44d26;font-size:1.1rem;"></i>
+                  <div>
+                    <div class="fw-semibold small">HTML5</div>
+                    <div class="text-muted" style="font-size:.75rem;">Markup Language</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-paintbrush"
+                    style="color:#264de4;font-size:1.1rem;"></i>
+                  <div>
+                    <div class="fw-semibold small">CSS3</div>
+                    <div class="text-muted" style="font-size:.75rem;">Styling</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-brands fa-js"
+                    style="color:#f7df1e;font-size:1.1rem;"></i>
+                  <div>
+                    <div class="fw-semibold small">Vanilla JavaScript</div>
+                    <div class="text-muted" style="font-size:.75rem;">Frontend Logic</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-brands fa-node-js"
+                    style="color:#68a063;font-size:1.1rem;"></i>
+                  <div>
+                    <div class="fw-semibold small">Node.js</div>
+                    <div class="text-muted" style="font-size:.75rem;">Backend Runtime</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-server"
+                    style="color:#0d6efd;font-size:1.1rem;"></i>
+                  <div>
+                    <div class="fw-semibold small">Express.js</div>
+                    <div class="text-muted" style="font-size:.75rem;">REST API Framework</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-database"
+                    style="color:#198754;font-size:1.1rem;"></i>
+                  <div>
+                    <div class="fw-semibold small">MongoDB</div>
+                    <div class="text-muted" style="font-size:.75rem;">NoSQL Database</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-link"
+                    style="color:#1a73e8;font-size:1.1rem;"></i>
+                  <div>
+                    <div class="fw-semibold small">Mongoose</div>
+                    <div class="text-muted" style="font-size:.75rem;">MongoDB ODM</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-key"
+                    style="color:#fd7e14;font-size:1.1rem;"></i>
+                  <div>
+                    <div class="fw-semibold small">JWT Auth</div>
+                    <div class="text-muted" style="font-size:.75rem;">Secure Authentication</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-shield-halved"
+                    style="color:#dc3545;font-size:1.1rem;"></i>
+                  <div>
+                    <div class="fw-semibold small">bcrypt</div>
+                    <div class="text-muted" style="font-size:.75rem;">Password Hashing</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-6">
+              <div class="card border-0 shadow-sm text-center p-4" style="border-radius:14px;">
+                <div class="fw-bold mb-1" style="font-size:2.2rem;color:#0d6efd;" id="aboutStatUsers">--</div>
+                <div class="text-muted small">Registered Users</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card border-0 shadow-sm text-center p-4" style="border-radius:14px;">
+                <div class="fw-bold mb-1" style="font-size:2.2rem;color:#198754;" id="aboutStatTechs">--</div>
+                <div class="text-muted small">Active Technicians</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card border-0 shadow-sm text-center p-4" style="border-radius:14px;">
+                <div class="fw-bold mb-1" style="font-size:2.2rem;color:#fd7e14;" id="aboutStatRequests">--</div>
+                <div class="text-muted small">Maintenance Requests</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card border-0 shadow-sm text-center p-4" style="border-radius:14px;">
+                <div class="fw-bold mb-1" style="font-size:2.2rem;color:#dc3545;" id="aboutStatResolved">--</div>
+                <div class="text-muted small">Completed Requests</div>
+              </div>
+            </div>
+          </div>
+          <div class="card border-0 shadow-sm p-4" style="border-radius:14px;">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-award me-2 text-primary"></i>Why This Platform</h5>
+            <ul class="list-unstyled mb-0">
+              <li class="d-flex align-items-start gap-2 mb-3">
+                <span
+                  style="width:28px;height:28px;background:#e8f0fe;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
+                    class="fa-solid fa-bolt" style="color:#0d6efd;font-size:.8rem;"></i></span>
+                <div>
+                  <div class="fw-semibold small">Faster Maintenance Request Handling</div>
+                  <div class="text-muted" style="font-size:.8rem;">Submit and track maintenance requests without paper
+                    forms or manual follow-ups</div>
+                </div>
+              </li>
+              <li class="d-flex align-items-start gap-2 mb-3">
+                <span
+                  style="width:28px;height:28px;background:#d1e7dd;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
+                    class="fa-solid fa-layer-group" style="color:#198754;font-size:.8rem;"></i></span>
+                <div>
+                  <div class="fw-semibold small">Centralized Request Management</div>
+                  <div class="text-muted" style="font-size:.8rem;">All ICT maintenance requests managed from a single
+                    unified platform</div>
+                </div>
+              </li>
+              <li class="d-flex align-items-start gap-2 mb-3">
+                <span
+                  style="width:28px;height:28px;background:#fff3cd;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
+                    class="fa-solid fa-chart-line" style="color:#fd7e14;font-size:.8rem;"></i></span>
+                <div>
+                  <div class="fw-semibold small">Transparent Request Tracking</div>
+                  <div class="text-muted" style="font-size:.8rem;">Monitor every request through its full lifecycle from
+                    submission to resolution</div>
+                </div>
+              </li>
+              <li class="d-flex align-items-start gap-2 mb-3">
+                <span
+                  style="width:28px;height:28px;background:#f8d7da;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
+                    class="fa-solid fa-user-gear" style="color:#dc3545;font-size:.8rem;"></i></span>
+                <div>
+                  <div class="fw-semibold small">Clear Technician Assignment</div>
+                  <div class="text-muted" style="font-size:.8rem;">Administrators can assign the right technician to
+                    each request efficiently</div>
+                </div>
+              </li>
+              <li class="d-flex align-items-start gap-2 mb-3">
+                <span
+                  style="width:28px;height:28px;background:#e8f0fe;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
+                    class="fa-solid fa-database" style="color:#0d6efd;font-size:.8rem;"></i></span>
+                <div>
+                  <div class="fw-semibold small">Digital Maintenance Records</div>
+                  <div class="text-muted" style="font-size:.8rem;">All request history stored securely in MongoDB for
+                    future reference</div>
+                </div>
+              </li>
+              <li class="d-flex align-items-start gap-2 mb-3">
+                <span
+                  style="width:28px;height:28px;background:#d1e7dd;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
+                    class="fa-solid fa-clipboard-check" style="color:#198754;font-size:.8rem;"></i></span>
+                <div>
+                  <div class="fw-semibold small">Improved Accountability</div>
+                  <div class="text-muted" style="font-size:.8rem;">Clear ownership and status tracking for every
+                    maintenance request</div>
+                </div>
+              </li>
+              <li class="d-flex align-items-start gap-2 mb-3">
+                <span
+                  style="width:28px;height:28px;background:#fff3cd;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
+                    class="fa-solid fa-comments" style="color:#fd7e14;font-size:.8rem;"></i></span>
+                <div>
+                  <div class="fw-semibold small">Better Communication</div>
+                  <div class="text-muted" style="font-size:.8rem;">Direct messaging between requesters, technicians, and
+                    administrators</div>
+                </div>
+              </li>
+              <li class="d-flex align-items-start gap-2">
+                <span
+                  style="width:28px;height:28px;background:#f8d7da;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
+                    class="fa-solid fa-globe" style="color:#dc3545;font-size:.8rem;"></i></span>
+                <div>
+                  <div class="fw-semibold small">Accessible Maintenance Information</div>
+                  <div class="text-muted" style="font-size:.8rem;">View request status and history from any device with
+                    a web browser</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="py-5">
+    <div class="container">
+      <div class="row g-4 mb-4">
+        <div class="col-md-4">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div
+              style="width:36px;height:36px;background:#0d6efd;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+              <i class="fa-solid fa-wrench text-white" style="font-size:.9rem;"></i>
+            </div>
+            <span class="text-white fw-bold">Smart Computer Maintenance Service</span>
+          </div>
+          <p style="color:rgba(255,255,255,.55);font-size:.875rem;line-height:1.7;">
+            Debre Berhan University's dedicated platform for managing hardware and software maintenance requests &#8212;
+            replacing paper-based forms with a transparent digital workflow.
+          </p>
+        </div>
+        <div class="col-6 col-md-2 offset-md-2">
+          <div class="text-white fw-semibold mb-3 small">Navigation</div>
+          <div class="d-flex flex-column gap-2">
+            <a href="#home" class="footer-link">Home</a>
+            <a href="#features" class="footer-link">Features</a>
+            <a href="#workflow" class="footer-link">Workflow</a>
+            <a href="#services" class="footer-link">Services</a>
+            <a href="#contact" class="footer-link">Contact</a>
+            <a href="#about" class="footer-link">About Us</a>
+          </div>
+        </div>
+        <div class="col-6 col-md-2">
+          <div class="text-white fw-semibold mb-3 small">Access</div>
+          <div class="d-flex flex-column gap-2">
+            <a href="/views/login.html" class="footer-link">Login</a>
+            <a href="/views/register.html" class="footer-link">Register</a>
+            <a href="/views/login.html" class="footer-link">Admin Panel</a>
+            <a href="/views/login.html" class="footer-link">Technician</a>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="text-white fw-semibold mb-3 small">System</div>
+          <div class="d-flex flex-column gap-2">
+            <span style="color:rgba(255,255,255,.55);font-size:.875rem;" id="footerBackendLabel">
+              <i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i>Backend: Online
+            </span>
+            <span style="color:rgba(255,255,255,.55);font-size:.875rem;" id="footerBackendStatus">
+              <i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i>API: Running
+            </span>
+          </div>
+        </div>
+      </div>
+      <hr style="border-color:rgba(255,255,255,.1);" />
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span style="color:rgba(255,255,255,.4);font-size:.8rem;">
+          &copy; 2024 Debre Berhan University ICT Hardware &amp; Software Maintenance System. All rights reserved.
+        </span>
+        <div class="d-flex gap-3">
+          <a href="/views/login.html" class="footer-link"><i class="fa-solid fa-right-to-bracket me-1"></i>Login</a>
+          <a href="/views/register.html" class="footer-link"><i class="fa-solid fa-user-plus me-1"></i>Register</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scroll to top -->
+  <button id="scrollTopBtn" aria-label="Scroll to top">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/validation.js"></script>
+  <script>
+    /* ===== Navbar scroll effect ===== */
+    const navbar = document.getElementById( 'mainNavbar' );
+    window.addEventListener( 'scroll', () =>
+    {
+      navbar.classList.toggle( 'scrolled', window.scrollY > 40 );
+      document.getElementById( 'scrollTopBtn' ).classList.toggle( 'visible', window.scrollY > 300 );
+    } );
+
+    /* ===== Active nav link on scroll ===== */
+    const sections = document.querySelectorAll( 'section[id]' );
+    const navLinks = document.querySelectorAll( '.nav-link-item' );
+
+    const observer = new IntersectionObserver( ( entries ) =>
+    {
+      entries.forEach( entry =>
+      {
+        if ( entry.isIntersecting )
+        {
+          navLinks.forEach( l => l.classList.remove( 'active' ) );
+          const active = document.querySelector( `.nav-link-item[href="#${ entry.target.id }"]` );
+          if ( active ) active.classList.add( 'active' );
+        }
+      } );
+    }, { threshold: 0.3 } );
+
+    sections.forEach( s => observer.observe( s ) );
+
+    /* ===== Scroll to top ===== */
+    document.getElementById( 'scrollTopBtn' ).addEventListener( 'click', () =>
+    {
+      window.scrollTo( { top: 0, behavior: 'smooth' } );
+    } );
+
+    /* ===== Live stats from public API ===== */
+    const API_BASE = 'http://localhost:5000/api';
+
+    async function loadStats ()
+    {
+      const statusLabel = document.getElementById( 'footerBackendLabel' );
+      const statusApi = document.getElementById( 'footerBackendStatus' );
+      const setOffline = () =>
+      {
+        ['countUsers', 'countResolved', 'countAssets', 'countTechs'].forEach( id =>
+        {
+          const el = document.getElementById( id );
+          if ( el ) el.textContent = '--';
+        } );
+        ['aboutStatUsers', 'aboutStatTechs', 'aboutStatRequests', 'aboutStatResolved'].forEach( id =>
+        {
+          const el = document.getElementById( id );
+          if ( el ) el.textContent = '--';
+        } );
+        if ( statusLabel ) statusLabel.innerHTML = '<i class="fa-solid fa-circle" style="font-size:.4rem;color:#fbbf24;margin-right:4px;"></i>Backend: Unavailable';
+        if ( statusApi ) statusApi.innerHTML = '<i class="fa-solid fa-circle" style="font-size:.4rem;color:#fbbf24;margin-right:4px;"></i>API: Offline';
+      };
+
+      try
+      {
+        const r = await fetch( API_BASE + '/health' );
+        if ( !r.ok ) throw new Error( 'backend unreachable' );
+        const res = await fetch( API_BASE + '/public/stats' );
+        if ( !res.ok ) throw new Error( 'stats unavailable' );
+        const { data } = await res.json();
+        animCount( 'countUsers', data.total_users );
+        animCount( 'countResolved', data.resolved );
+        animCount( 'countAssets', data.total_assets );
+        animCount( 'countTechs', data.total_technicians );
+        animCount( 'aboutStatUsers', data.total_users );
+        animCount( 'aboutStatTechs', data.total_technicians );
+        animCount( 'aboutStatRequests', data.total_tickets );
+        animCount( 'aboutStatResolved', data.resolved );
+        if ( statusLabel ) statusLabel.innerHTML = '<i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i>Backend: Online';
+        if ( statusApi ) statusApi.innerHTML = '<i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i>API: Online';
+      } catch ( _ ) { setOffline(); }
+    }
+
+    function animCount ( id, target )
+    {
+      const el = document.getElementById( id );
+      if ( !el ) return;
+      let cur = 0;
+      const step = Math.max( 1, Math.ceil( target / 40 ) );
+      const t = setInterval( () =>
+      {
+        cur = Math.min( cur + step, target );
+        el.textContent = cur;
+        if ( cur >= target ) clearInterval( t );
+      }, 40 );
+    }
+
+    /* ===== Close mobile menu on link click ===== */
+    document.querySelectorAll( '.nav-link-item' ).forEach( link =>
+    {
+      link.addEventListener( 'click', () =>
+      {
+        const menu = document.getElementById( 'navMenu' );
+        if ( menu.classList.contains( 'show' ) )
+        {
+          bootstrap.Collapse.getInstance( menu )?.hide();
+        }
+      } );
+    } );
+
+    window.addEventListener( 'load', loadStats );
+
+    /* ===== Contact / Inquiry Form ===== */
+    attachRealTimeValidation('contactForm', [
+      { fieldId: 'inquiryName', checks: [v => Validators.name(v, 'Full name')] },
+      { fieldId: 'inquiryEmail', checks: [Validators.email] },
+      { fieldId: 'inquiryDesc', checks: [v => Validators.length(v, 'Description', 5, 1000)] },
+    ]);
+
+    document.getElementById( 'contactForm' ).addEventListener( 'submit', async function ( e )
+    {
+      e.preventDefault();
+      const btn = document.getElementById( 'contactSubmitBtn' );
+      const successEl = document.getElementById( 'contactSuccess' );
+      const errorEl = document.getElementById( 'contactError' );
+      const errorMsgEl = document.getElementById( 'contactErrorMsg' );
+
+      successEl.style.display = 'none';
+      errorEl.style.display = 'none';
+
+      /* Validate fields */
+      let hasError = false;
+
+      const nameErr = Validators.name(document.getElementById('inquiryName').value, 'Full name');
+      if (nameErr) { showFieldError('inquiryName', nameErr); hasError = true; } else { showFieldValid('inquiryName'); }
+
+      const emailErr = Validators.email(document.getElementById('inquiryEmail').value);
+      if (emailErr) { showFieldError('inquiryEmail', emailErr); hasError = true; } else { showFieldValid('inquiryEmail'); }
+
+      if (!document.getElementById('inquiryType').value) {
+        showFieldError('inquiryType', 'Please select an issue type.');
+        hasError = true;
+      } else { clearFieldValidation('inquiryType'); }
+
+      const descErr = Validators.length(document.getElementById('inquiryDesc').value, 'Description', 5, 1000);
+      if (descErr) { showFieldError('inquiryDesc', descErr); hasError = true; } else { showFieldValid('inquiryDesc'); }
+
+      if (hasError) return;
+
+      const payload = {
+        fullName: document.getElementById( 'inquiryName' ).value.trim(),
+        email: document.getElementById( 'inquiryEmail' ).value.trim(),
+        department: document.getElementById( 'inquiryDept' ).value.trim(),
+        issueType: document.getElementById( 'inquiryType' ).value,
+        description: document.getElementById( 'inquiryDesc' ).value.trim(),
+      };
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Submitting...';
+
+      try
+      {
+        const res = await fetch( 'http://localhost:5000/api/inquiries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify( payload ),
+        } );
+        const data = await res.json();
+        if ( res.ok && data.success )
+        {
+          successEl.style.display = 'block';
+          document.getElementById( 'contactForm' ).reset();
+          clearAllFieldValidations('contactForm');
+        } else
+        {
+          errorMsgEl.textContent = data.message || 'Submission failed. Please try again.';
+          errorEl.style.display = 'block';
+        }
+      } catch ( err )
+      {
+        errorMsgEl.textContent = 'Cannot connect to server. Make sure the backend is running on port 5000.';
+        errorEl.style.display = 'block';
+      } finally
+      {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Submit Inquiry';
+      }
+    } );
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,378 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — Smart Computer Maintenance Service</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #0d6efd 0%, #0a2540 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    .card { border-radius: 16px; border: none; }
+    .logo-circle {
+      width: 56px; height: 56px; background: #0d6efd; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .form-control, .form-select { border-radius: 8px !important; font-size: .875rem; }
+    .input-group .form-control  { border-radius: 0 8px 8px 0 !important; }
+    .input-group .form-select   { border-radius: 0 8px 8px 0 !important; }
+    .input-group-text           { border-radius: 8px 0 0 8px !important; background: #f8f9fa; }
+    .btn-outline-secondary      { border-radius: 0 8px 8px 0 !important; }
+    .btn-primary { border-radius: 8px; font-weight: 600; }
+    #registerAlert { font-size: .875rem; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-sm-10 col-md-8 col-lg-6 col-xl-5">
+
+        <div class="card shadow-lg">
+          <div class="card-body p-4 p-md-5">
+
+            <!-- Logo -->
+            <div class="text-center mb-4">
+              <div class="d-inline-flex align-items-center justify-content-center mb-3"
+                   style="width:72px;height:72px;background:linear-gradient(135deg,#0d6efd,#0a2540);border-radius:18px;box-shadow:0 6px 20px rgba(13,110,253,.35);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 64 64" fill="none">
+                  <rect x="10" y="12" width="44" height="30" rx="3" fill="#fff" fill-opacity=".2" stroke="#fff" stroke-width="2"/>
+                  <rect x="14" y="16" width="36" height="22" rx="2" fill="#fff" fill-opacity=".9"/>
+                  <circle cx="32" cy="27" r="6" fill="#0d6efd"/>
+                  <circle cx="32" cy="27" r="3" fill="#fff"/>
+                  <rect x="30.5" y="19" width="3" height="3" rx="1" fill="#0d6efd"/>
+                  <rect x="30.5" y="33" width="3" height="3" rx="1" fill="#0d6efd"/>
+                  <rect x="19" y="25.5" width="3" height="3" rx="1" fill="#0d6efd"/>
+                  <rect x="42" y="25.5" width="3" height="3" rx="1" fill="#0d6efd"/>
+                  <rect x="28" y="42" width="8" height="5" rx="1" fill="#fff" fill-opacity=".7"/>
+                  <rect x="22" y="47" width="20" height="3" rx="1.5" fill="#fff" fill-opacity=".7"/>
+                  <path d="M44 46 L50 52 M44 46 C42 44 42 41 44 39 C46 37 49 37 51 39 L48 42 L46 40 L44 42 L46 44 Z" stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                  <circle cx="14" cy="56" r="2" fill="#4ade80"/>
+                  <circle cx="20" cy="56" r="2" fill="#4ade80" opacity=".7"/>
+                  <circle cx="26" cy="56" r="2" fill="#fff" opacity=".4"/>
+                </svg>
+              </div>
+              <h4 class="fw-bold mb-1">Create Account</h4>
+              <p class="text-muted small mb-0">Register to access the Smart Computer Maintenance Service</p>
+            </div>
+
+            <!-- Alert -->
+            <div id="registerAlert" class="alert d-none mb-3" role="alert"></div>
+
+            <form id="registerForm" novalidate>
+
+              <!-- ── Full Name ── -->
+              <div class="mb-3">
+                <label for="name" class="form-label fw-semibold small">Full Name <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-person text-muted"></i></span>
+                  <input type="text" class="form-control" id="name"
+                         placeholder="Enter your full name" required minlength="3" />
+                </div>
+                <div class="invalid-feedback">Full name must be at least 3 characters.</div>
+              </div>
+
+              <!-- ── Email ── -->
+              <div class="mb-3">
+                <label for="email" class="form-label fw-semibold small">Email Address <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-envelope text-muted"></i></span>
+                  <input type="email" class="form-control" id="email"
+                         placeholder="e.g. john@dbu.edu.et" required autocomplete="email" />
+                </div>
+                <div class="form-text">Use your official DBU email address.</div>
+                <div class="invalid-feedback">Please enter a valid email address.</div>
+              </div>
+
+              <!-- ── Department & Phone ── -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="department" class="form-label fw-semibold small">Department</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-building text-muted"></i></span>
+                    <select class="form-select" id="department">
+                      <option value="" disabled selected>Select Department</option>
+                      <option value="No Department / Not Assigned">No Department / Not Assigned</option>
+                      <option value="Computer Maintenance">Computer Maintenance</option>
+                      <option value="ICT Infrastructure and Security Services">ICT Infrastructure and Security Services</option>
+                      <option value="Software Development">Software Development</option>
+                      <option value="Network Administrations">Network Administrations</option>
+                      <option value="Learning and Technology">Learning and Technology</option>
+                      <option value="System Administration">System Administration</option>
+                      <option value="other">Other Department</option>
+                      <option value="other_user">Other User</option>
+                    </select>
+                  </div>
+                  <div class="text-danger small mt-1 d-none" id="deptError">Please select a department.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="phone" class="form-label fw-semibold small">Phone Number</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-telephone text-muted"></i></span>
+                    <input type="tel" class="form-control" id="phone"
+                           placeholder="+1234567890" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── Other Department / User (conditional) ── -->
+              <div class="mb-3 d-none" id="otherDepartmentContainer">
+                <label for="otherDepartment" class="form-label fw-semibold small" id="otherDeptLabel">Other Department Name</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-building-add text-muted" id="otherDeptIcon"></i></span>
+                  <input type="text" class="form-control" id="otherDepartment"
+                         placeholder="Enter your department name" />
+                </div>
+                <div class="invalid-feedback" id="otherDeptFeedback">Please enter your department name.</div>
+              </div>
+
+              <!-- ── Password ── -->
+              <div class="mb-3">
+                <label for="password" class="form-label fw-semibold small">Password <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock text-muted"></i></span>
+                  <input type="password" class="form-control" id="password"
+                         placeholder="Min. 8 characters" required minlength="8" autocomplete="new-password" />
+                  <button class="btn btn-outline-secondary" type="button" id="togglePwd">
+                    <i class="bi bi-eye" id="eyeIcon"></i>
+                  </button>
+                </div>
+                <div class="form-text">Must be at least 8 characters.</div>
+                <div class="invalid-feedback">Password must be at least 8 characters.</div>
+              </div>
+
+              <!-- ── Confirm Password ── -->
+              <div class="mb-4">
+                <label for="confirmPassword" class="form-label fw-semibold small">Confirm Password <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock-fill text-muted"></i></span>
+                  <input type="password" class="form-control" id="confirmPassword"
+                         placeholder="Repeat your password" required autocomplete="new-password" />
+                </div>
+                <div class="text-danger small mt-1 d-none" id="pwdMismatch">Passwords do not match.</div>
+              </div>
+
+              <!-- ── Terms ── -->
+              <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" id="agreeTerms" required />
+                <label class="form-check-label small text-muted" for="agreeTerms">
+                  I agree to the <a href="#" class="text-primary">Terms of Service</a>
+                </label>
+                <div class="invalid-feedback">You must agree before registering.</div>
+              </div>
+
+              <!-- ── Submit ── -->
+              <button type="submit" class="btn btn-primary w-100 py-2" id="registerBtn">
+                <span id="registerSpinner" class="spinner-border spinner-border-sm me-2 d-none"></span>
+                <i class="bi bi-person-check me-1"></i>
+                <span id="registerBtnText">Create Account</span>
+              </button>
+
+            </form>
+
+            <hr class="my-4" />
+            <p class="text-center text-muted small mb-0">
+              Already have an account?
+              <a href="login.html" class="text-primary fw-semibold text-decoration-none">Sign in here</a>
+            </p>
+
+          </div>
+        </div>
+
+        <p class="text-center mt-3">
+          <a href="index.html" class="text-white-50 small text-decoration-none">
+            <i class="bi bi-arrow-left me-1"></i>Back to Home
+          </a>
+        </p>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/js/validation.js"></script>
+<script>
+const API = 'http://localhost:5000/api';
+
+function showAlert(id, msg, type) {
+  const el    = document.getElementById(id);
+  const icons = { success:'bi-check-circle-fill', danger:'bi-exclamation-triangle-fill', warning:'bi-exclamation-triangle-fill' };
+  el.className = `alert alert-${type} d-flex align-items-center gap-2`;
+  el.innerHTML = `<i class="bi ${icons[type]||'bi-info-circle-fill'} flex-shrink-0"></i><span>${msg}</span>`;
+  el.classList.remove('d-none');
+}
+
+function setLoading(on) {
+  document.getElementById('registerBtn').disabled = on;
+  document.getElementById('registerSpinner').classList.toggle('d-none', !on);
+  document.getElementById('registerBtnText').textContent = on ? 'Creating account...' : 'Create Account';
+}
+
+/* Real-time field validation */
+attachRealTimeValidation('registerForm', [
+  { fieldId: 'name', checks: [v => Validators.name(v, 'Full name')] },
+  { fieldId: 'email', checks: [Validators.email] },
+  { fieldId: 'password', checks: [Validators.password] },
+  { fieldId: 'phone', checks: [Validators.phone] },
+]);
+
+/* Department change — show/hide Other Department Name */
+document.getElementById('department').addEventListener('change', function () {
+  const otherContainer = document.getElementById('otherDepartmentContainer');
+  const otherInput     = document.getElementById('otherDepartment');
+  const otherLabel     = document.getElementById('otherDeptLabel');
+  const otherIcon      = document.getElementById('otherDeptIcon');
+  const otherErr       = document.getElementById('otherDeptFeedback');
+  const deptErr        = document.getElementById('deptError');
+  deptErr.classList.add('d-none');
+  if (this.value === 'other') {
+    otherContainer.classList.remove('d-none');
+    otherLabel.textContent = 'Other Department Name';
+    otherIcon.className    = 'bi bi-building-add text-muted';
+    otherInput.placeholder = 'Enter your department name';
+    otherErr.textContent   = 'Please enter your department name.';
+    otherInput.focus();
+  } else if (this.value === 'other_user') {
+    otherContainer.classList.remove('d-none');
+    otherLabel.textContent = 'Other User Category';
+    otherIcon.className    = 'bi bi-person-add text-muted';
+    otherInput.placeholder = 'Enter user category';
+    otherErr.textContent   = 'Please enter a user category.';
+    otherInput.focus();
+  } else {
+    otherContainer.classList.add('d-none');
+    otherInput.value = '';
+    otherInput.classList.remove('is-invalid', 'is-valid');
+  }
+});
+
+/* Password live match check */
+document.getElementById('confirmPassword').addEventListener('input', () => {
+  const pwd     = document.getElementById('password').value;
+  const confirm = document.getElementById('confirmPassword').value;
+  const err     = document.getElementById('pwdMismatch');
+  if (confirm && pwd !== confirm) {
+    err.classList.remove('d-none');
+    document.getElementById('confirmPassword').classList.add('is-invalid');
+  } else {
+    err.classList.add('d-none');
+    document.getElementById('confirmPassword').classList.remove('is-invalid');
+    if (confirm) document.getElementById('confirmPassword').classList.add('is-valid');
+  }
+});
+
+/* Form submit */
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+
+  /* Validate all fields */
+  let hasError = false;
+
+  const nameErr = Validators.name(document.getElementById('name').value, 'Full name');
+  if (nameErr) { showFieldError('name', nameErr); hasError = true; } else { showFieldValid('name'); }
+
+  const emailErr = Validators.email(document.getElementById('email').value);
+  if (emailErr) { showFieldError('email', emailErr); hasError = true; } else { showFieldValid('email'); }
+
+  const pwErr = Validators.password(document.getElementById('password').value);
+  if (pwErr) { showFieldError('password', pwErr); hasError = true; } else { clearFieldValidation('password'); }
+
+  const matchErr = Validators.passwordMatch(document.getElementById('password').value, document.getElementById('confirmPassword').value);
+  if (matchErr) { showFieldError('confirmPassword', matchErr); hasError = true; } else { showFieldValid('confirmPassword'); }
+
+  const phoneErr = Validators.phone(document.getElementById('phone').value);
+  if (phoneErr) { showFieldError('phone', phoneErr); hasError = true; } else { clearFieldValidation('phone'); }
+
+  /* Terms */
+  if (!document.getElementById('agreeTerms').checked) {
+    form.classList.add('was-validated');
+    hasError = true;
+  }
+
+  /* Department value */
+  const deptSelect   = document.getElementById('department').value;
+  const otherInput   = document.getElementById('otherDepartment');
+  const otherErr     = document.getElementById('otherDeptFeedback');
+  const deptErr      = document.getElementById('deptError');
+  let department     = null;
+
+  if (!deptSelect) {
+    deptErr.classList.remove('d-none');
+    hasError = true;
+  } else {
+    deptErr.classList.add('d-none');
+  }
+
+  if (deptSelect === 'other' || deptSelect === 'other_user') {
+    const customDept = otherInput.value.trim();
+    if (!customDept) {
+      otherInput.classList.add('is-invalid');
+      otherErr.textContent = deptSelect === 'other_user'
+        ? 'Please enter a user category.'
+        : 'Please enter your department name.';
+      hasError = true;
+    } else {
+      department = customDept;
+    }
+  } else if (deptSelect && deptSelect !== '') {
+    department = deptSelect;
+  }
+
+  if (hasError) return;
+
+  const body = {
+    fullName:         document.getElementById('name').value.trim(),
+    email:            document.getElementById('email').value.trim(),
+    password:         document.getElementById('password').value,
+    confirmPassword:  document.getElementById('confirmPassword').value,
+    department:       department,
+    phone:            document.getElementById('phone').value.trim(),
+  };
+
+  setLoading(true);
+  try {
+    const res  = await fetch(`${API}/auth/register`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showAlert('registerAlert', data.message || 'Registration failed.', 'danger');
+      setLoading(false);
+      return;
+    }
+
+    showAlert('registerAlert',
+      'Account created! You can now sign in. Redirecting to login...',
+      'success'
+    );
+    form.reset();
+    document.getElementById('otherDepartmentContainer').classList.add('d-none');
+    setTimeout(() => { window.location.href = 'login.html'; }, 2500);
+
+  } catch {
+    showAlert('registerAlert', 'Cannot connect to server. Make sure the backend is running.', 'warning');
+    setLoading(false);
+  }
+});
+
+/* Password toggle */
+document.getElementById('togglePwd').addEventListener('click', () => {
+  const pwd  = document.getElementById('password');
+  const icon = document.getElementById('eyeIcon');
+  const show = pwd.type === 'password';
+  pwd.type       = show ? 'text' : 'password';
+  icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+});
+</script>
+</body>
+</html>

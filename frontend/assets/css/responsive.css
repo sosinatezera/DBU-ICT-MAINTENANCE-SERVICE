@@ -1,0 +1,131 @@
+/* ============================================================
+   responsive.css — Responsive / Mobile Overrides
+    Smart Computer Maintenance Service Request and Tracking System
+   ============================================================ */
+
+/* ── Mobile Sidebar Overlay ────────────────────────────────── */
+@media (max-width: 991.98px) {
+  .sidebar {
+    position: fixed !important;
+    left: -260px;
+    top: 0;
+    z-index: 1050;
+    height: 100vh !important;
+    transition: left 0.3s ease;
+    box-shadow: none;
+  }
+
+  .sidebar.show {
+    left: 0;
+    box-shadow: 4px 0 20px rgba(0,0,0,.25);
+  }
+
+  /* Overlay backdrop */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 1040;
+  }
+
+  .sidebar-overlay.show { display: block; }
+
+  /* Push content when sidebar is open */
+  .sidebar-toggle-btn { display: inline-flex !important; }
+
+  .main-content { width: 100% !important; }
+}
+
+/* ── Topbar ────────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  .topbar { padding: 0.5rem 1rem !important; }
+  .topbar h5 { font-size: 0.95rem; }
+}
+
+/* ── Hero Section ──────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  .hero-section { padding: 3rem 0 !important; }
+  .hero-section h1 { font-size: 1.6rem; }
+  .hero-section p.lead { font-size: 0.95rem; }
+}
+
+/* ── Dashboard Cards ───────────────────────────────────────── */
+@media (max-width: 575.98px) {
+  .card-body.p-4 { padding: 1rem !important; }
+  .card-body.p-3 { padding: 0.75rem !important; }
+}
+
+/* ── Tables on small screens ───────────────────────────────── */
+@media (max-width: 767.98px) {
+  .table-responsive table thead { display: none; }
+
+  .table-responsive table tr {
+    display: block;
+    margin-bottom: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.4rem;
+    overflow: hidden;
+  }
+
+  .table-responsive table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .table-responsive table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+}
+
+/* ── Modals ────────────────────────────────────────────────── */
+@media (max-width: 575.98px) {
+  .modal-dialog { margin: 0.5rem; }
+  .modal-body { padding: 1rem; }
+  .modal-header, .modal-footer { padding: 0.75rem 1rem; }
+}
+
+/* ── Forms ─────────────────────────────────────────────────── */
+@media (max-width: 575.98px) {
+  .row.g-3 > [class*="col-md"] { flex: 0 0 100%; max-width: 100%; }
+}
+
+/* ── Auth Card ─────────────────────────────────────────────── */
+@media (max-width: 575.98px) {
+  .auth-body .card-body { padding: 1.5rem !important; }
+}
+
+/* ── Landing Page Nav ──────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  .navbar-collapse .btn { display: block; width: 100%; margin-top: 0.5rem; margin-left: 0 !important; }
+}
+
+/* ── Workflow Steps ────────────────────────────────────────── */
+@media (max-width: 575.98px) {
+  .workflow-step { padding: 0.65rem !important; }
+  .workflow-step span:not(.badge) { font-size: 0.85rem; }
+}
+
+/* ── Reports ───────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  #settingsTabs { flex-wrap: nowrap; overflow-x: auto; }
+  #settingsTabs .nav-link { white-space: nowrap; }
+}
+
+/* ── Print Styles ──────────────────────────────────────────── */
+@media print {
+  .sidebar, .topbar, .btn, .modal { display: none !important; }
+  body { background: #fff; font-size: 12pt; }
+  .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+  table { width: 100% !important; }
+}
