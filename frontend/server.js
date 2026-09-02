@@ -75,17 +75,31 @@ const server = http.createServer((req, res) => {
                 <h2 style="color:#dc3545;">404 — Not Found</h2>
                 <code style="background:#f1f3f5;padding:4px 12px;border-radius:4px;">${urlPath.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}</code>
                 <br/><br/>
-                <a href="/views/login.html" style="color:#0d6efd;">← Back to Login</a>
+                <a href="/views/login.html" style="color:#2563eb;">← Back to Login</a>
               </div>
             </body></html>
           `);
         } else {
-          res.writeHead(200, { 'Content-Type': 'text/html' });
+          res.writeHead(200, {
+            'Content-Type': 'text/html',
+            // Root cause of "my new JS never appears in the browser": this server
+            // previously sent NO Cache-Control, so browsers heuristically cached a
+            // stale assets/js/*.js and never ran the updated code. Force revalidation.
+            'Cache-Control': 'no-cache, must-revalidate',
+          });
           res.end(data2);
         }
       });
     } else {
-      res.writeHead(200, { 'Content-Type': mime });
+      const headers = { 'Content-Type': mime };
+      if (ext === '.js' || ext === '.css' || ext === '.html') {
+        // no-store: never let a browser reuse a stale copy of our scripts/styles.
+        // A cached old requests.js (without the /feedback loader) leaves admin
+        // pages frozen on their static "Loading requests..." placeholder.
+        headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+        headers['Pragma'] = 'no-cache';
+      }
+      res.writeHead(200, headers);
       res.end(data);
     }
   });

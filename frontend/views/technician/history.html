@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,6 +9,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/technician.css" />
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
+<link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
 <body class="dashboard-body">
 
@@ -24,6 +27,7 @@
         <li><a href="assigned-requests.html" class="nav-link text-white-50"><i class="bi bi-list-task me-2"></i>Assigned Requests</a></li>
         <li><a href="maintenance.html"       class="nav-link text-white-50"><i class="bi bi-tools me-2"></i>Maintenance Activity</a></li>
         <li><a href="history.html"           class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-clock-history me-2"></i>History</a></li>
+        <li><a href="technician-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i>Feedback</a></li>
         <li><a href="notifications.html"     class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a></li>
       </ul>
       <div class="mt-auto pt-3 border-top border-white border-opacity-25">
@@ -126,8 +130,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/js/main.js"></script>
-  <script src="/assets/js/notifications.js"></script>
-  <script src="/assets/js/technicians.js"></script>
+  <script src="/assets/js/main.js?v=6"></script>
+  <script src="/assets/js/notifications.js?v=6"></script>
+  <script src="/assets/js/technicians.js?v=6"></script>
+<script src="/assets/js/theme.js"></script>
 </body>
 </html>

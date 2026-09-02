@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById(id)?.addEventListener('reset', () => {
       document.getElementById('settingsAlert')?.classList.add('d-none');
       document.getElementById('profileAlert')?.classList.add('d-none');
+      if (id === 'profileForm') {
+        loadProfilePhotoState();
+        applyProfileAvatar(currentUser, document.getElementById('profileAvatar'));
+      }
     });
   });
 
@@ -42,6 +46,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (_) {
     showToast('Failed to load system settings.', 'danger');
   }
+
+  /* ── Profile photo state (uploaded photo / image URL) ───── */
+  let profilePhoto = { uploaded: null, url: '' };
+
+  function loadProfilePhotoState() {
+    const prefs = getProfileImagePrefs(currentUser);
+    profilePhoto = { uploaded: prefs.uploaded || null, url: prefs.url || '' };
+    const urlInput = document.getElementById('profileImageUrl');
+    if (urlInput) urlInput.value = profilePhoto.url;
+  }
+
+  function persistProfilePhotoState() {
+    if (!currentUser) return;
+    setProfileImagePrefs(currentUser, profilePhoto);
+    applyProfileAvatar(currentUser, document.getElementById('profileAvatar'));
+  }
+
+  loadProfilePhotoState();
 
   /* ── Populate General Settings ────────────────────────── */
   if (currentSettings) {
@@ -234,6 +256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentUser = res.data;
         populateProfile(currentUser);
         populateSecurity(currentUser);
+        persistProfilePhotoState();
       }
 
       showAlert('profileAlert', 'Profile updated successfully.', 'success');
@@ -255,6 +278,53 @@ document.addEventListener('DOMContentLoaded', async () => {
       target.type = isPassword ? 'text' : 'password';
       btn.querySelector('i').className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
     });
+  });
+
+  /* ═══════════════════════════════════════════════════════
+     PROFILE PHOTO — upload / image URL / remove
+     Priority: upload > URL > default ADMIN image > initials
+     ═══════════════════════════════════════════════════════ */
+  const photoInput = document.getElementById('profilePhotoUpload');
+  const urlInput   = document.getElementById('profileImageUrl');
+  const removeBtn  = document.getElementById('removeProfilePhotoBtn');
+
+  photoInput?.addEventListener('change', () => {
+    const file = photoInput.files && photoInput.files[0];
+    if (!file) return;
+
+    if (!/^image\//.test(file.type)) {
+      showAlert('profileAlert', 'Please choose an image file (JPG, PNG or WebP).', 'warning');
+      photoInput.value = '';
+      return;
+    }
+    if (file.size > 1.5 * 1024 * 1024) {
+      showAlert('profileAlert', 'Image must be 1.5 MB or smaller.', 'warning');
+      photoInput.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      profilePhoto.uploaded = e.target.result;
+      profilePhoto.url = '';
+      if (urlInput) urlInput.value = '';
+      persistProfilePhotoState();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  urlInput?.addEventListener('input', () => {
+    if (profilePhoto.uploaded) return; /* uploaded photo has priority */
+    profilePhoto.url = urlInput.value.trim();
+    persistProfilePhotoState();
+  });
+
+  removeBtn?.addEventListener('click', () => {
+    profilePhoto = { uploaded: null, url: '' };
+    if (photoInput) photoInput.value = '';
+    if (urlInput) urlInput.value = '';
+    persistProfilePhotoState();
+    showToast('Custom photo removed. Default ADMIN image restored.', 'info');
   });
 
   /* ═══════════════════════════════════════════════════════
@@ -286,21 +356,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     setVal('profilePhone', u.phone);
     setVal('profileDept', u.department);
 
-    /* Header */
-    const initial = (u.fullName || 'A').charAt(0).toUpperCase();
+    /* Header avatar (uploaded photo > image URL > default ADMIN image > initial) */
     const avatar = document.getElementById('profileAvatar');
-    if (avatar) {
-      avatar.textContent = initial;
-      const bg = { 'ICT Admin': '#dc3545', Technician: '#ffc107', Requester: '#0d6efd', student: '#0d6efd' };
-      avatar.style.background = bg[u.role] || '#0d6efd';
-      if (u.role === 'Technician') avatar.style.color = '#212529';
+    if (avatar) applyProfileAvatar(u, avatar);
+
+    /* Image URL field reflects the saved Image URL preference */
+    const urlInput = document.getElementById('profileImageUrl');
+    if (urlInput && !getProfileImagePrefs(u).uploaded) {
+      urlInput.value = getProfileImagePrefs(u).url || '';
     }
     setText('profileDisplayName', u.fullName);
     setText('profileDisplayEmail', u.email);
 
     const roleBadge = document.getElementById('profileRoleBadge');
     if (roleBadge) {
-      const roleC = { 'ICT Admin': 'danger', Technician: 'warning', Requester: 'primary', student: 'primary' };
+      const roleC = { 'ICT Admin': 'danger', Technician: 'warning', Requester: 'primary' };
       roleBadge.innerHTML = `<span class="badge bg-${roleC[u.role] || 'secondary'} text-capitalize">${u.role}</span>`;
     }
   }
@@ -314,7 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const roleEl = document.getElementById('securityRole');
     if (roleEl) {
-      const roleC = { 'ICT Admin': 'danger', Technician: 'warning', Requester: 'primary', student: 'primary' };
+      const roleC = { 'ICT Admin': 'danger', Technician: 'warning', Requester: 'primary' };
       roleEl.innerHTML = `<span class="badge bg-${roleC[u.role] || 'secondary'}">${u.role}</span>`;
     }
 

@@ -58,6 +58,14 @@ const createAssignment = async (req, res, next) => {
     const ticket = await Ticket.findById(ticket_id).select('ticketId equipmentType priority status');
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found.' });
 
+    /* Prevent re-assigning a ticket that is already finished */
+    if (ticket.status === 'resolved' || ticket.status === 'closed') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot assign a ${ticket.status} ticket. Only open tickets can be assigned.`,
+      });
+    }
+
     /* Verify technician exists — technician_id is a Technician._id (separate collection) */
     const tech = await Technician.findById(technician_id).populate('user', 'fullName role status');
     if (!tech) {
@@ -117,8 +125,8 @@ const createAssignment = async (req, res, next) => {
       await Notification.create({
         user:    ticketFull.requester,
         ticket:  ticket_id,
-        title:   `#${ticket.ticketId} — ተመድቧል`,
-        message: `የእርስዎ የአገልግሎት ጥያቄ #${ticket.ticketId} ለቴክኒሻን ተመድቧል።`,
+        title:   `#${ticket.ticketId} — Assigned`,
+        message: `Your service request #${ticket.ticketId} has been assigned to a technician.`,
         type:    'info',
       });
     }
@@ -170,4 +178,35 @@ const updateAssignmentStatus = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getAllAssignments, createAssignment, updateAssignmentStatus };
+/* ── DELETE /api/assignments/:id — remove/cancel an assignment (admin only) ──
+   Marks the assignment as removed, clears the ticket's assigned technician,
+   and returns the ticket to a pre-assignment status without deleting the
+   maintenance request itself. */
+const removeAssignment = async (req, res, next) => {
+  try {
+    const idErr = validateObjectId(req.params.id, 'Assignment');
+    if (idErr) return res.status(400).json({ success: false, message: idErr });
+
+    const assignment = await Assignment.findById(req.params.id);
+    if (!assignment) return res.status(404).json({ success: false, message: 'Assignment not found.' });
+
+    /* Remove this assignment (mark it so it no longer counts as active) */
+    await Assignment.findByIdAndUpdate(assignment._id, { status: 'reassigned' }, { new: true, runValidators: true });
+
+    const ticketId = assignment.ticket;
+
+    /* Any other active assignment for this ticket keeps the technician assigned.
+       Otherwise, unassign the ticket and return it to a pending state. */
+    const otherActive = await Assignment.findOne({
+      ticket: ticketId,
+      status: { $in: ['assigned', 'accepted', 'in_progress'] },
+    });
+    if (!otherActive) {
+      await Ticket.findByIdAndUpdate(ticketId, { assignedTechnician: null, status: 'submitted' });
+    }
+
+    res.json({ success: true, message: 'Assignment removed successfully.' });
+  } catch (err) { next(err); }
+};
+
+module.exports = { getAllAssignments, createAssignment, updateAssignmentStatus, removeAssignment };

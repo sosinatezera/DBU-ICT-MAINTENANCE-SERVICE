@@ -8,6 +8,7 @@ const ICTAsset   = require('../models/ICTAsset');
 const Technician = require('../models/Technician');
 const Assignment = require('../models/Assignment');
 const Feedback   = require('../models/Feedback');
+const Category   = require('../models/Category');
 
 /* Build a $match filter on createdAt from ?dateFrom=&dateTo= */
 const buildDateMatch = (req) => {
@@ -160,11 +161,68 @@ const getRecentFeedback = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+/* GET /api/reports/requests-by-category */
+const getRequestsByCategory = async (req, res, next) => {
+  try {
+    const pipeline = [];
+    const dateMatch = buildDateMatch(req);
+    if (dateMatch) pipeline.push({ $match: dateMatch });
+
+    /* Group tickets by their free-text `category`. $toString makes the
+       pipeline safe for legacy rows (null / Missing / non-string) and
+       $toLower normalises the match against Category names. */
+    const grouped = await Ticket.aggregate([
+      ...pipeline,
+      { $group: {
+        _id:   { $toLower: { $ifNull: [{ $toString: '$category' }, ''] } },
+        total: { $sum: 1 },
+      } },
+    ]);
+
+    const countMap = {};
+    grouped.forEach(g => {
+      const key = (g._id || '').toLowerCase();
+      countMap[key] = (countMap[key] || 0) + Number(g.total || 0);
+    });
+
+    /* Every Category from the collection gets a row (even with 0 requests) */
+    const cats = await Category.find().sort({ name: 1 });
+    const data = [];
+    const matched = new Set();
+
+    cats.forEach(c => {
+      const key = String(c.name || '').trim().toLowerCase();
+      const total = countMap[key] || 0;
+      if (countMap[key]) matched.add(key);
+      data.push({ _id: c._id, name: c.name, description: c.description || null, total });
+    });
+
+    /* Ticket categories that don't match any category in the collection
+       (includes tickets created before the Category list existed). */
+    let uncategorised = 0;
+    Object.entries(countMap).forEach(([key, total]) => {
+      if (key && !matched.has(key)) uncategorised += total;
+    });
+    uncategorised += countMap[''] || 0;
+    if (uncategorised) {
+      data.push({
+        _id: null,
+        name: 'Uncategorised',
+        description: 'Requests without a matching category',
+        total: uncategorised,
+      });
+    }
+
+    res.json({ success: true, data });
+  } catch (err) { next(err); }
+};
+
 module.exports = {
   getDashboardStats,
   getRequestsByStatus,
   getRequestsByEquipment,
   getTechnicianPerformance,
   getRequestsByDepartment,
+  getRequestsByCategory,
   getRecentFeedback,
 };

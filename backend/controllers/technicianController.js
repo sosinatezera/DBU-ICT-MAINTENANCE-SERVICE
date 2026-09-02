@@ -38,6 +38,37 @@ const getTechnicianById = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+/* Return the profile of the AUTHENTICATED technician, resolved deterministically
+   by the logged-in user's id — not by fuzzy name matching across the whole list.
+   Mirrors the shape of entries in getAllTechnicians so the frontend can use either. */
+const getMyTechnicianProfile = async (req, res, next) => {
+  try {
+    const tech = await Technician.findOne({ user: req.user.id }).populate('user', '-password');
+    if (!tech) {
+      return res.status(404).json({
+        success: false,
+        message: 'Technician profile not found for your account. Contact ICT Admin.',
+      });
+    }
+    res.json({
+      success: true,
+      data: {
+        id:             tech._id,
+        _id:            tech._id,
+        user_id:        tech.user?._id,
+        fullName:       tech.user?.fullName,
+        email:          tech.user?.email,
+        phone:          tech.user?.phone,
+        department:     tech.user?.department,
+        status:         tech.user?.status,
+        role:           tech.user?.role,
+        specialization: tech.specialization,
+        available:      tech.available,
+      },
+    });
+  } catch (err) { next(err); }
+};
+
 const getMyAssignments = async (req, res, next) => {
   try {
     const tech = await Technician.findOne({ user: req.user.id });
@@ -60,6 +91,7 @@ const getMyAssignments = async (req, res, next) => {
       requester_name:   a.ticket?.requester?.fullName,
       department:       a.ticket?.requester?.department,
       assigned_at:      a.createdAt,
+      has_feedback:     !!(a.ticket?.technicianFeedback && a.ticket.technicianFeedback.technicianConfirmed),
     }));
 
     res.json({ success: true, data });
@@ -70,6 +102,16 @@ const updateTechnician = async (req, res, next) => {
   try {
     const idErr = validateObjectId(req.params.id, 'Technician');
     if (idErr) return res.status(400).json({ success: false, message: idErr });
+
+    const tech = await Technician.findById(req.params.id);
+    if (!tech) return res.status(404).json({ success: false, message: 'Technician not found.' });
+
+    if (req.user.role === 'Technician') {
+      if (tech.user?.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'You can only update your own technician profile.' });
+      }
+      req.body = { available: req.body.available };
+    }
 
     if (req.body.available !== undefined) {
       const availErr = validateBoolean(req.body.available, 'Available');
@@ -82,13 +124,13 @@ const updateTechnician = async (req, res, next) => {
       req.body.specialization = sanitizeString(req.body.specialization);
     }
 
-    const tech = await Technician.findByIdAndUpdate(
+    const updated = await Technician.findByIdAndUpdate(
       req.params.id, req.body, { new: true, runValidators: true }
     );
-    if (!tech) return res.status(404).json({ success: false, message: 'Technician not found.' });
+    if (!updated) return res.status(404).json({ success: false, message: 'Technician not found.' });
 
     res.json({ success: true, message: 'Technician updated.' });
   } catch (err) { next(err); }
 };
 
-module.exports = { getAllTechnicians, getTechnicianById, getMyAssignments, updateTechnician };
+module.exports = { getAllTechnicians, getTechnicianById, getMyTechnicianProfile, getMyAssignments, updateTechnician };

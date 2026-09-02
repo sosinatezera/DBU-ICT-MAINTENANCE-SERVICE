@@ -37,6 +37,14 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  /* ── Multer upload errors (too large / disallowed type) ── */
+  if (err.name === 'MulterError') {
+    const code = err.code === 'LIMIT_FILE_SIZE'
+      ? 'Uploaded file exceeds the 5 MB limit.'
+      : err.message || 'File upload failed.';
+    return res.status(400).json({ success: false, message: code });
+  }
+
   /* ── Custom application errors ────────────────────────── */
   const statusCode = err.statusCode || 500;
   const message    = err.message    || 'Internal Server Error';

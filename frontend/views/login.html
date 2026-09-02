@@ -1,32 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login — Smart Computer Maintenance Service</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
-  <style>
-    body {
-      background: linear-gradient(135deg, #0d6efd 0%, #0a2540 100%);
-      min-height: 100vh;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-    }
-    .card { border-radius: 16px; border: none; }
-    .logo-circle {
-      width: 64px; height: 64px; background: #0d6efd; border-radius: 50%;
-      display: inline-flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 16px rgba(13,110,253,.4);
-    }
-    .form-control { border-radius: 8px !important; font-size: .9rem; }
-    .input-group .form-control { border-radius: 0 8px 8px 0 !important; }
-    .input-group-text { border-radius: 8px 0 0 8px !important; background: #f8f9fa; }
-    .btn-outline-secondary { border-radius: 0 8px 8px 0 !important; }
-    .btn-primary { border-radius: 8px; font-weight: 600; padding: .65rem; font-size: .95rem; }
-    #loginAlert { font-size: .875rem; border-radius: 8px; }
-  </style>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
+<link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
-<body>
+<body class="auth-body">
 
 <div class="min-vh-100 d-flex align-items-center justify-content-center py-5">
   <div class="container">
@@ -39,16 +24,16 @@
             <!-- Logo -->
             <div class="text-center mb-4">
               <div class="d-inline-flex align-items-center justify-content-center mb-3"
-                   style="width:72px;height:72px;background:linear-gradient(135deg,#0d6efd,#0a2540);border-radius:18px;box-shadow:0 6px 20px rgba(13,110,253,.35);">
+                   style="width:72px;height:72px;background:linear-gradient(135deg,#2563eb,#0a2540);border-radius:18px;box-shadow:0 6px 20px rgba(37,99,235,.35);">
                 <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 64 64" fill="none">
                   <rect x="10" y="12" width="44" height="30" rx="3" fill="#fff" fill-opacity=".2" stroke="#fff" stroke-width="2"/>
                   <rect x="14" y="16" width="36" height="22" rx="2" fill="#fff" fill-opacity=".9"/>
-                  <circle cx="32" cy="27" r="6" fill="#0d6efd"/>
+                  <circle cx="32" cy="27" r="6" fill="#2563eb"/>
                   <circle cx="32" cy="27" r="3" fill="#fff"/>
-                  <rect x="30.5" y="19" width="3" height="3" rx="1" fill="#0d6efd"/>
-                  <rect x="30.5" y="33" width="3" height="3" rx="1" fill="#0d6efd"/>
-                  <rect x="19" y="25.5" width="3" height="3" rx="1" fill="#0d6efd"/>
-                  <rect x="42" y="25.5" width="3" height="3" rx="1" fill="#0d6efd"/>
+                  <rect x="30.5" y="19" width="3" height="3" rx="1" fill="#2563eb"/>
+                  <rect x="30.5" y="33" width="3" height="3" rx="1" fill="#2563eb"/>
+                  <rect x="19" y="25.5" width="3" height="3" rx="1" fill="#2563eb"/>
+                  <rect x="42" y="25.5" width="3" height="3" rx="1" fill="#2563eb"/>
                   <rect x="28" y="42" width="8" height="5" rx="1" fill="#fff" fill-opacity=".7"/>
                   <rect x="22" y="47" width="20" height="3" rx="1.5" fill="#fff" fill-opacity=".7"/>
                   <path d="M44 46 L50 52 M44 46 C42 44 42 41 44 39 C46 37 49 37 51 39 L48 42 L46 40 L44 42 L46 44 Z" stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
@@ -118,11 +103,11 @@
           </div>
         </div>
 
-        <p class="text-center mt-3">
-          <a href="index.html" class="text-white-50 small text-decoration-none">
-            <i class="bi bi-arrow-left me-1"></i>Back to Home
+        <footer class="auth-footer">
+          <a href="index.html" class="back-home">
+            <i class="bi bi-arrow-left"></i>Back to Home
           </a>
-        </p>
+        </footer>
 
       </div>
     </div>
@@ -130,7 +115,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/assets/js/validation.js"></script>
+<script src="/assets/js/validation.js?v=6"></script>
 <script>
 const API = 'http://localhost:5000/api';
 
@@ -146,7 +131,6 @@ function redirectByRole(role) {
     'ICT Admin':  '/views/admin/dashboard.html',
     'Requester':  '/views/user/dashboard.html',
     'Technician': '/views/technician/dashboard.html',
-    'student':    '/views/user/dashboard.html',
   };
   window.location.href = routes[role] || '/views/user/dashboard.html';
 }
@@ -199,31 +183,51 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   if (hasError) return;
 
   setLoading(true);
+  let res;
   try {
-    const res  = await fetch(`${API}/auth/login`, {
+    res = await fetch(`${API}/auth/login`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ email, password }),
     });
-    const data = await res.json();
-
-    if (!res.ok) {
-      showAlert(data.message || 'Invalid email or password.', 'danger');
-      setLoading(false);
-      return;
-    }
-
-    /* Save session */
-    localStorage.setItem('ict_token', data.token);
-    localStorage.setItem('ict_user',  JSON.stringify(data.user));
-
-    showAlert(`Welcome, <strong>${data.user.fullName}</strong>! Redirecting...`, 'success');
-    setTimeout(() => window.location.href = data.redirect || redirectByRole(data.user.role), 1200);
-
   } catch {
-    showAlert('Cannot connect to server. Make sure the backend is running.', 'warning');
+    showAlert('Cannot connect to server. Make sure the backend is running on port 5000.', 'warning');
     setLoading(false);
+    return;
   }
+
+  /* Parse JSON defensively — a non-JSON body (proxy/HTML error) must not be
+     mistaken for a network failure: show the backend message when we have one. */
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    showAlert(data.message || 'Invalid email or password.', 'danger');
+    setLoading(false);
+    return;
+  }
+
+  if (!data.token || !data.user) {
+    showAlert('Server responded without user data. Please retry or contact support.', 'warning');
+    setLoading(false);
+    return;
+  }
+
+  /* Save session — normalize role to canonical format */
+  const roleMap = {
+    'requester': 'Requester',
+    'technician': 'Technician',
+    'admin': 'ICT Admin',
+    'ict admin': 'ICT Admin',
+  };
+  const normalizedUser = {
+    ...data.user,
+    role: roleMap[data.user.role?.toLowerCase()] || data.user.role,
+  };
+  localStorage.setItem('ict_token', data.token);
+  localStorage.setItem('ict_user',  JSON.stringify(normalizedUser));
+
+  showAlert(`Welcome, <strong>${normalizedUser.fullName}</strong>! Redirecting...`, 'success');
+  setTimeout(() => window.location.href = data.redirect || redirectByRole(normalizedUser.role), 1200);
 });
 
 /* Password toggle */
@@ -235,5 +239,6 @@ document.getElementById('togglePwd').addEventListener('click', () => {
   icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
 });
 </script>
+<script src="/assets/js/theme.js"></script>
 </body>
 </html>

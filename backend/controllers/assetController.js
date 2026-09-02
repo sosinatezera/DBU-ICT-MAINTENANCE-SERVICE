@@ -10,7 +10,21 @@ const {
 
 const getAllAssets = async (req, res, next) => {
   try {
-    const assets = await ICTAsset.find().sort({ asset_name: 1 });
+    const { status } = req.query;
+
+    /* Optional status filter, e.g. GET /api/assets?status=active
+       Requesters use ?status=active so only available assets appear
+       in the Submit Request dropdown (decommissioned/inactive are hidden). */
+    const filter = {};
+    if (status) filter.status = status;
+
+    /* Only ever surface available assets to non-admin viewers.
+       Decommissioned assets are treated as retired/inactive. */
+    if (req.user && req.user.role !== 'ICT Admin') {
+      filter.status = 'active';
+    }
+
+    const assets = await ICTAsset.find(filter).sort({ asset_name: 1 });
     res.json({ success: true, data: assets });
   } catch (err) { next(err); }
 };

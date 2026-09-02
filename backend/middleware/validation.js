@@ -7,12 +7,12 @@
 const mongoose = require('mongoose');
 
 /* ── Constants ──────────────────────────────────────────── */
-const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[\x21-\x7E]{8,100}$/;
 const EMAIL_REGEX    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX   = /^\+?[\d\s\-()]{7,20}$/;
 const NAME_REGEX    = /^[\p{L}\s.'-]{2,100}$/u;
 
-const VALID_ROLES       = ['Requester', 'student', 'Technician', 'ICT Admin'];
+const VALID_ROLES       = ['Requester', 'Technician', 'ICT Admin'];
 const VALID_STATUSES    = ['active', 'inactive'];
 const VALID_PRIORITIES  = ['low', 'medium', 'high', 'critical'];
 const VALID_TICKET_STATUSES = ['submitted', 'under_review', 'assigned', 'accepted', 'in_progress', 'resolved', 'closed'];
@@ -20,11 +20,11 @@ const VALID_EQUIPMENT   = ['Desktop Computer', 'Laptop', 'Printer', 'Scanner', '
 const VALID_MAINT_STATUS = ['accepted', 'in_progress', 'resolved'];
 const VALID_ASSET_STATUSES = ['active', 'under_maintenance', 'decommissioned'];
 const VALID_ASSIGN_STATUSES = ['assigned', 'accepted', 'in_progress', 'completed', 'reassigned'];
-const VALID_INQUIRY_TYPES = ['Hardware Problem', 'Software Problem', 'Network Problem', 'Printer Problem', 'Account / Access Problem', 'ICT Service Request', 'Other'];
+const VALID_INQUIRY_TYPES = ['Hardware Problem', 'Software Problem', 'Internet Connectivity', 'Printer Problem', 'Account / Access Problem', 'ICT Service Request', 'Other'];
 const VALID_REQUEST_CATEGORIES = [
   'Hardware Problem',
   'Software Problem',
-  'Network / Internet',
+  'Internet Connectivity',
   'Printer / Scanner',
   'Computer / Laptop',
   'Account / Password',
@@ -66,8 +66,8 @@ function validateEmail(email) {
 
 function validatePassword(password) {
   if (!password || typeof password !== 'string') return 'Password is required.';
-  if (password.length < 8) return 'Password must be at least 8 characters and contain both letters and numbers. Only letters and numbers are allowed.';
-  if (!PASSWORD_REGEX.test(password)) return 'Password must be at least 8 characters and contain both letters and numbers. Only letters and numbers are allowed.';
+  if (password.length < 8) return 'Password must be at least 8 characters, contain both letters and numbers, and may include special characters.';
+  if (!PASSWORD_REGEX.test(password)) return 'Password must be at least 8 characters (max 100), contain both letters and numbers, and may include special characters (no spaces).';
   return null;
 }
 

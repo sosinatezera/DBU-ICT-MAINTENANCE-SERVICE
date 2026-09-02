@@ -1,41 +1,59 @@
 /* ============================================================
    technician.css — Technician Panel Styles
-    Smart Computer Maintenance Service Request and Tracking System
+   DBU ICT Maintenance Request & Tracking System
    ============================================================ */
 
 /* ── Technician Sidebar ────────────────────────────────────── */
 #sidebar.sidebar {
-  background: linear-gradient(180deg, #1c2a3a 0%, #212529 100%) !important;
-  border-right: 1px solid rgba(255,255,255,.05);
+  background: linear-gradient(180deg, #101c31 0%, #0b1220 100%) !important;
+  border-right: 1px solid rgba(255,255,255,.06);
+}
+
+#sidebar .nav-link {
+  color: rgba(226,232,240,.74) !important;
 }
 
 #sidebar .nav-link.active {
-  background: rgba(255,193,7,.2) !important;
-  color: #ffc107 !important;
-  border-left: 3px solid #ffc107;
+  background: linear-gradient(90deg, rgba(37,99,235,.32), rgba(37,99,235,.07)) !important;
+  color: #fff !important;
+  font-weight: 600;
+  border: 1px solid rgba(59,130,246,.4);
+  box-shadow: inset 3px 0 0 0 #3b82f6, 0 6px 16px -10px rgba(37,99,235,.85);
 }
 
 #sidebar .nav-link:hover:not(.active) {
-  background: rgba(255,255,255,.08) !important;
+  background: rgba(255,255,255,.06) !important;
   color: #fff !important;
+}
+
+#sidebar .sidebar-brand i { color: #60a5fa; }
+
+/* Sidebar availability toggle */
+#availabilityToggle:checked + .form-check-label { color: #4ade80 !important; }
+#availabilityToggle + .form-check-label         { color: rgba(226,232,240,.62); }
+
+#availabilityToggle.form-check-input:checked {
+  background-color: #22c55e;
+  border-color: #22c55e;
+  box-shadow: 0 0 0 .2rem rgba(34,197,94,.2);
 }
 
 /* ── Task Cards ────────────────────────────────────────────── */
 .task-card {
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   border-left: 4px solid transparent;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform .2s ease, box-shadow .2s ease;
 }
 
 .task-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,.1) !important;
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md) !important;
 }
 
-.task-card.priority-critical { border-left-color: #dc3545; }
-.task-card.priority-high      { border-left-color: #fd7e14; }
-.task-card.priority-medium    { border-left-color: #0d6efd; }
-.task-card.priority-low       { border-left-color: #198754; }
+.task-card.priority-critical { border-left-color: #dc2626; }
+.task-card.priority-high      { border-left-color: #f59e0b; }
+.task-card.priority-medium    { border-left-color: #2563eb; }
+.task-card.priority-low       { border-left-color: #16a34a; }
 
 /* ── Activity Timeline ─────────────────────────────────────── */
 .activity-timeline { position: relative; padding-left: 2rem; }
@@ -43,11 +61,11 @@
 .activity-timeline::before {
   content: '';
   position: absolute;
-  left: 0.85rem;
-  top: 0.5rem;
-  bottom: 0.5rem;
+  left: .85rem;
+  top: .5rem;
+  bottom: .5rem;
   width: 2px;
-  background: linear-gradient(to bottom, #0d6efd, #dee2e6);
+  background: linear-gradient(to bottom, #3b82f6, var(--border));
 }
 
 .activity-item {
@@ -59,67 +77,73 @@
   content: '';
   position: absolute;
   left: -1.2rem;
-  top: 0.4rem;
+  top: .4rem;
   width: 12px;
   height: 12px;
   border-radius: 50%;
   border: 2px solid #fff;
-  box-shadow: 0 0 0 2px #0d6efd;
-  background: #0d6efd;
+  box-shadow: 0 0 0 2px #2563eb;
+  background: #2563eb;
 }
 
-.activity-item.status-resolved::before { background: #198754; box-shadow: 0 0 0 2px #198754; }
-.activity-item.status-in_progress::before { background: #ffc107; box-shadow: 0 0 0 2px #ffc107; }
+.activity-item.status-resolved::before    { background: #16a34a; box-shadow: 0 0 0 2px #16a34a; }
+.activity-item.status-in_progress::before { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }
 
 .activity-card {
   background: #fff;
-  border-radius: 0.4rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #e9ecef;
-  margin-left: 0.25rem;
+  border-radius: var(--radius-sm);
+  padding: .75rem 1rem;
+  border: 1px solid var(--border);
+  margin-left: .25rem;
+  transition: var(--transition);
 }
+
+.activity-card:hover { border-color: var(--border-strong); }
 
 /* ── Status Update Buttons ─────────────────────────────────── */
 .status-action-btn {
-  font-size: 0.8rem;
-  padding: 0.3rem 0.75rem;
-  border-radius: 50px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-size: .8rem;
+  padding: .3rem .75rem;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  transition: all .2s ease;
 }
 
-/* ── Availability Toggle ───────────────────────────────────── */
-#availabilityToggle:checked + .form-check-label { color: #4ade80 !important; }
-#availabilityToggle + .form-check-label         { color: rgba(255,255,255,.5); }
+.status-action-btn i { font-size: .9em; }
 
 /* ── Performance Summary Cards ─────────────────────────────── */
 .perf-card {
-  border-radius: 0.5rem;
-  transition: transform 0.2s ease;
+  border-radius: var(--radius-md);
+  transition: transform .2s ease;
 }
 
-.perf-card:hover { transform: translateY(-2px); }
+.perf-card:hover { transform: translateY(-3px); }
 
 /* ── Assigned Request List Cards ───────────────────────────── */
 .assigned-card {
-  border-radius: 0.5rem;
-  border: 1px solid #e9ecef;
-  transition: all 0.2s ease;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  transition: all .2s ease;
 }
 
 .assigned-card:hover {
-  border-color: #0d6efd;
-  box-shadow: 0 4px 12px rgba(13,110,253,.1) !important;
+  border-color: var(--primary);
+  box-shadow: 0 6px 18px -8px rgba(37,99,235,.25) !important;
 }
 
 /* ── Request Detail in Modal ───────────────────────────────── */
 .request-detail-label {
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: .74rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #6c757d;
-  margin-bottom: 0.2rem;
+  letter-spacing: .6px;
+  color: var(--muted);
+  margin-bottom: .2rem;
 }
 
-.request-detail-value { font-size: 0.9rem; color: #212529; }
+.request-detail-value { font-size: .9rem; color: #111827; }
+
+/* ── Technician Profile Avatar ─────────────────────────────── */
+#sidebar .rounded-circle.bg-warning {
+  box-shadow: 0 2px 8px rgba(0,0,0,.28);
+}

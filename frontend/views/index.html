@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
 
 <head>
   <meta charset="UTF-8" />
@@ -9,10 +10,11 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
   <style>
     :root {
       --nav-height: 68px;
-      --dbu-blue: #0d6efd;
+      --dbu-blue: #2563eb;
       --dbu-dark: #0a2540;
     }
 
@@ -34,7 +36,7 @@
       right: 0;
       z-index: 1000;
       height: var(--nav-height);
-      background: rgba(13, 110, 253, 0.97);
+      background: rgba(37, 99, 235, 0.97);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(255, 255, 255, .1);
@@ -42,7 +44,7 @@
     }
 
     .main-navbar.scrolled {
-      background: rgba(10, 88, 202, 0.99);
+      background: rgba(29, 78, 216, 0.99);
       box-shadow: 0 4px 20px rgba(0, 0, 0, .2);
     }
 
@@ -128,7 +130,7 @@
 
     .btn-nav-register {
       background: #fff;
-      color: #0d6efd !important;
+      color: #2563eb !important;
       border-radius: 8px;
       padding: .4rem 1.2rem !important;
       font-size: .875rem;
@@ -168,7 +170,7 @@
     /* ===== Hero ===== */
     .hero-section {
       min-height: 90vh;
-      background: linear-gradient(135deg, #0d6efd 0%, #0a2540 100%);
+      background: linear-gradient(135deg, #2563eb 0%, #0a2540 100%);
       display: flex;
       align-items: center;
       position: relative;
@@ -265,7 +267,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      color: #0d6efd;
+      color: #2563eb;
       background: #e8f0fe;
       padding: .3rem .9rem;
       border-radius: 50px;
@@ -288,8 +290,8 @@
     }
 
     .feature-card:hover {
-      border-color: #0d6efd;
-      box-shadow: 0 12px 32px rgba(13, 110, 253, .12);
+      border-color: #2563eb;
+      box-shadow: 0 12px 32px rgba(37, 99, 235, .12);
       transform: translateY(-4px);
     }
 
@@ -318,9 +320,9 @@
     }
 
     .workflow-step:hover {
-      border-color: #0d6efd;
+      border-color: #2563eb;
       transform: translateX(6px);
-      box-shadow: 0 4px 16px rgba(13, 110, 253, .1);
+      box-shadow: 0 4px 16px rgba(37, 99, 235, .1);
     }
 
     .step-num {
@@ -420,10 +422,10 @@
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: #0d6efd;
+      background: #2563eb;
       color: #fff;
       border: none;
-      box-shadow: 0 4px 16px rgba(13, 110, 253, .4);
+      box-shadow: 0 4px 16px rgba(37, 99, 235, .4);
       display: none;
       align-items: center;
       justify-content: center;
@@ -435,7 +437,7 @@
 
     #scrollTopBtn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(13, 110, 253, .5);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, .5);
     }
 
     #scrollTopBtn.visible {
@@ -457,6 +459,7 @@
       transform: translateY(-3px);
     }
   </style>
+<link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
 
 <body>
@@ -467,16 +470,16 @@
       <a class="navbar-brand d-flex align-items-center gap-2 text-white text-decoration-none" href="index.html">
         <span class="navbar-brand-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 64 64" fill="none">
-            <rect width="64" height="64" rx="12" fill="#0d6efd" />
+            <rect width="64" height="64" rx="12" fill="#2563eb" />
             <rect x="10" y="12" width="44" height="30" rx="3" fill="#fff" fill-opacity=".15" stroke="#fff"
               stroke-width="2" />
             <rect x="14" y="16" width="36" height="22" rx="2" fill="#fff" fill-opacity=".9" />
-            <circle cx="32" cy="27" r="6" fill="#0d6efd" />
+            <circle cx="32" cy="27" r="6" fill="#2563eb" />
             <circle cx="32" cy="27" r="3" fill="#fff" />
-            <rect x="30.5" y="19" width="3" height="3" rx="1" fill="#0d6efd" />
-            <rect x="30.5" y="33" width="3" height="3" rx="1" fill="#0d6efd" />
-            <rect x="19" y="25.5" width="3" height="3" rx="1" fill="#0d6efd" />
-            <rect x="42" y="25.5" width="3" height="3" rx="1" fill="#0d6efd" />
+            <rect x="30.5" y="19" width="3" height="3" rx="1" fill="#2563eb" />
+            <rect x="30.5" y="33" width="3" height="3" rx="1" fill="#2563eb" />
+            <rect x="19" y="25.5" width="3" height="3" rx="1" fill="#2563eb" />
+            <rect x="42" y="25.5" width="3" height="3" rx="1" fill="#2563eb" />
             <rect x="28" y="42" width="8" height="5" rx="1" fill="#fff" fill-opacity=".6" />
             <rect x="22" y="47" width="20" height="3" rx="1.5" fill="#fff" fill-opacity=".6" />
             <path d="M44 46 L50 52 M44 46 C42 44 42 41 44 39 C46 37 49 37 51 39 L48 42 L46 40 L44 42 L46 44 Z"
@@ -578,7 +581,7 @@
               alt="ICT technician performing hardware maintenance"
               style="width:100%;height:360px;object-fit:cover;display:block;" />
             <div
-              style="position:absolute;bottom:1rem;left:1rem;background:rgba(13,110,253,.92);backdrop-filter:blur(8px);border-radius:10px;padding:.55rem 1rem;display:flex;align-items:center;gap:.6rem;color:#fff;">
+              style="position:absolute;bottom:1rem;left:1rem;background:rgba(37,99,235,.92);backdrop-filter:blur(8px);border-radius:10px;padding:.55rem 1rem;display:flex;align-items:center;gap:.6rem;color:#fff;">
               <i class="fa-solid fa-wrench fs-5"></i>
               <div>
                 <div style="font-size:.78rem;font-weight:700;">Hardware &amp; Software Support</div>
@@ -667,9 +670,9 @@
           <div class="metric-card">
             <div
               style="width:60px;height:60px;background:#e8f0fe;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;">
-              <i class="fa-solid fa-user-gear fa-lg" style="color:#0d6efd;"></i>
+              <i class="fa-solid fa-user-gear fa-lg" style="color:#2563eb;"></i>
             </div>
-            <h3 class="fw-bold mb-1" style="color:#0d6efd;">12+</h3>
+            <h3 class="fw-bold mb-1" style="color:#2563eb;">12+</h3>
             <div class="text-muted small fw-semibold">Active Technicians</div>
             <p class="text-muted small mt-2 mb-0">Skilled ICT professionals dedicated to hardware repair and software
               configuration.</p>
@@ -704,7 +707,7 @@
         <div class="col-md-4">
           <div class="feature-card text-center">
             <div class="feature-icon mx-auto" style="background:#e8f0fe;">
-              <i class="fa-solid fa-desktop" style="color:#0d6efd;"></i>
+              <i class="fa-solid fa-desktop" style="color:#2563eb;"></i>
             </div>
             <h5 class="fw-bold mb-2">Hardware Maintenance</h5>
             <p class="text-muted small mb-3">PC and laptop repair, component replacement, printer servicing, monitor and
@@ -757,7 +760,7 @@
         <div class="col-md-6 col-lg-4">
           <div class="feature-card">
             <div class="feature-icon" style="background:#e8f0fe;">
-              <i class="fa-solid fa-file-lines" style="color:#0d6efd;"></i>
+              <i class="fa-solid fa-file-lines" style="color:#2563eb;"></i>
             </div>
             <h5 class="fw-bold mb-2">Online Request Submission</h5>
             <p class="text-muted small mb-0">Submit maintenance requests with device serial numbers, office location,
@@ -830,7 +833,7 @@
       <div class="row justify-content-center">
         <div class="col-lg-7">
           <div class="workflow-step mb-1">
-            <div class="step-num" style="background:#e8f0fe;color:#0d6efd;">1</div>
+            <div class="step-num" style="background:#e8f0fe;color:#2563eb;">1</div>
             <div>
               <div class="fw-semibold">Submit Request</div>
               <div class="text-muted small">The user fills in a detailed form including device type, serial number,
@@ -898,9 +901,9 @@
       </div>
       <div class="row g-4">
         <div class="col-md-6">
-          <div class="service-card" style="border-top:4px solid #0d6efd;">
+          <div class="service-card" style="border-top:4px solid #2563eb;">
             <div class="service-icon" style="background:#e8f0fe;">
-              <i class="fa-solid fa-wrench" style="color:#0d6efd;"></i>
+              <i class="fa-solid fa-wrench" style="color:#2563eb;"></i>
             </div>
             <h5 class="fw-bold mb-2">Hardware Repair &amp; Maintenance</h5>
             <p class="text-muted mb-3" style="font-size:.9rem;line-height:1.7;">
@@ -1023,7 +1026,7 @@
             <div class="col-12">
               <div class="contact-card d-flex align-items-start gap-3">
                 <div class="contact-icon" style="background:#e8f0fe;">
-                  <i class="fa-solid fa-location-dot" style="color:#0d6efd;"></i>
+                  <i class="fa-solid fa-location-dot" style="color:#2563eb;"></i>
                 </div>
                 <div>
                   <h6 class="fw-bold mb-1">ICT Helpdesk Location</h6>
@@ -1072,7 +1075,20 @@
           <div class="card border-0 shadow-sm p-4" style="border-radius:16px;">
             <h5 class="fw-bold mb-1">Submit an Inquiry</h5>
             <p class="text-muted small mb-4">Describe your issue and our team will respond within 24 working hours.</p>
-            <form id="contactForm">
+
+            <!-- Login Required Prompt (shown when not logged in) -->
+            <div id="contactLoginPrompt" class="text-center py-4" style="display:none;">
+              <i class="bi bi-person-lock text-muted" style="font-size:2.5rem;"></i>
+              <h6 class="fw-bold mt-3 mb-2">Login Required</h6>
+              <p class="text-muted small mb-3">You must be logged in to submit a service request.</p>
+              <a href="/views/login.html" class="btn btn-primary px-4 py-2 fw-semibold" style="border-radius:10px;">
+                <i class="bi bi-box-arrow-in-right me-1"></i>Login to Submit Request
+              </a>
+              <p class="text-muted small mt-3 mb-0">Don't have an account? <a href="/views/register.html" class="text-primary text-decoration-none fw-semibold">Register here</a></p>
+            </div>
+
+            <!-- Inquiry Form (shown when logged in) -->
+            <form id="contactForm" style="display:none;">
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label small fw-semibold">Full Name</label>
@@ -1084,19 +1100,22 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label small fw-semibold">Department</label>
-                  <input type="text" class="form-control" id="inquiryDept" placeholder="e.g. Computer Science" required>
+                  <input type="text" class="form-control" id="inquiryDept" placeholder="e.g. Computer Science">
                 </div>
                 <div class="col-md-6">
                   <label class="form-label small fw-semibold">Issue Type</label>
                   <select class="form-select" id="inquiryType" required>
                     <option value="" selected disabled>Select type</option>
-                    <option>Hardware Problem</option>
-                    <option>Software Problem</option>
-                    <option>Network Problem</option>
-                    <option>Printer Problem</option>
-                    <option>Account / Access Problem</option>
-                    <option>ICT Service Request</option>
-                    <option>Other</option>
+                    <option value="Hardware Problem">Hardware Problem</option>
+                    <option value="Software Problem">Software Problem</option>
+                    <option value="Internet Connectivity">Internet Connectivity</option>
+                    <option value="Printer / Scanner">Printer / Scanner</option>
+                    <option value="Computer / Laptop">Computer / Laptop</option>
+                    <option value="Account / Password">Account / Password</option>
+                    <option value="Email Problem">Email Problem</option>
+                    <option value="System / Application">System / Application</option>
+                    <option value="ICT Security">ICT Security</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
                 <div class="col-12">
@@ -1106,8 +1125,7 @@
                 </div>
                 <div class="col-12">
                   <div id="contactSuccess" class="alert alert-success" role="alert" style="display:none;">
-                    <i class="fa-solid fa-circle-check me-2"></i>Your inquiry has been submitted successfully. Our team
-                    will contact you shortly.
+                    <i class="fa-solid fa-circle-check me-2"></i><span id="contactSuccessMsg">Your inquiry has been submitted successfully. Our team will contact you shortly.</span>
                   </div>
                   <div id="contactError" class="alert alert-danger" role="alert" style="display:none;">
                     <i class="fa-solid fa-circle-exclamation me-2"></i><span id="contactErrorMsg">Something went wrong.
@@ -1139,11 +1157,11 @@
       <div class="row g-4 align-items-start">
         <div class="col-lg-6">
           <div class="card border-0 shadow-sm mb-4 p-4"
-            style="border-left:4px solid #0d6efd!important;border-radius:14px;">
+            style="border-left:4px solid #2563eb!important;border-radius:14px;">
             <div class="d-flex gap-3 align-items-start">
               <div
                 style="width:48px;height:48px;background:#e8f0fe;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <i class="fa-solid fa-bullseye" style="color:#0d6efd;font-size:1.2rem;"></i>
+                <i class="fa-solid fa-bullseye" style="color:#2563eb;font-size:1.2rem;"></i>
               </div>
               <div>
                 <h5 class="fw-bold mb-2">Our Mission</h5>
@@ -1188,7 +1206,7 @@
             <div class="row g-2">
               <div class="col-6">
                 <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
-                    style="color:#0d6efd;font-size:.85rem;"></i><span class="small fw-semibold">Accountability</span>
+                    style="color:#2563eb;font-size:.85rem;"></i><span class="small fw-semibold">Accountability</span>
                 </div>
               </div>
               <div class="col-6">
@@ -1260,7 +1278,7 @@
               </div>
               <div class="col-6">
                 <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-server"
-                    style="color:#0d6efd;font-size:1.1rem;"></i>
+                    style="color:#2563eb;font-size:1.1rem;"></i>
                   <div>
                     <div class="fw-semibold small">Express.js</div>
                     <div class="text-muted" style="font-size:.75rem;">REST API Framework</div>
@@ -1308,7 +1326,7 @@
           <div class="row g-3 mb-4">
             <div class="col-6">
               <div class="card border-0 shadow-sm text-center p-4" style="border-radius:14px;">
-                <div class="fw-bold mb-1" style="font-size:2.2rem;color:#0d6efd;" id="aboutStatUsers">--</div>
+                <div class="fw-bold mb-1" style="font-size:2.2rem;color:#2563eb;" id="aboutStatUsers">--</div>
                 <div class="text-muted small">Registered Users</div>
               </div>
             </div>
@@ -1337,7 +1355,7 @@
               <li class="d-flex align-items-start gap-2 mb-3">
                 <span
                   style="width:28px;height:28px;background:#e8f0fe;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
-                    class="fa-solid fa-bolt" style="color:#0d6efd;font-size:.8rem;"></i></span>
+                    class="fa-solid fa-bolt" style="color:#2563eb;font-size:.8rem;"></i></span>
                 <div>
                   <div class="fw-semibold small">Faster Maintenance Request Handling</div>
                   <div class="text-muted" style="font-size:.8rem;">Submit and track maintenance requests without paper
@@ -1377,7 +1395,7 @@
               <li class="d-flex align-items-start gap-2 mb-3">
                 <span
                   style="width:28px;height:28px;background:#e8f0fe;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
-                    class="fa-solid fa-database" style="color:#0d6efd;font-size:.8rem;"></i></span>
+                    class="fa-solid fa-database" style="color:#2563eb;font-size:.8rem;"></i></span>
                 <div>
                   <div class="fw-semibold small">Digital Maintenance Records</div>
                   <div class="text-muted" style="font-size:.8rem;">All request history stored securely in MongoDB for
@@ -1428,7 +1446,7 @@
         <div class="col-md-4">
           <div class="d-flex align-items-center gap-2 mb-3">
             <div
-              style="width:36px;height:36px;background:#0d6efd;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+              style="width:36px;height:36px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;">
               <i class="fa-solid fa-wrench text-white" style="font-size:.9rem;"></i>
             </div>
             <span class="text-white fw-bold">Smart Computer Maintenance Service</span>
@@ -1476,6 +1494,7 @@
           &copy; 2024 Debre Berhan University ICT Hardware &amp; Software Maintenance System. All rights reserved.
         </span>
         <div class="d-flex gap-3">
+          <a href="https://github.com/sosinatezera/DBU-ICT-MAINTENANCE-SERVICE" target="_blank" rel="noopener noreferrer" class="footer-link"><i class="fa-brands fa-github me-1"></i>GitHub</a>
           <a href="/views/login.html" class="footer-link"><i class="fa-solid fa-right-to-bracket me-1"></i>Login</a>
           <a href="/views/register.html" class="footer-link"><i class="fa-solid fa-user-plus me-1"></i>Register</a>
         </div>
@@ -1489,7 +1508,7 @@
   </button>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/js/validation.js"></script>
+  <script src="/assets/js/validation.js?v=6"></script>
   <script>
     /* ===== Navbar scroll effect ===== */
     const navbar = document.getElementById( 'mainNavbar' );
@@ -1597,6 +1616,37 @@
     window.addEventListener( 'load', loadStats );
 
     /* ===== Contact / Inquiry Form ===== */
+
+    /* Check authentication status and show appropriate UI */
+    (function initContactForm() {
+      const token = localStorage.getItem('ict_token');
+      const userStr = localStorage.getItem('ict_user');
+      let user = null;
+      try { user = userStr ? JSON.parse(userStr) : null; } catch(_) {}
+
+      if (token && user && user.role === 'Requester') {
+        document.getElementById('contactLoginPrompt').style.display = 'none';
+        document.getElementById('contactForm').style.display = '';
+        /* Pre-fill name/email from authenticated user */
+        const nameEl = document.getElementById('inquiryName');
+        const emailEl = document.getElementById('inquiryEmail');
+        if (nameEl && user.fullName) nameEl.value = user.fullName;
+        if (emailEl && user.email) emailEl.value = user.email;
+        if (nameEl) nameEl.readOnly = true;
+        if (emailEl) emailEl.readOnly = true;
+      } else if (token && user) {
+        /* Logged in but wrong role — show message */
+        document.getElementById('contactLoginPrompt').style.display = '';
+        document.getElementById('contactLoginPrompt').querySelector('h6').textContent = 'Account Not Eligible';
+        document.getElementById('contactLoginPrompt').querySelector('p').textContent =
+          'Only Requester accounts can submit service requests. Please log in with a Requester account.';
+        document.getElementById('contactForm').style.display = 'none';
+      } else {
+        document.getElementById('contactLoginPrompt').style.display = '';
+        document.getElementById('contactForm').style.display = 'none';
+      }
+    })();
+
     attachRealTimeValidation('contactForm', [
       { fieldId: 'inquiryName', checks: [v => Validators.name(v, 'Full name')] },
       { fieldId: 'inquiryEmail', checks: [Validators.email] },
@@ -1608,6 +1658,7 @@
       e.preventDefault();
       const btn = document.getElementById( 'contactSubmitBtn' );
       const successEl = document.getElementById( 'contactSuccess' );
+      const successMsgEl = document.getElementById( 'contactSuccessMsg' );
       const errorEl = document.getElementById( 'contactError' );
       const errorMsgEl = document.getElementById( 'contactErrorMsg' );
 
@@ -1633,12 +1684,23 @@
 
       if (hasError) return;
 
+      /* Map contact form fields to Ticket model fields */
+      const token = localStorage.getItem('ict_token');
+      const userStr = localStorage.getItem('ict_user');
+      let user = null;
+      try { user = userStr ? JSON.parse(userStr) : null; } catch(_) {}
+
+      if (!token || !user) {
+        errorMsgEl.textContent = 'Your session has expired. Please log in again.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
       const payload = {
-        fullName: document.getElementById( 'inquiryName' ).value.trim(),
-        email: document.getElementById( 'inquiryEmail' ).value.trim(),
-        department: document.getElementById( 'inquiryDept' ).value.trim(),
-        issueType: document.getElementById( 'inquiryType' ).value,
-        description: document.getElementById( 'inquiryDesc' ).value.trim(),
+        problemDescription: document.getElementById( 'inquiryDesc' ).value.trim(),
+        category:           document.getElementById( 'inquiryType' ).value,
+        department:         document.getElementById( 'inquiryDept' ).value.trim() || user.department || null,
+        priority:           'medium',
       };
 
       btn.disabled = true;
@@ -1646,17 +1708,30 @@
 
       try
       {
-        const res = await fetch( 'http://localhost:5000/api/inquiries', {
+        const res = await fetch( API_BASE + '/tickets', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+          },
           body: JSON.stringify( payload ),
         } );
         const data = await res.json();
         if ( res.ok && data.success )
         {
+          const ticketId = data.data?.ticketId || 'N/A';
+          const status = data.data?.status || 'submitted';
+          successMsgEl.innerHTML = '<strong>Service request submitted successfully!</strong><br>' +
+            'Request ID: <strong>' + ticketId + '</strong><br>' +
+            'Status: <strong>' + status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ') + '</strong>';
           successEl.style.display = 'block';
           document.getElementById( 'contactForm' ).reset();
           clearAllFieldValidations('contactForm');
+          /* Re-fill name/email after reset */
+          const nameEl = document.getElementById('inquiryName');
+          const emailEl = document.getElementById('inquiryEmail');
+          if (nameEl && user.fullName) nameEl.value = user.fullName;
+          if (emailEl && user.email) emailEl.value = user.email;
         } else
         {
           errorMsgEl.textContent = data.message || 'Submission failed. Please try again.';
@@ -1673,6 +1748,7 @@
       }
     } );
   </script>
+<script src="/assets/js/theme.js"></script>
 </body>
 
 </html>

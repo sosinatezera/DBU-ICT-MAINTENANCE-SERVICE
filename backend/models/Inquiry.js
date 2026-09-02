@@ -31,7 +31,7 @@ const inquirySchema = new mongoose.Schema(
       enum: [
         'Hardware Problem',
         'Software Problem',
-        'Network Problem',
+        'Internet Connectivity',
         'Printer Problem',
         'Account / Access Problem',
         'ICT Service Request',

@@ -10,7 +10,10 @@ const Auth = {
   setToken:   (t) => localStorage.setItem('ict_token', t),
   getToken:   ()  => localStorage.getItem('ict_token'),
   setUser:    (u) => localStorage.setItem('ict_user', JSON.stringify(u)),
-  getUser:    ()  => JSON.parse(localStorage.getItem('ict_user') || 'null'),
+  getUser:    ()  => {
+    try { return JSON.parse(localStorage.getItem('ict_user') || 'null'); }
+    catch (_) { return null; }
+  },
   clear:      ()  => { localStorage.removeItem('ict_token'); localStorage.removeItem('ict_user'); },
   isLoggedIn: ()  => !!localStorage.getItem('ict_token'),
 };
@@ -25,24 +28,49 @@ async function apiRequest(endpoint, { method = 'GET', body = null, isFormData = 
   const opts = { method, headers };
   if (body) opts.body = isFormData ? body : JSON.stringify(body);
 
+  /* Abort requests that never settle so the UI can never be stuck on an
+     infinite "Loading..." state (e.g. backend hung, Mongo slow, or a proxy
+     that neither responds nor closes). The timeout fires as a normal error
+     so page handlers show a real message and a Retry button. */
+  const controller = new AbortController();
+  opts.signal = controller.signal;
+  const timer = setTimeout(() => controller.abort(), 15000);
+
   let res;
   try {
     res = await fetch(`${API_BASE}${endpoint}`, opts);
-  } catch (_) {
+  } catch (err) {
+    clearTimeout(timer);
     showOfflineBanner();
+    if (err && err.name === 'AbortError') {
+      throw new Error('Request timed out. The server did not respond. Please retry.');
+    }
     throw new Error('Cannot reach server. Is the backend running on port 5000?');
   }
+  clearTimeout(timer);
 
   hideOfflineBanner();
   const data = await res.json().catch(() => ({}));
 
   if (res.status === 401) {
     Auth.clear();
-    window.location.href = '/views/login.html';
-    return;
+    if (!window.__authRedirecting) {
+      window.__authRedirecting = true;
+      window.location.href = '/views/login.html';
+    }
+    const e = new Error(data.message || 'Session expired. Please log in again.');
+    e.status = res.status;
+    e.data = data;
+    e.redirected = true;
+    throw e;
   }
 
-  if (!res.ok) throw new Error(data.message || `Error ${res.status}`);
+  if (!res.ok) {
+    const e = new Error(data.message || `Error ${res.status}`);
+    e.status = res.status;
+    e.data = data;
+    throw e;
+  }
   return data;
 }
 
@@ -83,8 +111,9 @@ function showToast(message, type = 'success') {
   }
 
   const toast = document.createElement('div');
-  toast.style.cssText = `background:#fff;border-left:4px solid ${colours[type]||colours.info};border-radius:6px;
-    box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 16px;min-width:280px;max-width:380px;
+  toast.className = 'app-toast';
+  toast.style.cssText = `border-left:4px solid ${colours[type]||colours.info};border-radius:6px;
+    padding:12px 16px;min-width:280px;max-width:380px;color:var(--ink);
     display:flex;align-items:flex-start;gap:10px;animation:slideIn .2s ease;font-size:.875rem;`;
   toast.innerHTML = `
     <i class="bi ${icons[type]||icons.info}" style="color:${colours[type]};font-size:1.1rem;margin-top:1px;flex-shrink:0;"></i>
@@ -160,30 +189,135 @@ function setText(id, val) {
   if (el) el.textContent = val ?? '—';
 }
 
+/* ── Attachment URL ────────────────────────────────────────
+   Uploaded files are stored by the backend in /uploads and served from
+   the backend origin (http://localhost:5000/uploads/<filename>). */
+function uploadUrl(filename) {
+  if (!filename) return '#';
+  const base = API_BASE.replace(/\/api\/?$/, '');
+  return `${base}/uploads/${encodeURIComponent(String(filename))}`;
+}
+
+/* ── Canonical role values (must match backend User model exactly) ── */
+const VALID_ROLES = ['Requester', 'Technician', 'ICT Admin'];
+
+/* ── Role normalization (lowercase input -> canonical) ── */
+const ROLE_MAP = {
+  'requester': 'Requester',
+  'technician': 'Technician',
+  'admin': 'ICT Admin',
+  'ict admin': 'ICT Admin',
+};
+
+function normalizeRole(role) {
+  if (!role) return null;
+  return ROLE_MAP[role.toLowerCase()] || role;
+}
+
+function isValidRole(role) {
+  return VALID_ROLES.includes(normalizeRole(role));
+}
+
 /* ── Auth Guards ──────────────────────────────────────────── */
 function logout() {
   Auth.clear();
   window.location.href = '/views/login.html';
 }
 function requireAuth() {
-  if (!Auth.isLoggedIn()) { window.location.href = '/views/login.html'; return null; }
-  return Auth.getUser();
+  if (!Auth.isLoggedIn()) { 
+    window.__authRedirecting = true;
+    window.location.href = '/views/login.html'; 
+    return null; 
+  }
+  const user = Auth.getUser();
+  /* Validate role - if invalid/obsolete, clear session and force re-login */
+  if (!isValidRole(user.role)) {
+    console.warn('[Auth] Invalid/obsolete role in session:', user.role);
+    Auth.clear();
+    window.__authRedirecting = true;
+    window.location.href = '/views/login.html';
+    return null;
+  }
+  /* Normalize role to canonical format for consistent downstream use */
+  user.role = normalizeRole(user.role);
+  return user;
 }
 function requireRole(...roles) {
   const user = requireAuth();
   if (!user) return null;
-  if (!roles.includes(user.role)) {
+  /* User role is already canonical (validated + normalized in requireAuth).
+     Perform case-insensitive comparison against allowed roles. */
+  const allowed = roles.map(r => r.toLowerCase());
+  if (!allowed.includes(user.role.toLowerCase())) {
     showToast('Access denied. Your role is: ' + user.role, 'danger');
     const dashboards = {
-      'ICT Admin':   '/views/admin/dashboard.html',
-      'Technician':  '/views/technician/dashboard.html',
       'Requester':   '/views/user/dashboard.html',
-      'student':     '/views/user/dashboard.html',
+      'Technician':  '/views/technician/dashboard.html',
+      'ICT Admin':   '/views/admin/dashboard.html',
     };
     setTimeout(() => { window.location.href = dashboards[user.role] || '/views/login.html'; }, 1500);
     return null;
   }
   return user;
+}
+
+/* ── Profile Image (Avatar) ────────────────────────────────── */
+const DEFAULT_ADMIN_IMAGE = '/assets/images/admin-profile.jpg';
+const PROFILE_IMAGE_PREFS_KEY = 'ict_profile_image_prefs';
+
+function getProfileImagePrefs(user) {
+  if (!user) return {};
+  try {
+    const all = JSON.parse(localStorage.getItem(PROFILE_IMAGE_PREFS_KEY) || '{}');
+    const key = String(user.email || user.id || 'default').toLowerCase();
+    return all[key] || {};
+  } catch (_) { return {}; }
+}
+
+function setProfileImagePrefs(user, prefs) {
+  if (!user) return false;
+  try {
+    const all = JSON.parse(localStorage.getItem(PROFILE_IMAGE_PREFS_KEY) || '{}');
+    const key = String(user.email || user.id || 'default').toLowerCase();
+    all[key] = prefs || {};
+    localStorage.setItem(PROFILE_IMAGE_PREFS_KEY, JSON.stringify(all));
+    return true;
+  } catch (_) { return false; }
+}
+
+/* Priority: Uploaded photo > Image URL > default ADMIN image > initials */
+function resolveProfileAvatar(user) {
+  if (!user) return null;
+  const prefs = getProfileImagePrefs(user);
+  if (prefs.uploaded) return prefs.uploaded;
+  if (prefs.url)      return prefs.url;
+  if (user.role === 'ICT Admin') return DEFAULT_ADMIN_IMAGE;
+  return null;
+}
+
+/* Fill a `.profile-avatar` container with the best available image.
+   Falls back to the user's initial when no image can be shown. */
+function applyProfileAvatar(user, container) {
+  if (!user || !container) return;
+  const img = container.querySelector('.profile-avatar-image');
+  const ini = container.querySelector('.profile-avatar-initials');
+  if (!img || !ini) return;
+
+  ini.textContent = (user.fullName || 'A').charAt(0).toUpperCase();
+
+  const src = resolveProfileAvatar(user);
+  if (!src) {
+    img.hidden = true;
+    ini.hidden = false;
+    return;
+  }
+
+  img.onload  = () => { img.hidden = false; ini.hidden = true; };
+  img.onerror = () => { img.hidden = true;  ini.hidden = false; };
+
+  let abs = src;
+  try { abs = new URL(src, window.location.origin).href; } catch (_) {}
+  if (img.src !== abs) img.src = src;
 }
 
 /* ── Populate User Info ───────────────────────────────────── */
@@ -197,6 +331,9 @@ function populateUserInfo() {
   if (panelLabel) {
     panelLabel.textContent = 'Admin Panel';
   }
+
+  /* Apply the profile photo to every avatar marked with [data-avatar] */
+  document.querySelectorAll('[data-avatar]').forEach(el => applyProfileAvatar(user, el));
 }
 
 /* ── Sidebar Toggle (mobile) ──────────────────────────────── */
@@ -223,7 +360,14 @@ async function loadNotificationCount() {
       const el = document.getElementById(id);
       if (el) { el.textContent = unread || 0; el.style.display = unread > 0 ? '' : 'none'; }
     });
-  } catch (_) {}
+  } catch (err) {
+    console.warn('Failed to load notification count:', err.message);
+    /* Keep badges hidden on error rather than showing stale data */
+    ['notifBadge','topNotifBadge'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  }
 }
 
 /* ── DOM Ready ────────────────────────────────────────────── */

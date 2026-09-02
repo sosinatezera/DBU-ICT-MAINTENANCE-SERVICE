@@ -9,7 +9,7 @@
 
 /* ── Regex Constants ─────────────────────────────────────── */
 const VAL = {
-  PASSWORD_REGEX: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/,
+  PASSWORD_REGEX: /^(?=.*[A-Za-z])(?=.*\d)[\x21-\x7E]{8,100}$/,
   EMAIL_REGEX:    /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   PHONE_REGEX:    /^\+?[\d\s\-()]{7,20}$/,
   NAME_REGEX:     /^[\p{L}\s.'-]{2,100}$/u,
@@ -34,8 +34,8 @@ const Validators = {
 
   password(value) {
     if (!value || typeof value !== 'string') return 'Password is required.';
-    if (value.length < 8) return 'Password must be at least 8 characters and contain both letters and numbers. Only letters and numbers are allowed.';
-    if (!VAL.PASSWORD_REGEX.test(value)) return 'Password must be at least 8 characters and contain both letters and numbers. Only letters and numbers are allowed.';
+    if (value.length < 8) return 'Password must be at least 8 characters, contain both letters and numbers, and may include special characters.';
+    if (!VAL.PASSWORD_REGEX.test(value)) return 'Password must be at least 8 characters (max 100), contain both letters and numbers, and may include special characters (no spaces).';
     return null;
   },
 

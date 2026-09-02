@@ -1,0 +1,426 @@
+/* ============================================================
+   theme.css — Global Light / Dark Theme System
+   DBU ICT Maintenance Request & Tracking System
+   
+   This stylesheet is loaded LAST (after style.css / admin.css /
+   technician.css / responsive.css) so that the dark theme in this
+   file reliably overrides the base design tokens and any hard-coded
+   light colours used across the application.
+   
+   Light mode is the default design already defined in :root in
+   style.css. This file only ADDS the dark-mode overrides and the
+   shared theme switcher styling.
+   ============================================================ */
+
+/* ── Theme Switcher control ────────────────────────────────── */
+.app-theme-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.app-theme-switch:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 4px 12px -6px rgba(37,99,235,.5);
+}
+.app-theme-switch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 .25rem rgba(37,99,235,.22);
+}
+.app-theme-switch .theme-sun { display: none; }
+.app-theme-switch .theme-moon { display: inline; }
+
+/* Floating switch for public/auth pages (no topbar) */
+.app-theme-float {
+  position: fixed;
+  top: 1.1rem;
+  right: 1.1rem;
+  z-index: 2000;
+  box-shadow: 0 4px 16px -6px rgba(16,24,40,.28);
+}
+/* On the dark landing navbar we keep the same button but it sits on
+   a dark surface, so restore the visible surface/ink colours. */
+.app-theme-switch.app-theme-float {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+
+html[data-theme="dark"] .app-theme-switch .theme-sun { display: inline; }
+html[data-theme="dark"] .app-theme-switch .theme-moon { display: none; }
+
+/* ── Shared Toast (from main.js) ───────────────────────────── */
+.app-toast {
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   DARK THEME
+   ════════════════════════════════════════════════════════════ */
+html[data-theme="dark"] {
+
+  /* Base background / surfaces */
+  --bg:              #0f172a;
+  --bg-body:         #0f172a;
+  --surface:         #1e293b;
+  --surface-soft:    #263244;
+  --surface-secondary:#263244;
+
+  /* Text */
+  --ink:             #e2e8f0;
+  --dark:            #e2e8f0;
+  --text-primary:    #e2e8f0;
+  --text-secondary:  #94a3b8;
+  --muted:           #94a3b8;
+
+  /* Borders */
+  --border:          #334155;
+  --border-strong:   #475569;
+  --border-light:    #263244;
+
+  /* Primary soft surfaces (used as hover/fill chips) */
+  --primary-soft:    #1e3a5f;
+  --primary-subtle:  #1d3a5a;
+  --primary-border:  #1e40af;
+
+  /* Semantic light chips tuned for dark backgrounds */
+  --success-light:   #132a1c;
+  --warning-light:   #2a2413;
+  --danger-light:    #2a1518;
+  --info-light:      #102a38;
+
+  /* Shadows — lighter for dark elevation */
+  --shadow-card: 0 1px 2px rgba(0,0,0,.35), 0 1px 3px rgba(0,0,0,.4);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,.5), 0 2px 4px -2px rgba(0,0,0,.4);
+  --shadow-lg: 0 14px 28px -12px rgba(0,0,0,.6), 0 8px 16px -8px rgba(0,0,0,.5);
+  --shadow-pop: 0 20px 40px -16px rgba(0,0,0,.65);
+
+  color-scheme: dark;
+}
+
+/* ── Global backgrounds & text ─────────────────────────────── */
+html[data-theme="dark"] body,
+html[data-theme="dark"] .dashboard-body {
+  background-color: var(--bg-body);
+  color: var(--dark);
+}
+
+/* Selection */
+html[data-theme="dark"] ::selection { background: rgba(59,130,246,.4); }
+
+/* Headings inherit --ink (already flips) */
+
+/* ── Scrollbars ────────────────────────────────────────────── */
+html[data-theme="dark"] * { scrollbar-color: #475569 transparent; }
+html[data-theme="dark"] *::-webkit-scrollbar-thumb { background: #475569; }
+html[data-theme="dark"] *::-webkit-scrollbar-thumb:hover { background: #64748b; }
+html[data-theme="dark"] .table-responsive::-webkit-scrollbar-thumb { background: #475569; }
+
+/* ── Topbar ────────────────────────────────────────────────── */
+html[data-theme="dark"] .topbar {
+  background: rgba(30,41,59,.92) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+/* ── Sidebar stays navy in both themes (brand). Keep as is. ── */
+
+/* ── Cards ─────────────────────────────────────────────────── */
+html[data-theme="dark"] .card {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);            /* override Bootstrap --bs-body-color (#212529) */
+}
+html[data-theme="dark"] .card-body { color: var(--text-secondary); }
+html[data-theme="dark"] .card-body .fw-bold,
+html[data-theme="dark"] .card-body strong { color: var(--ink); }
+html[data-theme="dark"] .card-header .card-title,
+html[data-theme="dark"] .card-header h5,
+html[data-theme="dark"] .card-header h6 { color: var(--ink); }
+html[data-theme="dark"] .card-header,
+html[data-theme="dark"] .card-footer {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+/* Override inline `bg-white` used on many card headers */
+html[data-theme="dark"] .card-header.bg-white { background: var(--surface-soft) !important; }
+
+/* Dashboard KPI cards */
+html[data-theme="dark"] .dashboard-body .card.p-3.d-flex.flex-row.align-items-center.gap-3 {
+  background: var(--surface);
+  border-color: var(--border) !important;
+}
+
+/* ── Tables ────────────────────────────────────────────────── */
+html[data-theme="dark"] .table {
+  --bs-table-bg: var(--surface);      /* override Bootstrap white table bg */
+  --bs-table-color: var(--ink);
+  --bs-table-border-color: var(--border);
+  color: var(--ink);
+  background-color: var(--surface);
+}
+html[data-theme="dark"] .table tbody td {
+  color: #cbd5e1;
+  border-bottom-color: var(--border);
+  background-color: var(--surface);
+}
+html[data-theme="dark"] .table tbody tr:nth-child(odd),
+html[data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) {
+  --bs-table-accent-bg: var(--surface);
+}
+html[data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) td { color: #cbd5e1; }
+html[data-theme="dark"] .table tbody tr:hover { background: var(--surface-soft); }
+html[data-theme="dark"] .admin-table tbody td { color: #cbd5e1; }
+html[data-theme="dark"] .dashboard-body .table tbody td { color: #cbd5e1; }
+html[data-theme="dark"] .table-light { --bs-table-bg: var(--surface-soft); --bs-table-color: var(--ink); }
+html[data-theme="dark"] .admin-table thead th,
+html[data-theme="dark"] .table thead th {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  color: #e2e8f0;
+}
+html[data-theme="dark"] .dashboard-body .table thead th {
+  background-color: var(--surface-soft);
+  color: #cbd5e1;
+  border-bottom-color: var(--border);
+}
+
+/* Ticket ID pills */
+html[data-theme="dark"] .table strong.text-primary {
+  background: #1e3a5f;
+  border-color: #1e40af;
+  color: #93c5fd !important;
+}
+
+/* ── Status / priority badges (soft variants) ────────────────
+   These are "light" pastel chips defined with hexes in style.css.
+   Re-map them to darker-but-readable equivalents for dark mode. */
+html[data-theme="dark"] .status-submitted    { background: #1e3a5f; color: #93c5fd; }
+html[data-theme="dark"] .status-under_review { background: #3a2a13; color: #fdba74; }
+html[data-theme="dark"] .status-assigned     { background: #2a2f5f; color: #a5b4fc; }
+html[data-theme="dark"] .status-accepted     { background: #32265f; color: #c4b5fd; }
+html[data-theme="dark"] .status-in_progress  { background: #10324a; color: #67e8f9; }
+html[data-theme="dark"] .status-resolved     { background: #12331f; color: #6ee7b7; }
+html[data-theme="dark"] .status-completed    { background: #12331f; color: #6ee7b7; }
+html[data-theme="dark"] .status-closed       { background: #263244; color: #94a3b8; }
+
+html[data-theme="dark"] .priority-critical { background: #3a1616; color: #fca5a5; }
+html[data-theme="dark"] .priority-high     { background: #3a2a13; color: #fdba74; }
+html[data-theme="dark"] .priority-medium   { background: #1e3a5f; color: #93c5fd; }
+html[data-theme="dark"] .priority-low      { background: #12331f; color: #6ee7b7; }
+
+/* Bootstrap soft chips used for KPI icon backgrounds */
+html[data-theme="dark"] .bg-white { background-color: var(--surface) !important; }
+html[data-theme="dark"] body .bg-light { background-color: var(--surface-soft) !important; color: var(--ink) !important; }
+html[data-theme="dark"] .bg-primary-subtle  { background-color: #1e3a5f !important; }
+html[data-theme="dark"] .bg-success-subtle  { background-color: #12331f !important; }
+html[data-theme="dark"] .bg-danger-subtle   { background-color: #2a1518 !important; }
+html[data-theme="dark"] .bg-warning-subtle  { background-color: #2a2413 !important; }
+html[data-theme="dark"] .bg-info-subtle     { background-color: #102a38 !important; }
+html[data-theme="dark"] .bg-secondary-subtle{ background-color: #263244 !important; }
+
+/* ── Forms / inputs ────────────────────────────────────────── */
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-select {
+  background-color: #0f172a;
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+html[data-theme="dark"] .form-control:focus,
+html[data-theme="dark"] .form-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+  background-color: #0f172a;
+}
+html[data-theme="dark"] .form-control::placeholder { color: #64748b; }
+html[data-theme="dark"] .form-control:disabled,
+html[data-theme="dark"] .form-select:disabled { background-color: var(--surface-soft); }
+html[data-theme="dark"] .form-select option { background-color: #1e293b; color: var(--ink); }
+
+html[data-theme="dark"] .input-group-text {
+  background: var(--surface-soft);
+  border-color: var(--border-strong);
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .form-label.fw-semibold { color: var(--text-secondary); }
+html[data-theme="dark"] .form-label { color: var(--ink); }
+html[data-theme="dark"] .form-check-label { color: var(--text-secondary); }
+html[data-theme="dark"] .form-switch .form-check-input:checked { background-color: var(--primary); border-color: var(--primary); }
+
+/* ── Buttons ───────────────────────────────────────────────── */
+html[data-theme="dark"] .btn-outline-primary,
+html[data-theme="dark"] .btn-outline-secondary,
+html[data-theme="dark"] .btn-outline-danger,
+html[data-theme="dark"] .btn-outline-success,
+html[data-theme="dark"] .btn-outline-warning,
+html[data-theme="dark"] .btn-outline-info {
+  background-color: transparent;
+}
+/* Brighter brand-blue text so outline buttons stay readable on dark surfaces */
+html[data-theme="dark"] .btn-outline-primary {
+  color: #93c5fd;
+  border-color: #60a5fa;
+}
+html[data-theme="dark"] .btn-outline-primary:hover,
+html[data-theme="dark"] .btn-outline-primary:focus {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+html[data-theme="dark"] .btn-outline-secondary {
+  color: #cbd5e1;
+  border-color: var(--border-strong);
+}
+html[data-theme="dark"] .btn-outline-secondary:hover {
+  background: var(--surface-soft);
+  border-color: #64748b;
+  color: #f1f5f9;
+}
+
+/* Admin table outline-primary buttons had background:#fff — flip */
+html[data-theme="dark"] .dashboard-body .table .btn-outline-primary {
+  background-color: transparent;
+  color: #93c5fd;
+  border-color: #475569;
+}
+html[data-theme="dark"] .dashboard-body .table .btn-outline-primary:hover {
+  background-color: #1e3a5f;
+}
+html[data-theme="dark"] .dashboard-body .table .btn-outline-primary:active {
+  background-color: #1e3a5f !important;
+}
+html[data-theme="dark"] .dashboard-body .table .btn-outline-primary:focus-visible {
+  box-shadow: 0 0 0 3px rgba(59,130,246,.25);
+}
+
+/* Device-type selector tiles */
+html[data-theme="dark"] .btn-check + .btn-outline-secondary:hover { background: #1e3a5f; border-color: #475569; }
+
+/* ── Dropdowns ─────────────────────────────────────────────── */
+html[data-theme="dark"] .dropdown-menu {
+  background-color: #1e293b;
+  border-color: var(--border-strong);
+  color: #e2e8f0;               /* override Bootstrap --bs-dropdown-color */
+}
+html[data-theme="dark"] .dropdown-item { color: #cbd5e1; }
+html[data-theme="dark"] .dropdown-item:hover,
+html[data-theme="dark"] .dropdown-item:focus { background: #263244; color: #fff; }
+html[data-theme="dark"] .dropdown-divider { border-color: var(--border); }
+html[data-theme="dark"] .dropdown-menu .dropdown-header { color: var(--muted); }
+
+/* ── Modals ────────────────────────────────────────────────── */
+html[data-theme="dark"] .modal-content {
+  background-color: #1e293b;
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+html[data-theme="dark"] .modal-header,
+html[data-theme="dark"] .modal-footer {
+  background: #263244;
+  border-color: var(--border);
+}
+html[data-theme="dark"] .modal-title { color: var(--ink); }
+html[data-theme="dark"] .modal-body { color: var(--text-secondary); }
+
+/* ── Alerts ────────────────────────────────────────────────── */
+html[data-theme="dark"] .alert-primary { background: #1e3a5f; border-color: #1e40af; color: #93c5fd; }
+html[data-theme="dark"] .alert-success { background: #12331f; border-color: #14532d; color: #6ee7b7; }
+html[data-theme="dark"] .alert-danger  { background: #2a1518; border-color: #7f1d1d; color: #fca5a5; }
+html[data-theme="dark"] .alert-warning { background: #2a2413; border-color: #78350f; color: #fcd34d; }
+html[data-theme="dark"] .alert-info    { background: #102a38; border-color: #155e75; color: #7dd3fc; }
+
+/* ── List groups ───────────────────────────────────────────── */
+html[data-theme="dark"] .list-group-item {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+/* ── Auth pages ────────────────────────────────────────────── */
+html[data-theme="dark"] .auth-body {
+  background: linear-gradient(135deg, #0f172a 0%, #111827 55%, #0b1220 100%);
+}
+html[data-theme="dark"] .auth-body .card { border-color: var(--border); }
+
+/* ── Notification dropdown / items ─────────────────────────── */
+html[data-theme="dark"] .notif-drop-item.bg-light { background: #263244 !important; }
+html[data-theme="dark"] .notification-item.unread { background-color: #1e3a5f; }
+html[data-theme="dark"] .notification-item:hover { background-color: #263244; }
+html[data-theme="dark"] .notification-item,
+html[data-theme="dark"] .notification-item .small,
+html[data-theme="dark"] .notification-item .text-muted { color: #cbd5e1; }
+html[data-theme="dark"] .notif-dot { box-shadow: 0 0 0 2px #263244; }
+
+/* ── Profile avatars ───────────────────────────────────────── */
+html[data-theme="dark"] .profile-avatar {
+  background: #263244;
+  border-color: #334155;
+}
+
+/* ── Activity / task / assigned cards (technician) ─────────── */
+html[data-theme="dark"] .activity-card { background: #263244; border-color: var(--border); }
+html[data-theme="dark"] .assigned-card,
+html[data-theme="dark"] .task-card,
+html[data-theme="dark"] .perf-card { background: var(--surface); border-color: var(--border); }
+html[data-theme="dark"] .request-detail-value { color: #e2e8f0; }
+
+/* ── Progress / performance / report bars (track background) ── */
+html[data-theme="dark"] .performance-bar,
+html[data-theme="dark"] .report-bar-track,
+html[data-theme="dark"] .tech-card .card-body .rounded-pill.overflow-hidden,
+html[data-theme="dark"] #categoryStats .progress,
+html[data-theme="dark"] .progress { background: #263244; }
+html[data-theme="dark"] .skeleton-line {
+  background: linear-gradient(90deg, #263244 25%, #334155 37%, #263244 63%);
+  background-size: 400% 100%;
+}
+
+/* ── Low rating row (feedback) ─────────────────────────────── */
+html[data-theme="dark"] .low-rating-row { background-color: #2a1518; }
+html[data-theme="dark"] .low-rating-row:hover { background-color: #331a1c; }
+
+/* ── Empty states ──────────────────────────────────────────── */
+html[data-theme="dark"] .empty-state .empty-title { color: var(--ink); }
+html[data-theme="dark"] .empty-state { color: var(--muted); }
+
+/* ── Quick actions list ────────────────────────────────────── */
+html[data-theme="dark"] .settings-nav .nav-link,
+html[data-theme="dark"] .nav-tabs .nav-link { color: var(--muted); }
+html[data-theme="dark"] .nav-tabs .nav-link:hover,
+html[data-theme="dark"] .settings-nav .nav-link:hover { color: var(--primary); background: #1e3a5f; }
+
+/* ── Footer text / dividers ────────────────────────────────── */
+html[data-theme="dark"] hr { border-color: var(--border); }
+html[data-theme="dark"] .text-muted { color: var(--muted) !important; }
+html[data-theme="dark"] .text-secondary { color: #94a3b8 !important; }
+html[data-theme="dark"] .card small.text-muted { color: var(--muted) !important; }
+
+/* ── Offline banner (red) is fine in both themes ───────────── */
+
+/* ── Landing page (index.html) ─────────────────────────────── */
+html[data-theme="dark"] .hero-section { background: linear-gradient(135deg, #1d4ed8 0%, #0b1220 100%); }
+
+/* Report chart bar fill labels/values inherit text colors */
+
+/* ── Utility: ensure text that was hard-coded dark flips ───── */
+html[data-theme="dark"] .text-dark { color: #e2e8f0 !important; }
+html[data-theme="dark"] .badge.bg-light.text-dark { background: #263244 !important; color: #e2e8f0 !important; border-color: var(--border) !important; }
+
+/* Print should always force light for readable hard copies */
+@media print {
+  html[data-theme="dark"] body,
+  html[data-theme="dark"] .dashboard-body { background: #fff !important; color: #111 !important; }
+  html[data-theme="dark"] .card { background: #fff !important; border-color: #dee2e6 !important; }
+}

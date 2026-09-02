@@ -49,6 +49,12 @@ const settingsSchema = new mongoose.Schema(
     notifSystemSecurity: { type: Boolean, default: true },
     emailNotifications:  { type: Boolean, default: false },
 
+    /* ── Operational / quick settings ─────────────────────── */
+    publicRegistration: { type: Boolean, default: false },
+    techAutoNotify:     { type: Boolean, default: true },
+    slaResponseHours:   { type: Number,  default: 24, min: 1, max: 720 },
+    defaultPriority:    { type: String,  enum: ['low', 'medium', 'high', 'critical'], default: 'medium' },
+
     /* ── Meta ─────────────────────────────────────────────── */
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,

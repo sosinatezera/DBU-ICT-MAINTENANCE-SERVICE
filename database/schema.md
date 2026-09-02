@@ -33,14 +33,13 @@
 | `phone`      | String   | no       |                                                    |
 | `department` | String   | no       | e.g. Finance, Human Resources                      |
 | `password`   | String   | yes      | bcrypt hashed (12 rounds)                          |
-| `role`       | String   | yes      | `Requester` \| `student` \| `Technician` \| `ICT Admin` (default: Requester) |
+| `role`       | String   | yes      | `Requester` \| `Technician` \| `ICT Admin` (default: Requester) |
 | `status`     | String   | yes      | `active` \| `inactive` (default: active)           |
 | `createdAt`  | Date     | auto     |                                                    |
 | `updatedAt`  | Date     | auto     |                                                    |
 
 **Notes:**
 - `Requester` is the standard role for staff who submit maintenance requests.
-- `student` exists for backward compatibility — behaves like Requester.
 - `Technician` and `ICT Admin` roles are only created via admin user management.
 
 ---

@@ -15,7 +15,21 @@ async function initAssets() {
     const { data } = await apiRequest('/assets');
     allAssets = data;
     renderAssetsTable(data);
-  } catch (err) { showToast(err.message, 'danger'); }
+  } catch (err) {
+    console.error('Load assets failed:', err);
+    showToast(err.message, 'danger');
+    /* Never leave the loader hanging — show the real error + a Retry action. */
+    const tbody = document.getElementById('assetsTableBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">
+        <i class="bi bi-exclamation-triangle text-danger d-block mb-2 fs-3"></i>
+        <p class="text-danger mb-2">Failed to load assets: ${escHtml(err.message)}</p>
+        <button class="btn btn-sm btn-outline-primary" onclick="initAssets()">
+          <i class="bi bi-arrow-clockwise me-1"></i>Retry
+        </button>
+      </td></tr>`;
+    }
+  }
 
   // Search/filter
   const doFilter = () => {
@@ -65,12 +79,12 @@ function renderAssetsTable(assets) {
       <td>${warrantyBadge(a.warranty_expiry)}</td>
       <td>
         <button class="btn btn-sm btn-outline-primary me-1 py-0 px-2"
-                onclick="editAsset(${a.id})"
+                onclick="editAsset('${a._id}')"
                 data-bs-toggle="modal" data-bs-target="#assetModal">
           <i class="bi bi-pencil"></i>
         </button>
         <button class="btn btn-sm btn-outline-danger py-0 px-2"
-                onclick="deleteAsset(${a.id}, '${escHtml(a.asset_name)}')">
+                onclick="deleteAsset('${a._id}')">
           <i class="bi bi-trash"></i>
         </button>
       </td>
@@ -78,9 +92,9 @@ function renderAssetsTable(assets) {
 }
 
 function editAsset(id) {
-  const a = allAssets.find(x => x.id === id);
+  const a = allAssets.find(x => x._id === id);
   if (!a) return;
-  document.getElementById('assetId').value         = a.id;
+  document.getElementById('assetId').value         = id;
   document.getElementById('assetName').value        = a.asset_name;
   document.getElementById('assetTag').value         = a.asset_tag;
   document.getElementById('assetCategory').value    = a.category || '';
@@ -121,18 +135,24 @@ async function saveAsset() {
     bootstrap.Modal.getInstance(document.getElementById('assetModal'))?.hide();
     setTimeout(() => window.location.reload(), 1000);
   } catch (err) {
-    showAlert('assetModalAlert', err.message, 'danger');
+    let msg = err?.message || 'Failed to save asset.';
+    if (err?.data?.errors) {
+      msg = Object.values(err.data.errors).join(' · ');
+    }
+    showAlert('assetModalAlert', msg, 'danger');
   } finally {
     setLoading('saveAssetBtn', 'saveAssetSpinner', false);
   }
 }
 
-async function deleteAsset(id, name) {
+async function deleteAsset(id) {
+  const found = allAssets.find(x => x._id === id);
+  const name  = found ? found.asset_name : id;
   if (!confirm(`Delete asset "${name}"? This cannot be undone.`)) return;
   try {
     await apiRequest(`/assets/${id}`, { method: 'DELETE' });
     showToast('Asset deleted.', 'success');
-    allAssets = allAssets.filter(a => a.id !== id);
+    allAssets = allAssets.filter(a => a._id !== id);
     renderAssetsTable(allAssets);
   } catch (err) { showToast(err.message, 'danger'); }
 }
@@ -155,9 +175,4 @@ function warrantyBadge(expiry) {
   if (days < 30)  return `<span class="badge bg-warning text-dark">${days}d left</span>`;
   if (days < 90)  return `<span class="badge bg-info text-dark">${days}d left</span>`;
   return `<span class="badge bg-success">${formatDate(expiry)}</span>`;
-}
-
-function escHtml(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }

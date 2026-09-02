@@ -20,7 +20,6 @@ function redirectByRole(role) {
     'ICT Admin':  '/views/admin/dashboard.html',
     'Requester':  '/views/user/dashboard.html',
     'Technician': '/views/technician/dashboard.html',
-    'student':    '/views/user/dashboard.html',
   };
   window.location.href = routes[role] || '/views/login.html';
 }

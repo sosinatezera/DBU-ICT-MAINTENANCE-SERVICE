@@ -4,6 +4,7 @@
  */
 
 const bcrypt     = require('bcryptjs');
+const mongoose   = require('mongoose');
 const User       = require('../models/User');
 const Technician = require('../models/Technician');
 const {
@@ -48,6 +49,10 @@ const createUser = async (req, res, next) => {
   try {
     let { fullName, email, password, role, department, phone, status, specialization } = req.body;
 
+    /* Debug: surface the exact payload so a "user not saved" report can be
+       traced to the real cause (missing field / wrong enum / duplicate email). */
+    console.log('[POST /api/users] body:', { fullName, email, role, department, phone, status });
+
     fullName = fullName ? sanitizeString(fullName) : '';
     email    = email ? sanitizeString(email) : '';
 
@@ -91,6 +96,7 @@ const createUser = async (req, res, next) => {
     }
 
     const hashed = await bcrypt.hash(password, 12);
+    console.log('[POST /api/users] before User.create | mongoose.readyState:', mongoose.connection.readyState);
     const user = await User.create({
       fullName,
       email: email.toLowerCase(),
@@ -100,6 +106,7 @@ const createUser = async (req, res, next) => {
       phone:      phone || null,
       status:     status || 'active',
     });
+    console.log('[POST /api/users] User.create SUCCESS:', user._id);
 
     /* If creating a Technician, also create a Technician profile */
     if (user.role === 'Technician') {
@@ -112,6 +119,8 @@ const createUser = async (req, res, next) => {
 
     res.status(201).json({ success: true, message: 'User created.', data: { id: user._id, role: user.role } });
   } catch (err) {
+    console.error('[POST /api/users] createUser error (User.create FAILED?):', err.message);
+    console.error('[POST /api/users] mongoose.readyState at failure:', mongoose.connection.readyState);
     next(err);
   }
 };

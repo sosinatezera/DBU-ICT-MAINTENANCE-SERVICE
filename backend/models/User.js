@@ -3,10 +3,10 @@
  * User schema for Smart Computer Maintenance Service Request and Tracking System
  *
  * Roles:
- *   - 'Requester'   → DBU staff/students who submit maintenance tickets
+ *   - 'Requester'   → DBU staff who submit maintenance tickets
  *   - 'Technician'  → ICT repair staff who resolve tickets
  *   - 'ICT Admin'   → Directorate manager with full system access
- */
+ * */
 
 const mongoose = require('mongoose');
 
@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['Requester', 'student', 'Technician', 'ICT Admin'],
+      enum: ['Requester', 'Technician', 'ICT Admin'],
       default: 'Requester',
     },
     status: {

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,11 +8,13 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
+<link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
 <body class="dashboard-body">
 
   <div class="d-flex">
-    <nav id="sidebar" class="sidebar bg-primary text-white d-flex flex-column p-3" style="min-height:100vh;width:240px;">
+    <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3" style="min-height:100vh;width:240px;">
       <a href="../index.html" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-tools fs-3"></i>
@@ -20,9 +23,9 @@
       </a>
       <ul class="nav flex-column gap-1">
         <li><a href="dashboard.html"     class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-        <li><a href="request.html"       class="nav-link text-white-50"><i class="bi bi-plus-circle me-2"></i>New Request</a></li>
-        <li><a href="tracking.html"      class="nav-link text-white-50"><i class="bi bi-search me-2"></i>Track Request</a></li>
-        <li><a href="history.html"       class="nav-link text-white-50"><i class="bi bi-clock-history me-2"></i>History</a></li>
+        <li><a href="request.html"       class="nav-link text-white-50"><i class="bi bi-plus-circle me-2"></i>Submit Request</a></li>
+        <li><a href="tracking.html"      class="nav-link text-white-50"><i class="bi bi-list-task me-2"></i>My Requests</a></li>
+        <li><a href="history.html"       class="nav-link text-white-50"><i class="bi bi-clock-history me-2"></i>Request History</a></li>
         <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a></li>
         <li><a href="feedback.html"      class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-star me-2"></i>Feedback</a></li>
       </ul>
@@ -52,10 +55,18 @@
               </div>
             </div>
 
+            <!-- Feedback Already Submitted (read-only) -->
+            <div class="card border-0 shadow-sm mb-4 d-none" id="feedbackSubmittedCard">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-check-circle-fill text-success me-2"></i>Feedback Submitted</h6>
+              </div>
+              <div class="card-body p-4" id="feedbackSubmittedBody"></div>
+            </div>
+
             <!-- Feedback Form -->
             <div class="card border-0 shadow-sm" id="feedbackFormCard" style="display:none!important;">
               <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-star text-warning me-2"></i>Rate Your Experience</h6>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-star text-warning me-2"></i>Rate Your Service Experience</h6>
               </div>
               <div class="card-body p-4">
                 <div id="feedbackAlert" class="alert d-none" role="alert"></div>
@@ -64,13 +75,13 @@
                   <input type="hidden" id="feedbackRequestId" />
 
                   <div class="mb-3">
-                    <label class="form-label fw-semibold">Request</label>
+                    <label class="form-label fw-semibold">Request / Ticket ID</label>
                     <input type="text" class="form-control" id="feedbackRequestTitle" readonly />
                   </div>
 
                   <!-- Star Rating -->
                   <div class="mb-3">
-                    <label class="form-label fw-semibold">Rating <span class="text-danger">*</span></label>
+                    <label class="form-label fw-semibold">Overall Service Rating <span class="text-danger">*</span></label>
                     <div class="star-rating d-flex gap-2 fs-2" id="starRating" role="group" aria-label="Rating">
                       <i class="bi bi-star text-warning star" data-value="1" style="cursor:pointer;" tabindex="0" role="radio" aria-label="1 star"></i>
                       <i class="bi bi-star text-warning star" data-value="2" style="cursor:pointer;" tabindex="0" role="radio" aria-label="2 stars"></i>
@@ -78,15 +89,75 @@
                       <i class="bi bi-star text-warning star" data-value="4" style="cursor:pointer;" tabindex="0" role="radio" aria-label="4 stars"></i>
                       <i class="bi bi-star text-warning star" data-value="5" style="cursor:pointer;" tabindex="0" role="radio" aria-label="5 stars"></i>
                     </div>
-                    <input type="hidden" id="ratingValue" required />
-                    <div class="form-text" id="ratingLabel">Click a star to rate</div>
+                    <input type="hidden" id="ratingValue" name="overallRating" value="" required />
+                    <div class="form-text" id="ratingLabel" aria-live="polite">Click a star to rate</div>
                   </div>
 
-                  <!-- Comment -->
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold small">Service Quality <span class="text-danger">*</span></label>
+                      <select class="form-select" id="fbServiceQuality">
+                        <option value="">-- Select --</option>
+                        <option>Excellent</option><option>Very Good</option><option>Good</option>
+                        <option>Fair</option><option>Poor</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold small">Technician Professionalism <span class="text-danger">*</span></label>
+                      <select class="form-select" id="fbProfessionalism">
+                        <option value="">-- Select --</option>
+                        <option>Excellent</option><option>Very Good</option><option>Good</option>
+                        <option>Fair</option><option>Poor</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold small">Response Time <span class="text-danger">*</span></label>
+                      <select class="form-select" id="fbResponseTime">
+                        <option value="">-- Select --</option>
+                        <option>Fast</option><option>Normal</option><option>Slow</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold small">Communication <span class="text-danger">*</span></label>
+                      <select class="form-select" id="fbCommunication">
+                        <option value="">-- Select --</option>
+                        <option>Excellent</option><option>Very Good</option><option>Good</option>
+                        <option>Fair</option><option>Poor</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold small">Problem Resolution <span class="text-danger">*</span></label>
+                      <select class="form-select" id="fbProblemResolution">
+                        <option value="">-- Select --</option>
+                        <option>Completely Resolved</option><option>Partially Resolved</option><option>Not Resolved</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold small">Satisfaction Level <span class="text-danger">*</span></label>
+                      <select class="form-select" id="fbSatisfaction">
+                        <option value="">-- Select --</option>
+                        <option>Very Satisfied</option><option>Satisfied</option><option>Neutral</option>
+                        <option>Dissatisfied</option><option>Very Dissatisfied</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold small">Would Recommend Service <span class="text-danger">*</span></label>
+                      <select class="form-select" id="fbWouldRecommend">
+                        <option value="">-- Select --</option>
+                        <option>Yes</option><option>No</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="mb-3 mt-3">
+                    <label for="comment" class="form-label fw-semibold">Requester Comment</label>
+                    <textarea class="form-control" id="comment" rows="3"
+                              placeholder="Tell us about your experience with the maintenance service..."></textarea>
+                  </div>
                   <div class="mb-4">
-                    <label for="comment" class="form-label fw-semibold">Comment (Optional)</label>
-                    <textarea class="form-control" id="comment" rows="4"
-                              placeholder="Share your experience with the maintenance service..."></textarea>
+                    <label for="suggestions" class="form-label fw-semibold">Suggestions for Improvement</label>
+                    <textarea class="form-control" id="suggestions" rows="2"
+                              placeholder="How can we improve our service?"></textarea>
                   </div>
 
                   <button type="submit" class="btn btn-primary px-4" id="feedbackSubmitBtn">
@@ -104,7 +175,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/js/main.js"></script>
-  <script src="/assets/js/requests.js"></script>
+  <script src="/assets/js/main.js?v=7"></script>
+  <script src="/assets/js/requests.js?v=7"></script>
+<script src="/assets/js/theme.js"></script>
 </body>
 </html>

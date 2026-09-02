@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
+<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,431 +10,416 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
+  <style>
+    /* Photo-enabled device selection cards (Desktop / Laptop / Printer) */
+    .device-radio:checked+.device-pick {
+      border-color: #2563eb !important;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, .35);
+    }
+
+    .device-pick {
+      position: relative;
+      display: block;
+      width: 100%;
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      background: #fff;
+      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+
+    .device-pick:hover {
+      border-color: #94a3b8;
+      transform: translateY(-2px);
+    }
+
+    .device-pick img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      display: block;
+      background: #eef2f7;
+    }
+
+    .device-pick-name {
+      display: block;
+      text-align: center;
+      padding: 10px 8px;
+      font-weight: 600;
+      font-size: .9rem;
+      color: #1f2937;
+      background: #fff;
+    }
+
+    @media (max-width: 575.98px) {
+      .device-pick img {
+        height: 110px;
+      }
+    }
+
+    .support-banner {
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, .12);
+    }
+
+    .support-banner img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      display: block;
+    }
+
+    @media (max-width: 767.98px) {
+      .support-banner img {
+        height: 150px;
+      }
+    }
+  </style>
+<link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
+
 <body class="dashboard-body">
 
-<div class="d-flex">
+  <div class="d-flex">
 
-  <!-- Sidebar -->
-  <nav id="sidebar" class="sidebar bg-primary text-white d-flex flex-column p-3" style="min-height:100vh;width:240px;flex-shrink:0;">
+    <!-- Sidebar -->
+    <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3"
+      style="min-height:100vh;width:240px;flex-shrink:0;">
       <a href="../index.html" class="text-decoration-none">
         <div class="text-center mb-4">
           <i class="bi bi-tools fs-2"></i>
           <div class="fw-bold small mt-1">Smart Computer Maintenance</div>
         </div>
       </a>
-    <ul class="nav flex-column gap-1">
-      <li><a href="dashboard.html"     class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-      <li><a href="request.html"       class="nav-link text-white rounded" style="background:rgba(255,255,255,.2);"><i class="bi bi-plus-circle me-2"></i>New Request</a></li>
-      <li><a href="tracking.html"      class="nav-link text-white-50"><i class="bi bi-search me-2"></i>Track Request</a></li>
-      <li><a href="history.html"       class="nav-link text-white-50"><i class="bi bi-clock-history me-2"></i>History</a></li>
-      <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a></li>
-      <li><a href="feedback.html"      class="nav-link text-white-50"><i class="bi bi-star me-2"></i>Feedback</a></li>
-    </ul>
-    <div class="mt-auto pt-3 border-top border-white border-opacity-25">
-      <div class="small text-white-50 mb-2" id="sidebarUserName"></div>
-      <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
-        <i class="bi bi-box-arrow-right me-1"></i>Logout
-      </a>
+      <ul class="nav flex-column gap-1">
+        <li><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+        </li>
+        <li><a href="request.html" class="nav-link text-white rounded" style="background:rgba(255,255,255,.2);"><i
+              class="bi bi-plus-circle me-2"></i>New Request</a></li>
+        <li><a href="tracking.html" class="nav-link text-white-50"><i class="bi bi-search me-2"></i>Track Request</a>
+        </li>
+        <li><a href="history.html" class="nav-link text-white-50"><i class="bi bi-clock-history me-2"></i>History</a>
+        </li>
+        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a>
+        </li>
+        <li><a href="feedback.html" class="nav-link text-white-50"><i class="bi bi-star me-2"></i>Feedback</a></li>
+      </ul>
+      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+        <div class="small text-white-50 mb-2" id="sidebarUserName"></div>
+        <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
+          <i class="bi bi-box-arrow-right me-1"></i>Logout
+        </a>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <div class="flex-grow-1">
+      <header
+        class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
+        <div class="d-flex align-items-center gap-3">
+          <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle"><i
+              class="bi bi-list"></i></button>
+          <div>
+            <h5 class="mb-0 fw-bold">Submit Maintenance Request</h5>
+            <div class="text-muted small">Fill in the form below to report an ICT issue</div>
+          </div>
+        </div>
+        <a href="dashboard.html" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+      </header>
+
+      <main class="p-3 p-md-4">
+        <!-- Support banner -->
+        <div class="support-banner mb-4">
+          <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1400&q=80&auto=format&fit=crop"
+            alt="ICT support technician assisting with a computer" />
+        </div>
+        <div class="row justify-content-center">
+          <div class="col-lg-9 col-xl-8">
+
+            <!-- Alert -->
+            <div id="requestAlert" class="alert d-none mb-3" role="alert"></div>
+
+            <form id="requestForm" novalidate enctype="multipart/form-data">
+
+              <!-- - Section 1: Requester Info ------------------- -->
+              <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                  <h6 class="mb-0 fw-bold">
+                    <span class="badge bg-primary rounded-circle me-2">1</span>
+                    Your Information
+                  </h6>
+                </div>
+                <div class="card-body p-4">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label for="requesterName" class="form-label fw-semibold">
+                        <i class="bi bi-person me-1 text-primary"></i>Full Name <span class="text-danger">*</span>
+                      </label>
+                      <input type="text" class="form-control form-control-lg" id="requesterName"
+                        placeholder="e.g. John Doe" required minlength="2" />
+                      <div class="invalid-feedback">Please enter your full name.</div>
+                    </div>
+                    <div class="col-md-6">
+                      <label for="requesterPhone" class="form-label fw-semibold">
+                        <i class="bi bi-telephone me-1 text-primary"></i>Phone Number <span class="text-danger">*</span>
+                      </label>
+                      <div class="input-group input-group-lg">
+                        <span class="input-group-text"><i class="bi bi-telephone-fill text-muted"></i></span>
+                        <input type="tel" class="form-control" id="requesterPhone" placeholder="+1 234 567 8900"
+                          required />
+                      </div>
+                      <div class="form-text">We'll use this to contact you about your request.</div>
+                      <div class="invalid-feedback">Please enter your phone number.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- - Section 2: Device Type ---------------------- -->
+              <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                  <h6 class="mb-0 fw-bold">
+                    <span class="badge bg-primary rounded-circle me-2">2</span>
+                    Device Type
+                  </h6>
+                </div>
+                <div class="card-body p-4">
+                  <label class="form-label fw-semibold mb-3">
+                    Select the device that has a hardware/software fault <span class="text-danger">*</span>
+                  </label>
+                  <div class="row g-3" id="deviceTypeCards"></div>
+                  <div class="invalid-feedback d-block mt-2" id="deviceTypeError" style="display:none!important;"></div>
+                  <script>
+                    /* Centralized equipment configuration.
+                       - name  = display label on the card (user-facing)
+                       - value = exact value sent to the backend / stored in MongoDB
+                                 (must match the Ticket.equipmentType enum)
+                       - image = verified real photograph matching the device.         */
+                    const equipmentTypes = [
+                      { id: 'dev_computer', name: 'Desktop', value: 'Desktop Computer', image: 'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=600&q=80&auto=format&fit=crop', alt: 'Desktop computer' },
+                      { id: 'dev_laptop', name: 'Laptop', value: 'Laptop', image: 'https://images.unsplash.com/photo-1593642532744-d377ab507dc8?w=600&q=80&auto=format&fit=crop', alt: 'Laptop' },
+                      { id: 'dev_printer', name: 'Printer', value: 'Printer', image: 'https://images.unsplash.com/photo-1587614382346-4ec70e388b28?w=600&q=80&auto=format&fit=crop', alt: 'Printer' },
+                      { id: 'dev_scanner', name: 'Scanner', value: 'Scanner', image: 'https://images.unsplash.com/photo-1611269154421-4e27233ac5c7?w=600&q=80&auto=format&fit=crop', alt: 'Document scanner' },
+                      { id: 'dev_monitor', name: 'Monitor', value: 'Monitor', image: 'https://images.unsplash.com/photo-1547394765-185e1e68f34e?w=600&q=80&auto=format&fit=crop', alt: 'Computer monitor' },
+                      { id: 'dev_projector', name: 'Projector', value: 'Projector', image: 'https://images.unsplash.com/photo-1601944179066-29786cb9d32a?w=600&q=80&auto=format&fit=crop', alt: 'Projector' },
+                      { id: 'dev_ups', name: 'UPS', value: 'UPS / Power Supply', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80&auto=format&fit=crop', alt: 'UPS uninterruptible power supply' },
+                      { id: 'dev_peripheral', name: 'Keyboard/Mouse', value: 'Keyboard / Mouse', image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&q=80&auto=format&fit=crop', alt: 'Computer keyboard and mouse' },
+                      { id: 'dev_other', name: 'Other', value: 'Other', image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&q=80&auto=format&fit=crop', alt: 'Other ICT equipment' },
+                    ];
+
+                    ( function renderEquipmentCards ()
+                    {
+                      const container = document.getElementById( 'deviceTypeCards' );
+                      if ( !container ) return;
+                      container.innerHTML = equipmentTypes.map( ( t, i ) => `
+                    <div class="col-6 col-md-4">
+                      <input type="radio" class="btn-check device-radio" name="deviceType" id="${ t.id }" value="${ t.value }"${ i === 0 ? ' required' : '' } />
+                      <label class="device-pick" for="${ t.id }">
+                        <img src="${ t.image }" alt="${ t.alt }" />
+                        <span class="device-pick-name">${ t.name }</span>
+                      </label>
+                    </div>`).join( '' );
+                    } )();
+                  </script>
+                </div>
+              </div>
+
+              <!-- - Section 3: Request Details ------------------ -->
+              <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                  <h6 class="mb-0 fw-bold">
+                    <span class="badge bg-primary rounded-circle me-2">3</span>
+                    Request Details
+                  </h6>
+                </div>
+                <div class="card-body p-4">
+                  <div class="row g-3">
+
+                    <!-- Title -->
+                    <div class="col-12">
+                      <label for="title" class="form-label fw-semibold">
+                        <i class="bi bi-tag me-1 text-primary"></i>Request Title <span class="text-danger">*</span>
+                      </label>
+                      <input type="text" class="form-control form-control-lg" id="title"
+                        placeholder="e.g. Laptop screen not working" required minlength="5" />
+                      <div class="invalid-feedback">Please provide a clear request title (min 5 characters).</div>
+                    </div>
+
+                    <!-- Category & Priority -->
+                    <div class="col-md-6">
+                      <label for="category" class="form-label fw-semibold">
+                        <i class="bi bi-tags me-1 text-primary"></i>Request Category <span class="text-danger">*</span>
+                      </label>
+                      <select class="form-select form-select-lg" id="category" required
+                        aria-describedby="categoryFeedback">
+                        <option value="" disabled selected>Select Request Category</option>
+                        <option value="Hardware Problem">Hardware Problem</option>
+                        <option value="Software Problem">Software Problem</option>
+                        <option value="Internet Connectivity">Internet Connectivity</option>
+                        <option value="Printer / Scanner">Printer / Scanner</option>
+                        <option value="Computer / Laptop">Computer / Laptop</option>
+                        <option value="Account / Password">Account / Password</option>
+                        <option value="Email Problem">Email Problem</option>
+                        <option value="System / Application">System / Application</option>
+                        <option value="ICT Security">ICT Security</option>
+                        <option value="Other">Other</option>
+                      </select>
+                      <div class="invalid-feedback" id="categoryFeedback">Please select a request category.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label for="priority" class="form-label fw-semibold">
+                        <i class="bi bi-exclamation-triangle me-1 text-primary"></i>Priority <span
+                          class="text-danger">*</span>
+                      </label>
+                      <select class="form-select form-select-lg" id="priority" required>
+                        <option value="">-- Select Priority --</option>
+                        <option value="low">&#9679; Low — Not urgent</option>
+                        <option value="medium" selected>&#9679; Medium — Normal</option>
+                        <option value="high">&#9679; High — Urgent</option>
+                        <option value="critical">&#9679; Critical — Stop work</option>
+                      </select>
+                      <div class="invalid-feedback">Please select a priority.</div>
+                      <!-- Color legend -->
+                      <div class="d-flex gap-3 mt-2">
+                        <span class="small"><span style="color:#198754;font-size:1rem;">&#9679;</span> Low</span>
+                        <span class="small"><span style="color:#2563eb;font-size:1rem;">&#9679;</span> Medium</span>
+                        <span class="small"><span style="color:#fd7e14;font-size:1rem;">&#9679;</span> High</span>
+                        <span class="small"><span style="color:#dc3545;font-size:1rem;">&#9679;</span> Critical</span>
+                      </div>
+                    </div>
+
+                    <!-- ICT Asset -->
+                    <div class="col-12">
+                      <label for="asset" class="form-label fw-semibold">
+                        <i class="bi bi-pc-display me-1 text-primary"></i>ICT Asset Tag
+                      </label>
+                      <select class="form-select" id="asset" aria-describedby="assetFeedback assetHelp">
+                        <option value="" disabled selected>Loading ICT Assets...</option>
+                      </select>
+                      <div class="invalid-feedback" id="assetFeedback"></div>
+                      <div class="form-text" id="assetHelp">Select the asset tag if your device is registered in the
+                        system. Choose "No Asset / Not Applicable" if not applicable.</div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="col-12">
+                      <label for="description" class="form-label fw-semibold">
+                        <i class="bi bi-chat-text me-1 text-primary"></i>Problem Description <span
+                          class="text-danger">*</span>
+                      </label>
+                      <textarea class="form-control" id="description" rows="5"
+                        placeholder="Describe the problem in detail. Include:&#10;� When did it start?&#10;� What were you doing when it happened?&#10;� Any error messages you saw?"
+                        required minlength="20"></textarea>
+                      <div class="d-flex justify-content-between mt-1">
+                        <div class="form-text">Be as detailed as possible to help the technician.</div>
+                        <span class="form-text" id="descCount">0 / 1000</span>
+                      </div>
+                      <div class="invalid-feedback">Description must be at least 20 characters.</div>
+                    </div>
+
+                    <!-- Attachment -->
+                    <div class="col-12">
+                      <label for="attachment" class="form-label fw-semibold">
+                        <i class="bi bi-paperclip me-1 text-primary"></i>Attach Screenshot / Document (Optional)
+                      </label>
+                      <input type="file" class="form-control" id="attachment"
+                        accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx" />
+                      <div class="form-text">Max 5MB. Accepted: JPG, PNG, PDF, DOC.</div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              <!-- - Preview Summary ------------------------------ -->
+              <div class="card border-0 shadow-sm mb-4 d-none" id="summaryCard">
+                <div class="card-header bg-light py-3 border-bottom">
+                  <h6 class="mb-0 fw-bold"><i class="bi bi-eye me-2 text-success"></i>Request Summary � Please Review
+                  </h6>
+                </div>
+                <div class="card-body p-4">
+                  <div class="row g-3" id="summaryContent"></div>
+                </div>
+              </div>
+
+              <!-- - Submit Buttons ------------------------------- -->
+              <div class="d-flex gap-3">
+                <button type="button" class="btn btn-outline-secondary btn-lg px-4" id="previewBtn">
+                  <i class="bi bi-eye me-1"></i>Preview
+                </button>
+                <button type="submit" class="btn btn-primary btn-lg px-5 fw-semibold flex-grow-1" id="submitBtn">
+                  <span class="spinner-border spinner-border-sm me-2 d-none" id="submitSpinner"></span>
+                  <i class="bi bi-send me-1" id="submitIcon"></i><span id="submitBtnLabel">Submit Request</span>
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-lg" id="clearBtn" title="Clear this form">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </main>
     </div>
-  </nav>
-
-  <!-- Main -->
-  <div class="flex-grow-1">
-    <header class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
-      <div class="d-flex align-items-center gap-3">
-        <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle"><i class="bi bi-list"></i></button>
-        <div>
-          <h5 class="mb-0 fw-bold">Submit Maintenance Request</h5>
-          <div class="text-muted small">Fill in the form below to report an ICT issue</div>
-        </div>
-      </div>
-      <a href="dashboard.html" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i>Back
-      </a>
-    </header>
-
-    <main class="p-3 p-md-4">
-      <div class="row justify-content-center">
-        <div class="col-lg-9 col-xl-8">
-
-          <!-- Alert -->
-          <div id="requestAlert" class="alert d-none mb-3" role="alert"></div>
-
-          <form id="requestForm" novalidate enctype="multipart/form-data">
-
-            <!-- - Section 1: Requester Info ------------------- -->
-            <div class="card border-0 shadow-sm mb-4">
-              <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="mb-0 fw-bold">
-                  <span class="badge bg-primary rounded-circle me-2">1</span>
-                  Your Information
-                </h6>
-              </div>
-              <div class="card-body p-4">
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label for="requesterName" class="form-label fw-semibold">
-                      <i class="bi bi-person me-1 text-primary"></i>Full Name <span class="text-danger">*</span>
-                    </label>
-                    <input type="text" class="form-control form-control-lg" id="requesterName"
-                           placeholder="e.g. John Doe" required minlength="2" />
-                    <div class="invalid-feedback">Please enter your full name.</div>
-                  </div>
-                  <div class="col-md-6">
-                    <label for="requesterPhone" class="form-label fw-semibold">
-                      <i class="bi bi-telephone me-1 text-primary"></i>Phone Number <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group input-group-lg">
-                      <span class="input-group-text"><i class="bi bi-telephone-fill text-muted"></i></span>
-                      <input type="tel" class="form-control" id="requesterPhone"
-                             placeholder="+1 234 567 8900" required />
-                    </div>
-                    <div class="form-text">We'll use this to contact you about your request.</div>
-                    <div class="invalid-feedback">Please enter your phone number.</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- - Section 2: Device Type ---------------------- -->
-            <div class="card border-0 shadow-sm mb-4">
-              <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="mb-0 fw-bold">
-                  <span class="badge bg-primary rounded-circle me-2">2</span>
-                  Device Type
-                </h6>
-              </div>
-              <div class="card-body p-4">
-                <label class="form-label fw-semibold mb-3">
-                  Select the device that has a hardware/software fault <span class="text-danger">*</span>
-                </label>
-                <div class="row g-3" id="deviceTypeCards">
-
-                  <div class="col-6 col-md-4 col-lg-2">
-                    <input type="radio" class="btn-check" name="deviceType" id="dev_computer" value="Desktop Computer" required />
-                    <label class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center gap-2" for="dev_computer">
-                      <i class="bi bi-pc-display fs-2"></i>
-                      <span class="small fw-semibold">Desktop</span>
-                    </label>
-                  </div>
-
-                  <div class="col-6 col-md-4 col-lg-2">
-                    <input type="radio" class="btn-check" name="deviceType" id="dev_laptop" value="Laptop" />
-                    <label class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center gap-2" for="dev_laptop">
-                      <i class="bi bi-laptop fs-2"></i>
-                      <span class="small fw-semibold">Laptop</span>
-                    </label>
-                  </div>
-
-                  <div class="col-6 col-md-4 col-lg-2">
-                    <input type="radio" class="btn-check" name="deviceType" id="dev_printer" value="Printer" />
-                    <label class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center gap-2" for="dev_printer">
-                      <i class="bi bi-printer fs-2"></i>
-                      <span class="small fw-semibold">Printer</span>
-                    </label>
-                  </div>
-
-                  <div class="col-6 col-md-4 col-lg-2">
-                    <input type="radio" class="btn-check" name="deviceType" id="dev_scanner" value="Scanner" />
-                    <label class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center gap-2" for="dev_scanner">
-                      <i class="bi bi-upc-scan fs-2"></i>
-                      <span class="small fw-semibold">Scanner</span>
-                    </label>
-                  </div>
-
-                  <div class="col-6 col-md-4 col-lg-2">
-                    <input type="radio" class="btn-check" name="deviceType" id="dev_monitor" value="Monitor" />
-                    <label class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center gap-2" for="dev_monitor">
-                      <i class="bi bi-display fs-2"></i>
-                      <span class="small fw-semibold">Monitor</span>
-                    </label>
-                  </div>
-
-                  <div class="col-6 col-md-4 col-lg-2">
-                    <input type="radio" class="btn-check" name="deviceType" id="dev_projector" value="Projector" />
-                    <label class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center gap-2" for="dev_projector">
-                      <i class="bi bi-easel fs-2"></i>
-                      <span class="small fw-semibold">Projector</span>
-                    </label>
-                  </div>
-
-                  <div class="col-6 col-md-4 col-lg-2">
-                    <input type="radio" class="btn-check" name="deviceType" id="dev_ups" value="UPS / Power Supply" />
-                    <label class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center gap-2" for="dev_ups">
-                      <i class="bi bi-battery-charging fs-2"></i>
-                      <span class="small fw-semibold">UPS</span>
-                    </label>
-                  </div>
-
-                  <div class="col-6 col-md-4 col-lg-2">
-                    <input type="radio" class="btn-check" name="deviceType" id="dev_peripheral" value="Keyboard / Mouse" />
-                    <label class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center gap-2" for="dev_peripheral">
-                      <i class="bi bi-keyboard fs-2"></i>
-                      <span class="small fw-semibold">Keyboard/Mouse</span>
-                    </label>
-                  </div>
-
-                  <div class="col-6 col-md-4 col-lg-2">
-                    <input type="radio" class="btn-check" name="deviceType" id="dev_other" value="Other" />
-                    <label class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center gap-2" for="dev_other">
-                      <i class="bi bi-hdd-stack fs-2"></i>
-                      <span class="small fw-semibold">Other</span>
-                    </label>
-                  </div>
-
-                </div>
-                <div class="invalid-feedback d-block mt-2" id="deviceTypeError" style="display:none!important;"></div>
-              </div>
-            </div>
-
-            <!-- - Section 3: Request Details ------------------ -->
-            <div class="card border-0 shadow-sm mb-4">
-              <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="mb-0 fw-bold">
-                  <span class="badge bg-primary rounded-circle me-2">3</span>
-                  Request Details
-                </h6>
-              </div>
-              <div class="card-body p-4">
-                <div class="row g-3">
-
-                  <!-- Title -->
-                  <div class="col-12">
-                    <label for="title" class="form-label fw-semibold">
-                      <i class="bi bi-tag me-1 text-primary"></i>Request Title <span class="text-danger">*</span>
-                    </label>
-                    <input type="text" class="form-control form-control-lg" id="title"
-                           placeholder="e.g. Laptop screen not working" required minlength="5" />
-                    <div class="invalid-feedback">Please provide a clear request title (min 5 characters).</div>
-                  </div>
-
-                  <!-- Category & Priority -->
-                  <div class="col-md-6">
-                    <label for="category" class="form-label fw-semibold">
-                      <i class="bi bi-tags me-1 text-primary"></i>Request Category <span class="text-danger">*</span>
-                    </label>
-                    <select class="form-select form-select-lg" id="category" required aria-describedby="categoryFeedback">
-                      <option value="" disabled selected>Select Request Category</option>
-                      <option value="Hardware Problem">Hardware Problem</option>
-                      <option value="Software Problem">Software Problem</option>
-                      <option value="Network / Internet">Network / Internet</option>
-                      <option value="Printer / Scanner">Printer / Scanner</option>
-                      <option value="Computer / Laptop">Computer / Laptop</option>
-                      <option value="Account / Password">Account / Password</option>
-                      <option value="Email Problem">Email Problem</option>
-                      <option value="System / Application">System / Application</option>
-                      <option value="ICT Security">ICT Security</option>
-                      <option value="Other">Other</option>
-                    </select>
-                    <div class="invalid-feedback" id="categoryFeedback">Please select a request category.</div>
-                  </div>
-
-                  <div class="col-md-6">
-                    <label for="priority" class="form-label fw-semibold">
-                      <i class="bi bi-exclamation-triangle me-1 text-primary"></i>Priority <span class="text-danger">*</span>
-                    </label>
-                    <select class="form-select form-select-lg" id="priority" required>
-                      <option value="">-- Select Priority --</option>
-                      <option value="low">&#9679; Low — Not urgent</option>
-                      <option value="medium" selected>&#9679; Medium — Normal</option>
-                      <option value="high">&#9679; High — Urgent</option>
-                      <option value="critical">&#9679; Critical — Stop work</option>
-                    </select>
-                    <div class="invalid-feedback">Please select a priority.</div>
-                    <!-- Color legend -->
-                    <div class="d-flex gap-3 mt-2">
-                      <span class="small"><span style="color:#198754;font-size:1rem;">&#9679;</span> Low</span>
-                      <span class="small"><span style="color:#0d6efd;font-size:1rem;">&#9679;</span> Medium</span>
-                      <span class="small"><span style="color:#fd7e14;font-size:1rem;">&#9679;</span> High</span>
-                      <span class="small"><span style="color:#dc3545;font-size:1rem;">&#9679;</span> Critical</span>
-                    </div>
-                  </div>
-
-                  <!-- ICT Asset -->
-                  <div class="col-12">
-                    <label for="asset" class="form-label fw-semibold">
-                      <i class="bi bi-pc-display me-1 text-primary"></i>ICT Asset Tag
-                    </label>
-                    <select class="form-select" id="asset" aria-describedby="assetFeedback assetHelp">
-                      <option value="" disabled selected>Loading assets...</option>
-                    </select>
-                    <div class="invalid-feedback" id="assetFeedback"></div>
-                    <div class="form-text" id="assetHelp">Select the asset tag if your device is registered in the system. Choose "No Asset / Not Applicable" if not applicable.</div>
-                  </div>
-
-                  <!-- Description -->
-                  <div class="col-12">
-                    <label for="description" class="form-label fw-semibold">
-                      <i class="bi bi-chat-text me-1 text-primary"></i>Problem Description <span class="text-danger">*</span>
-                    </label>
-                    <textarea class="form-control" id="description" rows="5"
-                              placeholder="Describe the problem in detail. Include:&#10;� When did it start?&#10;� What were you doing when it happened?&#10;� Any error messages you saw?"
-                              required minlength="20"></textarea>
-                    <div class="d-flex justify-content-between mt-1">
-                      <div class="form-text">Be as detailed as possible to help the technician.</div>
-                      <span class="form-text" id="descCount">0 / 1000</span>
-                    </div>
-                    <div class="invalid-feedback">Description must be at least 20 characters.</div>
-                  </div>
-
-                  <!-- Attachment -->
-                  <div class="col-12">
-                    <label for="attachment" class="form-label fw-semibold">
-                      <i class="bi bi-paperclip me-1 text-primary"></i>Attach Screenshot / Document (Optional)
-                    </label>
-                    <input type="file" class="form-control" id="attachment"
-                           accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx" />
-                    <div class="form-text">Max 5MB. Accepted: JPG, PNG, PDF, DOC.</div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-
-            <!-- - Preview Summary ------------------------------ -->
-            <div class="card border-0 shadow-sm mb-4 d-none" id="summaryCard">
-              <div class="card-header bg-light py-3 border-bottom">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-eye me-2 text-success"></i>Request Summary � Please Review</h6>
-              </div>
-              <div class="card-body p-4">
-                <div class="row g-3" id="summaryContent"></div>
-              </div>
-            </div>
-
-            <!-- - Submit Buttons ------------------------------- -->
-            <div class="d-flex gap-3">
-              <button type="button" class="btn btn-outline-secondary btn-lg px-4" id="previewBtn">
-                <i class="bi bi-eye me-1"></i>Preview
-              </button>
-              <button type="submit" class="btn btn-primary btn-lg px-5 fw-semibold flex-grow-1" id="submitBtn">
-                <span class="spinner-border spinner-border-sm me-2 d-none" id="submitSpinner"></span>
-                <i class="bi bi-send me-1"></i>Submit Request
-              </button>
-              <button type="reset" class="btn btn-outline-danger btn-lg" id="clearBtn">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-
-          </form>
-        </div>
-      </div>
-    </main>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/assets/js/validation.js"></script>
-<script src="/assets/js/main.js"></script>
-<script src="/assets/js/requests.js"></script>
-<script>
-/* -- Extra: Preview button + device type visual feedback -- */
-document.addEventListener('DOMContentLoaded', () => {
+  <!-- Clear Form Confirmation Modal -->
+  <div class="modal fade" id="clearFormModal" tabindex="-1" aria-labelledby="clearFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="clearFormModalLabel"><i class="bi bi-trash me-2 text-danger"></i>Clear
+            this form?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0">All information you entered in this form will be removed. Your request has not been submitted
+            yet.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" id="clearFormCancelBtn" data-bs-dismiss="modal"><i
+              class="bi bi-x-lg me-1"></i>Cancel</button>
+          <button type="button" class="btn btn-danger" id="clearFormConfirmBtn"><i class="bi bi-trash me-1"></i>Clear
+            Form</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  // Priority select — color the select border based on chosen priority
-  const priorityColors = { low: '#198754', medium: '#0d6efd', high: '#fd7e14', critical: '#dc3545' };
-  const prioritySelect = document.getElementById('priority');
-  function updatePriorityColor() {
-    const color = priorityColors[prioritySelect.value] || '#dee2e6';
-    prioritySelect.style.borderColor   = color;
-    prioritySelect.style.borderWidth   = '2px';
-    prioritySelect.style.color         = color;
-    prioritySelect.style.fontWeight    = '600';
-    prioritySelect.style.boxShadow     = prioritySelect.value ? `0 0 0 0.15rem ${color}33` : '';
-  }
-  prioritySelect?.addEventListener('change', updatePriorityColor);
-  updatePriorityColor(); // apply on load for default "medium"
-  const user = Auth.getUser();
-  if (user) {
-    const nameEl = document.getElementById('requesterName');
-    if (nameEl && !nameEl.value) nameEl.value = user.fullName || '';
-  }
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/validation.js?v=6"></script>
+  <script src="/assets/js/main.js?v=6"></script>
+  <script src="/assets/js/requests.js?v=6"></script>
+  <script>
+    /* -- Request form extras not covered by requests.js::initSubmitRequest:
+       priority border color. (Everything else — requester prefill, description
+       counter, device-type highlight, Preview, Submit, Clear — is bound inside
+       initSubmitRequest to avoid duplicate listeners.) */
+    document.addEventListener( 'DOMContentLoaded', () =>
+    {
 
-  // Description character counter
-  document.getElementById('description')?.addEventListener('input', function() {
-    document.getElementById('descCount').textContent = `${this.value.length} / 1000`;
-  });
-
-  // Device type radio � highlight selected card
-  document.querySelectorAll('input[name="deviceType"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      document.querySelectorAll('input[name="deviceType"] + label').forEach(l => {
-        l.style.borderColor = '';
-        l.style.background  = '';
-        l.style.color       = '';
-      });
-      const lbl = radio.nextElementSibling;
-      if (lbl) {
-        lbl.style.borderColor = '#0d6efd';
-        lbl.style.background  = '#e8f0fe';
-        lbl.style.color       = '#0d6efd';
+      // Priority select — color the select border based on chosen priority
+      const priorityColors = { low: '#198754', medium: '#2563eb', high: '#fd7e14', critical: '#dc3545' };
+      const prioritySelect = document.getElementById( 'priority' );
+      function updatePriorityColor ()
+      {
+        const color = priorityColors[prioritySelect.value] || '#dee2e6';
+        prioritySelect.style.borderColor = color;
+        prioritySelect.style.borderWidth = '2px';
+        prioritySelect.style.color = color;
+        prioritySelect.style.fontWeight = '600';
+        prioritySelect.style.boxShadow = prioritySelect.value ? `0 0 0 0.15rem ${ color }33` : '';
       }
-    });
-  });
-
-  // Preview button
-  document.getElementById('previewBtn')?.addEventListener('click', () => {
-    const name    = document.getElementById('requesterName').value;
-    const phone   = document.getElementById('requesterPhone').value;
-    const device  = document.querySelector('input[name="deviceType"]:checked')?.value || '—';
-    const title   = document.getElementById('title').value;
-    const cat     = document.getElementById('category').selectedOptions[0]?.text || '—';
-    const pri     = document.getElementById('priority').value;
-    const desc    = document.getElementById('description').value;
-    const asset   = document.getElementById('asset').selectedOptions[0]?.text || '—';
-
-    const card    = document.getElementById('summaryCard');
-    const content = document.getElementById('summaryContent');
-
-    const deviceIcons = { computer:'bi-pc-display', laptop:'bi-laptop', mobile:'bi-phone', tablet:'bi-tablet', printer:'bi-printer', other:'bi-hdd-stack' };
-    const priColours  = { low:'success', medium:'primary', high:'warning', critical:'danger' };
-
-    content.innerHTML = `
-      <div class="col-sm-6 col-md-3">
-        <div class="text-muted small mb-1"><i class="bi bi-person me-1"></i>Requester</div>
-        <div class="fw-semibold">${escHtml(name)||'—'}</div>
-      </div>
-      <div class="col-sm-6 col-md-3">
-        <div class="text-muted small mb-1"><i class="bi bi-telephone me-1"></i>Phone</div>
-        <div class="fw-semibold">${escHtml(phone)||'—'}</div>
-      </div>
-      <div class="col-sm-6 col-md-3">
-        <div class="text-muted small mb-1"><i class="bi bi-${deviceIcons[device]||'hdd-stack'} me-1"></i>Device</div>
-        <div class="fw-semibold text-capitalize">${device}</div>
-      </div>
-      <div class="col-sm-6 col-md-3">
-        <div class="text-muted small mb-1"><i class="bi bi-exclamation-triangle me-1"></i>Priority</div>
-        <span class="badge bg-${priColours[pri]||'secondary'} text-capitalize">${pri||'—'}</span>
-      </div>
-      <div class="col-12">
-        <div class="text-muted small mb-1"><i class="bi bi-tag me-1"></i>Title</div>
-        <div class="fw-semibold">${escHtml(title)||'—'}</div>
-      </div>
-      <div class="col-sm-6">
-        <div class="text-muted small mb-1"><i class="bi bi-tags me-1"></i>Category</div>
-        <div>${escHtml(cat)}</div>
-      </div>
-      <div class="col-sm-6">
-        <div class="text-muted small mb-1"><i class="bi bi-pc-display me-1"></i>Asset</div>
-        <div>${escHtml(asset)}</div>
-      </div>
-      <div class="col-12">
-        <div class="text-muted small mb-1"><i class="bi bi-chat-text me-1"></i>Description</div>
-        <div class="p-2 bg-white border rounded small" style="white-space:pre-wrap;max-height:100px;overflow-y:auto;">${escHtml(desc)||'—'}</div>
-      </div>`;
-
-    card.classList.remove('d-none');
-    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-
-  // Clear hides summary
-  document.getElementById('clearBtn')?.addEventListener('click', () => {
-    document.getElementById('summaryCard').classList.add('d-none');
-    document.querySelectorAll('input[name="deviceType"] + label').forEach(l => {
-      l.style.borderColor = ''; l.style.background = ''; l.style.color = '';
-    });
-  });
-});
-</script>
+      prioritySelect?.addEventListener( 'change', updatePriorityColor );
+      updatePriorityColor(); // apply on load for default "medium"
+    } );
+  </script>
+<script src="/assets/js/theme.js"></script>
 </body>
+
 </html>

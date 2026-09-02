@@ -1,15 +1,25 @@
 /* ============================================================
    responsive.css — Responsive / Mobile Overrides
-    Smart Computer Maintenance Service Request and Tracking System
+   DBU ICT Maintenance Request & Tracking System
    ============================================================ */
 
-/* ── Mobile Sidebar Overlay ────────────────────────────────── */
+/* ── Global mobile guards ──────────────────────────────────── */
+html, body { overflow-x: hidden; }
+
+/* Prevent wide tables / code / pre from breaking the page */
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+
+/* Avoid 100vw scrollbars from fixed/absolute elements */
+.main-content, .container, .container-fluid { max-width: 100%; }
+
+/* ── Mobile Sidebar Drawer ─────────────────────────────────── */
 @media (max-width: 991.98px) {
   .sidebar {
     position: fixed !important;
-    left: -260px;
+    left: calc(-1 * var(--sidebar-width) - 14px);
     top: 0;
     z-index: 1050;
+    width: var(--sidebar-width) !important;
     height: 100vh !important;
     transition: left 0.3s ease;
     box-shadow: none;
@@ -17,7 +27,7 @@
 
   .sidebar.show {
     left: 0;
-    box-shadow: 4px 0 20px rgba(0,0,0,.25);
+    box-shadow: 8px 0 32px rgba(2,6,23,.4);
   }
 
   /* Overlay backdrop */
@@ -25,8 +35,10 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.5);
+    background: rgba(15,23,42,.55);
+    backdrop-filter: blur(2px);
     z-index: 1040;
+    transition: opacity .2s;
   }
 
   .sidebar-overlay.show { display: block; }
@@ -35,19 +47,23 @@
   .sidebar-toggle-btn { display: inline-flex !important; }
 
   .main-content { width: 100% !important; }
+
+  /* Topbar adjust for the hamburger */
+  .topbar { padding-left: 1rem !important; padding-right: 1rem !important; }
 }
 
 /* ── Topbar ────────────────────────────────────────────────── */
 @media (max-width: 767.98px) {
   .topbar { padding: 0.5rem 1rem !important; }
-  .topbar h5 { font-size: 0.95rem; }
+  .topbar h5 { font-size: .95rem; }
+  .topbar .gap-3 { gap: .6rem !important; }
 }
 
 /* ── Hero Section ──────────────────────────────────────────── */
 @media (max-width: 767.98px) {
   .hero-section { padding: 3rem 0 !important; }
   .hero-section h1 { font-size: 1.6rem; }
-  .hero-section p.lead { font-size: 0.95rem; }
+  .hero-section p.lead { font-size: .95rem; }
 }
 
 /* ── Dashboard Cards ───────────────────────────────────────── */
@@ -57,35 +73,21 @@
 }
 
 /* ── Tables on small screens ───────────────────────────────── */
+/* Tables stay horizontally scrollable inside .table-responsive
+   so page width is never broken. Table headers remain visible
+   as a proper, professional header. */
 @media (max-width: 767.98px) {
-  .table-responsive table thead { display: none; }
+  .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-  .table-responsive table tr {
-    display: block;
-    margin-bottom: 0.75rem;
-    border: 1px solid #dee2e6;
-    border-radius: 0.4rem;
-    overflow: hidden;
+  .table-responsive table {
+    min-width: 520px;
+    width: 100%;
   }
 
-  .table-responsive table td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #f0f0f0;
-  }
+  .table thead th { white-space: nowrap; }
+  .table td, .table th { white-space: nowrap; }
 
-  .table-responsive table td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    font-size: 0.78rem;
-    color: #6c757d;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    margin-right: 1rem;
-    flex-shrink: 0;
-  }
+  .table td:last-child .btn { margin: .125rem 0; }
 }
 
 /* ── Modals ────────────────────────────────────────────────── */
@@ -98,6 +100,8 @@
 /* ── Forms ─────────────────────────────────────────────────── */
 @media (max-width: 575.98px) {
   .row.g-3 > [class*="col-md"] { flex: 0 0 100%; max-width: 100%; }
+  .btn-lg { width: 100%; }
+  .d-flex.gap-3 > .btn-lg { margin-bottom: .4rem; }
 }
 
 /* ── Auth Card ─────────────────────────────────────────────── */
@@ -124,8 +128,13 @@
 
 /* ── Print Styles ──────────────────────────────────────────── */
 @media print {
-  .sidebar, .topbar, .btn, .modal { display: none !important; }
-  body { background: #fff; font-size: 12pt; }
+  .sidebar, .topbar, .btn, .modal, .navbar, .footer, .offcanvas { display: none !important; }
+  body { background: #fff !important; font-size: 12pt; }
+  .dashboard-body { background: #fff !important; }
+  .main-content { width: 100% !important; }
   .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
   table { width: 100% !important; }
+  .table-responsive table thead { display: table-header-group !important; }
+  .table-responsive table tr,
+  .table-responsive table td { display: table-row; }
 }

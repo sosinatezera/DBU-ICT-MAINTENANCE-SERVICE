@@ -10,6 +10,8 @@ const GENERAL_FIELDS = [
   'defaultLanguage', 'timezone', 'dateFormat',
 ];
 
+const VALID_PRIORITIES = ['low', 'medium', 'high', 'critical'];
+
 const NOTIF_FIELDS = [
   'notifNewRequest', 'notifAssignment', 'notifStatusChange',
   'notifCompletion', 'notifSystemSecurity', 'emailNotifications',
@@ -53,6 +55,24 @@ const updateGeneral = async (req, res, next) => {
     if (req.body.dateFormat !== undefined) {
       const fmtErr = validateEnum(req.body.dateFormat, VALID_DATE_FORMATS, 'date format');
       if (fmtErr) return res.status(400).json({ success: false, message: fmtErr });
+    }
+
+    /* Quick / operational settings */
+    if (req.body.publicRegistration !== undefined) settings.publicRegistration = !!req.body.publicRegistration;
+    if (req.body.techAutoNotify !== undefined)     settings.techAutoNotify     = !!req.body.techAutoNotify;
+
+    if (req.body.slaResponseHours !== undefined) {
+      const sla = Number(req.body.slaResponseHours);
+      if (!Number.isFinite(sla) || sla < 1 || sla > 720) {
+        return res.status(400).json({ success: false, message: 'SLA response time must be between 1 and 720 hours.' });
+      }
+      settings.slaResponseHours = sla;
+    }
+
+    if (req.body.defaultPriority !== undefined) {
+      const priErr = validateEnum(req.body.defaultPriority, VALID_PRIORITIES, 'default priority');
+      if (priErr) return res.status(400).json({ success: false, message: priErr });
+      settings.defaultPriority = req.body.defaultPriority;
     }
 
     GENERAL_FIELDS.forEach((f) => {

@@ -307,12 +307,8 @@ function typeIcon(type) {
            danger:  'bi-x-circle-fill',     info:    'bi-bell-fill' }[type] || 'bi-bell-fill';
 }
 function typeColour(type) {
-  return { success: '#198754', warning: '#fd7e14', danger: '#dc3545', info: '#0d6efd' }[type] || '#0d6efd';
+  return { success: '#198754', warning: '#fd7e14', danger: '#dc3545', info: '#2563eb' }[type] || '#2563eb';
 }
 function typeColourSoft(type) {
   return { success: '#d1e7dd', warning: '#fff3cd', danger: '#f8d7da', info: '#cfe2ff' }[type] || '#cfe2ff';
-}
-function escHtml(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
