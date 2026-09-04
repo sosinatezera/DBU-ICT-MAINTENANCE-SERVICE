@@ -52,7 +52,6 @@
             style="width:36px;height:36px;" id="avatarInitial">T</div>
           <div style="overflow:hidden;">
             <div class="small fw-semibold text-white text-truncate" id="sidebarUserName">Technician</div>
-            <div class="text-white-50" style="font-size:.7rem;" id="sidebarSpec">—</div>
           </div>
         </div>
         <!-- Availability toggle -->
@@ -100,7 +99,6 @@
               <div class="flex-grow-1">
                 <h4 class="mb-1" id="profileFullName">Technician Name</h4>
                 <p class="text-muted mb-1" id="profileEmail">tech@example.com</p>
-                <span class="badge bg-warning text-dark" id="profileSpecialization">General</span>
               </div>
               <button type="button" class="btn btn-primary btn-sm" id="editProfileBtn" data-i18n="profile.edit">Edit Profile</button>
             </div>
@@ -128,7 +126,7 @@
                     </div>
                     <div class="col-md-6">
                       <label for="phone" class="form-label" data-i18n="profile.phone">Phone Number</label>
-                      <input type="tel" class="form-control" id="phone" name="phone" placeholder="+251 9XX XXX XXX">
+                      <input type="tel" class="form-control" id="phone" name="phone" placeholder="e.g., 0912345678" maxlength="10" inputmode="numeric" pattern="(09|07)[0-9]{8}">
                     </div>
                     <div class="col-md-6">
                       <label for="department" class="form-label" data-i18n="profile.department">Department</label>
@@ -137,34 +135,12 @@
                     </div>
                     <div class="col-md-6">
                       <label for="gender" class="form-label" data-i18n="profile.gender">Gender</label>
-                      <select class="form-select" id="gender" name="gender">
+                      <select class="form-select" id="gender" name="gender" required>
                         <option value="">—</option>
                         <option value="Male" data-i18n="auth.gender.male">Male</option>
                         <option value="Female" data-i18n="auth.gender.female">Female</option>
                         <option value="Other" data-i18n="auth.gender.other">Other</option>
                         <option value="Prefer not to say" data-i18n="auth.gender.prefer">Prefer not to say</option>
-                      </select>
-                    </div>
-                    <div class="col-md-6">
-                      <label for="specialization" class="form-label" data-i18n="profile.specialization">Specialization</label>
-                      <select class="form-select" id="specialization" name="specialization">
-                        <option value="hardware">Hardware Repair</option>
-                        <option value="software">Software Support</option>
-                        <option value="network">Network & Connectivity</option>
-                        <option value="printer">Printer Maintenance</option>
-                        <option value="general">General ICT Support</option>
-                      </select>
-                    </div>
-                    <div class="col-md-6">
-                      <label for="employeeId" class="form-label" data-i18n="profile.employeeId">Employee ID</label>
-                      <input type="text" class="form-control" id="employeeId" name="employeeId" placeholder="e.g., TECH-001">
-                    </div>
-                    <div class="col-md-6">
-                      <label for="shift" class="form-label" data-i18n="profile.shift">Shift</label>
-                      <select class="form-select" id="shift" name="shift">
-                        <option value="morning">Morning (8:00 - 16:00)</option>
-                        <option value="afternoon">Afternoon (16:00 - 00:00)</option>
-                        <option value="night">Night (00:00 - 08:00)</option>
                       </select>
                     </div>
                     <div class="col-md-6">
@@ -193,22 +169,36 @@
               </div>
               <div class="card-body">
                 <form id="passwordForm" class="needs-validation" novalidate>
+                  <input type="email" class="d-none" id="cardPwdUsername" autocomplete="username" readonly tabindex="-1" aria-hidden="true">
                   <div class="row g-3">
                     <div class="col-md-6">
                       <label for="currentPassword" class="form-label" data-i18n="profile.currentPassword">Current Password</label>
-                      <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                      <div class="input-group">
+                        <input type="password" class="form-control" id="currentPassword" name="currentPassword" autocomplete="current-password" required>
+                        <button class="btn btn-outline-secondary password-toggle" type="button" data-target="currentPassword" aria-label="Show password"><i class="bi bi-eye"></i></button>
+                      </div>
                     </div>
                     <div class="col-md-6">
                       <label for="newPassword" class="form-label" data-i18n="profile.newPassword">New Password</label>
-                      <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="6">
+                      <div class="input-group">
+                        <input type="password" class="form-control" id="newPassword" name="newPassword" autocomplete="new-password" required minlength="8">
+                        <button class="btn btn-outline-secondary password-toggle" type="button" data-target="newPassword" aria-label="Show password"><i class="bi bi-eye"></i></button>
+                      </div>
+                      <div class="form-text" data-i18n="profile.passwordHint">Minimum 8 characters with letters and numbers</div>
                     </div>
                     <div class="col-md-6">
-                      <label for="confirmPassword" class="form-label" data-i18n="profile.confirmPassword">Confirm New Password</label>
-                      <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                      <label for="confirmPassword" class="form-label" data-i18n="profile.confirmPassword">Confirm Password</label>
+                      <div class="input-group">
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" autocomplete="new-password" required>
+                        <button class="btn btn-outline-secondary password-toggle" type="button" data-target="confirmPassword" aria-label="Show password"><i class="bi bi-eye"></i></button>
+                      </div>
                     </div>
                   </div>
                   <div class="d-flex gap-2 mt-3">
-                    <button type="submit" class="btn btn-primary" data-i18n="profile.updatePassword">Update Password</button>
+                    <button type="submit" class="btn btn-primary" id="passwordSaveBtn" data-i18n="profile.updatePassword">
+                      <span class="spinner-border spinner-border-sm me-1 d-none" id="passwordSaveSpinner"></span>
+                      <span data-i18n="profile.updatePassword">Update Password</span>
+                    </button>
                   </div>
                 </form>
               </div>
@@ -293,7 +283,7 @@
               </div>
               <div class="card-body text-center">
                 <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center text-dark fw-bold flex-shrink-0 mx-auto mb-3"
-                  style="width:80px;height:80px;font-size:2rem;" id="avatarInitialLarge">T</div>
+                  style="width:80px;height:80px;font-size:2rem;" id="avatarInitialLargePhoto">T</div>
                 <p class="text-muted small mb-3" data-i18n="profile.photoHint">Click to change photo</p>
                 <button type="button" class="btn btn-outline-primary" id="changePhotoBtn" data-i18n="profile.changePhoto">Change Photo</button>
                 <div class="mt-3">
@@ -355,34 +345,37 @@
         </div>
         <div class="modal-body">
           <div id="pwdAlert" class="alert d-none"></div>
-          <div class="mb-3">
-            <label for="pwdCurrent" class="form-label fw-semibold" data-i18n="profile.currentPassword">Current Password</label>
-            <div class="input-group">
-              <input type="password" class="form-control" id="pwdCurrent" autocomplete="current-password" required>
-              <button class="btn btn-outline-secondary password-toggle" type="button" data-target="pwdCurrent" aria-label="Show password">
-                <i class="bi bi-eye"></i>
-              </button>
+          <form id="passwordModalForm" novalidate>
+            <input type="email" class="form-control d-none" id="pwdUsername" autocomplete="username" readonly tabindex="-1" aria-hidden="true">
+            <div class="mb-3">
+              <label for="pwdCurrent" class="form-label fw-semibold" data-i18n="profile.currentPassword">Current Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="pwdCurrent" autocomplete="current-password" required>
+                <button class="btn btn-outline-secondary password-toggle" type="button" data-target="pwdCurrent" aria-label="Show password">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
             </div>
-          </div>
-          <div class="mb-3">
-            <label for="pwdNew" class="form-label fw-semibold" data-i18n="profile.newPassword">New Password</label>
-            <div class="input-group">
-              <input type="password" class="form-control" id="pwdNew" autocomplete="new-password" required minlength="8">
-              <button class="btn btn-outline-secondary password-toggle" type="button" data-target="pwdNew" aria-label="Show password">
-                <i class="bi bi-eye"></i>
-              </button>
+            <div class="mb-3">
+              <label for="pwdNew" class="form-label fw-semibold" data-i18n="profile.newPassword">New Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="pwdNew" autocomplete="new-password" required minlength="8">
+                <button class="btn btn-outline-secondary password-toggle" type="button" data-target="pwdNew" aria-label="Show password">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              <div class="form-text" data-i18n="profile.passwordHint">Minimum 8 characters</div>
             </div>
-            <div class="form-text" data-i18n="profile.passwordHint">Minimum 8 characters</div>
-          </div>
-          <div class="mb-3">
-            <label for="pwdConfirm" class="form-label fw-semibold" data-i18n="profile.confirmPassword">Confirm New Password</label>
-            <div class="input-group">
-              <input type="password" class="form-control" id="pwdConfirm" autocomplete="new-password" required>
-              <button class="btn btn-outline-secondary password-toggle" type="button" data-target="pwdConfirm" aria-label="Show password">
-                <i class="bi bi-eye"></i>
-              </button>
+            <div class="mb-3">
+              <label for="pwdConfirm" class="form-label fw-semibold" data-i18n="profile.confirmPassword">Confirm New Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="pwdConfirm" autocomplete="new-password" required>
+                <button class="btn btn-outline-secondary password-toggle" type="button" data-target="pwdConfirm" aria-label="Show password">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
             </div>
-          </div>
+          </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="profile.cancel">Cancel</button>
@@ -395,184 +388,494 @@
     </div>
   </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Translation helper with fallback
-      const t = (key) => (window.t ? window.t(key) : key);
-
-      // Initialize password toggles
-      if (typeof initPasswordToggles === 'function') {
-        initPasswordToggles();
-      }
-
-      // Load and populate profile data
-      await loadProfileData();
-
-      // Profile form save handler
-const profileForm = document.getElementById('profileForm');
-        if (profileForm) {
-          profileForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('profileSaveBtn');
-            const originalHtml = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
-
-            const formData = new FormData(profileForm);
-            const body = {};
-            formData.forEach((value, key) => { body[key] = value; });
-
-            try {
-              const { data } = await apiRequest('/technicians/me', { method: 'PUT', body });
-              showToast(t('profile.saved') || 'Profile saved successfully', 'success');
-              // Update sidebar name
-              if (data.fullName) {
-                document.getElementById('sidebarUserName')?.textContent = data.fullName;
-                document.getElementById('topUserName')?.textContent = 'Welcome, ' + data.fullName;
-                document.getElementById('welcomeName')?.textContent = data.fullName;
-                document.getElementById('profileFullName')?.textContent = data.fullName;
-              }
-            } catch (err) {
-              showToast(err.message || t('profile.loadFailed') || 'Failed to save profile', 'danger');
-            } finally {
-              btn.disabled = false;
-              btn.innerHTML = originalHtml;
-            }
-          });
-        }
-
-      // Cancel button - reload current data
-      const cancelBtn = document.getElementById('cancelEditBtn');
-      if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
-          loadProfileData();
-        });
-      }
-
-      // Avatar change/remove buttons
-      const changePhotoBtn = document.getElementById('changePhotoBtn');
-      const removePhotoBtn = document.getElementById('removePhotoBtn');
-      if (changePhotoBtn) changePhotoBtn.addEventListener('click', () => handleProfileAvatarChange?.());
-      if (removePhotoBtn) removePhotoBtn.addEventListener('click', () => handleProfileAvatarRemove?.());
-
-      // Password form handler (standalone page - the card form)
-      const passwordForm = document.getElementById('passwordForm');
-      if (passwordForm) {
-        passwordForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          await submitPasswordChange();
-        });
-      }
-
-      // Delete account button handler
-      const deleteAccountBtn = document.getElementById('deleteAccountBtn');
-      if (deleteAccountBtn) {
-        deleteAccountBtn.addEventListener('click', async () => {
-          const t = (key) => (window.t ? window.t(key) : key);
-          if (!confirm(t('profile.deleteAccountConfirm') || 'Are you sure you want to delete your account? This action cannot be undone.')) return;
-          deleteAccountBtn.disabled = true;
-          deleteAccountBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Deleting...';
-          try {
-            await apiRequest('/users/profile', { method: 'DELETE' });
-            showToast(t('profile.accountDeleted') || 'Account deleted successfully', 'success');
-            // Redirect to login
-            setTimeout(() => { window.location.href = '/views/login.html'; }, 1500);
-          } catch (err) {
-            showToast(err.message || 'Failed to delete account', 'danger');
-            deleteAccountBtn.disabled = false;
-            deleteAccountBtn.innerHTML = '<span data-i18n="profile.deleteAccount">Delete Account</span>';
-          }
-        });
-      }
-
-      // Edit profile button - toggle form editable state
-      const editProfileBtn = document.getElementById('editProfileBtn');
-      if (editProfileBtn) {
-        editProfileBtn.addEventListener('click', () => {
-          const form = document.getElementById('profileForm');
-          const inputs = form?.querySelectorAll('input:not([type="hidden"]), select, textarea');
-          const isEditing = editProfileBtn.dataset.editing === 'true';
-          
-          if (inputs) {
-            inputs.forEach(input => {
-              if (input.id !== 'email' && input.id !== 'role') {
-                input.readOnly = !isEditing;
-                input.disabled = !isEditing;
-              }
-            });
-          }
-          
-          if (!isEditing) {
-            editProfileBtn.textContent = t ? t('profile.cancel') : 'Cancel';
-            editProfileBtn.classList.remove('btn-primary');
-            editProfileBtn.classList.add('btn-outline-secondary');
-            editProfileBtn.dataset.editing = 'true';
-            showToast(t('profile.editMode') || 'Edit mode enabled. Modify fields and click Save.', 'info');
-          } else {
-            loadProfileData();
-            editProfileBtn.textContent = t ? t('profile.edit') : 'Edit Profile';
-            editProfileBtn.classList.remove('btn-outline-secondary');
-            editProfileBtn.classList.add('btn-primary');
-            editProfileBtn.dataset.editing = 'false';
-          }
-        });
-      }
-    });
-
-    // Load profile data from server
-    async function loadProfileData() {
-      try {
-        const { user } = await apiRequest('/auth/me');
-        if (!user) return;
-
-        // Populate form fields (user + technician fields)
-        document.getElementById('fullName')?.value = user.fullName || '';
-        document.getElementById('email')?.value = user.email || '';
-        document.getElementById('phone')?.value = user.phone || '';
-        document.getElementById('specialization')?.value = user.tech?.specialization || user.specialization || '';
-        document.getElementById('employeeId')?.value = user.tech?.id || user.employeeId || '';
-        document.getElementById('shift')?.value = user.tech?.shift || user.shift || '';
-
-        // Update display elements
-        const fullName = user.fullName || 'Technician';
-        document.getElementById('profileFullName')?.textContent = fullName;
-        document.getElementById('profileEmail')?.textContent = user.email || '';
-        document.getElementById('profileSpecialization')?.textContent = user.tech?.specialization || 'General';
-        document.getElementById('welcomeName')?.textContent = fullName;
-        document.getElementById('sidebarUserName')?.textContent = fullName;
-        document.getElementById('topUserName')?.textContent = 'Welcome, ' + fullName;
-        document.getElementById('avatarInitial')?.textContent = fullName.charAt(0).toUpperCase();
-        document.getElementById('avatarInitialLarge')?.textContent = fullName.charAt(0).toUpperCase();
-        document.getElementById('bannerInitial')?.textContent = fullName.charAt(0).toUpperCase();
-
-        // Update avatar if profile image exists
-        if (user.profileImage) {
-          const img = document.querySelector('#profileAvatar .profile-avatar-image');
-          if (img) {
-            const absUrl = (typeof profileUploadUrl === 'function')
-              ? profileUploadUrl(user.profileImage)
-              : user.profileImage;
-            img.src = absUrl;
-            img.hidden = false;
-            const initials = document.querySelector('#profileAvatar .profile-avatar-initials');
-            if (initials) initials.hidden = true;
-          }
-        }
-
-        // Update sidebar name
-        document.getElementById('sidebarUserName')?.textContent = user.fullName || 'Technician';
-        document.getElementById('topUserName')?.textContent = 'Welcome, ' + (user.fullName || 'Technician');
-      } catch (err) {
-        console.error('Failed to load profile:', err);
-      }
-    }
-  </script>
-
+  <!-- Shared libraries must load BEFORE the page logic so apiRequest,
+       showToast, profileUploadUrl, Validators, Auth, etc. are defined. -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/api-config.js"></script>
   <script src="/assets/js/main.js?v=6"></script>
-  <script src="/assets/js/profile.js?v=6"></script>
+  <script src="/assets/js/validation.js?v=6"></script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/lang.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (typeof Auth === 'undefined' || !Auth.isLoggedIn()) {
+        window.__authRedirecting = true;
+        window.location.href = '/views/login.html';
+        return;
+      }
+
+      const t = (key) => (window.t ? window.t(key) : key);
+      let _current = null;      // full user profile
+      let _tech = null;         // technician record
+      let _saving = false;      // duplicate-submit guard
+
+      // ---------- Helpers ----------
+      function enableInput(el) {
+        if (!el) return;
+        el.readOnly = false;
+        el.disabled = false;
+      }
+      function disableInput(el) {
+        if (!el) return;
+        el.readOnly = true;
+        el.disabled = true;
+      }
+
+      /* Extract a 10-digit Ethiopian mobile number (09/07 prefix) from raw input.
+         Handles E.164/country-code forms like "+251947119834" or "251947119834"
+         by extracting the local 10-digit part. Strips non-digits and truncates
+         to 10, keeping only values that match the backend PHONE_REGEX. */
+      function extractEthPhone(raw) {
+        if (!raw) return '';
+        const digits = (typeof raw === 'string' ? raw : '').replace(/\D/g, '');
+        if (/^(09|07)\d{8}$/.test(digits)) return digits;
+        const m251 = digits.match(/^251(09|07|9|7)\d{8}$/);
+        if (m251) {
+          const rest = digits.slice(3);
+          return (rest[0] === '0' ? rest : '0' + rest).slice(0, 10);
+        }
+        return digits.slice(0, 10);
+      }
+      function sanitizePhone(el) {
+        const fixed = extractEthPhone(el.value);
+        if (fixed !== el.value) el.value = fixed;
+      }
+      (function initPhoneSanitizer() {
+        const el = document.getElementById('phone');
+        if (!el) return;
+        el.addEventListener('input', () => sanitizePhone(el));
+        el.addEventListener('paste', (e) => {
+          e.preventDefault();
+          el.value = extractEthPhone((e.clipboardData || window.clipboardData).getData('text'));
+        });
+      })();
+
+      /* Convert a stored phone value into the app's required local mobile format
+         (exactly 10 digits starting with 09 or 07). Legacy/E.164 values such as
+         "+251947119834" become "0947119834" so they match the backend rule and can
+         be saved instead of hitting a 400. Any value that is not a valid Ethiopian
+         mobile is left untouched so the caller's validation can report it. */
+      function toEthMobilePhone(value) {
+        if (!value || typeof value !== 'string') return value;
+        const trimmed = value.trim();
+        if (/^(09|07)\d{8}$/.test(trimmed)) return trimmed;
+        const digits = trimmed.replace(/\D/g, '');
+        if (/^(251)?(09|07|9|7)\d{8}$/.test(digits)) {
+          const withoutCc = digits.replace(/^251/, '');
+          const local = withoutCc.slice(0, 10);
+          const normalized = (local[0] === '0' ? local : '0' + local);
+          if (/^(09|07)\d{8}$/.test(normalized)) return normalized;
+        }
+        return value;
+      }
+
+      function setAvatarSource() {
+        // Default avatar = yellow circle with initial. If a profile image exists,
+        // swap in the image for the large avatars.
+        const src = _current && _current.profileImage ? profileUploadUrl(_current.profileImage) : null;
+        const name = _current ? _current.fullName : 'T';
+
+        // Sidebar circle: initials only (keeps the flex layout intact).
+        const side = document.getElementById('avatarInitial');
+        if (side) side.textContent = name.charAt(0).toUpperCase();
+
+        // Large avatars (header + photo card): show photo if present, else initials.
+        ['avatarInitialLarge', 'avatarInitialLargePhoto'].forEach(id => {
+          const big = document.getElementById(id);
+          if (!big) return;
+          big.textContent = name.charAt(0).toUpperCase();
+          const container = big.closest('div');
+          if (!container) return;
+          let img = container.querySelector('img.profile-avatar-img');
+          if (src) {
+            if (!img) {
+              img = document.createElement('img');
+              img.className = 'profile-avatar-img';
+              img.alt = 'Profile Photo';
+              img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+              container.appendChild(img);
+            }
+            img.onerror = () => { img.remove(); big.hidden = false; };
+            img.src = src;
+            big.hidden = true;
+          } else {
+            if (img) img.remove();
+            big.hidden = false;
+          }
+        });
+      }
+
+      // ---------- Load profile ----------
+      async function loadProfileData() {
+        try {
+          const { user } = await apiRequest('/auth/me');
+          if (!user) return;
+          _current = user;
+
+          // Technician fields (best effort — may 404 if no tech record exists)
+          try {
+            const techRes = await apiRequest('/technicians/me');
+            _tech = techRes.data || null;
+          } catch (_) { _tech = null; }
+
+          // Populate form
+          const phoneVal = toEthMobilePhone(user.phone);
+          if (phoneVal !== user.phone) {
+            _current = { ...user, phone: phoneVal };
+          }
+          document.getElementById('fullName').value = user.fullName || '';
+          document.getElementById('email').value = user.email || '';
+          document.getElementById('phone').value = phoneVal || '';
+          document.getElementById('department').value = user.department || '';
+          document.getElementById('gender').value = user.gender || '';
+          const pwdUsername = document.getElementById('pwdUsername');
+          if (pwdUsername) pwdUsername.value = user.email || '';
+          const cardPwdUsername = document.getElementById('cardPwdUsername');
+          if (cardPwdUsername) cardPwdUsername.value = user.email || '';
+          if (_tech) {
+            document.getElementById('available').value = String(_tech.available !== false);
+          }
+
+          // Header + account info
+          const fullName = user.fullName || 'Technician';
+          document.getElementById('profileFullName').textContent = fullName;
+          document.getElementById('profileEmail').textContent = user.email || '';
+          document.getElementById('sidebarUserName').textContent = fullName;
+          document.getElementById('topUserName').textContent = 'Welcome, ' + fullName;
+
+          // Account info card
+          if (user.createdAt) document.getElementById('memberSince').textContent = formatDate(user.createdAt);
+          if (user.lastLogin) document.getElementById('lastLogin').textContent = formatDate(user.lastLogin);
+          document.getElementById('completionRate').textContent = (_tech && _tech.completionRate) ? _tech.completionRate + '%' : '—';
+
+          setAvatarSource();
+
+          // Sync sidebar/topbar via shared helper
+          const localUser = Auth.getUser();
+          if (localUser) {
+            localUser.fullName = user.fullName;
+            localUser.email = user.email;
+            localUser.role = user.role;
+            Auth.setUser(localUser);
+          }
+          if (typeof populateUserInfo === 'function') populateUserInfo();
+        } catch (err) {
+          if (err && err.redirected) return;
+          console.error('Failed to load profile:', err);
+          const main = document.getElementById('profileSection');
+          if (main) main.innerHTML = `<div class="alert alert-danger m-3"><i class="bi bi-exclamation-triangle-fill me-1"></i>${escHtml(err.message || 'Failed to load profile.')} <button class="btn btn-sm btn-outline-danger ms-2" onclick="window.location.reload()">Retry</button></div>`;
+        }
+      }
+
+      // ---------- Edit / Save / Cancel ----------
+      const EDITABLE = ['fullName', 'phone', 'department', 'gender', 'available'];
+
+      function enterEditMode() {
+        EDITABLE.forEach(id => enableInput(document.getElementById(id)));
+        document.getElementById('profileSaveBtn').closest('.d-flex').style.display = '';
+        document.getElementById('editProfileBtn').textContent = t('profile.cancel') || 'Cancel';
+        document.getElementById('editProfileBtn').className = 'btn btn-outline-secondary btn-sm';
+      }
+
+      function exitEditMode(restore) {
+        if (restore && _current) {
+          document.getElementById('fullName').value = _current.fullName || '';
+          document.getElementById('phone').value = _current.phone || '';
+          document.getElementById('department').value = _current.department || '';
+          document.getElementById('gender').value = _current.gender || '';
+          if (_tech) {
+            document.getElementById('available').value = String(_tech.available !== false);
+          }
+        }
+        EDITABLE.forEach(id => disableInput(document.getElementById(id)));
+        document.getElementById('profileSaveBtn').closest('.d-flex').style.display = 'none';
+        document.getElementById('editProfileBtn').textContent = t('profile.edit') || 'Edit Profile';
+        document.getElementById('editProfileBtn').className = 'btn btn-primary btn-sm';
+        EDITABLE.forEach(id => clearFieldValidation(id));
+      }
+
+      document.getElementById('editProfileBtn').addEventListener('click', () => {
+        const editing = document.getElementById('profileSaveBtn').closest('.d-flex').style.display !== 'none';
+        if (editing) {
+          if (hasUnsavedChanges() && !confirm(t('profile.unsaved') || 'You have unsaved changes. Are you sure you want to cancel?')) return;
+          exitEditMode(true);
+        } else {
+          enterEditMode();
+        }
+      });
+
+      function hasUnsavedChanges() {
+        if (!_current) return false;
+        return document.getElementById('fullName').value.trim() !== (_current.fullName || '') ||
+          document.getElementById('phone').value.trim() !== (_current.phone || '') ||
+          document.getElementById('department').value.trim() !== (_current.department || '') ||
+          document.getElementById('gender').value !== (_current.gender || '');
+      }
+
+      // Save Changes
+      document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (_saving) return;
+
+        const alerts = {
+          fullName: [v => Validators.required(v, 'Full name'), v => Validators.name(v, 'Full name')],
+          email: [Validators.email],
+          phone: [Validators.phone],
+        };
+        const fields = ['fullName', 'phone'];
+        let hasError = false;
+        fields.forEach(id => {
+          let err = null;
+          for (const check of alerts[id]) {
+            err = check(document.getElementById(id).value);
+            if (err) break;
+          }
+          if (err) { showFieldError(id, err); hasError = true; } else { clearFieldValidation(id); }
+        });
+
+        const gender = document.getElementById('gender').value;
+        const VALID_GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
+        if (!gender) { showFieldError('gender', 'Gender is required.'); hasError = true; }
+        else if (!VALID_GENDERS.includes(gender)) { showFieldError('gender', 'Please select a valid gender.'); hasError = true; }
+        else { clearFieldValidation('gender'); }
+
+        if (hasError) return;
+
+        const phoneRaw = document.getElementById('phone').value.trim();
+        const phoneNorm = phoneRaw ? toEthMobilePhone(phoneRaw) : null;
+        const body = {
+          fullName: document.getElementById('fullName').value.trim(),
+          phone: phoneNorm,
+          department: document.getElementById('department').value.trim() || null,
+          gender: gender,
+          available: document.getElementById('available').value === 'true',
+        };
+
+        _saving = true;
+        setLoading('profileSaveBtn', 'profileSaveSpinner', true);
+        try {
+          const res = await apiRequest('/technicians/me', { method: 'PUT', body });
+          showToast(t('profile.saved') || 'Profile updated successfully.', 'success');
+          await loadProfileData();
+          exitEditMode(false);
+        } catch (err) {
+          let msg = err.message || 'Failed to save profile.';
+          if (err.status === 400) msg = err.data?.message || msg;
+          else if (err.status === 401) msg = 'Session expired. Please log in again.';
+          else if (err.status === 403) msg = 'You do not have permission to edit this profile.';
+          else if (err.status === 404) msg = 'Profile not found.';
+          else if (err.status === 500) msg = 'Server error. Please try again later.';
+          showToast(msg, 'danger');
+        } finally {
+          _saving = false;
+          setLoading('profileSaveBtn', 'profileSaveSpinner', false);
+        }
+      });
+
+      // Cancel button
+      document.getElementById('cancelEditBtn').addEventListener('click', () => {
+        if (hasUnsavedChanges() && !confirm(t('profile.unsaved') || 'You have unsaved changes. Are you sure you want to cancel?')) return;
+        exitEditMode(true);
+      });
+
+      // ---------- Password changes ----------
+      function initPasswordToggles() {
+        document.querySelectorAll('.password-toggle').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const input = document.getElementById(btn.getAttribute('data-target'));
+            if (!input) return;
+            const hidden = input.type === 'password';
+            input.type = hidden ? 'text' : 'password';
+            btn.innerHTML = hidden ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+          });
+        });
+      }
+      initPasswordToggles();
+
+      function validatePasswordChange(current, next, confirm) {
+        const cur = (current || '').trim();
+        const nxt = (next || '').trim();
+        const cnf = (confirm || '').trim();
+        if (!cur) return { err: (t('profile.currentPassword') || 'Current Password') + ' is required.' };
+        if (!nxt) return { err: (t('profile.newPassword') || 'New Password') + ' is required.' };
+        if (!cnf) return { err: (t('profile.confirmPassword') || 'Confirm Password') + ' is required.' };
+        const pwErr = Validators.password(nxt);
+        if (pwErr) return { err: pwErr };
+        if (nxt !== cnf) return { err: t('profile.pwdMismatch') || 'New password and confirm password do not match.' };
+        if (cur === nxt) return { err: 'New password must be different from current password.' };
+        return {};
+      }
+
+      async function submitPasswordChange(current, next, confirm, opts) {
+        if (_saving) return;
+        const v = validatePasswordChange(current, next, confirm);
+        if (v.err) { showToast(v.err, 'danger'); return; }
+
+        _saving = true;
+        const btnId = (opts && opts.btnId) || 'passwordSaveBtn';
+        const spinId = (opts && opts.spinId) || 'passwordSaveSpinner';
+        setLoading(btnId, spinId, true);
+        try {
+          await apiRequest('/users/change-password', { method: 'PUT', body: { currentPassword: current, newPassword: next } });
+          showToast(t('profile.password.changed') || 'Password updated successfully.', 'success');
+          if (opts && opts.clear) opts.clear();
+        } catch (err) {
+          showToast(err.message || 'Could not change password.', 'danger');
+        } finally {
+          _saving = false;
+          setLoading(btnId, spinId, false);
+        }
+      }
+
+      // Inline card form
+      document.getElementById('passwordForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitPasswordChange(
+          document.getElementById('currentPassword').value,
+          document.getElementById('newPassword').value,
+          document.getElementById('confirmPassword').value,
+          {
+            clear: () => {
+              document.getElementById('currentPassword').value = '';
+              document.getElementById('newPassword').value = '';
+              document.getElementById('confirmPassword').value = '';
+            }
+          }
+        );
+      });
+
+      // Change Password modal (kept functional if opened)
+      const pwdModal = document.getElementById('changePasswordModal');
+      if (pwdModal) {
+        const pwdAlert = document.getElementById('pwdAlert');
+        const showPwdAlert = (msg, isErr) => {
+          if (!pwdAlert) { showToast(msg, isErr ? 'danger' : 'success'); return; }
+          pwdAlert.className = 'alert ' + (isErr ? 'alert-danger' : 'alert-success');
+          pwdAlert.textContent = msg;
+          pwdAlert.classList.remove('d-none');
+        };
+        pwdModal.addEventListener('hidden.bs.modal', () => {
+          if (pwdAlert) pwdAlert.classList.add('d-none');
+        });
+        document.getElementById('pwdSaveBtn').addEventListener('click', async () => {
+          const current = document.getElementById('pwdCurrent').value;
+          const next = document.getElementById('pwdNew').value;
+          const confirm = document.getElementById('pwdConfirm').value;
+          const v = validatePasswordChange(current, next, confirm);
+          if (v.err) { showPwdAlert(v.err, true); return; }
+          setLoading('pwdSaveBtn', 'pwdSaveSpinner', true);
+          try {
+            await apiRequest('/users/change-password', { method: 'PUT', body: { currentPassword: current, newPassword: next } });
+            showPwdAlert(t('profile.password.changed') || 'Password updated successfully.', false);
+            document.getElementById('pwdCurrent').value = '';
+            document.getElementById('pwdNew').value = '';
+            document.getElementById('pwdConfirm').value = '';
+          } catch (err) {
+            showPwdAlert(err.message || 'Could not change password.', true);
+          } finally {
+            setLoading('pwdSaveBtn', 'pwdSaveSpinner', false);
+          }
+        });
+      }
+
+      // ---------- Change / Remove Photo ----------
+      let photoInput = null;
+      document.getElementById('changePhotoBtn').addEventListener('click', () => {
+        if (!photoInput) {
+          photoInput = document.createElement('input');
+          photoInput.type = 'file';
+          photoInput.accept = 'image/jpeg,image/png,image/webp';
+          photoInput.hidden = true;
+          document.body.appendChild(photoInput);
+          photoInput.addEventListener('change', handlePhotoSelected);
+        }
+        photoInput.value = '';
+        photoInput.click();
+      });
+
+      async function handlePhotoSelected() {
+        const file = photoInput.files && photoInput.files[0];
+        if (!file) return;
+
+        const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowed.includes(file.type)) {
+          showToast(t('profile.invalidImage') || 'Please choose a JPG, PNG, or WebP image.', 'danger');
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          showToast(t('profile.tooLarge') || 'Image must be 5 MB or smaller.', 'danger');
+          return;
+        }
+
+        setLoading('changePhotoBtn', null, true);
+        try {
+          const fd = new FormData();
+          fd.append('profileImage', file);
+          const res = await apiRequest('/users/profile-image', { method: 'POST', body: fd, isFormData: true });
+          showToast(t('profile.success') || 'Profile photo updated successfully.', 'success');
+          if (_current) _current.profileImage = (res.data && res.data.profileImage) ? res.data.profileImage : null;
+          setAvatarSource();
+        } catch (err) {
+          showToast(err.message || 'Could not upload photo.', 'danger');
+        } finally {
+          setLoading('changePhotoBtn', null, false);
+        }
+      }
+
+      document.getElementById('removePhotoBtn').addEventListener('click', async () => {
+        if (!confirm(t('profile.removePhotoConfirm') || 'Are you sure you want to remove your profile photo?')) return;
+        setLoading('removePhotoBtn', null, true);
+        try {
+          await apiRequest('/users/profile-image', { method: 'DELETE' });
+          showToast(t('profile.success') || 'Profile photo removed successfully.', 'success');
+          if (_current) _current.profileImage = null;
+          setAvatarSource();
+        } catch (err) {
+          showToast(err.message || 'Could not remove photo.', 'danger');
+        } finally {
+          setLoading('removePhotoBtn', null, false);
+        }
+      });
+
+      // ---------- Delete Account ----------
+      document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
+        if (!confirm(t('profile.deleteAccountConfirm') || 'Are you sure you want to delete your account? This action cannot be undone.')) return;
+        setLoading('deleteAccountBtn', null, true);
+        try {
+          await apiRequest('/users/profile', { method: 'DELETE' });
+          showToast(t('profile.accountDeleted') || 'Account deleted successfully.', 'success');
+          Auth.clear();
+          setTimeout(() => { window.location.href = '/views/login.html'; }, 1500);
+        } catch (err) {
+          showToast(err.message || 'Could not delete account.', 'danger');
+          setLoading('deleteAccountBtn', null, false);
+        }
+      });
+
+      // ---------- Notification prefs (store locally) ----------
+      ['notifyAssigned', 'notifyUpdates', 'notifyComments', 'notifyDaily'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.checked = localStorage.getItem('nt_' + id) !== 'false';
+          el.addEventListener('change', () => localStorage.setItem('nt_' + id, el.checked));
+        }
+      });
+
+      // ---------- Logout ----------
+      document.getElementById('logoutBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        Auth.clear();
+        window.location.href = '/views/login.html';
+      });
+
+      // Hide Save/Cancel by default (shown in edit mode)
+      const actionRow = document.getElementById('profileSaveBtn').closest('.d-flex');
+      if (actionRow) actionRow.style.display = 'none';
+      EDITABLE.forEach(id => disableInput(document.getElementById(id)));
+
+      await loadProfileData();
+    });
+  </script>
 </body>
 </html>
