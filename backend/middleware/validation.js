@@ -8,9 +8,14 @@ const mongoose = require('mongoose');
 
 /* ── Constants ──────────────────────────────────────────── */
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[\x21-\x7E]{8,100}$/;
-const EMAIL_REGEX    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/* Gmail-only: local part must contain at least one letter and end exactly with @gmail.com (case-insensitive domain) */
+const EMAIL_REGEX    = /^(?=[A-Za-z0-9._%+-]*[A-Za-z])[A-Za-z0-9._%+-]+@gmail\.com$/i;
+/* Phone: Ethiopian mobile — exactly 10 digits (0-9) only, starting with 09 or 07.
+   No letters, spaces, +, -, or special chars. */
 const PHONE_REGEX   = /^(09|07)\d{8}$/;
-const NAME_REGEX    = /^[\p{L}\s.'-]{2,100}$/u;
+/* Full name: must contain at least one letter, allow letters/digits/spaces/apostrophes/dots/hyphens.
+   Rejects numbers-only and special-characters-only values; no length limit. */
+const NAME_REGEX    = /^(?=[\p{L}\d\s.'-]*[\p{L}])[\p{L}\d\s.'-]+$/u;
 
 const VALID_ROLES       = ['Requester', 'Technician', 'ICT Admin'];
 const VALID_STATUSES    = ['active', 'inactive'];
@@ -60,8 +65,9 @@ function validateRequired(value, fieldName) {
 function validateEmail(email) {
   if (!email || typeof email !== 'string') return 'Email is required.';
   const trimmed = email.trim();
+  if (trimmed.length === 0) return 'Email is required.';
   if (trimmed.length > 254) return 'Email is too long.';
-  if (!EMAIL_REGEX.test(trimmed)) return 'Please enter a valid email address.';
+  if (!EMAIL_REGEX.test(trimmed)) return 'Please enter a valid Gmail address ending with @gmail.com.';
   return null;
 }
 
@@ -81,17 +87,25 @@ function validatePasswordMatch(password, confirmPassword) {
 function validateName(name, fieldName = 'Name') {
   if (!name || typeof name !== 'string') return `${fieldName} is required.`;
   const trimmed = name.trim();
-  if (trimmed.length < 2) return `${fieldName} must be at least 2 characters.`;
+  if (trimmed.length === 0) return `${fieldName} is required.`;
 
   if (!NAME_REGEX.test(trimmed)) {
-    return `Please enter a valid ${fieldName.toLowerCase()}.`;
+    return `${fieldName} must contain letters and cannot contain only numbers or special characters.`;
   }
   return null;
 }
 
 function validatePhone(phone) {
   if (!phone || phone.trim() === '') return null;
-  if (!PHONE_REGEX.test(phone.trim())) return 'Enter a valid Ethiopian mobile number (10 digits, starting with 09 or 07).';
+  if (!PHONE_REGEX.test(phone.trim())) return 'Phone number must be exactly 10 digits starting with 09 or 07.';
+  return null;
+}
+
+/* Registration Terms-of-Service consent — must be explicitly true. */
+function validateTermsAccepted(agreed) {
+  if (agreed !== true && agreed !== 1 && agreed !== 'true') {
+    return 'You must agree to the Terms of Service before registering.';
+  }
   return null;
 }
 
@@ -173,6 +187,7 @@ module.exports = {
   validatePasswordMatch,
   validateName,
   validatePhone,
+  validateTermsAccepted,
   validateEnum,
   validateLength,
   validateBoolean,

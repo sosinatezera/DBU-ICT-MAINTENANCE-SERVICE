@@ -59,9 +59,9 @@
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-person text-muted"></i></span>
                   <input type="text" class="form-control" id="name"
-                         placeholder="Enter your full name" required minlength="3" />
+                         placeholder="Enter your full name" required />
                 </div>
-                <div class="invalid-feedback">Full name must be at least 3 characters.</div>
+                <div class="invalid-feedback">Full name must contain letters and cannot contain only numbers or special characters.</div>
               </div>
 
               <!-- ── Email ── -->
@@ -70,10 +70,10 @@
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-envelope text-muted"></i></span>
                   <input type="email" class="form-control" id="email"
-                         placeholder="e.g. john@dbu.edu.et" required autocomplete="email" />
+                         placeholder="e.g. example@gmail.com" required autocomplete="email" />
                 </div>
-                <div class="form-text">Use your official DBU email address.</div>
-                <div class="invalid-feedback">Please enter a valid email address.</div>
+                <div class="form-text">Use a Gmail address ending with @gmail.com.</div>
+                <div class="invalid-feedback">Please enter a valid Gmail address ending with @gmail.com.</div>
               </div>
 
               <!-- ── Department & Phone ── -->
@@ -102,8 +102,9 @@
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-telephone text-muted"></i></span>
                     <input type="tel" class="form-control" id="phone"
-                           placeholder="0912 345 678 (09 or 07)" />
+                           placeholder="0912345678" maxlength="10" inputmode="numeric" pattern="(09|07)[0-9]{8}" autocomplete="tel-national" />
                   </div>
+                  <div class="invalid-feedback">Phone number must be exactly 10 digits starting with 09 or 07.</div>
                 </div>
               </div>
 
@@ -161,12 +162,12 @@
               </div>
 
               <!-- ── Terms ── -->
-              <div class="form-check mb-4">
-                <input class="form-check-input" type="checkbox" id="agreeTerms" required />
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="agreeTerms" name="agreeTerms" required />
                 <label class="form-check-label small text-muted" for="agreeTerms">
-                  I agree to the <a href="#" class="text-primary">Terms of Service</a>
+                  I agree to the <a href="#" id="termsLink" class="text-primary">Terms of Service</a>
                 </label>
-                <div class="invalid-feedback">You must agree before registering.</div>
+                <div class="small text-danger d-none" id="termsError">You must agree to the Terms of Service before creating an account.</div>
               </div>
 
               <!-- ── Submit ── -->
@@ -198,6 +199,37 @@
   </div>
 </div>
 
+<!-- Terms of Service Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold" id="termsModalLabel"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Terms of Service</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body small" style="line-height:1.7;">
+        <p>Welcome to the Smart Computer Maintenance Service. By creating an account and using this service, you agree to the following terms:</p>
+        <h6 class="fw-bold">1. Acceptance of Terms</h6>
+        <p class="text-muted">By checking the "I agree to the Terms of Service" box and creating an account, you acknowledge that you have read, understood, and agreed to be bound by these terms.</p>
+        <h6 class="fw-bold">2. Authorized Use</h6>
+        <p class="text-muted">This system is intended for authorized personnel of DBU to submit, track, and manage ICT maintenance service requests. You agree to use the service only for legitimate maintenance requests and to provide accurate information.</p>
+        <h6 class="fw-bold">3. Account Responsibilities</h6>
+        <p class="text-muted">You are responsible for safeguarding your account credentials and for all activity that occurs under your account. Notify ICT Admin immediately if you suspect unauthorized access.</p>
+        <h6 class="fw-bold">4. Acceptable Conduct</h6>
+        <p class="text-muted">You agree not to misuse the service, submit false or duplicate requests, attempt to bypass security, or interfere with the operation of the system.</p>
+        <h6 class="fw-bold">5. Privacy</h6>
+        <p class="text-muted">Your personal information is used solely for the purpose of providing this maintenance service and will not be shared with third parties except as required to fulfill your requests or by law.</p>
+        <h6 class="fw-bold">6. Changes to Terms</h6>
+        <p class="text-muted">These terms may be updated from time to time. Continued use of the service after changes are posted constitutes acceptance of the revised terms.</p>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="agreeFromModal">I Agree</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/assets/js/validation.js?v=6"></script>
 <script>
@@ -213,6 +245,7 @@ function showAlert(id, msg, type) {
 }
 
 function setLoading(on) {
+  _submitting = on;
   document.getElementById('registerBtn').disabled = on;
   document.getElementById('registerSpinner').classList.toggle('d-none', !on);
   document.getElementById('registerBtnText').textContent = on ? (window.t ? t('auth.register.creating') : 'Creating account...') : (window.t ? t('auth.register.title') : 'Create Account');
@@ -225,6 +258,46 @@ attachRealTimeValidation('registerForm', [
   { fieldId: 'password', checks: [Validators.password] },
   { fieldId: 'phone', checks: [Validators.phone] },
 ]);
+
+/* Phone: strip all non-digit characters and enforce a max of 10 digits for
+   typing, pasting, autofill, and any other input method. */
+const phoneInput = document.getElementById('phone');
+phoneInput.addEventListener('input', () => {
+  const digits = phoneInput.value.replace(/\D/g, '').slice(0, 10);
+  if (phoneInput.value !== digits) phoneInput.value = digits;
+  if (phoneInput.classList.contains('is-invalid')) {
+    const perr = Validators.phone(phoneInput.value);
+    if (perr) showFieldError('phone', perr); else clearFieldValidation('phone');
+  }
+});
+
+/* Phone: also strip non-digits on paste (defensive — covers input events that
+   arrive before this handler in some browsers). */
+phoneInput.addEventListener('paste', (e) => {
+  e.preventDefault();
+  const pasted = (e.clipboardData || window.clipboardData).getData('text');
+  phoneInput.value = (phoneInput.value + pasted).replace(/\D/g, '').slice(0, 10);
+});
+
+/* Terms of Service — link opens modal; "I Agree" checks the box. */
+const termsLink  = document.getElementById('termsLink');
+const termsModal = new bootstrap.Modal(document.getElementById('termsModal'));
+let _termsModalInstance = termsModal;
+document.getElementById('termsLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  _termsModalInstance.show();
+});
+document.getElementById('agreeFromModal').addEventListener('click', () => {
+  document.getElementById('agreeTerms').checked = true;
+  document.getElementById('agreeTerms').classList.remove('is-invalid');
+  document.getElementById('termsError').classList.add('d-none');
+  _termsModalInstance.hide();
+});
+document.getElementById('agreeTerms').addEventListener('change', function () {
+  this.classList.remove('is-invalid');
+  const el = document.getElementById('termsError');
+  if (this.checked) el.classList.add('d-none');
+});
 
 /* Gender change — clear the required error */
 document.getElementById('gender').addEventListener('change', function () {
@@ -284,8 +357,10 @@ document.getElementById('confirmPassword').addEventListener('input', () => {
 });
 
 /* Form submit */
+let _submitting = false;
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (_submitting) return;           // prevent duplicate submissions
   const form = e.target;
 
   /* Validate all fields */
@@ -307,9 +382,15 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
   if (phoneErr) { showFieldError('phone', phoneErr); hasError = true; } else { clearFieldValidation('phone'); }
 
   /* Terms */
-  if (!document.getElementById('agreeTerms').checked) {
-    form.classList.add('was-validated');
+  const termsInput = document.getElementById('agreeTerms');
+  const termsErrEl = document.getElementById('termsError');
+  if (!termsInput.checked) {
+    termsInput.classList.add('is-invalid');
+    termsErrEl.classList.remove('d-none');
     hasError = true;
+  } else {
+    termsInput.classList.remove('is-invalid');
+    termsErrEl.classList.add('d-none');
   }
 
   /* Department value */
@@ -363,6 +444,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     department:       department,
     phone:            document.getElementById('phone').value.trim(),
     gender:           genderVal,
+    agreeTerms:       termsInput.checked,
   };
 
   setLoading(true);

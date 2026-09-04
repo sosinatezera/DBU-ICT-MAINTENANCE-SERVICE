@@ -10,10 +10,14 @@
 /* ── Regex Constants ─────────────────────────────────────── */
 const VAL = {
   PASSWORD_REGEX: /^(?=.*[A-Za-z])(?=.*\d)[\x21-\x7E]{8,100}$/,
-  EMAIL_REGEX:    /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  /* Ethiopian mobile numbers only: exactly 10 digits starting with 09 (Ethio Telecom) or 07 (Safaricom). */
+  /* Gmail-only: local part must contain at least one letter and end exactly with @gmail.com (case-insensitive domain) */
+  EMAIL_REGEX:    /^(?=[A-Za-z0-9._%+-]*[A-Za-z])[A-Za-z0-9._%+-]+@gmail\.com$/i,
+  /* Phone: Ethiopian mobile — exactly 10 digits (0-9) only, starting with 09 or 07.
+     No letters, spaces, +, -, or special chars. */
   PHONE_REGEX:    /^(09|07)\d{8}$/,
-  NAME_REGEX:     /^[\p{L}\s.'-]{2,100}$/u,
+  /* Full name: must contain at least one letter, allow letters/digits/spaces/apostrophes/dots/hyphens.
+     Rejects numbers-only and special-characters-only values; no length limit. */
+  NAME_REGEX:     /^(?=[\p{L}\d\s.'-]*[\p{L}])[\p{L}\d\s.'-]+$/u,
 };
 
 /* ── Validators (return error message or null) ───────────── */
@@ -28,8 +32,9 @@ const Validators = {
   email(value) {
     if (!value || typeof value !== 'string') return 'Email is required.';
     const trimmed = value.trim();
+    if (trimmed.length === 0) return 'Email is required.';
     if (trimmed.length > 254) return 'Email is too long.';
-    if (!VAL.EMAIL_REGEX.test(trimmed)) return 'Please enter a valid email address.';
+    if (!VAL.EMAIL_REGEX.test(trimmed)) return 'Please enter a valid Gmail address ending with @gmail.com.';
     return null;
   },
 
@@ -49,13 +54,14 @@ const Validators = {
   name(value, fieldName = 'Name') {
     if (!value || typeof value !== 'string') return `${fieldName} is required.`;
     const trimmed = value.trim();
-    if (trimmed.length < 2) return `${fieldName} must be at least 2 characters.`;
+    if (trimmed.length === 0) return `${fieldName} is required.`;
+    if (!VAL.NAME_REGEX.test(trimmed)) return `${fieldName} must contain letters and cannot contain only numbers or special characters.`;
     return null;
   },
 
   phone(value) {
     if (!value || value.trim() === '') return null;
-    if (!VAL.PHONE_REGEX.test(value.trim())) return 'Enter a valid Ethiopian mobile number (10 digits, starting with 09 or 07).';
+    if (!VAL.PHONE_REGEX.test(value.trim())) return 'Phone number must be exactly 10 digits starting with 09 or 07.';
     return null;
   },
 
