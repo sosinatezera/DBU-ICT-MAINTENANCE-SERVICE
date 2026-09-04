@@ -392,6 +392,37 @@ const uploadProfileImage = async (req, res, next) => {
   }
 };
 
+/* ── DELETE /api/users/profile — delete own account ──────── */
+const deleteMyAccount = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    /* Delete profile image from disk if present */
+    if (user.profileImage) {
+      const imagePath = path.join(__dirname, '..', 'uploads', user.profileImage);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    /* Soft-delete: set status to inactive rather than hard delete to preserve
+       referential integrity with tickets and other collections. */
+    user.status = 'inactive';
+    user.fullName = '[Deleted User]';
+    user.email = `deleted_${user._id}@removed.local`;
+    user.password = await bcrypt.hash(require('crypto').randomBytes(32).toString('hex'), 12);
+    user.profileImage = null;
+    await user.save({ validateBeforeSave: false });
+
+    res.json({ success: true, message: 'Account deleted successfully.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 /* ── DELETE /api/users/profile-image — remove profile image ─── */
 const removeProfileImage = async (req, res, next) => {
   try {
@@ -420,4 +451,4 @@ const removeProfileImage = async (req, res, next) => {
   }
 };
 
-module.exports = { getAllUsers, getUserById, createUser, updateUser, deleteUser, changePassword, updateMyProfile, changeMyPassword, uploadProfileImage, removeProfileImage };
+module.exports = { getAllUsers, getUserById, createUser, updateUser, deleteUser, changePassword, updateMyProfile, changeMyPassword, uploadProfileImage, removeProfileImage, deleteMyAccount };

@@ -14,6 +14,7 @@ const {
   validateName,
   validatePhone,
   validateEnum,
+  validateTermsAccepted,
   sanitizeString,
   VALID_GENDERS,
 } = require("../middleware/validation");
@@ -26,12 +27,17 @@ const RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
 /* ── POST /api/auth/register ────────────────────────────────── */
 const register = async (req, res, next) => {
   try {
-    let { fullName, email, password, confirmPassword, department, phone, gender } =
+    let { fullName, email, password, confirmPassword, department, phone, gender, agreeTerms } =
       req.body;
 
     /* Sanitize */
     fullName = fullName ? sanitizeString(fullName) : "";
     email = email ? sanitizeString(email) : "";
+
+    /* Validate Terms-of-Service consent — cannot be bypassed by direct API call */
+    const termsErr = validateTermsAccepted(agreeTerms);
+    if (termsErr)
+      return res.status(422).json({ success: false, message: termsErr });
 
     /* Validate required */
     const nameErr = validateName(fullName, "Full name");
