@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 /* ── Constants ──────────────────────────────────────────── */
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[\x21-\x7E]{8,100}$/;
 const EMAIL_REGEX    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_REGEX   = /^\+?[\d\s\-()]{7,20}$/;
+const PHONE_REGEX   = /^(09|07)\d{8}$/;
 const NAME_REGEX    = /^[\p{L}\s.'-]{2,100}$/u;
 
 const VALID_ROLES       = ['Requester', 'Technician', 'ICT Admin'];
@@ -33,6 +33,7 @@ const VALID_REQUEST_CATEGORIES = [
   'ICT Security',
   'Other'
 ];
+const VALID_GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
 const VALID_LANGUAGES = ['en', 'am'];
 const VALID_DATE_FORMATS = ['YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD-MM-YYYY'];
 
@@ -90,7 +91,7 @@ function validateName(name, fieldName = 'Name') {
 
 function validatePhone(phone) {
   if (!phone || phone.trim() === '') return null;
-  if (!PHONE_REGEX.test(phone.trim())) return 'Please enter a valid phone number.';
+  if (!PHONE_REGEX.test(phone.trim())) return 'Enter a valid Ethiopian mobile number (10 digits, starting with 09 or 07).';
   return null;
 }
 
@@ -192,6 +193,7 @@ module.exports = {
   VALID_ASSIGN_STATUSES,
   VALID_INQUIRY_TYPES,
   VALID_REQUEST_CATEGORIES,
+  VALID_GENDERS,
   VALID_LANGUAGES,
   VALID_DATE_FORMATS,
 };

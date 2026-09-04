@@ -11,7 +11,8 @@
 const VAL = {
   PASSWORD_REGEX: /^(?=.*[A-Za-z])(?=.*\d)[\x21-\x7E]{8,100}$/,
   EMAIL_REGEX:    /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  PHONE_REGEX:    /^\+?[\d\s\-()]{7,20}$/,
+  /* Ethiopian mobile numbers only: exactly 10 digits starting with 09 (Ethio Telecom) or 07 (Safaricom). */
+  PHONE_REGEX:    /^(09|07)\d{8}$/,
   NAME_REGEX:     /^[\p{L}\s.'-]{2,100}$/u,
 };
 
@@ -54,7 +55,7 @@ const Validators = {
 
   phone(value) {
     if (!value || value.trim() === '') return null;
-    if (!VAL.PHONE_REGEX.test(value.trim())) return 'Please enter a valid phone number.';
+    if (!VAL.PHONE_REGEX.test(value.trim())) return 'Enter a valid Ethiopian mobile number (10 digits, starting with 09 or 07).';
     return null;
   },
 

@@ -79,9 +79,9 @@ async function seed() {
   hr();
   console.log('  [1/9] Seeding users…');
 
-  const adminPwd = await bcrypt.hash('Admin@1234', 10);
-  const techPwd  = await bcrypt.hash('Tech@1234',  10);
-  const staffPwd = await bcrypt.hash('Staff@1234', 10);
+  const adminPwd = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || 'Admin@1234', 10);
+  const techPwd  = await bcrypt.hash(process.env.SEED_TECH_PASSWORD  || 'Tech@1234',  10);
+  const staffPwd = await bcrypt.hash(process.env.SEED_REQUESTER_PASSWORD || 'Staff@1234', 10);
 
   const usersData = [
     // ICT Admin
@@ -490,13 +490,14 @@ async function seed() {
   console.log(`  ║  Notifications      : ${await Notification.countDocuments()}`.padEnd(51) + '║');
   console.log('  ╠══════════════════════════════════════════════════╣');
   console.log('  ║  Login Credentials                              ║');
-  console.log('  ║  Admin   : admin@ict.local   / Admin@1234       ║');
-  console.log('  ║  Tech 1  : tech1@ict.local   / Tech@1234        ║');
-  console.log('  ║  Tech 2  : tech2@ict.local   / Tech@1234        ║');
-  console.log('  ║  Tech 3  : tech3@ict.local   / Tech@1234        ║');
-  console.log('  ║  Staff 1 : staff1@ict.local  / Staff@1234       ║');
-  console.log('  ║  Staff 2 : staff2@ict.local  / Staff@1234       ║');
-  console.log('  ║  Staff 3 : staff3@ict.local  / Staff@1234       ║');
+  console.log('  ║  Admin   : admin@ict.local                     ║');
+  console.log('  ║  Tech 1  : tech1@ict.local                     ║');
+  console.log('  ║  Tech 2  : tech2@ict.local                     ║');
+  console.log('  ║  Tech 3  : tech3@ict.local                     ║');
+  console.log('  ║  Staff 1 : staff1@ict.local                    ║');
+  console.log('  ║  Staff 2 : staff2@ict.local                    ║');
+  console.log('  ║  Staff 3 : staff3@ict.local                    ║');
+  console.log('  ║  Passwords: set via SEED_* env vars, not shown ║');
   console.log('  ╚══════════════════════════════════════════════════╝\n');
 
   await mongoose.connection.close();

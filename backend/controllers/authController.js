@@ -3,6 +3,7 @@
  * Authentication — register, login, get current user
  */
 
+const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -12,13 +13,20 @@ const {
   validatePasswordMatch,
   validateName,
   validatePhone,
+  validateEnum,
   sanitizeString,
+  VALID_GENDERS,
 } = require("../middleware/validation");
+const { sendPasswordResetEmail } = require("../services/mailer");
+const env = require("../config/env");
+
+/* Token lifetime for password reset links — 15–30 minutes per spec; we use 30. */
+const RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
 
 /* ── POST /api/auth/register ────────────────────────────────── */
 const register = async (req, res, next) => {
   try {
-    let { fullName, email, password, confirmPassword, department, phone } =
+    let { fullName, email, password, confirmPassword, department, phone, gender } =
       req.body;
 
     /* Sanitize */
@@ -56,6 +64,13 @@ const register = async (req, res, next) => {
         return res.status(400).json({ success: false, message: phoneErr });
     }
 
+    /* Validate gender if provided */
+    if (gender) {
+      const genderErr = validateEnum(gender, VALID_GENDERS, 'gender');
+      if (genderErr)
+        return res.status(400).json({ success: false, message: genderErr });
+    }
+
     /* Normalize department */
     let normalizedDept = null;
     if (department && typeof department === "string") {
@@ -81,6 +96,7 @@ const register = async (req, res, next) => {
       role: "Requester",
       department: normalizedDept,
       phone: phone || null,
+      gender: gender || null,
     });
 
     res.status(201).json({
@@ -174,6 +190,8 @@ const login = async (req, res, next) => {
         email: user.email,
         role: user.role,
         department: user.department,
+        gender: user.gender,
+        profileImage: user.profileImage || null,
       },
     });
   } catch (err) {
@@ -196,4 +214,135 @@ const getMe = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, getMe };
+/* ── POST /api/auth/forgot-password ────────────────────────────
+   Issues a short-lived, single-use, hashed reset token and sends a reset link.
+   ACCOUNT-ENUMERATION SAFE: we always return the same generic message whether
+   an account exists or not, and never reveal existence via status codes.
+   Errors are only emitted to the server console, never to the client. */
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body || {};
+
+    const emailErr = validateEmail(email);
+    if (emailErr) {
+      return res
+        .status(422)
+        .json({ success: false, message: emailErr });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    /* Generic success — returned both for existing and non-existing emails so
+       the response tells an attacker nothing about whether the account exists. */
+    const genericMessage =
+      "If an account exists for this email, a password reset link has been sent.";
+
+    /* Find the account; .select('+...') is not needed here because we only need
+       the user document to issue a token. Any lookup failure is non-fatal. */
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (user && user.status === "active") {
+      /* Cryptographic random token — 32 bytes → 64 hex chars.
+         Never user-id, email, timestamp or username based.
+         Only the SHA-256 HASH is stored in the database, never the raw token. */
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+      /* Single active token per user: overwrite any previous (also invalidates
+         an unused, still-unexpired token from an earlier request). */
+      user.resetPasswordToken = tokenHash;
+      user.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+      await user.save({ validateBeforeSave: false });
+
+      const resetUrl = `${env.FRONTEND_URL.replace(/\/$/, "")}/views/reset-password.html?token=${rawToken}`;
+
+      await sendPasswordResetEmail({ to: user.email, resetUrl });
+    } else if (user) {
+      console.warn(
+        `[auth/forgot-password] Skipping token for "${user.email}": account status is "${user.status}".`,
+      );
+    } else {
+      console.warn(
+        `[auth/forgot-password] No account found for "${normalizedEmail}" (server-only log).`,
+      );
+    }
+
+    return res.json({ success: true, message: genericMessage });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/* ── POST /api/auth/reset-password ─────────────────────────────
+   Verifies the (hashed) token, enforces expiry + single-use, updates the
+   user's password with the existing bcrypt mechanism, then destroys the token. */
+const resetPassword = async (req, res, next) => {
+  try {
+    let { token, password } = req.body || {};
+
+    if (typeof token !== "string" || !token) {
+      return res
+        .status(400)
+        .json({ success: false, message: "An invalid or expired reset token was provided." });
+    }
+    if (typeof password !== "string") {
+      return res
+        .status(422)
+        .json({ success: false, message: "A new password is required." });
+    }
+
+    const pwErr = validatePassword(password);
+    if (pwErr) return res.status(400).json({ success: false, message: pwErr });
+
+    /* In the database we only ever have the hash — look the token up by its
+       SHA-256 digest. If the user is missing, the token was already used and
+       destroyed (single-use) or never existed for this hash. */
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+      resetPasswordToken: tokenHash,
+    }).select("+resetPasswordToken +resetPasswordExpires");
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "This reset link is invalid or has already been used." });
+    }
+
+    if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+      /* Expired or malformed — destroy it and reject. */
+      user.resetPasswordToken = null;
+      user.resetPasswordExpires = null;
+      await user.save({ validateBeforeSave: false });
+      return res
+        .status(400)
+        .json({ success: false, message: "This reset link has expired. Please request a new one." });
+    }
+
+    if (user.status !== "active") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Account has been deactivated. Contact ICT Admin." });
+    }
+
+    /* Update the password with the SAME mechanism used everywhere (bcrypt,
+       cost 12). NEVER return the password or its hash — the response omits them. */
+    user.password = await bcrypt.hash(password, 12);
+
+    /* Invalid the token immediately: single-use guaranteed — the same token
+       can never be used again, and it dies with expiry going forward. */
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save({ validateBeforeSave: false });
+
+    console.log(`[auth/reset-password] Password reset for "${user.email}".`);
+
+    return res.json({
+      success: true,
+      message: "Your password has been reset. You can now sign in.",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { register, login, getMe, forgotPassword, resetPassword };

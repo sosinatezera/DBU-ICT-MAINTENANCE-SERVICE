@@ -24,6 +24,7 @@
 require('dotenv').config();
 const express   = require('express');
 const cors      = require('cors');
+const helmet    = require('helmet');
 const path      = require('path');
 const connectDB = require('./config/db');
 
@@ -36,9 +37,25 @@ connectDB();
 const app = express();
 
 /* ── Core Middleware ─────────────────────────────────────── */
+/* CORS origins: default to local dev origins; override via the
+   FRONTEND_ORIGINS env var (comma-separated list) for deployed setups.
+   credentials:true is preserved and a wildcard is never allowed. */
+const defaultOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+const allowedOrigins = process.env.FRONTEND_ORIGINS
+  ? process.env.FRONTEND_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+  : defaultOrigins;
+
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: allowedOrigins,
   credentials: true,
+}));
+
+/* ── Security headers (Helmet) ──────────────────────────────
+   Defaults harden API responses. We relax crossOriginResourcePolicy
+   to "cross-origin" so uploaded attachments under /uploads remain
+   displayable on the separate frontend origin (localhost:3000). */
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));

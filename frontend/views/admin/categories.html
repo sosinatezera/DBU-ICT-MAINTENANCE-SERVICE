@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,8 +12,9 @@
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/admin.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
-<link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
+
 <body class="dashboard-body">
 
   <div class="d-flex">
@@ -19,32 +22,48 @@
       <a href="../index.html" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-shield-check fs-3 text-info"></i>
-          <div class="small fw-bold mt-1" id="panelLabel">Management Panel</div>
+          <div class="small fw-bold mt-1" id="panelLabel"><span data-i18n="side.panel.admin">Management Panel</span>
+          </div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
-        <li><a href="dashboard.html"   class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-        <li><a href="users.html"       class="nav-link text-white-50"><i class="bi bi-people me-2"></i>Users</a></li>
-        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i>Technicians</a></li>
-        <li><a href="assets.html"      class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i>ICT Assets</a></li>
-        <li><a href="requests.html"    class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i>Requests</a></li>
-        <li><a href="categories.html"  class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-tags me-2"></i>Categories</a></li>
-        <li><a href="reports.html"     class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i>Reports</a></li>
-        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i>Feedback</a></li>
-        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a></li>
-        <li><a href="settings.html"    class="nav-link text-white-50"><i class="bi bi-gear me-2"></i>Settings</a></li>
-      </ul>
-      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
-        <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
-      </div>
+        <li><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i><span
+              data-i18n="side.dashboard">Dashboard</span></a></li>
+        <li><a href="users.html" class="nav-link text-white-50"><i class="bi bi-people me-2"></i><span
+              data-i18n="side.users">Users</span></a></li>
+        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i><span
+              data-i18n="side.technicians">Technicians</span></a></li>
+        <li><a href="assets.html" class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i><span
+              data-i18n="side.assets">ICT Assets</span></a></li>
+        <li><a href="requests.html" class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i><span
+              data-i18n="side.requests">Requests</span></a></li>
+        <li><a href="categories.html" class="nav-link text-white active bg-white bg-opacity-25 rounded"><i
+              class="bi bi-tags me-2"></i><span data-i18n="side.categories">Categories</span></a></li>
+        <li><a href="reports.html" class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i><span
+              data-i18n="side.reports">Reports</span></a></li>
+        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i><span
+              data-i18n="side.feedback">Feedback</span></a></li>
+        <li><a href="commits.html" class="nav-link text-white-50"><i class="bi bi-git-branch me-2"></i><span
+              data-i18n="side.commits">Commits</span></a></li>
+        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span
+              data-i18n="side.notifications">Notifications</span></a></li>
+        <li><a href="settings.html" class="nav-link text-white-50"><i class="bi bi-gear me-2"></i><span
+              data-i18n="side.settings">Settings</span></a></li>
+
+        <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+          <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i
+              class="bi bi-box-arrow-right me-1"></i><span data-i18n="admin.logout">Logout</span></a>
+        </div>
     </nav>
 
     <div class="flex-grow-1">
-      <header class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
-        <h5 class="mb-0 fw-bold">Category Management</h5>
+      <header
+        class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
+        <h5 class="mb-0 fw-bold"><span data-i18n="admin.categories.title">Category Management</span></h5>
         <div class="d-flex align-items-center gap-2">
           <div id="notifBellContainer"></div>
-          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#categoryModal" id="addCategoryBtn">
+          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#categoryModal"
+            id="addCategoryBtn">
             <i class="bi bi-plus-circle me-1"></i>Add Category
           </button>
         </div>
@@ -63,11 +82,18 @@
                   <table class="table table-hover mb-0">
                     <thead class="table-light">
                       <tr>
-                        <th>#</th><th>Category Name</th><th>Description</th><th>Total Requests</th><th>Actions</th>
+                        <th>#</th>
+                        <th>Category Name</th>
+                        <th>Description</th>
+                        <th>Total Requests</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody id="categoriesTableBody">
-                      <tr><td colspan="5" class="text-center text-muted py-4">Loading categories...</td></tr>
+                      <tr>
+                        <td colspan="5" class="text-center text-muted py-4"><span
+                            data-i18n="admin.categories.loading">Loading categories...</span></td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -106,23 +132,26 @@
           <form id="categoryForm" novalidate>
             <input type="hidden" id="categoryId" />
             <div class="mb-3">
-              <label for="categoryName" class="form-label fw-semibold">Category Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="categoryName"
-                     placeholder="e.g. Hardware, Software, Internet" required />
+              <label for="categoryName" class="form-label fw-semibold"><span
+                  data-i18n="admin.categories.modal.name">Category Name</span> <span
+                  class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="categoryName" placeholder="e.g. Hardware, Software, Internet"
+                required />
             </div>
             <div class="mb-3">
               <label for="categoryDescription" class="form-label fw-semibold">Description</label>
               <textarea class="form-control" id="categoryDescription" rows="3"
-                        placeholder="Brief description of this category..."></textarea>
+                placeholder="Brief description of this category..."></textarea>
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="saveCategoryBtn">
-            <span class="spinner-border spinner-border-sm me-2 d-none" id="saveCategorySpinner"></span>
-            Save Category
-          </button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><span
+              data-i18n="admin.categories.modal.cancel">Cancel</span>
+            <button type="button" class="btn btn-primary" id="saveCategoryBtn">
+              <span class="spinner-border spinner-border-sm me-2 d-none" id="saveCategorySpinner"></span>
+              Save Category
+            </button>
         </div>
       </div>
     </div>
@@ -145,7 +174,8 @@
   </div>
 
   <!-- Delete Category Confirmation Modal -->
-  <div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
+  <div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header border-0 pb-0">
@@ -167,20 +197,24 @@
           <div id="categoryDeleteInfo"></div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-danger" id="deleteCategoryConfirmBtn">
-            <span class="spinner-border spinner-border-sm me-2 d-none" id="deleteCategorySpinner" role="status" aria-hidden="true"></span>
-            <i class="bi bi-trash me-1" aria-hidden="true"></i>Delete Category
-          </button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><span
+              data-i18n="admin.categories.modal.cancel">Cancel</span>
+            <button type="button" class="btn btn-danger" id="deleteCategoryConfirmBtn">
+              <span class="spinner-border spinner-border-sm me-2 d-none" id="deleteCategorySpinner" role="status"
+                aria-hidden="true"></span>
+              <i class="bi bi-trash me-1" aria-hidden="true"></i>Delete Category
+            </button>
         </div>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/api-config.js"></script>
   <script src="/assets/js/main.js?v=6"></script>
   <script src="/assets/js/notifications.js?v=6"></script>
   <script src="/assets/js/requests.js?v=6"></script>
-<script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/theme.js"></script>
 </body>
+
 </html>

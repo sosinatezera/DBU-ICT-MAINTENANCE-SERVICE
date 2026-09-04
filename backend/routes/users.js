@@ -1,12 +1,15 @@
 const express = require('express');
 const router  = express.Router();
-const { getAllUsers, getUserById, createUser, updateUser, deleteUser, changePassword, updateMyProfile, changeMyPassword } = require('../controllers/userController');
+const { getAllUsers, getUserById, createUser, updateUser, deleteUser, changePassword, updateMyProfile, changeMyPassword, uploadProfileImage, removeProfileImage } = require('../controllers/userController');
 const { authenticate } = require('../middleware/auth');
 const { authorize }    = require('../middleware/authorize');
+const uploadProfile    = require('../config/multerProfile');
 
 /* ── Self-service routes (any authenticated user) ────────── */
-router.put('/profile',        authenticate, updateMyProfile);
-router.put('/change-password', authenticate, changeMyPassword);
+router.put('/profile',            authenticate, updateMyProfile);
+router.put('/change-password',    authenticate, changeMyPassword);
+router.post('/profile-image',     authenticate, uploadProfile.single('profileImage'), uploadProfileImage);
+router.delete('/profile-image',   authenticate, removeProfileImage);
 
 /* ── Admin-only routes ──────────────────────────────────── */
 router.get('/',             authenticate, authorize('ICT Admin'), getAllUsers);

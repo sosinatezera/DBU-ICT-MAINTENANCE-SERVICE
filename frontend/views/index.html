@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
 
 <head>
   <meta charset="UTF-8" />
@@ -14,250 +15,686 @@
   <style>
     :root {
       --nav-height: 68px;
-      --dbu-blue: #2563eb;
-      --dbu-dark: #0a2540;
+
+      /* ── Home Page — clean white/light SaaS theme ── */
+      --home-bg: #ffffff;
+      /* page background        */
+      --home-surface: #f8fafc;
+      /* sections / surface     */
+      --home-surface-2: #f5f7fa;
+      /* raised surface         */
+      --home-surface-3: #ffffff;
+      /* card surface           */
+      --home-surface-hover: #eef2f7;
+      /* card hover             */
+      --home-text: #0f172a;
+      /* main headings          */
+      --home-text-soft: #475569;
+      /* body text              */
+      --home-text-muted: #64748b;
+      /* secondary text         */
+      --home-text-dim: #9ca3af;
+      /* tertiary / meta text   */
+      --home-primary: #2563eb;
+      /* brand blue — PRESERVE  */
+      --home-primary-strong: #1d4ed8;
+      /* hover / active blue    */
+      --home-accent: #0891b2;
+      /* cyan highlight         */
+      --home-border: #e2e8f0;
+      /* card / hairline border */
+      --home-border-strong: #cbd5e1;
+      /* strong border          */
+      --home-radius: 12px;
+      /* cards                  */
+      --home-radius-lg: 16px;
+      /* hero media / large     */
+      --home-radius-sm: 8px;
+      /* chips / small buttons  */
+      --home-shadow: 0 4px 12px -2px rgba(0, 0, 0, .05);
+      --home-shadow-hover: 0 8px 20px -4px rgba(0, 0, 0, .1);
+      --home-transition: .25s cubic-bezier(.4, 0, .2, 1);
     }
 
     html {
       scroll-behavior: smooth;
+      overflow-x: hidden;
     }
 
     body {
-      padding-top: var(--nav-height);
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      color: #212529;
+      color: var(--home-text);
+      background-color: var(--home-bg);
+      overflow-x: hidden;
     }
 
-    /* ===== Navbar ===== */
+    /* =========================================================
+       NAVBAR — Professional university ICT-service header
+       White/light premium surface, navy + royal blue + cyan
+       ========================================================= */
+
+    /* Base bar: clean white, translucent blur, subtle shadow */
     .main-navbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      height: var(--nav-height);
-      background: rgba(37, 99, 235, 0.97);
+      background: rgba(255, 255, 255, .96) !important;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255, 255, 255, .1);
-      transition: all 0.3s ease;
+      box-shadow: 0 6px 24px -12px rgba(15, 23, 42, .18), 0 1px 0 rgba(226, 232, 240, .9) inset;
+      border-bottom: 1px solid rgba(226, 232, 240, .9);
+      min-height: var(--nav-height);
+      padding-top: .5rem;
+      padding-bottom: .5rem;
+      transition: border-color .25s cubic-bezier(.4, 0, .2, 1), box-shadow .25s cubic-bezier(.4, 0, .2, 1);
     }
 
     .main-navbar.scrolled {
-      background: rgba(29, 78, 216, 0.99);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, .2);
+      box-shadow: 0 10px 32px -14px rgba(15, 23, 42, .24);
+      border-bottom-color: rgba(203, 213, 225, .95);
+    }
+
+    .navbar-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0;
+      min-width: 0;
     }
 
     .navbar-brand-icon {
-      width: 44px;
-      height: 44px;
-      background: #fff;
-      border-radius: 12px;
-      display: inline-flex;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--home-primary) 0%, var(--home-primary-strong) 100%);
+      border-radius: 11px;
+      display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, .2);
       flex-shrink: 0;
       overflow: hidden;
+      box-shadow: 0 4px 12px -4px rgba(37, 99, 235, .55);
+    }
+
+    .navbar-brand-icon svg {
+      width: 24px;
+      height: 24px;
     }
 
     .brand-text-main {
       font-size: 1.05rem;
       font-weight: 700;
-      letter-spacing: -.2px;
+      letter-spacing: -.3px;
       line-height: 1.2;
+      color: var(--home-text);
+      white-space: nowrap;
     }
 
     .brand-text-sub {
-      font-size: .68rem;
+      font-size: .7rem;
       font-weight: 400;
-      opacity: .75;
+      color: var(--home-text-muted);
       letter-spacing: .3px;
+      white-space: nowrap;
     }
 
+    /* ── Navigation links: evenly spaced, vertically centred ── */
     .nav-link-item {
-      color: rgba(255, 255, 255, .85) !important;
+      color: var(--home-text-muted) !important;
       font-weight: 500;
-      font-size: .9rem;
-      padding: .5rem .9rem !important;
-      border-radius: 8px;
-      transition: all .2s;
+      font-size: .875rem;
+      padding: .5rem .72rem !important;
+      border-radius: 9px;
+      transition: color .22s cubic-bezier(.4, 0, .2, 1), background-color .22s cubic-bezier(.4, 0, .2, 1);
       position: relative;
+      margin: 0 .28rem;
+      white-space: nowrap;
+      line-height: 1.2;
+      text-align: center;
     }
 
     .nav-link-item::after {
       content: '';
       position: absolute;
-      bottom: 2px;
+      bottom: 3px;
       left: 50%;
       width: 0;
-      height: 2px;
-      background: #fff;
-      border-radius: 2px;
-      transition: all .25s ease;
+      height: 3px;
+      background: linear-gradient(90deg, var(--home-primary), var(--home-accent));
+      border-radius: 3px;
+      transition: width .3s cubic-bezier(.4, 0, .2, 1);
       transform: translateX(-50%);
     }
 
     .nav-link-item:hover {
-      color: #fff !important;
-      background: rgba(255, 255, 255, .1);
+      color: var(--home-primary) !important;
+      background: rgba(37, 99, 235, .075);
     }
 
     .nav-link-item:hover::after,
     .nav-link-item.active::after {
-      width: 60%;
+      width: 72%;
     }
 
     .nav-link-item.active {
-      color: #fff !important;
-      background: rgba(255, 255, 255, .12);
+      color: var(--home-primary) !important;
+      background: rgba(37, 99, 235, .12);
+      font-weight: 600;
     }
 
+    .nav-link-item i {
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    /* ── Login: elegant outlined button ── */
     .btn-nav-login {
-      border: 1.5px solid rgba(255, 255, 255, .5);
-      color: #fff !important;
-      border-radius: 8px;
+      border: 1.5px solid var(--home-primary);
+      color: var(--home-primary) !important;
+      background: transparent;
+      border-radius: 9px;
       padding: .4rem 1.1rem !important;
-      font-size: .875rem;
-      font-weight: 500;
-      transition: all .2s;
+      font-size: .8125rem;
+      font-weight: 600;
+      transition: background-color .22s cubic-bezier(.4, 0, .2, 1),
+        color .22s cubic-bezier(.4, 0, .2, 1), border-color .22s cubic-bezier(.4, 0, .2, 1),
+        box-shadow .22s cubic-bezier(.4, 0, .2, 1);
+      margin-left: .35rem;
+      min-height: 38px;
+      white-space: nowrap;
     }
 
     .btn-nav-login:hover {
-      background: rgba(255, 255, 255, .15);
-      border-color: #fff;
+      background: rgba(37, 99, 235, .08);
+      border-color: var(--home-primary-strong);
+      color: var(--home-primary-strong) !important;
+      box-shadow: 0 4px 14px -8px rgba(37, 99, 235, .5);
     }
 
+    /* ── Register: primary blue button ── */
     .btn-nav-register {
-      background: #fff;
-      color: #2563eb !important;
-      border-radius: 8px;
-      padding: .4rem 1.2rem !important;
-      font-size: .875rem;
+      background: linear-gradient(135deg, var(--home-primary) 0%, var(--home-primary-strong) 100%);
+      color: #fff !important;
+      border: none;
+      border-radius: 9px;
+      padding: .4rem 1.25rem !important;
+      font-size: .8125rem;
       font-weight: 600;
-      transition: all .2s;
+      box-shadow: 0 4px 14px -8px rgba(37, 99, 235, .6);
+      transition: transform .22s cubic-bezier(.4, 0, .2, 1),
+        box-shadow .22s cubic-bezier(.4, 0, .2, 1),
+        background .22s cubic-bezier(.4, 0, .2, 1);
+      margin-left: .35rem;
+      min-height: 38px;
+      white-space: nowrap;
     }
 
     .btn-nav-register:hover {
-      background: #e8f0fe;
+      background: linear-gradient(135deg, var(--home-primary-strong) 0%, var(--home-primary) 100%);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+      box-shadow: 0 6px 18px -8px rgba(37, 99, 235, .7);
     }
 
+    /* ── Language selector: globe icon + dropdown arrow ── */
+    #mainNavbar .lang-switch {
+      display: inline-flex;
+      align-items: center;
+      margin-left: .3rem;
+    }
+
+    #mainNavbar .lang-select {
+      width: auto;
+      min-width: 64px;
+      height: 38px;
+      padding: .25rem .6rem .25rem 1.9rem;
+      border: 1px solid var(--home-border-strong);
+      border-radius: 9px;
+      background-color: #fff;
+      color: var(--home-text);
+      font-size: .8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      line-height: 1.2;
+      appearance: none;
+      outline: none;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M2 12h20'/%3E%3Cpath d='M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat, no-repeat;
+      background-position: left .55rem center, right .55rem center;
+      background-size: 16px, 12px;
+      transition: border-color .22s cubic-bezier(.4, 0, .2, 1),
+        box-shadow .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    #mainNavbar .lang-select:hover,
+    #mainNavbar .lang-select:focus {
+      border-color: var(--home-primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+    #mainNavbar .lang-select option {
+      background: #fff;
+      color: var(--home-text);
+    }
+
+    /* ── Dark mode control: compact circular icon button ── */
+    #mainNavbar .app-theme-switch {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--home-border-strong);
+      border-radius: 50%;
+      background: #fff;
+      color: var(--home-text);
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: .3rem;
+      transition: border-color .22s cubic-bezier(.4, 0, .2, 1),
+        color .22s cubic-bezier(.4, 0, .2, 1),
+        box-shadow .22s cubic-bezier(.4, 0, .2, 1),
+        transform .22s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    #mainNavbar .app-theme-switch:hover {
+      border-color: var(--home-primary);
+      color: var(--home-primary);
+      box-shadow: 0 4px 12px -6px rgba(37, 99, 235, .5);
+      transform: translateY(-1px);
+    }
+
+    #mainNavbar .app-theme-switch:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .18);
+    }
+
+    /* ── Navbar toggler (tablet / mobile) ── */
     .navbar-toggler {
-      border-color: rgba(255, 255, 255, .4);
+      border: 1px solid var(--home-border-strong);
+      border-radius: 9px;
+      padding: .42rem;
+      color: var(--home-text);
     }
 
+    .navbar-toggler:focus {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+    /* Restore a visible, colour-unlocked icon on the light bar */
     .navbar-toggler-icon {
-      filter: brightness(2);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%230f172a' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+      width: 24px;
+      height: 24px;
+      filter: none;
+    }
+
+    /* Desktop: centre links, prevent wrapping */
+    @media (min-width: 992px) {
+      .main-navbar .navbar-collapse {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+      }
+
+      .main-navbar .navbar-nav {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+        margin-inline: auto;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .main-navbar .navbar-nav .nav-link {
+        white-space: nowrap;
+      }
+
+      .main-navbar #navMenu .d-flex {
+        margin-left: .5rem;
+      }
+    }
+
+    /* Keep everything on one clean line on small-desktop tablets */
+    @media (min-width: 992px) and (max-width: 1259.98px) {
+      .brand-text-sub {
+        display: none;
+      }
+
+      .nav-link-item {
+        padding-left: .5rem !important;
+        padding-right: .5rem !important;
+        margin: 0 .18rem;
+      }
+
+      .nav-link-item i {
+        display: none;
+      }
+
+      .btn-nav-login,
+      .btn-nav-register {
+        padding-left: .9rem !important;
+        padding-right: .9rem !important;
+      }
+    }
+
+    @media (min-width: 992px) and (max-width: 1119.98px) {
+      .main-navbar {
+        padding-top: .35rem;
+        padding-bottom: .35rem;
+      }
+
+      .main-navbar .navbar-nav {
+        gap: 0;
+      }
     }
 
     @media (max-width: 991.98px) {
 
       .main-navbar .collapse.show,
       .main-navbar .collapsing {
-        background: #0a58ca;
-        border-radius: 0 0 12px 12px;
-        padding: .75rem 1rem 1rem;
-        margin-top: 4px;
+        background: rgba(255, 255, 255, .99);
+        border-radius: 0 0 14px 14px;
+        border-bottom: 1px solid var(--home-border);
+        box-shadow: 0 14px 28px -16px rgba(15, 23, 42, .28);
+        padding: .5rem 1rem 1rem;
+        margin-top: 6px;
       }
 
       .nav-link-item::after {
         display: none;
       }
+
+      .nav-link-item.active {
+        background: rgba(37, 99, 235, .12);
+      }
+
+      .navbar-nav .nav-link {
+        color: var(--home-text) !important;
+        width: 100%;
+        text-align: center;
+      }
+
+      .navbar-nav .nav-link:hover {
+        color: var(--home-primary) !important;
+      }
     }
 
     /* ===== Hero ===== */
     .hero-section {
-      min-height: 90vh;
-      background: linear-gradient(135deg, #2563eb 0%, #0a2540 100%);
+      min-height: 0;
+      padding: 8rem 0 7rem;
+      background:
+        /* Base gradient */
+        linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
       display: flex;
       align-items: center;
       position: relative;
       overflow: hidden;
     }
 
+    /* Hero slides - continuous right-to-left loop */
+    .hero-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center center;
+      z-index: 0;
+      will-change: transform, opacity;
+    }
+    .hero-slide-1 {
+      background-image: url('/assets/images/home1.png');
+      animation: slideRTL 25s linear infinite;
+    }
+    .hero-slide-2 {
+      background-image: url('/assets/images/home3.png');
+      animation: slideRTL 25s linear infinite;
+      animation-delay: 12.5s; /* half cycle delay for continuous flow */
+    }
+
+    @keyframes slideRTL {
+      0%   { transform: translateX(100%); opacity: 0; }
+      10%  { transform: translateX(80%); opacity: 0.15; }
+      50%  { transform: translateX(0); opacity: 0.15; }
+      90%  { transform: translateX(-80%); opacity: 0.15; }
+      100% { transform: translateX(-100%); opacity: 0; }
+    }
+
+    /* Pause on hover for accessibility */
+    .hero-section:hover .hero-slide {
+      animation-play-state: paused;
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .hero-slide {
+        animation: none;
+        transform: translateX(0);
+        opacity: 0.15;
+      }
+    }
+
+    /* Cursor hint */
+    .hero-section {
+      cursor: grab;
+    }
+    .hero-section:active {
+      cursor: grabbing;
+    }
+
     .hero-section::before {
       content: '';
       position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 600px;
-      height: 600px;
-      background: rgba(255, 255, 255, .04);
-      border-radius: 50%;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--home-primary), transparent);
+      opacity: 0.5;
     }
 
     .hero-section::after {
       content: '';
       position: absolute;
-      bottom: -30%;
-      left: -10%;
-      width: 400px;
-      height: 400px;
-      background: rgba(255, 255, 255, .03);
-      border-radius: 50%;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      /* Bottom fade transition into next section */
+      background: linear-gradient(180deg, transparent 0%, rgba(248, 250, 252, 0.4) 50%, #ffffff 100%);
+      pointer-events: none;
+    }
+
+    .hero-container {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      width: 100%;
     }
 
     .hero-badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(255, 255, 255, .12);
-      border: 1px solid rgba(255, 255, 255, .2);
-      color: #fff;
+      background: rgba(6, 182, 212, .18);
+      border: 1px solid rgba(6, 182, 212, .4);
+      color: #ffffff;
       border-radius: 50px;
-      padding: .35rem 1rem;
-      font-size: .8rem;
+      padding: .4rem .8rem;
+      font-size: .75rem;
       font-weight: 500;
       margin-bottom: 1.5rem;
+      letter-spacing: .1px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+    }
+
+    .hero-badge i {
+      font-size: 1rem;
+      color: #22d3ee;
     }
 
     .hero-title {
-      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-size: clamp(2rem, 4.5vw, 3.5rem);
       font-weight: 800;
       line-height: 1.15;
+      color: #ffffff;
+      letter-spacing: -.03em;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, .45);
+    }
+
+    .hero-title span {
+      display: block;
+    }
+
+    .hero-title span:first-child {
+      font-size: 1.1em;
+      color: #ffffff;
+    }
+
+    .hero-title span:last-child {
+      color: #60a5fa;
+      font-weight: 700;
     }
 
     .hero-subtitle {
       font-size: 1.1rem;
-      color: rgba(255, 255, 255, .8);
-      line-height: 1.7;
-      max-width: 580px;
+      color: #f1f5f9;
+      line-height: 1.8;
+      max-width: 620px;
+      margin-bottom: 2.5rem;
+      font-weight: 400;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+    }
+
+    /* Hero metrics strip */
+    .hero-section .fw-bold.fs-5 {
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+    }
+
+    .hero-section div[style*="font-size:.78rem"][data-i18n] {
+      color: #e2e8f0 !important;
+    }
+
+    .hero-section div[style*="background:rgba(255,255,255,.2)"] {
+      background: rgba(255, 255, 255, .2) !important;
+    }
+
+    /* Hero media panel (appears on lg screens only) */
+    .hero-section .col-lg-6>div[style*="border-radius:20px"] {
+      border: 1px solid rgba(255, 255, 255, .15);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .3), 0 0 0 1px rgba(37, 99, 235, .25);
+    }
+
+    /* Hero CTA buttons */
+    .hero-cta .btn {
+      padding: .6rem 1.5rem !important;
+      font-size: .875rem !important;
+      font-weight: 500 !important;
+      border-radius: var(--home-radius-sm) !important;
+      margin-right: .5rem;
+      margin-bottom: .5rem;
+      transition: all .25s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .hero-cta .btn-request {
+      background: linear-gradient(135deg, var(--home-primary) 0%, var(--home-primary-strong) 100%);
+      color: #fff !important;
+    }
+
+    .hero-cta .btn-request:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(37, 99, 235, .45);
+    }
+
+    .hero-cta .btn-track {
+      background: rgba(255, 255, 255, .12);
+      color: #ffffff !important;
+      border: 1px solid rgba(255, 255, 255, .35);
+      backdrop-filter: blur(4px);
+    }
+
+    .hero-cta .btn-track:hover {
+      background: rgba(255, 255, 255, .22);
+      border-color: rgba(255, 255, 255, .55);
+      color: #ffffff !important;
+    }
+
+    .hero-cta .btn-learn {
+      background: transparent;
+      color: #f1f5f9 !important;
+      border: 1px solid rgba(255, 255, 255, .3);
+    }
+
+    .hero-cta .btn-learn:hover {
+      background: rgba(255, 255, 255, .1);
+      border-color: rgba(255, 255, 255, .5);
+      color: #ffffff !important;
     }
 
     /* ===== Stats ===== */
     .stats-bar {
-      background: #fff;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, .08);
+      background: var(--home-surface);
+      border-top: 1px solid var(--home-border);
+      border-bottom: 1px solid var(--home-border);
+      padding: 2rem 0;
     }
 
     .stat-item {
       padding: 1.5rem 1rem;
       text-align: center;
       position: relative;
+      transition: transform .25s ease;
+    }
+
+    .stat-item:hover {
+      transform: translateY(-4px);
     }
 
     .stat-item:not(:last-child)::after {
       content: '';
       position: absolute;
       right: 0;
-      top: 25%;
-      bottom: 25%;
+      top: 30%;
+      bottom: 30%;
       width: 1px;
-      background: #e9ecef;
+      background: var(--home-border-strong);
     }
 
     .stat-number {
-      font-size: 2rem;
+      font-size: 2.2rem;
       font-weight: 800;
       line-height: 1;
+      color: var(--home-primary);
+      margin-bottom: .5rem;
     }
 
     .stat-label {
-      font-size: .8rem;
-      color: #6c757d;
+      font-size: .75rem;
+      color: var(--home-text-dim);
+      text-transform: uppercase;
+      letter-spacing: .1em;
       margin-top: 4px;
+    }
+
+    .stat-number.text-primary {
+      color: var(--home-primary) !important;
+    }
+
+    .stat-number.text-success {
+      color: #198754 !important;
+    }
+
+    .stat-number.text-warning {
+      color: #fd7e14 !important;
+    }
+
+    .stat-number.text-info {
+      color: #0dcaf0 !important;
     }
 
     /* ===== Section headings ===== */
@@ -267,31 +704,36 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      color: #2563eb;
-      background: #e8f0fe;
+      color: var(--home-accent);
+      background: rgba(6, 182, 212, .12);
+      border: 1px solid rgba(6, 182, 212, .25);
       padding: .3rem .9rem;
       border-radius: 50px;
       margin-bottom: .75rem;
     }
 
     .section-title {
-      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-size: clamp(1.75rem, 3vw, 2.25rem);
       font-weight: 800;
+      color: var(--home-text);
+      letter-spacing: -.4px;
     }
 
     /* ===== Feature / Quick-access cards ===== */
     .feature-card {
-      border: 1px solid #e9ecef;
-      border-radius: 16px;
+      border: 1px solid var(--home-border);
+      border-radius: var(--home-radius);
       padding: 2rem 1.5rem;
-      transition: all .25s ease;
-      background: #fff;
+      transition: var(--home-transition);
+      background: var(--home-surface-3);
       height: 100%;
+      color: var(--home-text-soft);
     }
 
     .feature-card:hover {
-      border-color: #2563eb;
-      box-shadow: 0 12px 32px rgba(37, 99, 235, .12);
+      border-color: var(--home-primary-strong);
+      background: var(--home-surface-hover);
+      box-shadow: var(--home-shadow-hover), 0 0 0 1px rgba(37, 99, 235, .2);
       transform: translateY(-4px);
     }
 
@@ -304,6 +746,25 @@
       justify-content: center;
       font-size: 1.5rem;
       margin-bottom: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    /* ===== Metric cards ===== */
+    .metric-card {
+      border: 1px solid var(--home-border);
+      border-radius: var(--home-radius);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      background: var(--home-surface-3);
+      color: var(--home-text-soft);
+      transition: var(--home-transition);
+    }
+
+    .metric-card:hover {
+      border-color: var(--home-border-strong);
+      background: var(--home-surface-hover);
+      box-shadow: var(--home-shadow-hover);
+      transform: translateY(-3px);
     }
 
     /* ===== Workflow ===== */
@@ -312,17 +773,18 @@
       align-items: flex-start;
       gap: 1.25rem;
       padding: 1.25rem 1.5rem;
-      background: #fff;
-      border-radius: 12px;
-      border: 1px solid #e9ecef;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
-      transition: all .2s;
+      background: var(--home-surface-3);
+      border-radius: var(--home-radius-sm);
+      border: 1px solid var(--home-border);
+      box-shadow: var(--home-shadow);
+      transition: var(--home-transition);
+      color: var(--home-text-soft);
     }
 
     .workflow-step:hover {
-      border-color: #2563eb;
+      border-color: var(--home-primary-strong);
       transform: translateX(6px);
-      box-shadow: 0 4px 16px rgba(37, 99, 235, .1);
+      box-shadow: var(--home-shadow-hover), 0 0 0 1px rgba(37, 99, 235, .18);
     }
 
     .step-num {
@@ -341,25 +803,28 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      color: #adb5bd;
+      color: var(--home-primary);
       font-size: 1.2rem;
       margin: .25rem 0;
     }
 
     /* ===== Service cards ===== */
     .service-card {
-      border: 1px solid #e9ecef;
-      border-radius: 16px;
+      border: 1px solid var(--home-border);
+      border-radius: var(--home-radius);
       padding: 2rem 1.5rem;
-      background: #fff;
+      background: var(--home-surface-3);
       height: 100%;
-      transition: all .25s ease;
+      transition: var(--home-transition);
       position: relative;
       overflow: hidden;
+      color: var(--home-text-soft);
     }
 
     .service-card:hover {
-      box-shadow: 0 12px 32px rgba(0, 0, 0, .1);
+      border-color: var(--home-border-strong);
+      background: var(--home-surface-hover);
+      box-shadow: var(--home-shadow-hover);
       transform: translateY(-4px);
     }
 
@@ -372,46 +837,236 @@
       justify-content: center;
       font-size: 1.75rem;
       margin-bottom: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, .08);
     }
 
     /* ===== Contact ===== */
     .contact-card {
-      border: 1px solid #e9ecef;
-      border-radius: 16px;
-      padding: 1.5rem;
-      background: #fff;
-      transition: all .25s ease;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--home-border);
+      border-radius: var(--home-radius-lg);
+      padding: 1.5rem 1.5rem 1.5rem 1.25rem;
+      background: linear-gradient(180deg, var(--home-surface-3) 0%, var(--home-surface) 100%);
+      transition: var(--home-transition);
+      color: var(--home-text-soft);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
+    }
+
+    .contact-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 1.25rem;
+      width: 48px;
+      height: 3px;
+      border-radius: 0 0 3px 3px;
+      background: linear-gradient(90deg, var(--home-primary), var(--home-accent));
+      opacity: 0;
+      transition: opacity .25s;
     }
 
     .contact-card:hover {
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+      border-color: var(--home-primary-strong);
+      box-shadow: 0 14px 34px -14px rgba(37, 99, 235, .35), var(--home-shadow-hover);
+      transform: translateY(-4px);
+    }
+
+    .contact-card:hover::before {
+      opacity: 1;
     }
 
     .contact-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.25rem;
+      font-size: 1.3rem;
       flex-shrink: 0;
+      box-shadow: 0 6px 16px -6px rgba(15, 23, 42, .18);
+    }
+
+    .contact-value {
+      font-weight: 600;
+      color: var(--home-text);
+      font-size: .95rem;
+      line-height: 1.5;
+    }
+
+    .contact-note {
+      color: var(--home-text-muted);
+      font-size: .82rem;
+      margin-top: .15rem;
+    }
+
+    /* Inline contact chips (email / phone as tap-friendly pills) */
+    .contact-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--home-primary);
+      background: rgba(37, 99, 235, .08);
+      border: 1px solid rgba(37, 99, 235, .18);
+      border-radius: 999px;
+      padding: .3rem .75rem;
+      transition: var(--home-transition);
+    }
+
+    .contact-pill:hover {
+      color: #ffffff;
+      background: var(--home-primary);
+      border-color: var(--home-primary);
+      transform: translateY(-1px);
+    }
+
+    /* Modern form card */
+    .contact-form-card {
+      border: 1px solid var(--home-border);
+      border-radius: 18px;
+      background: linear-gradient(180deg, var(--home-surface-3) 0%, #fbfcfe 100%);
+      box-shadow: 0 10px 30px -12px rgba(15, 23, 42, .12);
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .contact-form-card::after {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, rgba(37, 99, 235, .08), transparent 70%);
+      pointer-events: none;
+    }
+
+    .contact-form-card .form-control,
+    .contact-form-card .form-select {
+      border-radius: 10px;
+      padding: .65rem .85rem;
+      border-color: var(--home-border-strong);
+      transition: var(--home-transition);
+    }
+
+    .contact-form-card .form-control:focus,
+    .contact-form-card .form-select:focus {
+      border-color: var(--home-primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .12);
+    }
+
+    .contact-form-card .form-label {
+      color: var(--home-text-soft);
+      letter-spacing: .2px;
     }
 
     /* ===== Footer ===== */
     footer {
-      background: #0a2540;
+      background: var(--home-surface);
+      border-top: 1px solid var(--home-border-strong);
     }
 
     .footer-link {
-      color: rgba(255, 255, 255, .6);
+      color: var(--home-text-dim);
       font-size: .875rem;
       text-decoration: none;
       transition: color .2s;
     }
 
     .footer-link:hover {
+      color: var(--home-text);
+    }
+
+    /* ── About Us — attractive info cards ── */
+    .about-info-card {
+      transition: var(--home-transition);
+    }
+
+    .about-info-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--home-shadow-hover), 0 0 0 1px rgba(226, 232, 240, .6);
+    }
+
+    .about-icon-chip {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
       color: #fff;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 10px -4px rgba(15, 23, 42, .35);
+    }
+
+    .about-value {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .5rem .75rem;
+      border-radius: 10px;
+      background: var(--home-surface-2);
+      border: 1px solid var(--home-border);
+      height: 100%;
+      transition: var(--home-transition);
+    }
+
+    .about-value:hover {
+      border-color: var(--home-primary);
+      background: var(--home-surface-hover);
+      transform: translateX(3px);
+    }
+
+    .about-stat-card {
+      transition: var(--home-transition);
+    }
+
+    .about-stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--home-shadow-hover);
+    }
+
+    .about-stat-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      margin-bottom: .65rem;
+    }
+
+    .about-tech {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      padding: .55rem .7rem;
+      border-radius: 10px;
+      background: var(--home-surface-2);
+      border: 1px solid var(--home-border);
+      height: 100%;
+      transition: var(--home-transition);
+    }
+
+    .about-tech i {
+      font-size: 1.15rem;
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .about-tech:hover {
+      border-color: var(--home-primary);
+      background: var(--home-surface-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--home-shadow);
     }
 
     /* ===== Scroll-to-top ===== */
@@ -422,10 +1077,10 @@
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: #2563eb;
+      background: linear-gradient(135deg, var(--home-primary) 0%, var(--home-primary-strong) 100%);
       color: #fff;
       border: none;
-      box-shadow: 0 4px 16px rgba(37, 99, 235, .4);
+      box-shadow: 0 10px 24px rgba(37, 99, 235, .5);
       display: none;
       align-items: center;
       justify-content: center;
@@ -437,29 +1092,512 @@
 
     #scrollTopBtn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(37, 99, 235, .5);
+      box-shadow: 0 14px 30px rgba(37, 99, 235, .6);
     }
 
     #scrollTopBtn.visible {
       display: flex;
     }
 
-    /* ===== Metric cards ===== */
-    .metric-card {
-      border: 1px solid #e9ecef;
-      border-radius: 16px;
-      padding: 2rem 1.5rem;
-      text-align: center;
-      background: #fff;
-      transition: all .25s ease;
+    /* ═══════════════════════════════════════════════════════════
+      HOME PAGE — DARK-TECH TEXT & SURFACES (landing page only)
+      Scoped with the same body:not() pattern theme.css uses so
+      login/register/admin/technician/user pages are untouched.
+      § Soft whites replace the default #212529/dark text so the
+      Home Page reads cleanly over the dark navy surfaces in BOTH
+      theme modes while the public landing keeps its premium dark
+      identity. Brand icon hues are preserved; icon surface tints +
+      semantic values are softened to sit well on the dark scheme.
+      ═══════════════════════════════════════════════════════════ */
+    html body:not(.dashboard-body):not(.auth-body) {
+      color: var(--home-text-soft);
+      background-color: var(--home-bg);
     }
 
-    .metric-card:hover {
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
-      transform: translateY(-3px);
+    /* ── Navbar text & icons (professional navy + blue accent) ──
+       Keeps the landing navbar consistent with the clean white
+       university-service bar in light mode. Dark mode is handled in
+       theme.css with a matching navy surface. */
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .brand-text-main {
+      color: var(--home-text) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .brand-text-sub {
+      color: var(--home-text-muted) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item {
+      color: var(--home-text-muted) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item i,
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-login i {
+      color: var(--home-text-muted) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item:hover i,
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active i {
+      color: var(--home-primary) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item:hover,
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active {
+      background: rgba(37, 99, 235, .075);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active {
+      background: rgba(37, 99, 235, .12);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active::after {
+      background: linear-gradient(90deg, var(--home-primary), var(--home-accent)) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-login {
+      color: var(--home-primary) !important;
+      border-color: var(--home-primary) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-register,
+    body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-register i {
+      color: #fff !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .main-navbar {
+      background: rgba(255, 255, 255, .96) !important;
+      border-bottom-color: rgba(226, 232, 240, .9);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) #mainNavbar .lang-select {
+      background-color: #fff;
+      color: var(--home-text);
+      border-color: var(--home-border-strong);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) #mainNavbar .app-theme-switch {
+      background-color: #fff;
+      color: var(--home-text);
+      border-color: var(--home-border-strong);
+    }
+
+    /* ── Floating theme/language controls, if rendered on Home ── */
+    body:not(.dashboard-body):not(.auth-body) .app-theme-switch,
+    body:not(.dashboard-body):not(.auth-body) .app-theme-switch i,
+    body:not(.dashboard-body):not(.auth-body) .app-theme-switch .theme-moon,
+    body:not(.dashboard-body):not(.auth-body) .app-theme-switch .theme-sun {
+      color: var(--home-text-soft) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .lang-switch .lang-select,
+    body:not(.dashboard-body):not(.auth-body) .lang-switch .lang-select i {
+      color: var(--home-text-muted) !important;
+    }
+
+    /* ── Hero (blue-neon workstation background kept) ── */
+    html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .hero-section,
+    body:not(.dashboard-body):not(.auth-body) .hero-section {
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 40%, transparent 40%, rgba(2, 6, 23, 0.85) 100%),
+        radial-gradient(ellipse 60% 50% at 50% 45%, rgba(6, 182, 212, 0.06) 0%, transparent 70%),
+        linear-gradient(180deg, rgba(2, 6, 23, 0.72) 0%, rgba(2, 6, 23, 0.45) 45%, rgba(2, 6, 23, 0.55) 70%, rgba(2, 6, 23, 0.85) 100%),
+        url('/assets/images/home1.png') center / cover no-repeat !important;
+      background-blend-mode: overlay, screen, multiply, normal !important;
+    }
+
+    html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .hero-section::before,
+    body:not(.dashboard-body):not(.auth-body) .hero-section::before {
+      background: radial-gradient(ellipse 90% 60% at 50% 15%, rgba(37, 99, 235, 0.04) 0%, transparent 60%) !important;
+    }
+
+    html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .hero-section::after,
+    body:not(.dashboard-body):not(.auth-body) .hero-section::after {
+      background: linear-gradient(180deg, transparent 0%, rgba(2, 6, 23, 0.6) 50%, rgba(2, 6, 23, 0.85) 100%) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .hero-section .hero-title {
+      color: #ffffff !important;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, .45) !important;
+    }
+
+    /* Compact professional hero title (mobile ≈24px, tablet ≈30–34px,
+       desktop ≈40px) so the workstation image stays clearly visible. */
+    body:not(.dashboard-body):not(.auth-body) .hero-section .hero-title {
+      font-size: clamp(1.5rem, 3.5vw + .5rem, 2.5rem) !important;
+      line-height: 1.2 !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .hero-section .hero-title span:first-child {
+      color: #ffffff !important;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, .45) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .hero-section .hero-title span:last-child {
+      color: #60a5fa !important;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, .45) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .hero-section .hero-subtitle {
+      color: #f1f5f9 !important;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, .35) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .hero-section .hero-badge {
+      color: #ffffff !important;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, .4) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .hero-section .btn-outline-light {
+      color: #ffffff !important;
+      border-color: rgba(255, 255, 255, .35) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .hero-section .fw-bold.fs-5 {
+      color: #ffffff !important;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, .4) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .hero-section div[style*="color:rgba(255,255,255"] {
+      color: #e2e8f0 !important;
+    }
+
+    /* ── Darken light Home surfaces so soft-white text reads ── */
+    body:not(.dashboard-body):not(.auth-body) section[style*="background:#f8faff"],
+    body:not(.dashboard-body):not(.auth-body) .stats-bar {
+      background: var(--home-surface) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .stats-bar {
+      border-top: 1px solid var(--home-border);
+      border-bottom: 1px solid var(--home-border);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .stat-item:not(:last-child)::after {
+      background: var(--home-border-strong);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .stat-label {
+      color: var(--home-text-dim) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .stats-bar .stat-number,
+    body:not(.dashboard-body):not(.auth-body) .stats-bar .stat-number.text-primary {
+      color: var(--home-text) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .metric-card,
+    body:not(.dashboard-body):not(.auth-body) .feature-card,
+    body:not(.dashboard-body):not(.auth-body) .service-card,
+    body:not(.dashboard-body):not(.auth-body) .workflow-step,
+    body:not(.dashboard-body):not(.auth-body) .contact-card,
+    body:not(.dashboard-body):not(.auth-body) .contact-contact-info,
+    body:not(.dashboard-body):not(.auth-body) .card {
+      background: var(--home-surface-3) !important;
+      border-color: var(--home-border) !important;
+      color: var(--home-text-soft);
+    }
+
+    /* ── Headings / labels / card text ── */
+    body:not(.dashboard-body):not(.auth-body) .section-label {
+      color: var(--home-accent) !important;
+      background: rgba(6, 182, 212, .12) !important;
+      border-color: rgba(6, 182, 212, .25) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .section-title,
+    body:not(.dashboard-body):not(.auth-body) h1,
+    body:not(.dashboard-body):not(.auth-body) h2,
+    body:not(.dashboard-body):not(.auth-body) h3,
+    body:not(.dashboard-body):not(.auth-body) h4,
+    body:not(.dashboard-body):not(.auth-body) h5,
+    body:not(.dashboard-body):not(.auth-body) h6,
+    body:not(.dashboard-body):not(.auth-body) .fw-bold,
+    body:not(.dashboard-body):not(.auth-body) .fw-semibold {
+      color: var(--home-text) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) p,
+    body:not(.dashboard-body):not(.auth-body) .small,
+    body:not(.dashboard-body):not(.auth-body) .text-muted,
+    body:not(.dashboard-body):not(.auth-body) .muted,
+    body:not(.dashboard-body):not(.auth-body) li,
+    body:not(.dashboard-body):not(.auth-body) strong,
+    body:not(.dashboard-body):not(.auth-body) label {
+      color: var(--home-text-muted) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .text-dark {
+      color: var(--home-text) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .workflow-connector {
+      color: var(--home-primary) !important;
+    }
+
+    /* ── Blue text links / outline buttons → soft white ──
+       Decorative blue icons keep their hue. */
+    body:not(.dashboard-body):not(.auth-body) a.text-primary,
+    body:not(.dashboard-body):not(.auth-body) .btn-outline-primary {
+      color: var(--home-text) !important;
+      border-color: rgba(241, 245, 249, .5) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .btn-outline-primary:hover,
+    body:not(.dashboard-body):not(.auth-body) .btn-outline-primary:focus {
+      background: rgba(241, 245, 249, .14);
+      border-color: var(--home-text) !important;
+    }
+
+    /* ── Workflow badges keep brand tints but stay readable ── */
+    body:not(.dashboard-body):not(.auth-body) .badge.bg-light {
+      background: #263244 !important;
+      color: var(--home-text-muted) !important;
+    }
+
+    /* ── Contact form card + labels ── */
+    body:not(.dashboard-body):not(.auth-body) .contact-card h6 {
+      color: var(--home-text) !important;
+    }
+
+    /* ── Footer (dark surface) ── */
+    body:not(.dashboard-body):not(.auth-body) footer {
+      background: var(--home-surface) !important;
+      color: var(--home-text-muted);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) footer .footer-link {
+      color: var(--home-text-dim);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) footer .footer-link:hover {
+      color: var(--home-text);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) footer p,
+    body:not(.dashboard-body):not(.auth-body) footer span,
+    body:not(.dashboard-body):not(.auth-body) footer .text-white-50,
+    body:not(.dashboard-body):not(.auth-body) footer div[style*="color:rgba(255,255,255"] {
+      color: var(--home-text-muted) !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) footer hr[style*="border-color:rgba(255,255,255,.1)"] {
+      border-color: var(--home-border-strong) !important;
+    }
+
+    /* ── Subtle tech pattern (extremely low opacity) ── */
+    body:not(.dashboard-body):not(.auth-body)::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(6, 182, 212, 0.025) 1px, transparent 0),
+        radial-gradient(circle at 1px 1px, rgba(37, 99, 235, 0.015) 1px, transparent 0);
+      background-size: 60px 60px, 40px 40px;
+      background-position: 0 0, 30px 30px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body:not(.dashboard-body):not(.auth-body)>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Cohesive section backgrounds with subtle depth ── */
+    body:not(.dashboard-body):not(.auth-body) section:not(.hero-section) {
+      background-color: var(--home-bg);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(2) {
+      background-color: #020617;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(3) {
+      background-color: #0B1220;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(4) {
+      background-color: #0F172A;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(5) {
+      background-color: #020617;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(6) {
+      background-color: #0B1220;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(7) {
+      background-color: #0F172A;
+    }
+
+    /* Stats bar - subtle separator */
+    body:not(.dashboard-body):not(.auth-body) .stats-bar {
+      background: linear-gradient(180deg, var(--home-surface) 0%, var(--home-bg) 100%) !important;
+    }
+
+    /* ===== Responsive refinements ===== */
+    @media (max-width: 767.98px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .stat-item:not(:last-child)::after {
+        top: 12%;
+        bottom: 12%;
+      }
+
+      .hero-section {
+        min-height: 78vh;
+      }
+
+      .hero-section .hero-title {
+        letter-spacing: -0.2px;
+      }
+
+      #scrollTopBtn {
+        bottom: 1.25rem;
+        right: 1.25rem;
+        width: 40px;
+        height: 40px;
+      }
+    }
+
+    @media (max-width: 575.98px) {
+      .hero-section .hero-subtitle br {
+        display: none;
+      }
+
+      .brand-text-sub {
+        display: none;
+      }
+    }
+
+    /* ===== Professional blue-black footer ===== */
+    body:not(.dashboard-body):not(.auth-body) footer.main-footer {
+      background: radial-gradient(1200px 500px at 50% 0%, #16233f 0%, #0d1428 55%, #080f1e 100%) !important;
+      color: #9fb0ca !important;
+    }
+
+    .main-footer .container {
+      position: relative;
+    }
+
+    .main-footer .main-footer-accent {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 3px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #2563eb, #22d3ee);
+    }
+
+    .main-footer .footer-brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 18px -6px rgba(37, 99, 235, .6);
+    }
+
+    .main-footer .footer-brand-icon i {
+      color: #ffffff;
+      font-size: 1rem;
+    }
+
+    .main-footer .footer-brand-title {
+      color: #ffffff;
+      font-size: 1.1rem;
+      letter-spacing: .2px;
+    }
+
+    .main-footer .footer-about {
+      color: #9fb0ca !important;
+      font-size: .9rem;
+      line-height: 1.8;
+      max-width: 540px;
+      margin-inline: auto;
+    }
+
+    .main-footer .footer-col-title {
+      color: #ffffff;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .main-footer .footer-link {
+      color: #9fb0ca !important;
+      font-size: .875rem;
+      transition: color .2s, transform .2s;
+      display: inline-block;
+    }
+
+    .main-footer .footer-link:hover {
+      color: #22d3ee !important;
+      transform: translateX(3px);
+    }
+
+    .main-footer .footer-status i {
+      margin-right: 4px;
+    }
+
+    .main-footer .main-footer-divider {
+      border: 0;
+      border-top: 1px solid rgba(148, 163, 184, .18);
+      margin: 2.5rem 0 1.5rem;
+      width: 100%;
+    }
+
+    .main-footer .footer-bottom {
+      color: #7c8ca3 !important;
+      font-size: .8rem;
+    }
+
+    .main-footer .footer-bottom-links .footer-link {
+      color: #9fb0ca !important;
+    }
+
+    .main-footer .footer-bottom-links .footer-link:hover {
+      color: #22d3ee !important;
+    }
+
+    /* ===== Reduced motion ====== */
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+
+      .feature-card:hover,
+      .service-card:hover,
+      .workflow-step:hover,
+      .contact-card:hover,
+      .metric-card:hover,
+      .hero-section .btn-light,
+      .hero-section .btn-outline-light,
+      .btn-nav-register,
+      .btn-nav-login {
+        transform: none !important;
+      }
     }
   </style>
-<link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <script src="/assets/js/api-config.js"></script>
 </head>
 
 <body>
@@ -502,24 +1640,22 @@
 
       <div class="collapse navbar-collapse" id="navMenu">
         <ul class="navbar-nav mx-auto gap-1">
-          <li class="nav-item"><a class="nav-link nav-link-item active" href="#home"><i
-                class="fa-solid fa-house me-1"></i>Home</a></li>
-          <li class="nav-item"><a class="nav-link nav-link-item" href="#features"><i
-                class="fa-solid fa-grid-2 me-1"></i>Features</a></li>
-          <li class="nav-item"><a class="nav-link nav-link-item" href="#workflow"><i
-                class="fa-solid fa-diagram-project me-1"></i>Workflow</a></li>
-          <li class="nav-item"><a class="nav-link nav-link-item" href="#services"><i
-                class="fa-solid fa-screwdriver-wrench me-1"></i>Services</a></li>
-          <li class="nav-item"><a class="nav-link nav-link-item" href="#contact"><i
-                class="fa-solid fa-envelope me-1"></i>Contact</a></li>
-          <li class="nav-item"><a class="nav-link nav-link-item" href="#about"><i
-                class="fa-solid fa-circle-info me-1"></i>About Us</a></li>
+          <li class="nav-item"><a class="nav-link nav-link-item active" href="#home"><span
+                data-i18n="nav.home">Home</span></a></li>
+          <li class="nav-item"><a class="nav-link nav-link-item" href="#features"><span
+                data-i18n="nav.features">Features</span></a></li>
+          <li class="nav-item"><a class="nav-link nav-link-item" href="#workflow"><span
+                data-i18n="nav.workflow">Workflow</span></a></li>
+          <li class="nav-item"><a class="nav-link nav-link-item" href="#services"><span
+                data-i18n="nav.services">Services</span></a></li>
+          <li class="nav-item"><a class="nav-link nav-link-item" href="#contact"><span
+                data-i18n="nav.contact">Contact</span></a></li>
+          <li class="nav-item"><a class="nav-link nav-link-item" href="#about"><span data-i18n="nav.about">About
+                Us</span></a></li>
         </ul>
         <div class="d-flex align-items-center gap-2 mt-2 mt-lg-0">
-          <a href="/views/login.html" class="btn btn-nav-login"><i
-              class="fa-solid fa-right-to-bracket me-1"></i>Login</a>
-          <a href="/views/register.html" class="btn btn-nav-register"><i
-              class="fa-solid fa-user-plus me-1"></i>Register</a>
+          <a href="/views/login.html" class="btn btn-nav-login"><span data-i18n="nav.login">Login</span></a>
+          <a href="/views/register.html" class="btn btn-nav-register"><span data-i18n="nav.register">Register</span></a>
         </div>
       </div>
     </div>
@@ -527,41 +1663,46 @@
 
   <!-- ===== HOME - HERO ===== -->
   <section class="hero-section text-white" id="home">
+    <div class="hero-slide hero-slide-1"></div>
+    <div class="hero-slide hero-slide-2"></div>
     <div class="container position-relative" style="z-index:1;">
       <div class="row align-items-center g-5">
         <div class="col-lg-6">
           <div class="hero-badge">
             <i class="fa-solid fa-shield-halved"></i>
-            Debre Berhan University ICT Platform
+            <span data-i18n="hero.badge">Debre Berhan University ICT Platform</span>
           </div>
           <h1 class="hero-title text-white mb-4">
-            Smart Computer Maintenance<br>
-            <span style="color:rgba(255,255,255,.7);">Service Request &amp; Tracking System</span>
+            <span data-i18n="hero.title">Smart Computer Maintenance </span>
+            <span data-i18n="hero.title_span">Request &amp; Tracking System</span>
           </h1>
           <p class="hero-subtitle mb-4">
-            Fast, transparent, and reliable computer, printer, and software maintenance support for
-            staff and students.
+            <span data-i18n="hero.subtitle">Fast, transparent, and reliable computer, printer, and software maintenance
+              support for
+              staff and students.</span>
           </p>
-          <div class="d-flex flex-wrap gap-3">
-            <a href="/views/register.html" class="btn btn-light btn-lg px-4 fw-semibold" style="border-radius:10px;">
-              <i class="fa-solid fa-paper-plane me-2"></i>Submit Request
+          <div class="hero-cta d-flex flex-wrap gap-2">
+            <a href="/views/register.html" class="btn btn-request btn-lg px-4 fw-semibold">
+              <i class="fa-solid fa-paper-plane me-2"></i><span data-i18n="hero.btn.request">Submit Request</span>
             </a>
-            <a href="/views/login.html" class="btn btn-outline-light btn-lg px-4" style="border-radius:10px;">
-              <i class="fa-solid fa-magnifying-glass me-2"></i>Track Status
+            <a href="/views/login.html" class="btn btn-track btn-lg px-4">
+              <i class="fa-solid fa-magnifying-glass me-2"></i><span data-i18n="hero.btn.track">Track Status</span>
             </a>
-            <a href="#services" class="btn btn-outline-light btn-lg px-4" style="border-radius:10px;">
-              <i class="fa-solid fa-play me-2"></i>Learn More
+            <a href="#services" class="btn btn-learn btn-lg px-4">
+              <i class="fa-solid fa-play me-2"></i><span data-i18n="hero.btn.learn">Learn More</span>
             </a>
           </div>
           <div class="d-flex gap-4 mt-4 pt-2">
             <div>
               <div class="fw-bold fs-5">3</div>
-              <div style="font-size:.78rem;color:rgba(255,255,255,.6);">User Roles</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="hero.roles">User Roles</span>
+              </div>
             </div>
             <div style="width:1px;background:rgba(255,255,255,.2);"></div>
             <div>
               <div class="fw-bold fs-5">7</div>
-              <div style="font-size:.78rem;color:rgba(255,255,255,.6);">Status Stages</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="hero.stages">Status
+                  Stages</span></div>
             </div>
             <div style="width:1px;background:rgba(255,255,255,.2);"></div>
             <div>
@@ -571,48 +1712,8 @@
             <div style="width:1px;background:rgba(255,255,255,.2);"></div>
             <div>
               <div class="fw-bold fs-5">Real-time</div>
-              <div style="font-size:.78rem;color:rgba(255,255,255,.6);">Tracking</div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-6 d-none d-lg-block">
-          <div style="border-radius:20px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4);position:relative;">
-            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=900&q=80&auto=format&fit=crop"
-              alt="ICT technician performing hardware maintenance"
-              style="width:100%;height:360px;object-fit:cover;display:block;" />
-            <div
-              style="position:absolute;bottom:1rem;left:1rem;background:rgba(37,99,235,.92);backdrop-filter:blur(8px);border-radius:10px;padding:.55rem 1rem;display:flex;align-items:center;gap:.6rem;color:#fff;">
-              <i class="fa-solid fa-wrench fs-5"></i>
-              <div>
-                <div style="font-size:.78rem;font-weight:700;">Hardware &amp; Software Support</div>
-                <div style="font-size:.68rem;opacity:.85;">Desktops &#8226; Laptops &#8226; Printers</div>
-              </div>
-            </div>
-          </div>
-          <div class="d-flex gap-2 mt-2">
-            <div style="flex:1;border-radius:12px;overflow:hidden;height:90px;">
-              <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&q=75&auto=format&fit=crop"
-                alt="Laptop repair"
-                style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;"
-                onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform='scale(1)'" />
-            </div>
-            <div style="flex:1;border-radius:12px;overflow:hidden;height:90px;">
-              <img src="https://images.unsplash.com/photo-1587614382346-4ec70e388b28?w=400&q=75&auto=format&fit=crop"
-                alt="Printer maintenance"
-                style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;"
-                onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform='scale(1)'" />
-            </div>
-            <div style="flex:1;border-radius:12px;overflow:hidden;height:90px;">
-              <img src="https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=400&q=75&auto=format&fit=crop"
-                alt="Desktop PC repair"
-                style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;"
-                onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform='scale(1)'" />
-            </div>
-            <div style="flex:1;border-radius:12px;overflow:hidden;height:90px;">
-              <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=75&auto=format&fit=crop"
-                alt="Software installation"
-                style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;"
-                onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform='scale(1)'" />
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span
+                  data-i18n="hero.monitoring">Tracking</span></div>
             </div>
           </div>
         </div>
@@ -626,19 +1727,19 @@
       <div class="row g-0">
         <div class="col-6 col-md-3 stat-item">
           <div class="stat-number text-primary" id="countUsers">0</div>
-          <div class="stat-label">Active Users</div>
+          <div class="stat-label"><span data-i18n="stats.users">Active Users</span></div>
         </div>
         <div class="col-6 col-md-3 stat-item">
           <div class="stat-number text-success" id="countResolved">0</div>
-          <div class="stat-label">Requests Resolved</div>
+          <div class="stat-label"><span data-i18n="stats.resolved">Requests Resolved</span></div>
         </div>
         <div class="col-6 col-md-3 stat-item">
           <div class="stat-number text-warning" id="countAssets">0</div>
-          <div class="stat-label">Devices Tracked</div>
+          <div class="stat-label"><span data-i18n="stats.devices">Devices Tracked</span></div>
         </div>
         <div class="col-6 col-md-3 stat-item">
           <div class="stat-number text-info" id="countTechs">0</div>
-          <div class="stat-label">Active Technicians</div>
+          <div class="stat-label"><span data-i18n="stats.techs">Active Technicians</span></div>
         </div>
       </div>
     </div>
@@ -648,10 +1749,11 @@
   <section class="py-5 my-2" style="background:#f8faff;">
     <div class="container">
       <div class="text-center mb-5">
-        <div class="section-label">Key Metrics</div>
-        <h2 class="section-title">Performance Dashboard</h2>
-        <p class="text-muted mx-auto" style="max-width:560px;">Real-time overview of our maintenance operations and
-          service delivery performance.</p>
+        <div class="section-label"><span data-i18n="metrics.label">Key Metrics</span></div>
+        <h2 class="section-title"><span data-i18n="metrics.title">Performance Dashboard</span></h2>
+        <p class="text-muted mx-auto" style="max-width:560px;"><span data-i18n="metrics.subtitle">Real-time overview of
+            our maintenance operations and
+            service delivery performance.</span></p>
       </div>
       <div class="row g-4">
         <div class="col-md-4">
@@ -661,9 +1763,11 @@
               <i class="fa-solid fa-circle-check fa-lg" style="color:#198754;"></i>
             </div>
             <h3 class="fw-bold mb-1" style="color:#198754;" id="metricResolved">2,450+</h3>
-            <div class="text-muted small fw-semibold">Total Requests Resolved</div>
-            <p class="text-muted small mt-2 mb-0">Successfully completed hardware and software maintenance tasks across
-              all departments.</p>
+            <div class="text-muted small fw-semibold"><span data-i18n="metrics.resolved">Total Requests Resolved</span>
+            </div>
+            <p class="text-muted small mt-2 mb-0"><span data-i18n="metrics.resolved.desc">Successfully completed
+                hardware and software maintenance tasks across
+                all departments.</span></p>
           </div>
         </div>
         <div class="col-md-4">
@@ -673,9 +1777,10 @@
               <i class="fa-solid fa-user-gear fa-lg" style="color:#2563eb;"></i>
             </div>
             <h3 class="fw-bold mb-1" style="color:#2563eb;">12+</h3>
-            <div class="text-muted small fw-semibold">Active Technicians</div>
-            <p class="text-muted small mt-2 mb-0">Skilled ICT professionals dedicated to hardware repair and software
-              configuration.</p>
+            <div class="text-muted small fw-semibold"><span data-i18n="metrics.techs">Active Technicians</span></div>
+            <p class="text-muted small mt-2 mb-0"><span data-i18n="metrics.techs.desc">Skilled ICT professionals
+                dedicated to hardware repair and software
+                configuration.</span></p>
           </div>
         </div>
         <div class="col-md-4">
@@ -685,9 +1790,10 @@
               <i class="fa-solid fa-clock fa-lg" style="color:#fd7e14;"></i>
             </div>
             <h3 class="fw-bold mb-1" style="color:#fd7e14;">2.5 hrs</h3>
-            <div class="text-muted small fw-semibold">Avg. Resolution Time</div>
-            <p class="text-muted small mt-2 mb-0">Average time from ticket assignment to confirmed resolution for
-              standard requests.</p>
+            <div class="text-muted small fw-semibold"><span data-i18n="metrics.avg">Avg. Resolution Time</span></div>
+            <p class="text-muted small mt-2 mb-0"><span data-i18n="metrics.avg.desc">Average time from ticket assignment
+                to confirmed resolution for
+                standard requests.</span></p>
           </div>
         </div>
       </div>
@@ -698,10 +1804,11 @@
   <section class="py-5 my-2">
     <div class="container">
       <div class="text-center mb-5">
-        <div class="section-label">Quick Access</div>
-        <h2 class="section-title">What Do You Need Help With?</h2>
-        <p class="text-muted mx-auto" style="max-width:560px;">Select a category to quickly access the relevant support
-          service for your issue.</p>
+        <div class="section-label"><span data-i18n="quick.label">Quick Access</span></div>
+        <h2 class="section-title"><span data-i18n="quick.title">What Do You Need Help With?</span></h2>
+        <p class="text-muted mx-auto" style="max-width:560px;"><span data-i18n="quick.subtitle">Select a category to
+            quickly access the relevant support
+            service for your issue.</span></p>
       </div>
       <div class="row g-4">
         <div class="col-md-4">
@@ -709,11 +1816,12 @@
             <div class="feature-icon mx-auto" style="background:#e8f0fe;">
               <i class="fa-solid fa-desktop" style="color:#2563eb;"></i>
             </div>
-            <h5 class="fw-bold mb-2">Hardware Maintenance</h5>
-            <p class="text-muted small mb-3">PC and laptop repair, component replacement, printer servicing, monitor and
-              peripheral troubleshooting.</p>
+            <h5 class="fw-bold mb-2"><span data-i18n="quick.hw">Hardware Maintenance</span></h5>
+            <p class="text-muted small mb-3"><span data-i18n="quick.hw.desc">PC and laptop repair, component
+                replacement, printer servicing, monitor and
+                peripheral troubleshooting.</span></p>
             <a href="#services" class="btn btn-sm btn-outline-primary" style="border-radius:8px;">
-              <i class="fa-solid fa-arrow-right me-1"></i>View Details
+              <i class="fa-solid fa-arrow-right me-1"></i><span data-i18n="quick.view">View Details</span>
             </a>
           </div>
         </div>
@@ -722,11 +1830,13 @@
             <div class="feature-icon mx-auto" style="background:#d1e7dd;">
               <i class="fa-solid fa-cube" style="color:#198754;"></i>
             </div>
-            <h5 class="fw-bold mb-2">Software Installation &amp; OS Troubleshooting</h5>
-            <p class="text-muted small mb-3">Operating system reinstallation, antivirus deployment, driver updates, and
-              essential application setup.</p>
+            <h5 class="fw-bold mb-2"><span data-i18n="quick.sw">Software Installation &amp; OS Troubleshooting</span>
+            </h5>
+            <p class="text-muted small mb-3"><span data-i18n="quick.sw.desc">Operating system reinstallation, antivirus
+                deployment, driver updates, and
+                essential application setup.</span></p>
             <a href="#services" class="btn btn-sm btn-outline-success" style="border-radius:8px;">
-              <i class="fa-solid fa-arrow-right me-1"></i>View Details
+              <i class="fa-solid fa-arrow-right me-1"></i><span data-i18n="quick.view">View Details</span>
             </a>
           </div>
         </div>
@@ -735,11 +1845,12 @@
             <div class="feature-icon mx-auto" style="background:#fff3cd;">
               <i class="fa-solid fa-user-lock" style="color:#fd7e14;"></i>
             </div>
-            <h5 class="fw-bold mb-2">Account &amp; System Access Support</h5>
-            <p class="text-muted small mb-3">Staff portal account creation, password resets, official email
-              configuration, and access restoration.</p>
+            <h5 class="fw-bold mb-2"><span data-i18n="quick.net">Account &amp; System Access Support</span></h5>
+            <p class="text-muted small mb-3"><span data-i18n="quick.net.desc">Staff portal account creation, password
+                resets, official email
+                configuration, and access restoration.</span></p>
             <a href="#contact" class="btn btn-sm btn-outline-warning" style="border-radius:8px;">
-              <i class="fa-solid fa-arrow-right me-1"></i>Contact Support
+              <i class="fa-solid fa-arrow-right me-1"></i><span data-i18n="quick.contact">Contact Support</span>
             </a>
           </div>
         </div>
@@ -751,10 +1862,11 @@
   <section id="features" class="py-5 my-2" style="background:#f8faff;">
     <div class="container">
       <div class="text-center mb-5">
-        <div class="section-label">Features</div>
-        <h2 class="section-title">Platform Capabilities</h2>
-        <p class="text-muted mx-auto" style="max-width:620px;">A comprehensive toolkit designed to streamline the entire
-          ICT hardware and software maintenance lifecycle at Debre Berhan University.</p>
+        <div class="section-label"><span data-i18n="features.label">Features</span></div>
+        <h2 class="section-title"><span data-i18n="features.title">Platform Capabilities</span></h2>
+        <p class="text-muted mx-auto" style="max-width:620px;"><span data-i18n="features.desc">A comprehensive toolkit
+            designed to streamline the entire
+            ICT hardware and software maintenance lifecycle at Debre Berhan University.</span></p>
       </div>
       <div class="row g-4">
         <div class="col-md-6 col-lg-4">
@@ -762,9 +1874,10 @@
             <div class="feature-icon" style="background:#e8f0fe;">
               <i class="fa-solid fa-file-lines" style="color:#2563eb;"></i>
             </div>
-            <h5 class="fw-bold mb-2">Online Request Submission</h5>
-            <p class="text-muted small mb-0">Submit maintenance requests with device serial numbers, office location,
-              issue description, and file attachments &#8212; no paper forms required.</p>
+            <h5 class="fw-bold mb-2"><span data-i18n="feat1.title">Online Request Submission</span></h5>
+            <p class="text-muted small mb-0"><span data-i18n="feat1.desc">Submit maintenance requests with device serial
+                numbers, office location,
+                issue description, and file attachments &#8212; no paper forms required.</span></p>
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
@@ -772,9 +1885,10 @@
             <div class="feature-icon" style="background:#d1e7dd;">
               <i class="fa-solid fa-timeline" style="color:#198754;"></i>
             </div>
-            <h5 class="fw-bold mb-2">Real-Time Ticket Tracking</h5>
-            <p class="text-muted small mb-0">Monitor your request through every stage &#8212; Pending, Assigned, In
-              Progress, and Resolved &#8212; with live status updates.</p>
+            <h5 class="fw-bold mb-2"><span data-i18n="feat2.title">Real-Time Ticket Tracking</span></h5>
+            <p class="text-muted small mb-0"><span data-i18n="feat2.desc">Monitor your request through every stage
+                &#8212; Pending, Assigned, In
+                Progress, and Resolved &#8212; with live status updates.</span></p>
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
@@ -782,9 +1896,10 @@
             <div class="feature-icon" style="background:#fff3cd;">
               <i class="fa-solid fa-robot" style="color:#fd7e14;"></i>
             </div>
-            <h5 class="fw-bold mb-2">Automated Technician Assignment</h5>
-            <p class="text-muted small mb-0">The system automatically routes requests to specialized technicians based
-              on issue type &#8212; hardware or software &#8212; for faster resolution.</p>
+            <h5 class="fw-bold mb-2"><span data-i18n="feat3.title">Automated Technician Assignment</span></h5>
+            <p class="text-muted small mb-0"><span data-i18n="feat3.desc">The system automatically routes requests to
+                specialized technicians based
+                on issue type &#8212; hardware or software &#8212; for faster resolution.</span></p>
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
@@ -792,9 +1907,10 @@
             <div class="feature-icon" style="background:#f8d7da;">
               <i class="fa-solid fa-shield-halved" style="color:#dc3545;"></i>
             </div>
-            <h5 class="fw-bold mb-2">Role-Based Access Control</h5>
-            <p class="text-muted small mb-0">Three distinct roles &#8212; Requesters, Technicians, and Administrators
-              &#8212; each with tailored dashboards and permissions secured via JWT.</p>
+            <h5 class="fw-bold mb-2"><span data-i18n="feat4.title">Role-Based Access Control</span></h5>
+            <p class="text-muted small mb-0"><span data-i18n="feat4.desc">Three distinct roles &#8212; Requesters,
+                Technicians, and Administrators
+                &#8212; each with tailored dashboards and permissions secured via JWT.</span></p>
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
@@ -802,9 +1918,10 @@
             <div class="feature-icon" style="background:#cff4fc;">
               <i class="fa-solid fa-hard-drive" style="color:#0dcaf0;"></i>
             </div>
-            <h5 class="fw-bold mb-2">Device Inventory &amp; History</h5>
-            <p class="text-muted small mb-0">Track all computers, printers, and peripherals with asset tags, maintenance
-              history, warranty status, and spare parts inventory.</p>
+            <h5 class="fw-bold mb-2"><span data-i18n="feat5.title">Device Inventory &amp; History</span></h5>
+            <p class="text-muted small mb-0"><span data-i18n="feat5.desc">Track all computers, printers, and peripherals
+                with asset tags, maintenance
+                history, warranty status, and spare parts inventory.</span></p>
           </div>
         </div>
         <div class="col-md-6 col-lg-4">
@@ -812,9 +1929,10 @@
             <div class="feature-icon" style="background:#e2e3e5;">
               <i class="fa-solid fa-chart-pie" style="color:#6c757d;"></i>
             </div>
-            <h5 class="fw-bold mb-2">Performance Analytics &amp; Reports</h5>
-            <p class="text-muted small mb-0">Generate detailed reports on resolution times, technician performance,
-              department trends, and issue categories with CSV export.</p>
+            <h5 class="fw-bold mb-2"><span data-i18n="feat6.title">Performance Analytics &amp; Reports</span></h5>
+            <p class="text-muted small mb-0"><span data-i18n="feat6.desc">Generate detailed reports on resolution times,
+                technician performance,
+                department trends, and issue categories with CSV export.</span></p>
           </div>
         </div>
       </div>
@@ -822,68 +1940,74 @@
   </section>
 
   <!-- ===== WORKFLOW ===== -->
-  <section id="workflow" class="py-5 my-2">
+  <section id="workflow" class="py-5 my-2" style="background:#ffffff;">
     <div class="container">
       <div class="text-center mb-5">
-        <div class="section-label">How It Works</div>
-        <h2 class="section-title">Maintenance Workflow</h2>
-        <p class="text-muted mx-auto" style="max-width:560px;">Every request follows a structured, transparent lifecycle
-          &#8212; ensuring accountability and timely resolution at each stage.</p>
+        <div class="section-label"><span data-i18n="workflow.label">How It Works</span></div>
+        <h2 class="section-title"><span data-i18n="workflow.title">Maintenance Workflow</span></h2>
+        <p class="text-muted mx-auto" style="max-width:560px;"><span data-i18n="workflow.subtitle">Every request follows
+            a structured, transparent lifecycle
+            &#8212; ensuring accountability and timely resolution at each stage.</span></p>
       </div>
       <div class="row justify-content-center">
         <div class="col-lg-7">
           <div class="workflow-step mb-1">
             <div class="step-num" style="background:#e8f0fe;color:#2563eb;">1</div>
             <div>
-              <div class="fw-semibold">Submit Request</div>
-              <div class="text-muted small">The user fills in a detailed form including device type, serial number,
-                office location, issue category, and priority level.</div>
+              <div class="fw-semibold"><span data-i18n="wf.step1">Submit Request</span></div>
+              <div class="text-muted small"><span data-i18n="wf.step1.desc">The user fills in a detailed form including
+                  device type, serial number,
+                  office location, issue category, and priority level.</span></div>
             </div>
-            <span class="badge bg-primary ms-auto">Submitted</span>
+            <span class="badge bg-primary ms-auto"><span data-i18n="wf.badge1">Submitted</span></span>
           </div>
           <div class="workflow-connector"><i class="fa-solid fa-arrow-down"></i></div>
 
           <div class="workflow-step mb-1">
             <div class="step-num" style="background:#e8eaf6;color:#5c6bc0;">2</div>
             <div>
-              <div class="fw-semibold">Ticket Generation</div>
-              <div class="text-muted small">The system automatically generates a unique tracking code and creates a
-                maintenance ticket in the queue.</div>
+              <div class="fw-semibold"><span data-i18n="wf.step2">Ticket Generation</span></div>
+              <div class="text-muted small"><span data-i18n="wf.step2.desc">The system automatically generates a unique
+                  tracking code and creates a
+                  maintenance ticket in the queue.</span></div>
             </div>
-            <span class="badge ms-auto" style="background:#5c6bc0;">Generated</span>
+            <span class="badge ms-auto" style="background:#5c6bc0;"><span data-i18n="wf.badge2">Generated</span></span>
           </div>
           <div class="workflow-connector"><i class="fa-solid fa-arrow-down"></i></div>
 
           <div class="workflow-step mb-1">
             <div class="step-num" style="background:#fff3cd;color:#fd7e14;">3</div>
             <div>
-              <div class="fw-semibold">Admin Review &amp; Assignment</div>
-              <div class="text-muted small">An administrator reviews the request and assigns it to a specialized
-                technician based on issue type and workload.</div>
+              <div class="fw-semibold"><span data-i18n="wf.step3">Admin Review &amp; Assignment</span></div>
+              <div class="text-muted small"><span data-i18n="wf.step3.desc">An administrator reviews the request and
+                  assigns it to a specialized
+                  technician based on issue type and workload.</span></div>
             </div>
-            <span class="badge bg-warning text-dark ms-auto">Assigned</span>
+            <span class="badge bg-warning text-dark ms-auto"><span data-i18n="wf.badge3">Assigned</span></span>
           </div>
           <div class="workflow-connector"><i class="fa-solid fa-arrow-down"></i></div>
 
           <div class="workflow-step mb-1">
             <div class="step-num" style="background:#cff4fc;color:#0dcaf0;">4</div>
             <div>
-              <div class="fw-semibold">Physical Inspection &amp; Repair</div>
-              <div class="text-muted small">The technician inspects the device, performs diagnostics, and carries out
-                the necessary hardware repair or software configuration.</div>
+              <div class="fw-semibold"><span data-i18n="wf.step4">Physical Inspection &amp; Repair</span></div>
+              <div class="text-muted small"><span data-i18n="wf.step4.desc">The technician inspects the device, performs
+                  diagnostics, and carries out
+                  the necessary hardware repair or software configuration.</span></div>
             </div>
-            <span class="badge bg-info text-dark ms-auto">In Progress</span>
+            <span class="badge bg-info text-dark ms-auto"><span data-i18n="wf.badge4">In Progress</span></span>
           </div>
           <div class="workflow-connector"><i class="fa-solid fa-arrow-down"></i></div>
 
           <div class="workflow-step mb-1">
             <div class="step-num" style="background:#d1e7dd;color:#198754;">5</div>
             <div>
-              <div class="fw-semibold">Resolution &amp; Feedback</div>
-              <div class="text-muted small">The user confirms the issue is resolved and provides a star rating to close
-                the maintenance cycle.</div>
+              <div class="fw-semibold"><span data-i18n="wf.step5">Resolution &amp; Feedback</span></div>
+              <div class="text-muted small"><span data-i18n="wf.step5.desc">The user confirms the issue is resolved and
+                  provides a star rating to close
+                  the maintenance cycle.</span></div>
             </div>
-            <span class="badge bg-success ms-auto">Resolved</span>
+            <span class="badge bg-success ms-auto"><span data-i18n="wf.badge5">Resolved</span></span>
           </div>
         </div>
       </div>
@@ -894,10 +2018,12 @@
   <section id="services" class="py-5 my-2" style="background:#f8faff;">
     <div class="container">
       <div class="text-center mb-5">
-        <div class="section-label">Our Services</div>
-        <h2 class="section-title">Hardware &amp; Software Maintenance Services</h2>
-        <p class="text-muted mx-auto" style="max-width:620px;">Specialized computer maintenance services exclusively
-          focused on hardware repair and software support for the community.</p>
+        <div class="section-label"><span data-i18n="services.label">Our Services</span></div>
+        <h2 class="section-title"><span data-i18n="services.title">Hardware &amp; Software Maintenance Services</span>
+        </h2>
+        <p class="text-muted mx-auto" style="max-width:620px;"><span data-i18n="services.subtitle">Specialized computer
+            maintenance services exclusively
+            focused on hardware repair and software support for the community.</span></p>
       </div>
       <div class="row g-4">
         <div class="col-md-6">
@@ -905,10 +2031,11 @@
             <div class="service-icon" style="background:#e8f0fe;">
               <i class="fa-solid fa-wrench" style="color:#2563eb;"></i>
             </div>
-            <h5 class="fw-bold mb-2">Hardware Repair &amp; Maintenance</h5>
+            <h5 class="fw-bold mb-2"><span data-i18n="svc1.title">Hardware Repair &amp; Maintenance</span></h5>
             <p class="text-muted mb-3" style="font-size:.9rem;line-height:1.7;">
-              Complete diagnostics, repair, and preventive maintenance for desktops, laptops, printers, scanners,
-              monitors, and all PC peripherals.
+              <span data-i18n="svc1.desc">Complete diagnostics, repair, and preventive maintenance for desktops,
+                laptops, printers, scanners,
+                monitors, and all PC peripherals.</span>
             </p>
             <ul class="list-unstyled mb-0">
               <li class="d-flex align-items-center gap-2 mb-2">
@@ -944,10 +2071,11 @@
             <div class="service-icon" style="background:#d1e7dd;">
               <i class="fa-solid fa-cube" style="color:#198754;"></i>
             </div>
-            <h5 class="fw-bold mb-2">Software Support &amp; Configuration</h5>
+            <h5 class="fw-bold mb-2"><span data-i18n="svc2.title">Software Support &amp; Configuration</span></h5>
             <p class="text-muted mb-3" style="font-size:.9rem;line-height:1.7;">
-              Operating system installation, software deployment, security configuration, and essential application
-              setup for all university workstations.
+              <span data-i18n="svc2.desc">Operating system installation, software deployment, security configuration,
+                and essential application
+                setup for all university workstations.</span>
             </p>
             <ul class="list-unstyled mb-0">
               <li class="d-flex align-items-center gap-2 mb-2">
@@ -982,10 +2110,11 @@
             <div class="service-icon" style="background:#fff3cd;">
               <i class="fa-solid fa-user-gear" style="color:#fd7e14;"></i>
             </div>
-            <h5 class="fw-bold mb-2">User Account &amp; Portal Support</h5>
+            <h5 class="fw-bold mb-2"><span data-i18n="svc3.title">User Account &amp; Portal Support</span></h5>
             <p class="text-muted mb-3" style="font-size:.9rem;line-height:1.7;">
-              Account management services for staff portals, email systems, and university application access
-              configurations.
+              <span data-i18n="svc3.desc">Account management services for staff portals, email systems, and university
+                application access
+                configurations.</span>
             </p>
             <ul class="list-unstyled mb-0">
               <li class="d-flex align-items-center gap-2 mb-2">
@@ -1015,95 +2144,114 @@
   <section id="contact" class="py-5 my-2">
     <div class="container">
       <div class="text-center mb-5">
-        <div class="section-label">Get in Touch</div>
-        <h2 class="section-title">Contact &amp; Support</h2>
-        <p class="text-muted mx-auto" style="max-width:560px;">Need assistance? Reach out to our ICT helpdesk or submit
-          an inquiry through the form below.</p>
+        <div class="section-label"><i class="fa-solid fa-headset me-2"></i><span data-i18n="contact.label">Get in
+            Touch</span></div>
+        <h2 class="section-title"><span data-i18n="contact.title">Contact &amp; Support</span></h2>
+        <p class="text-muted mx-auto" style="max-width:560px;"><span data-i18n="contact.intro">Need assistance? Reach
+            out to our ICT helpdesk or submit
+            an inquiry through the form below.</span></p>
       </div>
       <div class="row g-4">
         <div class="col-lg-5">
           <div class="row g-3">
             <div class="col-12">
               <div class="contact-card d-flex align-items-start gap-3">
-                <div class="contact-icon" style="background:#e8f0fe;">
+                <div class="contact-icon" style="background:linear-gradient(135deg,#e8f0fe,#dbe7fe);">
                   <i class="fa-solid fa-location-dot" style="color:#2563eb;"></i>
                 </div>
                 <div>
-                  <h6 class="fw-bold mb-1">ICT Helpdesk Location</h6>
-                  <p class="text-muted small mb-0">Main Campus, ICT Directorate Building<br>Block 102 (Hardware &amp;
-                    Software Repair Lab)</p>
+                  <h6 class="fw-bold mb-1"><span data-i18n="contact.loc">ICT Helpdesk Location</span></h6>
+                  <div class="contact-value">Main Campus, ICT Directorate Building</div>
+                  <p class="contact-note mb-0">Block 102 (Hardware &amp; Software Repair Lab)</p>
                 </div>
               </div>
             </div>
             <div class="col-12">
               <div class="contact-card d-flex align-items-start gap-3">
-                <div class="contact-icon" style="background:#d1e7dd;">
+                <div class="contact-icon" style="background:linear-gradient(135deg,#d1e7dd,#bce3cf);">
                   <i class="fa-solid fa-envelope" style="color:#198754;"></i>
                 </div>
                 <div>
-                  <h6 class="fw-bold mb-1">Email</h6>
-                  <p class="text-muted small mb-0">ictsupport@dbu.edu.et</p>
+                  <h6 class="fw-bold mb-1"><span data-i18n="contact.email">Email</span></h6>
+                  <a class="contact-pill" href="mailto:admin@gmail.com"><i
+                      class="fa-solid fa-paper-plane"></i>admin@gmail.com</a>
                 </div>
               </div>
             </div>
             <div class="col-12">
               <div class="contact-card d-flex align-items-start gap-3">
-                <div class="contact-icon" style="background:#f8d7da;">
+                <div class="contact-icon" style="background:linear-gradient(135deg,#f8d7da,#f5c6cb);">
                   <i class="fa-solid fa-phone" style="color:#dc3545;"></i>
                 </div>
                 <div>
-                  <h6 class="fw-bold mb-1">Emergency Line</h6>
-                  <p class="text-muted small mb-0">+251-11-681-XXXX<br>Critical system failure support</p>
+                  <h6 class="fw-bold mb-1"><span data-i18n="contact.phone">Phone</span></h6>
+                  <a class="contact-pill" href="tel:+251911234567"><i class="fa-solid fa-phone-volume"></i>+251 911 234
+                    567</a>
+                  <p class="contact-note mb-0"><span data-i18n="contact.emergency.note">Call for urgent system
+                      support</span></p>
                 </div>
               </div>
             </div>
             <div class="col-12">
               <div class="contact-card d-flex align-items-start gap-3">
-                <div class="contact-icon" style="background:#fff3cd;">
+                <div class="contact-icon" style="background:linear-gradient(135deg,#fff3cd,#ffe9a8);">
                   <i class="fa-solid fa-clock" style="color:#fd7e14;"></i>
                 </div>
                 <div>
-                  <h6 class="fw-bold mb-1">Working Hours</h6>
-                  <p class="text-muted small mb-0">Monday &#8211; Friday: 8:30 AM &#8211; 5:30 PM<br>Saturday &amp;
-                    Sunday: Closed</p>
+                  <h6 class="fw-bold mb-1"><span data-i18n="contact.hours">Working Hours</span></h6>
+                  <div class="contact-value">Monday &#8211; Friday: 8:30 AM &#8211; 5:30 PM</div>
+                  <p class="contact-note mb-0"><span data-i18n="contact.hours.closed">Saturday &amp; Sunday:
+                      Closed</span></p>
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div class="col-lg-7">
-          <div class="card border-0 shadow-sm p-4" style="border-radius:16px;">
-            <h5 class="fw-bold mb-1">Submit an Inquiry</h5>
-            <p class="text-muted small mb-4">Describe your issue and our team will respond within 24 working hours.</p>
+          <div class="contact-form-card">
+            <h5 class="fw-bold mb-1 text-center mb-2"><i class="fa-solid fa-paper-plane me-2"
+                style="color:var(--home-primary);"></i><span data-i18n="contact.form.title">Submit an
+                Inquiry</span></h5>
+            <p class="text-muted small mb-4 text-center"><span data-i18n="contact.form.subtitle">Describe your issue and
+                our team
+                will respond within 24 working hours.</span></p>
 
             <!-- Login Required Prompt (shown when not logged in) -->
             <div id="contactLoginPrompt" class="text-center py-4" style="display:none;">
               <i class="bi bi-person-lock text-muted" style="font-size:2.5rem;"></i>
-              <h6 class="fw-bold mt-3 mb-2">Login Required</h6>
-              <p class="text-muted small mb-3">You must be logged in to submit a service request.</p>
+              <h6 class="fw-bold mt-3 mb-2"><span data-i18n="contact.form.login.title">Login Required</span></h6>
+              <p class="text-muted small mb-3"><span data-i18n="contact.form.login.desc">You must be logged in to submit
+                  a service request.</span></p>
               <a href="/views/login.html" class="btn btn-primary px-4 py-2 fw-semibold" style="border-radius:10px;">
-                <i class="bi bi-box-arrow-in-right me-1"></i>Login to Submit Request
+                <i class="bi bi-box-arrow-in-right me-1"></i><span data-i18n="contact.form.login.btn">Login to Submit
+                  Request</span>
               </a>
-              <p class="text-muted small mt-3 mb-0">Don't have an account? <a href="/views/register.html" class="text-primary text-decoration-none fw-semibold">Register here</a></p>
+              <p class="text-muted small mt-3 mb-0">Don't have an account? <a href="/views/register.html"
+                  class="text-primary text-decoration-none fw-semibold"><span
+                    data-i18n="contact.form.login.register">Register here</span></a></p>
             </div>
 
             <!-- Inquiry Form (shown when logged in) -->
             <form id="contactForm" style="display:none;">
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label small fw-semibold">Full Name</label>
+                  <label class="form-label small fw-semibold"><span data-i18n="contact.form.name">Full
+                      Name</span></label>
                   <input type="text" class="form-control" id="inquiryName" placeholder="e.g. John Doe" required>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small fw-semibold">Email Address</label>
+                  <label class="form-label small fw-semibold"><span data-i18n="contact.form.email">Email
+                      Address</span></label>
                   <input type="email" class="form-control" id="inquiryEmail" placeholder="you@dbu.edu.et" required>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small fw-semibold">Department</label>
+                  <label class="form-label small fw-semibold"><span
+                      data-i18n="contact.form.dept">Department</span></label>
                   <input type="text" class="form-control" id="inquiryDept" placeholder="e.g. Computer Science">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small fw-semibold">Issue Type</label>
+                  <label class="form-label small fw-semibold"><span data-i18n="contact.form.issue">Issue
+                      Type</span></label>
                   <select class="form-select" id="inquiryType" required>
                     <option value="" selected disabled>Select type</option>
                     <option value="Hardware Problem">Hardware Problem</option>
@@ -1119,21 +2267,26 @@
                   </select>
                 </div>
                 <div class="col-12">
-                  <label class="form-label small fw-semibold">Description</label>
+                  <label class="form-label small fw-semibold"><span
+                      data-i18n="contact.form.desc">Description</span></label>
                   <textarea class="form-control" id="inquiryDesc" rows="4"
                     placeholder="Describe your issue in detail..." required></textarea>
                 </div>
                 <div class="col-12">
                   <div id="contactSuccess" class="alert alert-success" role="alert" style="display:none;">
-                    <i class="fa-solid fa-circle-check me-2"></i><span id="contactSuccessMsg">Your inquiry has been submitted successfully. Our team will contact you shortly.</span>
+                    <i class="fa-solid fa-circle-check me-2"></i><span id="contactSuccessMsg"
+                      data-i18n="contact.form.sent">Your inquiry has been submitted successfully. Our team will contact
+                      you shortly.</span>
                   </div>
                   <div id="contactError" class="alert alert-danger" role="alert" style="display:none;">
-                    <i class="fa-solid fa-circle-exclamation me-2"></i><span id="contactErrorMsg">Something went wrong.
+                    <i class="fa-solid fa-circle-exclamation me-2"></i><span id="contactErrorMsg"
+                      data-i18n="contact.form.error">Something went wrong.
                       Please try again.</span>
                   </div>
-                  <button type="submit" id="contactSubmitBtn" class="btn btn-primary px-4 py-2 fw-semibold"
-                    style="border-radius:10px;">
-                    <i class="fa-solid fa-paper-plane me-2"></i>Submit Inquiry
+                  <button type="submit" id="contactSubmitBtn" class="btn fw-semibold px-4 py-2"
+                    style="border-radius:10px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;box-shadow:0 8px 20px -8px rgba(37,99,235,.6);transition:transform .2s,box-shadow .2s;">
+                    <i class="fa-solid fa-paper-plane me-2"></i><span data-i18n="contact.form.submit">Submit
+                      Inquiry</span>
                   </button>
                 </div>
               </div>
@@ -1148,53 +2301,55 @@
   <section id="about" class="py-5 my-2" style="background:#f8faff;">
     <div class="container">
       <div class="text-center mb-5">
-        <div class="section-label">About Us</div>
-        <h2 class="section-title">About the Platform</h2>
-        <p class="text-muted mx-auto" style="max-width:620px;">The Smart Computer Maintenance Service Request &amp; Tracking
-          System is designed to digitize and improve hardware and software maintenance request
-          management for the community.</p>
+        <div class="section-label"><span data-i18n="about.label">About Us</span></div>
+        <h2 class="section-title"><span data-i18n="about.title">About the Platform</span></h2>
+        <p class="text-muted mx-auto" style="max-width:620px;"><span data-i18n="about.intro">The Smart Computer
+            Maintenance Service Request &amp; Tracking
+            System is designed to digitize and improve hardware and software maintenance request
+            management for the community.</span></p>
       </div>
       <div class="row g-4 align-items-start">
+
+        <!-- Left column: Mission / Vision / Overview / Core Values -->
         <div class="col-lg-6">
-          <div class="card border-0 shadow-sm mb-4 p-4"
+          <div class="card border-0 shadow-sm mb-4 p-4 about-info-card"
             style="border-left:4px solid #2563eb!important;border-radius:14px;">
             <div class="d-flex gap-3 align-items-start">
-              <div
-                style="width:48px;height:48px;background:#e8f0fe;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <i class="fa-solid fa-bullseye" style="color:#2563eb;font-size:1.2rem;"></i>
+              <div class="about-icon-chip" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);">
+                <i class="fa-solid fa-bullseye"></i>
               </div>
               <div>
-                <h5 class="fw-bold mb-2">Our Mission</h5>
+                <h5 class="fw-bold mb-2" style="color:var(--home-text);"><span data-i18n="about.mission">Our
+                    Mission</span></h5>
                 <p class="text-muted mb-0" style="font-size:.9rem;line-height:1.7;">To provide a reliable and
                   transparent digital platform for managing hardware and software maintenance requests, improving
                   response time, accountability, and service delivery across the university community.</p>
               </div>
             </div>
           </div>
-          <div class="card border-0 shadow-sm mb-4 p-4"
-            style="border-left:4px solid #198754!important;border-radius:14px;">
+          <div class="card border-0 shadow-sm mb-4 p-4 about-info-card"
+            style="border-left:4px solid #16a34a!important;border-radius:14px;">
             <div class="d-flex gap-3 align-items-start">
-              <div
-                style="width:48px;height:48px;background:#d1e7dd;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <i class="fa-solid fa-eye" style="color:#198754;font-size:1.2rem;"></i>
+              <div class="about-icon-chip" style="background:linear-gradient(135deg,#16a34a,#15803d);">
+                <i class="fa-solid fa-eye"></i>
               </div>
               <div>
-                <h5 class="fw-bold mb-2">Our Vision</h5>
+                <h5 class="fw-bold mb-2" style="color:var(--home-text);"><span data-i18n="about.vision">Our
+                    Vision</span></h5>
                 <p class="text-muted mb-0" style="font-size:.9rem;line-height:1.7;">To create an efficient, transparent,
                   and user-friendly digital maintenance workflow that simplifies ICT support and improves the experience
                   of students, technicians, and administrators.</p>
               </div>
             </div>
           </div>
-          <div class="card border-0 shadow-sm mb-4 p-4"
-            style="border-left:4px solid #fd7e14!important;border-radius:14px;">
+          <div class="card border-0 shadow-sm mb-4 p-4 about-info-card"
+            style="border-left:4px solid #f59e0b!important;border-radius:14px;">
             <div class="d-flex gap-3 align-items-start">
-              <div
-                style="width:48px;height:48px;background:#fff3cd;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <i class="fa-solid fa-circle-info" style="color:#fd7e14;font-size:1.2rem;"></i>
+              <div class="about-icon-chip" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                <i class="fa-solid fa-circle-info"></i>
               </div>
               <div>
-                <h5 class="fw-bold mb-2">System Overview</h5>
+                <h5 class="fw-bold mb-2" style="color:var(--home-text);">System Overview</h5>
                 <p class="text-muted mb-0" style="font-size:.9rem;line-height:1.7;">A web-based maintenance management
                   platform that replaces manual maintenance request processes with a centralized digital workflow for
                   submitting, assigning, tracking, and managing ICT maintenance requests.</p>
@@ -1202,237 +2357,77 @@
             </div>
           </div>
           <div class="card border-0 shadow-sm p-4" style="border-radius:14px;">
-            <h5 class="fw-bold mb-3"><i class="fa-solid fa-gem me-2" style="color:#fd7e14;"></i>Core Values</h5>
+            <h5 class="fw-bold mb-3" style="color:var(--home-text);"><i class="fa-solid fa-gem me-2"
+                style="color:#f59e0b;"></i>Core Values</h5>
             <div class="row g-2">
               <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
-                    style="color:#2563eb;font-size:.85rem;"></i><span class="small fw-semibold">Accountability</span>
+                <div class="about-value"><i class="fa-solid fa-check-circle" style="color:#2563eb;"></i><span
+                    class="small fw-semibold">Accountability</span>
                 </div>
               </div>
               <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
-                    style="color:#198754;font-size:.85rem;"></i><span class="small fw-semibold">Transparency</span>
+                <div class="about-value"><i class="fa-solid fa-check-circle" style="color:#16a34a;"></i><span
+                    class="small fw-semibold">Transparency</span>
                 </div>
               </div>
               <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
-                    style="color:#fd7e14;font-size:.85rem;"></i><span class="small fw-semibold">Speed &amp;
+                <div class="about-value"><i class="fa-solid fa-check-circle" style="color:#f59e0b;"></i><span
+                    class="small fw-semibold">Speed &amp;
                     Efficiency</span></div>
               </div>
               <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
-                    style="color:#dc3545;font-size:.85rem;"></i><span class="small fw-semibold">Service
+                <div class="about-value"><i class="fa-solid fa-check-circle" style="color:#dc2626;"></i><span
+                    class="small fw-semibold">Service
                     Excellence</span></div>
               </div>
               <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
-                    style="color:#0dcaf0;font-size:.85rem;"></i><span class="small fw-semibold">Reliability</span></div>
+                <div class="about-value"><i class="fa-solid fa-check-circle" style="color:#0ea5e9;"></i><span
+                    class="small fw-semibold">Reliability</span></div>
               </div>
               <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-check-circle"
-                    style="color:#6c757d;font-size:.85rem;"></i><span class="small fw-semibold">User Satisfaction</span>
+                <div class="about-value"><i class="fa-solid fa-check-circle" style="color:#64748b;"></i><span
+                    class="small fw-semibold">User Satisfaction</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- Right column: Stats -->
         <div class="col-lg-6">
-          <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius:14px;">
-            <h5 class="fw-bold mb-3"><i class="fa-solid fa-layer-group me-2 text-primary"></i>Technology Stack</h5>
-            <div class="row g-3">
-              <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-code"
-                    style="color:#e44d26;font-size:1.1rem;"></i>
-                  <div>
-                    <div class="fw-semibold small">HTML5</div>
-                    <div class="text-muted" style="font-size:.75rem;">Markup Language</div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-paintbrush"
-                    style="color:#264de4;font-size:1.1rem;"></i>
-                  <div>
-                    <div class="fw-semibold small">CSS3</div>
-                    <div class="text-muted" style="font-size:.75rem;">Styling</div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-brands fa-js"
-                    style="color:#f7df1e;font-size:1.1rem;"></i>
-                  <div>
-                    <div class="fw-semibold small">Vanilla JavaScript</div>
-                    <div class="text-muted" style="font-size:.75rem;">Frontend Logic</div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-brands fa-node-js"
-                    style="color:#68a063;font-size:1.1rem;"></i>
-                  <div>
-                    <div class="fw-semibold small">Node.js</div>
-                    <div class="text-muted" style="font-size:.75rem;">Backend Runtime</div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-server"
-                    style="color:#2563eb;font-size:1.1rem;"></i>
-                  <div>
-                    <div class="fw-semibold small">Express.js</div>
-                    <div class="text-muted" style="font-size:.75rem;">REST API Framework</div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-database"
-                    style="color:#198754;font-size:1.1rem;"></i>
-                  <div>
-                    <div class="fw-semibold small">MongoDB</div>
-                    <div class="text-muted" style="font-size:.75rem;">NoSQL Database</div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-link"
-                    style="color:#1a73e8;font-size:1.1rem;"></i>
-                  <div>
-                    <div class="fw-semibold small">Mongoose</div>
-                    <div class="text-muted" style="font-size:.75rem;">MongoDB ODM</div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-key"
-                    style="color:#fd7e14;font-size:1.1rem;"></i>
-                  <div>
-                    <div class="fw-semibold small">JWT Auth</div>
-                    <div class="text-muted" style="font-size:.75rem;">Secure Authentication</div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="d-flex align-items-center gap-2"><i class="fa-solid fa-shield-halved"
-                    style="color:#dc3545;font-size:1.1rem;"></i>
-                  <div>
-                    <div class="fw-semibold small">bcrypt</div>
-                    <div class="text-muted" style="font-size:.75rem;">Password Hashing</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
           <div class="row g-3 mb-4">
             <div class="col-6">
-              <div class="card border-0 shadow-sm text-center p-4" style="border-radius:14px;">
-                <div class="fw-bold mb-1" style="font-size:2.2rem;color:#2563eb;" id="aboutStatUsers">--</div>
+              <div class="card border-0 shadow-sm text-center p-4 about-stat-card">
+                <div class="about-stat-icon" style="background:#e8f0fe;"><i class="fa-solid fa-users"
+                    style="color:#2563eb;"></i></div>
+                <div class="fw-bold mb-1" style="font-size:2rem;color:#2563eb;" id="aboutStatUsers">--</div>
                 <div class="text-muted small">Registered Users</div>
               </div>
             </div>
             <div class="col-6">
-              <div class="card border-0 shadow-sm text-center p-4" style="border-radius:14px;">
-                <div class="fw-bold mb-1" style="font-size:2.2rem;color:#198754;" id="aboutStatTechs">--</div>
+              <div class="card border-0 shadow-sm text-center p-4 about-stat-card">
+                <div class="about-stat-icon" style="background:#dcfce7;"><i class="fa-solid fa-user-gear"
+                    style="color:#16a34a;"></i></div>
+                <div class="fw-bold mb-1" style="font-size:2rem;color:#16a34a;" id="aboutStatTechs">--</div>
                 <div class="text-muted small">Active Technicians</div>
               </div>
             </div>
             <div class="col-6">
-              <div class="card border-0 shadow-sm text-center p-4" style="border-radius:14px;">
-                <div class="fw-bold mb-1" style="font-size:2.2rem;color:#fd7e14;" id="aboutStatRequests">--</div>
+              <div class="card border-0 shadow-sm text-center p-4 about-stat-card">
+                <div class="about-stat-icon" style="background:#fef3c7;"><i class="fa-solid fa-screwdriver-wrench"
+                    style="color:#f59e0b;"></i></div>
+                <div class="fw-bold mb-1" style="font-size:2rem;color:#f59e0b;" id="aboutStatRequests">--</div>
                 <div class="text-muted small">Maintenance Requests</div>
               </div>
             </div>
             <div class="col-6">
-              <div class="card border-0 shadow-sm text-center p-4" style="border-radius:14px;">
-                <div class="fw-bold mb-1" style="font-size:2.2rem;color:#dc3545;" id="aboutStatResolved">--</div>
+              <div class="card border-0 shadow-sm text-center p-4 about-stat-card">
+                <div class="about-stat-icon" style="background:#fee2e2;"><i class="fa-solid fa-circle-check"
+                    style="color:#dc2626;"></i></div>
+                <div class="fw-bold mb-1" style="font-size:2rem;color:#dc2626;" id="aboutStatResolved">--</div>
                 <div class="text-muted small">Completed Requests</div>
               </div>
             </div>
-          </div>
-          <div class="card border-0 shadow-sm p-4" style="border-radius:14px;">
-            <h5 class="fw-bold mb-3"><i class="fa-solid fa-award me-2 text-primary"></i>Why This Platform</h5>
-            <ul class="list-unstyled mb-0">
-              <li class="d-flex align-items-start gap-2 mb-3">
-                <span
-                  style="width:28px;height:28px;background:#e8f0fe;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
-                    class="fa-solid fa-bolt" style="color:#2563eb;font-size:.8rem;"></i></span>
-                <div>
-                  <div class="fw-semibold small">Faster Maintenance Request Handling</div>
-                  <div class="text-muted" style="font-size:.8rem;">Submit and track maintenance requests without paper
-                    forms or manual follow-ups</div>
-                </div>
-              </li>
-              <li class="d-flex align-items-start gap-2 mb-3">
-                <span
-                  style="width:28px;height:28px;background:#d1e7dd;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
-                    class="fa-solid fa-layer-group" style="color:#198754;font-size:.8rem;"></i></span>
-                <div>
-                  <div class="fw-semibold small">Centralized Request Management</div>
-                  <div class="text-muted" style="font-size:.8rem;">All ICT maintenance requests managed from a single
-                    unified platform</div>
-                </div>
-              </li>
-              <li class="d-flex align-items-start gap-2 mb-3">
-                <span
-                  style="width:28px;height:28px;background:#fff3cd;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
-                    class="fa-solid fa-chart-line" style="color:#fd7e14;font-size:.8rem;"></i></span>
-                <div>
-                  <div class="fw-semibold small">Transparent Request Tracking</div>
-                  <div class="text-muted" style="font-size:.8rem;">Monitor every request through its full lifecycle from
-                    submission to resolution</div>
-                </div>
-              </li>
-              <li class="d-flex align-items-start gap-2 mb-3">
-                <span
-                  style="width:28px;height:28px;background:#f8d7da;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
-                    class="fa-solid fa-user-gear" style="color:#dc3545;font-size:.8rem;"></i></span>
-                <div>
-                  <div class="fw-semibold small">Clear Technician Assignment</div>
-                  <div class="text-muted" style="font-size:.8rem;">Administrators can assign the right technician to
-                    each request efficiently</div>
-                </div>
-              </li>
-              <li class="d-flex align-items-start gap-2 mb-3">
-                <span
-                  style="width:28px;height:28px;background:#e8f0fe;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
-                    class="fa-solid fa-database" style="color:#2563eb;font-size:.8rem;"></i></span>
-                <div>
-                  <div class="fw-semibold small">Digital Maintenance Records</div>
-                  <div class="text-muted" style="font-size:.8rem;">All request history stored securely in MongoDB for
-                    future reference</div>
-                </div>
-              </li>
-              <li class="d-flex align-items-start gap-2 mb-3">
-                <span
-                  style="width:28px;height:28px;background:#d1e7dd;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
-                    class="fa-solid fa-clipboard-check" style="color:#198754;font-size:.8rem;"></i></span>
-                <div>
-                  <div class="fw-semibold small">Improved Accountability</div>
-                  <div class="text-muted" style="font-size:.8rem;">Clear ownership and status tracking for every
-                    maintenance request</div>
-                </div>
-              </li>
-              <li class="d-flex align-items-start gap-2 mb-3">
-                <span
-                  style="width:28px;height:28px;background:#fff3cd;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
-                    class="fa-solid fa-comments" style="color:#fd7e14;font-size:.8rem;"></i></span>
-                <div>
-                  <div class="fw-semibold small">Better Communication</div>
-                  <div class="text-muted" style="font-size:.8rem;">Direct messaging between requesters, technicians, and
-                    administrators</div>
-                </div>
-              </li>
-              <li class="d-flex align-items-start gap-2">
-                <span
-                  style="width:28px;height:28px;background:#f8d7da;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i
-                    class="fa-solid fa-globe" style="color:#dc3545;font-size:.8rem;"></i></span>
-                <div>
-                  <div class="fw-semibold small">Accessible Maintenance Information</div>
-                  <div class="text-muted" style="font-size:.8rem;">View request status and history from any device with
-                    a web browser</div>
-                </div>
-              </li>
-            </ul>
           </div>
         </div>
       </div>
@@ -1440,64 +2435,87 @@
   </section>
 
   <!-- ===== FOOTER ===== -->
-  <footer class="py-5">
+  <footer class="py-5 text-center">
     <div class="container">
-      <div class="row g-4 mb-4">
-        <div class="col-md-4">
-          <div class="d-flex align-items-center gap-2 mb-3">
-            <div
-              style="width:36px;height:36px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;">
-              <i class="fa-solid fa-wrench text-white" style="font-size:.9rem;"></i>
-            </div>
-            <span class="text-white fw-bold">Smart Computer Maintenance Service</span>
+      <div class="text-center mb-4">
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+          <div
+            style="width:36px;height:36px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-wrench" style="color:var(--home-text);font-size:.9rem;"></i>
           </div>
-          <p style="color:rgba(255,255,255,.55);font-size:.875rem;line-height:1.7;">
-            Debre Berhan University's dedicated platform for managing hardware and software maintenance requests &#8212;
-            replacing paper-based forms with a transparent digital workflow.
-          </p>
+          <span class="fw-bold"><span data-i18n="footer.brand">Smart Computer Maintenance Service</span></span>
         </div>
-        <div class="col-6 col-md-2 offset-md-2">
-          <div class="text-white fw-semibold mb-3 small">Navigation</div>
-          <div class="d-flex flex-column gap-2">
-            <a href="#home" class="footer-link">Home</a>
-            <a href="#features" class="footer-link">Features</a>
-            <a href="#workflow" class="footer-link">Workflow</a>
-            <a href="#services" class="footer-link">Services</a>
-            <a href="#contact" class="footer-link">Contact</a>
-            <a href="#about" class="footer-link">About Us</a>
+        <p class="mb-0"
+          style="color:var(--home-text-soft);font-size:.875rem;line-height:1.7;max-width:560px;margin-inline:auto;">
+          <span data-i18n="footer.about">Debre Berhan University's dedicated platform for managing hardware and
+            software maintenance requests &#8212;
+            replacing paper-based forms with a transparent digital workflow.</span>
+        </p>
+      </div>
+      <div class="row justify-content-center g-4 mb-4">
+        <div class="col-6 col-md-4">
+          <div class="fw-semibold mb-3 small" style="color:var(--home-text-soft);"><span
+              data-i18n="footer.nav">Navigation</span></div>
+          <div class="d-flex flex-column align-items-center gap-2">
+            <a href="#home" class="footer-link" style="color:var(--home-text);"><span
+                data-i18n="nav.home">Home</span></a>
+            <a href="#features" class="footer-link" style="color:var(--home-text);"><span
+                data-i18n="nav.features">Features</span></a>
+            <a href="#workflow" class="footer-link" style="color:var(--home-text);"><span
+                data-i18n="nav.workflow">Workflow</span></a>
+            <a href="#services" class="footer-link" style="color:var(--home-text);"><span
+                data-i18n="nav.services">Services</span></a>
+            <a href="#contact" class="footer-link" style="color:var(--home-text);"><span
+                data-i18n="nav.contact">Contact</span></a>
+            <a href="#about" class="footer-link" style="color:var(--home-text);"><span data-i18n="nav.about">About
+                Us</span></a>
           </div>
         </div>
-        <div class="col-6 col-md-2">
-          <div class="text-white fw-semibold mb-3 small">Access</div>
-          <div class="d-flex flex-column gap-2">
-            <a href="/views/login.html" class="footer-link">Login</a>
-            <a href="/views/register.html" class="footer-link">Register</a>
-            <a href="/views/login.html" class="footer-link">Admin Panel</a>
-            <a href="/views/login.html" class="footer-link">Technician</a>
+        <div class="col-6 col-md-4">
+          <div class="fw-semibold mb-3 small" style="color:var(--home-text-soft);"><span
+              data-i18n="footer.access">Access</span></div>
+          <div class="d-flex flex-column align-items-center gap-2">
+            <a href="/views/login.html" class="footer-link" style="color:var(--home-text);"><span
+                data-i18n="nav.login">Login</span></a>
+            <a href="/views/register.html" class="footer-link" style="color:var(--home-text);"><span
+                data-i18n="nav.register">Register</span></a>
+            <a href="/views/login.html" class="footer-link" style="color:var(--home-text);"><span
+                data-i18n="footer.admin">Admin Panel</span></a>
+            <a href="/views/login.html" class="footer-link" style="color:var(--home-text);"><span
+                data-i18n="footer.tech">Technician</span></a>
           </div>
         </div>
-        <div class="col-md-2">
-          <div class="text-white fw-semibold mb-3 small">System</div>
-          <div class="d-flex flex-column gap-2">
-            <span style="color:rgba(255,255,255,.55);font-size:.875rem;" id="footerBackendLabel">
-              <i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i>Backend: Online
+        <div class="col-6 col-md-4">
+          <div class="fw-semibold mb-3 small" style="color:var(--home-text-soft);"><span
+              data-i18n="footer.system">System</span></div>
+          <div class="d-flex flex-column align-items-center gap-2">
+            <span style="color:var(--home-text-soft);font-size:.875rem;" id="footerBackendLabel">
+              <i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i><span
+                data-i18n="footer.backend">Backend: Online</span>
             </span>
-            <span style="color:rgba(255,255,255,.55);font-size:.875rem;" id="footerBackendStatus">
-              <i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i>API: Running
+            <span style="color:var(--home-text-soft);font-size:.875rem;" id="footerBackendStatus">
+              <i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i><span
+                data-i18n="footer.api">API: Running</span>
             </span>
           </div>
         </div>
       </div>
-      <hr style="border-color:rgba(255,255,255,.1);" />
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <span style="color:rgba(255,255,255,.4);font-size:.8rem;">
-          &copy; 2024 Debre Berhan University ICT Hardware &amp; Software Maintenance System. All rights reserved.
-        </span>
+      <!-- Scroll to top -->
+      <button id="scrollTopBtn" aria-label="Scroll to top">
+        <i class="fa-solid fa-arrow-up"></i>
+      </button>
+      <hr style="border-color:var(--home-border-weak);" />
+      <div class="d-flex flex-column align-items-center gap-3">
         <div class="d-flex gap-3">
-          <a href="https://github.com/sosinatezera/DBU-ICT-MAINTENANCE-SERVICE" target="_blank" rel="noopener noreferrer" class="footer-link"><i class="fa-brands fa-github me-1"></i>GitHub</a>
+          <a href="https://github.com/sosinatezera/DBU-ICT-MAINTENANCE-SERVICE" target="_blank"
+            rel="noopener noreferrer" class="footer-link"><i class="fa-brands fa-github me-1"></i>GitHub</a>
           <a href="/views/login.html" class="footer-link"><i class="fa-solid fa-right-to-bracket me-1"></i>Login</a>
           <a href="/views/register.html" class="footer-link"><i class="fa-solid fa-user-plus me-1"></i>Register</a>
         </div>
+        <span class="text-center" style="color:var(--home-text-soft);font-size:.8rem;">
+          &copy; 2024 <span data-i18n="footer.rights">Debre Berhan University ICT Hardware &amp; Software Maintenance
+            System. All rights reserved.</span>
+        </span>
       </div>
     </div>
   </footer>
@@ -1543,8 +2561,8 @@
       window.scrollTo( { top: 0, behavior: 'smooth' } );
     } );
 
-    /* ===== Live stats from public API ===== */
-    const API_BASE = 'http://localhost:5000/api';
+    /* ===== Live stats from public API =====
+       API base is provided by the shared api-config.js loaded in <head>. */
 
     async function loadStats ()
     {
@@ -1618,40 +2636,44 @@
     /* ===== Contact / Inquiry Form ===== */
 
     /* Check authentication status and show appropriate UI */
-    (function initContactForm() {
-      const token = localStorage.getItem('ict_token');
-      const userStr = localStorage.getItem('ict_user');
+    ( function initContactForm ()
+    {
+      const token = localStorage.getItem( 'ict_token' );
+      const userStr = localStorage.getItem( 'ict_user' );
       let user = null;
-      try { user = userStr ? JSON.parse(userStr) : null; } catch(_) {}
+      try { user = userStr ? JSON.parse( userStr ) : null; } catch ( _ ) { }
 
-      if (token && user && user.role === 'Requester') {
-        document.getElementById('contactLoginPrompt').style.display = 'none';
-        document.getElementById('contactForm').style.display = '';
+      if ( token && user && user.role === 'Requester' )
+      {
+        document.getElementById( 'contactLoginPrompt' ).style.display = 'none';
+        document.getElementById( 'contactForm' ).style.display = '';
         /* Pre-fill name/email from authenticated user */
-        const nameEl = document.getElementById('inquiryName');
-        const emailEl = document.getElementById('inquiryEmail');
-        if (nameEl && user.fullName) nameEl.value = user.fullName;
-        if (emailEl && user.email) emailEl.value = user.email;
-        if (nameEl) nameEl.readOnly = true;
-        if (emailEl) emailEl.readOnly = true;
-      } else if (token && user) {
+        const nameEl = document.getElementById( 'inquiryName' );
+        const emailEl = document.getElementById( 'inquiryEmail' );
+        if ( nameEl && user.fullName ) nameEl.value = user.fullName;
+        if ( emailEl && user.email ) emailEl.value = user.email;
+        if ( nameEl ) nameEl.readOnly = true;
+        if ( emailEl ) emailEl.readOnly = true;
+      } else if ( token && user )
+      {
         /* Logged in but wrong role — show message */
-        document.getElementById('contactLoginPrompt').style.display = '';
-        document.getElementById('contactLoginPrompt').querySelector('h6').textContent = 'Account Not Eligible';
-        document.getElementById('contactLoginPrompt').querySelector('p').textContent =
+        document.getElementById( 'contactLoginPrompt' ).style.display = '';
+        document.getElementById( 'contactLoginPrompt' ).querySelector( 'h6' ).textContent = 'Account Not Eligible';
+        document.getElementById( 'contactLoginPrompt' ).querySelector( 'p' ).textContent =
           'Only Requester accounts can submit service requests. Please log in with a Requester account.';
-        document.getElementById('contactForm').style.display = 'none';
-      } else {
-        document.getElementById('contactLoginPrompt').style.display = '';
-        document.getElementById('contactForm').style.display = 'none';
+        document.getElementById( 'contactForm' ).style.display = 'none';
+      } else
+      {
+        document.getElementById( 'contactLoginPrompt' ).style.display = '';
+        document.getElementById( 'contactForm' ).style.display = 'none';
       }
-    })();
+    } )();
 
-    attachRealTimeValidation('contactForm', [
-      { fieldId: 'inquiryName', checks: [v => Validators.name(v, 'Full name')] },
+    attachRealTimeValidation( 'contactForm', [
+      { fieldId: 'inquiryName', checks: [v => Validators.name( v, 'Full name' )] },
       { fieldId: 'inquiryEmail', checks: [Validators.email] },
-      { fieldId: 'inquiryDesc', checks: [v => Validators.length(v, 'Description', 5, 1000)] },
-    ]);
+      { fieldId: 'inquiryDesc', checks: [v => Validators.length( v, 'Description', 5, 1000 )] },
+    ] );
 
     document.getElementById( 'contactForm' ).addEventListener( 'submit', async function ( e )
     {
@@ -1668,29 +2690,31 @@
       /* Validate fields */
       let hasError = false;
 
-      const nameErr = Validators.name(document.getElementById('inquiryName').value, 'Full name');
-      if (nameErr) { showFieldError('inquiryName', nameErr); hasError = true; } else { showFieldValid('inquiryName'); }
+      const nameErr = Validators.name( document.getElementById( 'inquiryName' ).value, 'Full name' );
+      if ( nameErr ) { showFieldError( 'inquiryName', nameErr ); hasError = true; } else { showFieldValid( 'inquiryName' ); }
 
-      const emailErr = Validators.email(document.getElementById('inquiryEmail').value);
-      if (emailErr) { showFieldError('inquiryEmail', emailErr); hasError = true; } else { showFieldValid('inquiryEmail'); }
+      const emailErr = Validators.email( document.getElementById( 'inquiryEmail' ).value );
+      if ( emailErr ) { showFieldError( 'inquiryEmail', emailErr ); hasError = true; } else { showFieldValid( 'inquiryEmail' ); }
 
-      if (!document.getElementById('inquiryType').value) {
-        showFieldError('inquiryType', 'Please select an issue type.');
+      if ( !document.getElementById( 'inquiryType' ).value )
+      {
+        showFieldError( 'inquiryType', 'Please select an issue type.' );
         hasError = true;
-      } else { clearFieldValidation('inquiryType'); }
+      } else { clearFieldValidation( 'inquiryType' ); }
 
-      const descErr = Validators.length(document.getElementById('inquiryDesc').value, 'Description', 5, 1000);
-      if (descErr) { showFieldError('inquiryDesc', descErr); hasError = true; } else { showFieldValid('inquiryDesc'); }
+      const descErr = Validators.length( document.getElementById( 'inquiryDesc' ).value, 'Description', 5, 1000 );
+      if ( descErr ) { showFieldError( 'inquiryDesc', descErr ); hasError = true; } else { showFieldValid( 'inquiryDesc' ); }
 
-      if (hasError) return;
+      if ( hasError ) return;
 
       /* Map contact form fields to Ticket model fields */
-      const token = localStorage.getItem('ict_token');
-      const userStr = localStorage.getItem('ict_user');
+      const token = localStorage.getItem( 'ict_token' );
+      const userStr = localStorage.getItem( 'ict_user' );
       let user = null;
-      try { user = userStr ? JSON.parse(userStr) : null; } catch(_) {}
+      try { user = userStr ? JSON.parse( userStr ) : null; } catch ( _ ) { }
 
-      if (!token || !user) {
+      if ( !token || !user )
+      {
         errorMsgEl.textContent = 'Your session has expired. Please log in again.';
         errorEl.style.display = 'block';
         return;
@@ -1698,13 +2722,13 @@
 
       const payload = {
         problemDescription: document.getElementById( 'inquiryDesc' ).value.trim(),
-        category:           document.getElementById( 'inquiryType' ).value,
-        department:         document.getElementById( 'inquiryDept' ).value.trim() || user.department || null,
-        priority:           'medium',
+        category: document.getElementById( 'inquiryType' ).value,
+        department: document.getElementById( 'inquiryDept' ).value.trim() || user.department || null,
+        priority: 'medium',
       };
 
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Submitting...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>' + ( window.t ? t( 'contact.form.submitting' ) : 'Submitting...' );
 
       try
       {
@@ -1721,34 +2745,34 @@
         {
           const ticketId = data.data?.ticketId || 'N/A';
           const status = data.data?.status || 'submitted';
-          successMsgEl.innerHTML = '<strong>Service request submitted successfully!</strong><br>' +
-            'Request ID: <strong>' + ticketId + '</strong><br>' +
-            'Status: <strong>' + status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ') + '</strong>';
+          successMsgEl.innerHTML = '<strong>' + ( window.t ? t( 'contact.form.sent.short' ) : 'Service request submitted successfully!' ) + '</strong><br>' +
+            ( window.t ? t( 'contact.form.rid' ) : 'Request ID' ) + ': <strong>' + ticketId + '</strong><br>' +
+            ( window.t ? t( 'contact.form.status' ) : 'Status' ) + ': <strong>' + status.charAt( 0 ).toUpperCase() + status.slice( 1 ).replace( '_', ' ' ) + '</strong>';
           successEl.style.display = 'block';
           document.getElementById( 'contactForm' ).reset();
-          clearAllFieldValidations('contactForm');
+          clearAllFieldValidations( 'contactForm' );
           /* Re-fill name/email after reset */
-          const nameEl = document.getElementById('inquiryName');
-          const emailEl = document.getElementById('inquiryEmail');
-          if (nameEl && user.fullName) nameEl.value = user.fullName;
-          if (emailEl && user.email) emailEl.value = user.email;
+          const nameEl = document.getElementById( 'inquiryName' );
+          const emailEl = document.getElementById( 'inquiryEmail' );
+          if ( nameEl && user.fullName ) nameEl.value = user.fullName;
+          if ( emailEl && user.email ) emailEl.value = user.email;
         } else
         {
-          errorMsgEl.textContent = data.message || 'Submission failed. Please try again.';
+          errorMsgEl.textContent = data.message || ( window.t ? t( 'contact.form.error' ) : 'Submission failed. Please try again.' );
           errorEl.style.display = 'block';
         }
       } catch ( err )
       {
-        errorMsgEl.textContent = 'Cannot connect to server. Make sure the backend is running on port 5000.';
+        errorMsgEl.textContent = window.t ? t( 'contact.form.neterror' ) : 'Cannot connect to server. Make sure the backend is running on port 5000.';
         errorEl.style.display = 'block';
       } finally
       {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Submit Inquiry';
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>' + ( window.t ? t( 'contact.form.submit' ) : 'Submit Inquiry' );
       }
     } );
   </script>
 <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/lang.js"></script>
 </body>
-
 </html>

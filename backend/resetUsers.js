@@ -27,13 +27,17 @@ const User       = require('./models/User');
 const Technician = require('./models/Technician');
 
 // ── Account definitions ────────────────────────────────────────
+// Passwords are read from environment variables when available and only
+// fall back to development placeholders for a local database. They are
+// NEVER printed to the console — deploy with SEED_ADMIN_PASSWORD /
+// SEED_TECH_PASSWORD set to real, strong values.
 const ADMIN_EMAIL    = 'admin@dbu.edu.et';
-const ADMIN_PASSWORD = 'Admin123!';
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || 'Admin123!';
 const ADMIN_NAME     = 'ICT Admin';
 const ADMIN_DEPT     = 'System Administration';
 
 const TECH_EMAIL    = 'technician@dbu.edu.et';
-const TECH_PASSWORD = 'Tech123!';
+const TECH_PASSWORD = process.env.SEED_TECH_PASSWORD || 'Tech123!';
 const TECH_NAME     = 'ICT Technician';
 const TECH_DEPT     = 'ICT Department';
 
@@ -136,7 +140,7 @@ async function runViaAPI() {
     // Reset password
     const pwdResult = await apiUpdateUserPassword(adminToken, adminUser._id, ADMIN_PASSWORD);
     if (pwdResult.success) {
-      log('Password reset to Admin123!');
+      log('Password reset OK');
     } else {
       fail(`Password reset failed: ${pwdResult.message}`);
     }
@@ -186,7 +190,7 @@ async function runViaAPI() {
     // Reset password
     const pwdResult = await apiUpdateUserPassword(adminToken, techUser._id, TECH_PASSWORD);
     if (pwdResult.success) {
-      log('Password reset to Tech123!');
+      log('Password reset OK');
     } else {
       fail(`Password reset failed: ${pwdResult.message}`);
     }
@@ -281,15 +285,15 @@ async function runViaAPI() {
   // Summary
   hr();
   console.log('\n  ╔══════════════════════════════════════════════════╗');
-  console.log('  ║            Reset Complete — Credentials          ║');
+  console.log('  ║            Reset Complete                    ║');
   console.log('  ╠══════════════════════════════════════════════════╣');
   console.log(`  ║  Admin      : ${ADMIN_EMAIL}`.padEnd(51) + '║');
-  console.log(`  ║  Password   : ${ADMIN_PASSWORD}`.padEnd(51) + '║');
+  console.log('  ║  Password   : (set, not shown)'.padEnd(51) + '║');
   console.log(`  ║  Role       : ICT Admin`.padEnd(51) + '║');
   console.log(`  ║  Status     : active`.padEnd(51) + '║');
   console.log('  ╠══════════════════════════════════════════════════╣');
   console.log(`  ║  Technician : ${TECH_EMAIL}`.padEnd(51) + '║');
-  console.log(`  ║  Password   : ${TECH_PASSWORD}`.padEnd(51) + '║');
+  console.log('  ║  Password   : (set, not shown)'.padEnd(51) + '║');
   console.log(`  ║  Role       : Technician`.padEnd(51) + '║');
   console.log(`  ║  Status     : active`.padEnd(51) + '║');
   console.log('  ╚══════════════════════════════════════════════════╝\n');
@@ -336,7 +340,7 @@ async function runDirectMongo() {
       department: ADMIN_DEPT,
     });
 
-    log('Password reset to Admin123!');
+    log('Password reset OK');
     log('Role set to "ICT Admin"');
     log('Status set to "active"');
   } else {
@@ -354,7 +358,6 @@ async function runDirectMongo() {
     });
 
     log('Admin account created');
-    log('Password: Admin123!');
     log('Role: "ICT Admin"');
     log('Status: "active"');
   }
@@ -378,7 +381,7 @@ async function runDirectMongo() {
       department: TECH_DEPT,
     });
 
-    log('Password reset to Tech123!');
+    log('Password reset OK');
     log('Role set to "Technician"');
     log('Status set to "active"');
   } else {
@@ -396,7 +399,6 @@ async function runDirectMongo() {
     });
 
     log('Technician account created');
-    log('Password: Tech123!');
     log('Role: "Technician"');
     log('Status: "active"');
 
@@ -491,15 +493,15 @@ async function runDirectMongo() {
   // Summary
   hr();
   console.log('\n  ╔══════════════════════════════════════════════════╗');
-  console.log('  ║            Reset Complete — Credentials          ║');
+  console.log('  ║            Reset Complete                    ║');
   console.log('  ╠══════════════════════════════════════════════════╣');
   console.log(`  ║  Admin      : ${ADMIN_EMAIL}`.padEnd(51) + '║');
-  console.log(`  ║  Password   : ${ADMIN_PASSWORD}`.padEnd(51) + '║');
+  console.log('  ║  Password   : (set, not shown)'.padEnd(51) + '║');
   console.log(`  ║  Role       : ICT Admin`.padEnd(51) + '║');
   console.log(`  ║  Status     : active`.padEnd(51) + '║');
   console.log('  ╠══════════════════════════════════════════════════╣');
   console.log(`  ║  Technician : ${TECH_EMAIL}`.padEnd(51) + '║');
-  console.log(`  ║  Password   : ${TECH_PASSWORD}`.padEnd(51) + '║');
+  console.log('  ║  Password   : (set, not shown)'.padEnd(51) + '║');
   console.log(`  ║  Role       : Technician`.padEnd(51) + '║');
   console.log(`  ║  Status     : active`.padEnd(51) + '║');
   console.log('  ╚══════════════════════════════════════════════════╝\n');

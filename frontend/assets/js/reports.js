@@ -476,8 +476,7 @@ function recentRequestRow(r) {
       <tr>
         <td><strong class="text-primary">${escHtml(r.ticketId || r.id)}</strong></td>
         <td>
-          <div style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
-               title="${escHtml(r.problemDescription)}">${escHtml(r.problemDescription)}</div>
+          <div class="text-break" title="${escHtml(r.problemDescription)}">${escHtml(r.problemDescription)}</div>
           <small class="text-muted">${escHtml(r.requester_name||'—')}</small>
         </td>
         <td><span class="badge bg-light text-dark border">${escHtml(r.department||'—')}</span></td>

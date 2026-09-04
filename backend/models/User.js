@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
+    gender: {
+      type: String,
+      enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+      default: null,
+    },
     department: {
       type: String,
       trim: true,
@@ -52,6 +57,25 @@ const userSchema = new mongoose.Schema(
     },
     lastLogin: {
       type: Date,
+      default: null,
+    },
+    /* Password reset (forgot password)
+       resetPasswordToken stores a HASH of the raw reset token (never the raw
+       value) so a DB leak cannot be used to reset accounts. Only one active
+       token per user is kept at a time.
+    */
+    resetPasswordToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+    profileImage: {
+      type: String,
       default: null,
     },
   },

@@ -206,9 +206,9 @@ const createTicket = async (req, res, next) => {
     if (descLenErr) return res.status(400).json({ success: false, message: descLenErr });
 
     if (req.body.phone) {
-      const phoneRegex = /^\+?[\d\s\-()]{7,20}$/;
+      const phoneRegex = /^(09|07)\d{8}$/;
       if (!phoneRegex.test(req.body.phone.trim())) {
-        return res.status(400).json({ success: false, message: 'Please enter a valid phone number.' });
+        return res.status(400).json({ success: false, message: 'Enter a valid Ethiopian mobile number (10 digits, starting with 09 or 07).' });
       }
     }
 

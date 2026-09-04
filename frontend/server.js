@@ -92,10 +92,11 @@ const server = http.createServer((req, res) => {
       });
     } else {
       const headers = { 'Content-Type': mime };
-      if (ext === '.js' || ext === '.css' || ext === '.html') {
-        // no-store: never let a browser reuse a stale copy of our scripts/styles.
-        // A cached old requests.js (without the /feedback loader) leaves admin
-        // pages frozen on their static "Loading requests..." placeholder.
+      // no-store: never let a browser reuse a stale copy of our scripts/styles/images.
+      // A cached old requests.js (without the /feedback loader) leaves admin
+      // pages frozen on their static "Loading requests..." placeholder; a cached
+      // old home.jpg can keep showing the previous (motherboard) hero background.
+      if (ext === '.js' || ext === '.css' || ext === '.html' || ext === '.jpg' || ext === '.jpeg' || ext === '.png' || ext === '.gif' || ext === '.svg') {
         headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
         headers['Pragma'] = 'no-cache';
       }

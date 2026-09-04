@@ -75,6 +75,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     setVal('settingDateFormat', currentSettings.dateFormat);
   }
 
+  /* ── Apply chosen language immediately (shared i18n) ──── */
+  const langSel = document.getElementById('settingLanguage');
+  if (langSel) {
+    if (window.setLang) window.setLang(langSel.value, false);
+    langSel.addEventListener('change', () => {
+      if (window.setLang) window.setLang(langSel.value);
+    });
+  }
+
   /* ── Populate Notification Settings ───────────────────── */
   if (currentSettings) {
     setCheck('notifNewRequest', currentSettings.notifNewRequest);

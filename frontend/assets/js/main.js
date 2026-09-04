@@ -3,7 +3,11 @@
     Smart Computer Maintenance Service Request and Tracking System
    ============================================================ */
 
-const API_BASE = 'http://localhost:5000/api';
+/* API base is provided by the shared api-config.js (safe for all pages).
+   Fallback keeps main.js self-sufficient if the config was not included. */
+if (typeof API_BASE === 'undefined') {
+  const API_BASE = 'http://localhost:5000/api';
+}
 
 /* ── Auth Helpers ─────────────────────────────────────────── */
 const Auth = {
@@ -191,10 +195,10 @@ function setText(id, val) {
 
 /* ── Attachment URL ────────────────────────────────────────
    Uploaded files are stored by the backend in /uploads and served from
-   the backend origin (http://localhost:5000/uploads/<filename>). */
+   the backend origin (e.g. http://localhost:5000/uploads/<filename>). */
 function uploadUrl(filename) {
   if (!filename) return '#';
-  const base = API_BASE.replace(/\/api\/?$/, '');
+  const base = typeof apiOrigin === 'function' ? apiOrigin() : API_BASE.replace(/\/api\/?$/, '');
   return `${base}/uploads/${encodeURIComponent(String(filename))}`;
 }
 
@@ -262,7 +266,7 @@ function requireRole(...roles) {
 }
 
 /* ── Profile Image (Avatar) ────────────────────────────────── */
-const DEFAULT_ADMIN_IMAGE = '/assets/images/admin-profile.jpg';
+const DEFAULT_ADMIN_IMAGE = '/assets/images/admin.jpg';
 const PROFILE_IMAGE_PREFS_KEY = 'ict_profile_image_prefs';
 
 function getProfileImagePrefs(user) {
@@ -285,12 +289,24 @@ function setProfileImagePrefs(user, prefs) {
   } catch (_) { return false; }
 }
 
-/* Priority: Uploaded photo > Image URL > default ADMIN image > initials */
+/* Build an absolute uploads URL that always points to the backend origin,
+   regardless of which port the frontend is served from. */
+function profileUploadUrl(filename) {
+  if (!filename) return null;
+  var base = (typeof apiOrigin === 'function') ? apiOrigin() : API_BASE.replace(/\/api\/?$/, '');
+  /* filename may already contain '/uploads/' prefix from the backend response. */
+  if (filename.indexOf('/uploads/') === 0) return base + filename;
+  return base + '/uploads/' + encodeURIComponent(String(filename));
+}
+
+/* Priority: Uploaded photo (localStorage) > DB profileImage > Image URL > default ADMIN image > initials */
 function resolveProfileAvatar(user) {
   if (!user) return null;
-  const prefs = getProfileImagePrefs(user);
+  var prefs = getProfileImagePrefs(user);
   if (prefs.uploaded) return prefs.uploaded;
   if (prefs.url)      return prefs.url;
+  /* Fall back to the profileImage stored in the database. */
+  if (user.profileImage) return profileUploadUrl(user.profileImage);
   if (user.role === 'ICT Admin') return DEFAULT_ADMIN_IMAGE;
   return null;
 }
@@ -315,8 +331,11 @@ function applyProfileAvatar(user, container) {
   img.onload  = () => { img.hidden = false; ini.hidden = true; };
   img.onerror = () => { img.hidden = true;  ini.hidden = false; };
 
-  let abs = src;
-  try { abs = new URL(src, window.location.origin).href; } catch (_) {}
+  /* Resolve relative URLs against the API origin (backend), not the page
+     origin, so profile images served from localhost:5000 load correctly
+     when the frontend runs on a different port. */
+  var abs = src;
+  try { abs = new URL(src, (typeof apiOrigin === 'function' ? apiOrigin() : window.location.origin)).href; } catch (_) {}
   if (img.src !== abs) img.src = src;
 }
 

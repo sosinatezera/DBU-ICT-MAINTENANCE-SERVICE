@@ -42,9 +42,9 @@ async function seedTechnician() {
       return;
     }
 
-    // Technician login credentials
+    // Technician login credentials (env-overridable, never printed)
     const email = "technician@dbu.edu.et";
-    const password = "Technician123!";
+    const password = process.env.SEED_TECH_PASSWORD || "Technician123!";
     const fullName = "Test Technician";
     const department = "ICT Infrastructure and Security Services";
     const phone = "+251-11-681-0000";
@@ -76,10 +76,10 @@ async function seedTechnician() {
 
     console.log("");
     console.log("==========================================");
-    console.log("       TECHNICIAN LOGIN CREDENTIALS       ");
+    console.log("       TECHNICIAN ACCOUNT CREATED         ");
     console.log("==========================================");
     console.log("Email:    technician@dbu.edu.et");
-    console.log("Password: Technician123!");
+    console.log("Password: (set, not shown)");
     console.log("Role:     Technician");
     console.log("Status:   active");
     console.log("==========================================");

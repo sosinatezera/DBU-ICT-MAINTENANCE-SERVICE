@@ -2,10 +2,12 @@
  * controllers/technicianController.js
  * Technician management and assignment views
  */
+const bcrypt = require('bcryptjs');
 const Technician = require('../models/Technician');
 const Assignment = require('../models/Assignment');
 const Ticket     = require('../models/Ticket');
-const { validateObjectId, validateBoolean, validateLength, sanitizeString } = require('../middleware/validation');
+const User       = require('../models/User');
+const { validateObjectId, validateBoolean, validateLength, sanitizeString, validateName, validatePhone, validateEmail, validateEnum, VALID_GENDERS } = require('../middleware/validation');
 
 const getAllTechnicians = async (req, res, next) => {
   try {
@@ -20,6 +22,7 @@ const getAllTechnicians = async (req, res, next) => {
       department:     t.user?.department,
       status:         t.user?.status,
       role:           t.user?.role,
+      profileImage:   t.user?.profileImage || null,
       specialization: t.specialization,
       available:      t.available,
     }));
@@ -62,6 +65,7 @@ const getMyTechnicianProfile = async (req, res, next) => {
         department:     tech.user?.department,
         status:         tech.user?.status,
         role:           tech.user?.role,
+        profileImage:   tech.user?.profileImage || null,
         specialization: tech.specialization,
         available:      tech.available,
       },
@@ -133,4 +137,114 @@ const updateTechnician = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getAllTechnicians, getTechnicianById, getMyTechnicianProfile, getMyAssignments, updateTechnician };
+/* ── PUT /api/technicians/me — update own technician profile ─── */
+const updateMyTechnicianProfile = async (req, res, next) => {
+  try {
+    const tech = await Technician.findOne({ user: req.user.id });
+    if (!tech) {
+      return res.status(404).json({
+        success: false,
+        message: 'Technician profile not found for your account. Contact ICT Admin.',
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    let { fullName, phone, department, gender, specialization, employeeId, shift, available } = req.body;
+
+    // Validate and sanitize user fields
+    if (fullName !== undefined) {
+      fullName = fullName ? sanitizeString(fullName) : '';
+      const nameErr = validateName(fullName, 'Full name');
+      if (nameErr) return res.status(400).json({ success: false, message: nameErr });
+    }
+
+    if (phone !== undefined && phone !== null && phone !== '') {
+      const phoneErr = validatePhone(phone);
+      if (phoneErr) return res.status(400).json({ success: false, message: phoneErr });
+    }
+
+    if (gender !== undefined && gender !== null && gender !== '') {
+      const genderErr = validateEnum(gender, ['Male', 'Female', 'Other', 'Prefer not to say'], 'gender');
+      if (genderErr) return res.status(400).json({ success: false, message: genderErr });
+    }
+
+    if (department !== undefined) {
+      department = department ? sanitizeString(department) : null;
+    }
+
+    if (specialization !== undefined && specialization !== null) {
+      const specErr = validateLength(sanitizeString(specialization), 'Specialization', { max: 100 });
+      if (specErr) return res.status(400).json({ success: false, message: specErr });
+      specialization = sanitizeString(specialization);
+    }
+
+    if (employeeId !== undefined) {
+      employeeId = employeeId ? sanitizeString(employeeId) : null;
+    }
+
+    if (shift !== undefined) {
+      const shiftErr = validateEnum(shift, ['morning', 'afternoon', 'night'], 'shift');
+      if (shiftErr) return res.status(400).json({ success: false, message: shiftErr });
+    }
+
+    if (available !== undefined) {
+      const availErr = validateBoolean(available, 'Available');
+      if (availErr) return res.status(400).json({ success: false, message: availErr });
+    }
+
+    // Update user fields
+    const userUpdate = {};
+    if (fullName !== undefined) userUpdate.fullName = fullName;
+    if (phone !== undefined) userUpdate.phone = phone || null;
+    if (department !== undefined) userUpdate.department = department;
+    if (gender !== undefined) userUpdate.gender = gender || null;
+
+    if (Object.keys(userUpdate).length > 0) {
+      await User.findByIdAndUpdate(req.user.id, userUpdate, { new: true, runValidators: true });
+    }
+
+    // Update technician fields
+    const techUpdate = {};
+    if (specialization !== undefined) techUpdate.specialization = specialization;
+    if (employeeId !== undefined) techUpdate.employeeId = employeeId;
+    if (shift !== undefined) techUpdate.shift = shift;
+    if (available !== undefined) techUpdate.available = available;
+
+    if (Object.keys(techUpdate).length > 0) {
+      await Technician.findByIdAndUpdate(tech._id, techUpdate, { new: true, runValidators: true });
+    }
+
+    // Return updated profile
+    const updatedTech = await Technician.findOne({ user: req.user.id }).populate('user', '-password');
+    const updatedUser = await User.findById(req.user.id).select('-password');
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully.',
+      data: {
+        id: updatedTech._id,
+        _id: updatedTech._id,
+        user_id: updatedUser._id,
+        fullName: updatedUser.fullName,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        department: updatedUser.department,
+        status: updatedUser.status,
+        role: updatedUser.role,
+        profileImage: updatedUser.profileImage || null,
+        specialization: updatedTech.specialization,
+        employeeId: updatedTech.employeeId,
+        shift: updatedTech.shift,
+        available: updatedTech.available,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getAllTechnicians, getTechnicianById, getMyTechnicianProfile, getMyAssignments, updateTechnician, updateMyTechnicianProfile };

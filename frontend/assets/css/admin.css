@@ -29,6 +29,10 @@
 }
 
 /* ── Admin Sidebar ─────────────────────────────────────────── */
+body.dashboard-body {
+  --sbw: 250px;
+}
+
 #sidebar.sidebar {
   background: linear-gradient(180deg, #111827 0%, #0b1220 100%) !important;
   border-right: 1px solid rgba(255,255,255,.06);
@@ -195,11 +199,17 @@
   letter-spacing: .5px;
   border-bottom: 1px solid var(--admin-border);
   padding: .68rem .8rem;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .dashboard-body .table-hover tbody tr:hover { background-color: var(--primary-subtle); }
 .dashboard-body .table tbody td { color: #334155; }
+
+/* Keep dashboard tables inside their card so rows never overflow into / overlap
+   the adjacent column (e.g. "Quick Actions" covering "Recent Maintenance Requests"). */
+.dashboard-body .table-responsive { overflow-x: auto; }
+.dashboard-body .table { max-width: 100%;  min-width: 0; }
+.dashboard-body .table td, .dashboard-body .table th { white-space: normal; overflow-wrap: break-word; }
 
 .table-responsive { border-radius: var(--radius-md); }
 
@@ -433,9 +443,9 @@
 
 /* Edit → secondary / neutral */
 .tech-card .card-footer .btn-outline-secondary {
-  color: #475569;
+  color: var(--text-secondary);
   border-color: var(--border-strong);
-  background: #fff;
+  background: var(--surface);
 }
 
 .tech-card .card-footer .btn-outline-secondary:hover {
@@ -448,7 +458,7 @@
 .tech-card .card-footer .btn-outline-danger {
   color: var(--danger);
   border-color: rgba(220,38,38,.35);
-  background: #fff;
+  background: var(--surface);
 }
 
 .tech-card .card-footer .btn-outline-danger:hover {

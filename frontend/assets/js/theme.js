@@ -69,11 +69,28 @@ function buildThemeSwitch(onClick) {
 
 /* Inject the switcher into the page at the best available spot. */
 function injectThemeSwitch() {
+  if (document.body && document.body.classList.contains('auth-body')) return; // no toggle on login/register
   if (document.querySelector('.app-theme-switch')) return; // already present
+
+  const sidebarNav = document.querySelector('.sidebar');
+  if (sidebarNav) {
+    // Dashboard / role pages: place the toggle at the top of the left sidebar,
+    // outside the brand link so clicking it does not trigger navigation.
+    const btn = buildThemeSwitch(toggleTheme);
+    btn.classList.add('app-theme-in-sidebar');
+    btn.setAttribute('title', 'Toggle dark/light mode');
+    const brandLink = sidebarNav.querySelector('a[href]');
+    if (brandLink && brandLink.parentNode === sidebarNav) {
+      brandLink.after(btn);
+    } else {
+      sidebarNav.prepend(btn);
+    }
+    return;
+  }
 
   const topbar = document.querySelector('.topbar');
   if (topbar) {
-    // Dashboard / role pages: add to the topbar's right-hand controls.
+    // Dashboard / role pages without a sidebar: add to topbar's controls.
     const btn = buildThemeSwitch(toggleTheme);
     btn.classList.add('app-theme-in-topbar');
     // Prefer an existing right-aligned action cluster, else append to topbar.

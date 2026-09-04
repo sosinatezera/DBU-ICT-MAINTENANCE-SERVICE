@@ -13,7 +13,12 @@ const {
 } = require('../controllers/ticketController');
 const { authenticate } = require('../middleware/auth');
 const { authorize }    = require('../middleware/authorize');
+const { rateLimit }    = require('../middleware/rateLimiter');
 const upload           = require('../config/multer');
+
+/* Public tracking is open to anyone, so throttle it tightly to prevent
+   brute-force enumeration of the sequential ticket codes. */
+const trackRateLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 60 });
 
 /* ICT Admin — all tickets */
 router.get('/',              authenticate, authorize('ICT Admin'), getAllTickets);
@@ -21,8 +26,8 @@ router.get('/',              authenticate, authorize('ICT Admin'), getAllTickets
 /* Requester — own tickets */
 router.get('/my',            authenticate, getMyTickets);
 
-/* Public tracking by ticket code (no auth required) */
-router.get('/track/:ticketId', trackTicket);
+/* Public tracking by ticket code (no auth required, rate-limited) */
+router.get('/track/:ticketId', trackRateLimit, trackTicket);
 
 /* Single ticket detail */
 router.get('/:id',           authenticate, getTicketById);

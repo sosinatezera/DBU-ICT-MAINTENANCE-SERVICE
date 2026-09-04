@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,12 +13,21 @@
   <link rel="stylesheet" href="/assets/css/admin.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <style>
-    .notif-item { transition: background .15s, border-color .15s; }
-    .notif-item:hover { background: #f8f9fa !important; }
-    .notif-item.unread { background: #fff; }
+    .notif-item {
+      transition: background .15s, border-color .15s;
+    }
+
+    .notif-item:hover {
+      background: #f8f9fa !important;
+    }
+
+    .notif-item.unread {
+      background: #fff;
+    }
   </style>
-<link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
+
 <body class="dashboard-body">
 
   <div class="d-flex">
@@ -25,55 +36,70 @@
       <a href="../index.html" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-shield-check fs-3 text-info"></i>
-          <div class="small fw-bold mt-1" id="panelLabel">Management Panel</div>
+          <div class="small fw-bold mt-1" id="panelLabel"><span data-i18n="side.panel.admin">Management Panel</span>
+          </div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
-        <li><a href="dashboard.html"     class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-        <li><a href="users.html"         class="nav-link text-white-50"><i class="bi bi-people me-2"></i>Users</a></li>
-        <li><a href="technicians.html"   class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i>Technicians</a></li>
-        <li><a href="assets.html"        class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i>ICT Assets</a></li>
-        <li><a href="requests.html"      class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i>Requests</a></li>
-        <li><a href="categories.html"    class="nav-link text-white-50"><i class="bi bi-tags me-2"></i>Categories</a></li>
-        <li><a href="reports.html"       class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i>Reports</a></li>
-        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i>Feedback</a></li>
+        <li><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i><span
+              data-i18n="side.dashboard">Dashboard</span></a></li>
+        <li><a href="users.html" class="nav-link text-white-50"><i class="bi bi-people me-2"></i><span
+              data-i18n="side.users">Users</span></a></li>
+        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i><span
+              data-i18n="side.technicians">Technicians</span></a></li>
+        <li><a href="assets.html" class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i><span
+              data-i18n="side.assets">ICT Assets</span></a></li>
+        <li><a href="requests.html" class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i><span
+              data-i18n="side.requests">Requests</span></a></li>
+        <li><a href="categories.html" class="nav-link text-white-50"><i class="bi bi-tags me-2"></i><span
+              data-i18n="side.categories">Categories</span></a></li>
+        <li><a href="reports.html" class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i><span
+              data-i18n="side.reports">Reports</span></a></li>
+        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i><span
+              data-i18n="side.feedback">Feedback</span></a></li>
+        <li><a href="commits.html" class="nav-link text-white-50"><i class="bi bi-git-branch me-2"></i><span
+              data-i18n="side.commits">Commits</span></a></li>
         <li><a href="notifications.html" class="nav-link text-white active bg-white bg-opacity-25 rounded">
-          <i class="bi bi-bell me-2"></i>Notifications
-          <span class="badge bg-danger ms-1" id="sidebarNotifBadge" style="display:none;"></span>
-        </a></li>
-        <li><a href="settings.html"      class="nav-link text-white-50"><i class="bi bi-gear me-2"></i>Settings</a></li>
-      </ul>
-<div class="mt-auto pt-3 border-top border-white border-opacity-25">
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <span class="profile-avatar profile-avatar-sm" data-avatar aria-label="Profile">
-            <img class="profile-avatar-image" alt="Profile" hidden />
-            <span class="profile-avatar-initials">A</span>
-          </span>
-          <span class="small fw-semibold" id="sidebarUserName">Administrator</span>
+            <i class="bi bi-bell me-2"></i><span data-i18n="side.notifications">Notifications</span>
+            <span class="badge bg-danger ms-1" id="sidebarNotifBadge" style="display:none;"></span>
+          </a></li>
+        <li><a href="settings.html" class="nav-link text-white-50"><i class="bi bi-gear me-2"></i><span
+              data-i18n="side.settings">Settings</span></a></li>
+
+        <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="profile-avatar profile-avatar-sm" data-avatar aria-label="Profile">
+              <img class="profile-avatar-image" alt="Profile" hidden />
+              <span class="profile-avatar-initials">A</span>
+            </span>
+            <span class="small fw-semibold" id="sidebarUserName">Administrator</span>
+          </div>
+          <div class="text-white-50 small mb-2" style="font-size:.72rem;" id="sidebarSpec">—</div>
+          <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
+            <i class="bi bi-box-arrow-right me-1"></i><span data-i18n="admin.logout">Logout</span>
+          </a>
         </div>
-        <div class="text-white-50 small mb-2" style="font-size:.72rem;" id="sidebarSpec">�</div>
-        <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
-          <i class="bi bi-box-arrow-right me-1"></i>Logout
-        </a>
-      </div>
     </nav>
 
     <!-- ── Main ── -->
     <div class="flex-grow-1">
-      <header class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
+      <header
+        class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
         <div>
-          <h5 class="mb-0 fw-bold"><i class="bi bi-bell text-primary me-2"></i>Notifications</h5>
+          <h5 class="mb-0 fw-bold"><i class="bi bi-bell text-primary me-2"></i><span
+              data-i18n="admin.notifications.title">Notifications</span></h5>
           <small class="text-muted" id="unreadCount"></small>
         </div>
         <div class="d-flex align-items-center gap-2">
           <!-- Filter unread toggle -->
           <div class="form-check form-switch mb-0 me-2">
             <input class="form-check-input" type="checkbox" id="filterUnread" />
-            <label class="form-check-label small text-muted" for="filterUnread">Unread only</label>
+            <label class="form-check-label small text-muted" for="filterUnread"><span
+                data-i18n="admin.notifications.filterUnread">Unread only</span></label>
           </div>
           <div id="notifBellContainer"></div>
           <button class="btn btn-sm btn-outline-secondary" id="markAllReadBtn">
-            <i class="bi bi-check2-all me-1"></i>Mark All Read
+            <i class="bi bi-check2-all me-1"></i><span data-i18n="admin.notifications.markAllRead">Mark All Read</span>
           </button>
         </div>
       </header>
@@ -84,25 +110,26 @@
           <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm text-center p-3">
               <h4 class="fw-bold text-primary mb-0" id="totalNotifCount">—</h4>
-              <small class="text-muted">Total</small>
+              <small class="text-muted"><span data-i18n="admin.notifications.total">Total</span></small>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm text-center p-3">
               <h4 class="fw-bold text-danger mb-0" id="unreadNotifCount">—</h4>
-              <small class="text-muted">Unread</small>
+              <small class="text-muted"><span data-i18n="admin.notifications.unread">Unread</span></small>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm text-center p-3">
               <h4 class="fw-bold text-success mb-0" id="readNotifCount">—</h4>
-              <small class="text-muted">Read</small>
+              <small class="text-muted"><span data-i18n="admin.notifications.read">Read</span></small>
             </div>
           </div>
           <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3 d-flex flex-row align-items-center justify-content-center gap-2">
+            <div
+              class="card border-0 shadow-sm text-center p-3 d-flex flex-row align-items-center justify-content-center gap-2">
               <button class="btn btn-sm btn-outline-danger w-100" id="clearAllBtn">
-                <i class="bi bi-trash me-1"></i>Clear All
+                <i class="bi bi-trash me-1"></i><span data-i18n="admin.notifications.clearAll">Clear All</span>
               </button>
             </div>
           </div>
@@ -123,42 +150,49 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/api-config.js"></script>
   <script src="/assets/js/main.js?v=6"></script>
   <script src="/assets/js/notifications.js?v=6"></script>
   <script>
-  // Wire up summary counts and Clear All
-  document.addEventListener('DOMContentLoaded', async () => {
-    // Update summary strip after notifications load
-    const origLoad = window.loadNotificationsPage;
-    const patchSummary = async () => {
-      try {
-        const { data, unread } = await apiRequest('/notifications');
-        document.getElementById('totalNotifCount').textContent  = data.length;
-        document.getElementById('unreadNotifCount').textContent = unread;
-        document.getElementById('readNotifCount').textContent   = data.length - unread;
-        // sidebar badge
-        const sb = document.getElementById('sidebarNotifBadge');
-        if (sb) { sb.textContent = unread; sb.style.display = unread > 0 ? '' : 'none'; }
-      } catch (_) {}
-    };
-    await patchSummary();
-    // Re-patch after each load
-    document.getElementById('filterUnread')?.addEventListener('change', patchSummary);
-    document.getElementById('markAllReadBtn')?.addEventListener('change', patchSummary);
+    // Wire up summary counts and Clear All
+    document.addEventListener( 'DOMContentLoaded', async () =>
+    {
+      // Update summary strip after notifications load
+      const origLoad = window.loadNotificationsPage;
+      const patchSummary = async () =>
+      {
+        try
+        {
+          const { data, unread } = await apiRequest( '/notifications' );
+          document.getElementById( 'totalNotifCount' ).textContent = data.length;
+          document.getElementById( 'unreadNotifCount' ).textContent = unread;
+          document.getElementById( 'readNotifCount' ).textContent = data.length - unread;
+          // sidebar badge
+          const sb = document.getElementById( 'sidebarNotifBadge' );
+          if ( sb ) { sb.textContent = unread; sb.style.display = unread > 0 ? '' : 'none'; }
+        } catch ( _ ) { }
+      };
+      await patchSummary();
+      // Re-patch after each load
+      document.getElementById( 'filterUnread' )?.addEventListener( 'change', patchSummary );
+      document.getElementById( 'markAllReadBtn' )?.addEventListener( 'change', patchSummary );
 
-    // Clear All
-    document.getElementById('clearAllBtn')?.addEventListener('click', async () => {
-      if (!confirm('Delete all notifications? This cannot be undone.')) return;
-      try {
-        const { data } = await apiRequest('/notifications');
-        await Promise.all(data.map(n => apiRequest(`/notifications/${n.id}`, { method: 'DELETE' })));
-        showToast('All notifications cleared.', 'success');
-        await loadNotificationsPage();
-        await patchSummary();
-      } catch (err) { showToast(err.message, 'danger'); }
-    });
-  });
+      // Clear All
+      document.getElementById( 'clearAllBtn' )?.addEventListener( 'click', async () =>
+      {
+        if ( !confirm( 'Delete all notifications? This cannot be undone.' ) ) return;
+        try
+        {
+          const { data } = await apiRequest( '/notifications' );
+          await Promise.all( data.map( n => apiRequest( `/notifications/${ n.id }`, { method: 'DELETE' } ) ) );
+          showToast( 'All notifications cleared.', 'success' );
+          await loadNotificationsPage();
+          await patchSummary();
+        } catch ( err ) { showToast( err.message, 'danger' ); }
+      } );
+    } );
   </script>
-<script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/theme.js"></script>
 </body>
+
 </html>

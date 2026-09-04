@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>User Management � Admin</title>
+  <title>User Management — Admin</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/admin.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
-<link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
+
 <body class="dashboard-body">
 
   <div class="d-flex">
@@ -19,33 +22,48 @@
       <a href="../index.html" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-shield-check fs-3 text-info"></i>
-          <div class="small fw-bold mt-1" id="panelLabel">Management Panel</div>
+          <div class="small fw-bold mt-1" id="panelLabel"><span data-i18n="side.panel.admin">Management Panel</span>
+          </div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
-        <li><a href="dashboard.html"   class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-        <li><a href="users.html"       class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-people me-2"></i>Users</a></li>
-        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i>Technicians</a></li>
-        <li><a href="assets.html"      class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i>ICT Assets</a></li>
-        <li><a href="requests.html"    class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i>Requests</a></li>
-        <li><a href="categories.html"  class="nav-link text-white-50"><i class="bi bi-tags me-2"></i>Categories</a></li>
-        <li><a href="reports.html"     class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i>Reports</a></li>
-        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i>Feedback</a></li>
-        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a></li>
-        <li><a href="settings.html"    class="nav-link text-white-50"><i class="bi bi-gear me-2"></i>Settings</a></li>
-      </ul>
-      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
-        <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
-      </div>
+        <li><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i><span
+              data-i18n="side.dashboard">Dashboard</span></a></li>
+        <li><a href="users.html" class="nav-link text-white active bg-white bg-opacity-25 rounded"><i
+              class="bi bi-people me-2"></i><span data-i18n="side.users">Users</span></a></li>
+        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i><span
+              data-i18n="side.technicians">Technicians</span></a></li>
+        <li><a href="assets.html" class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i><span
+              data-i18n="side.assets">ICT Assets</span></a></li>
+        <li><a href="requests.html" class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i><span
+              data-i18n="side.requests">Requests</span></a></li>
+        <li><a href="categories.html" class="nav-link text-white-50"><i class="bi bi-tags me-2"></i><span
+              data-i18n="side.categories">Categories</span></a></li>
+        <li><a href="reports.html" class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i><span
+              data-i18n="side.reports">Reports</span></a></li>
+        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i><span
+              data-i18n="side.feedback">Feedback</span></a></li>
+        <li><a href="commits.html" class="nav-link text-white-50"><i class="bi bi-git-branch me-2"></i><span
+              data-i18n="side.commits">Commits</span></a></li>
+        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span
+              data-i18n="side.notifications">Notifications</span></a></li>
+        <li><a href="settings.html" class="nav-link text-white-50"><i class="bi bi-gear me-2"></i><span
+              data-i18n="side.settings">Settings</span></a></li>
+
+        <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+          <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i
+              class="bi bi-box-arrow-right me-1"></i><span data-i18n="admin.logout">Logout</span></a>
+        </div>
     </nav>
 
     <div class="flex-grow-1">
-      <header class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
-        <h5 class="mb-0 fw-bold">User Management</h5>
+      <header
+        class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
+        <h5 class="mb-0 fw-bold"><span data-i18n="admin.users.title">User Management</span></h5>
         <div class="d-flex align-items-center gap-3">
           <div id="notifBellContainer"></div>
           <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#userModal" id="addUserBtn">
-            <i class="bi bi-person-plus me-1"></i>Add User
+            <i class="bi bi-person-plus me-1"></i><span data-i18n="admin.users.addUser">Add User</span>
           </button>
         </div>
       </header>
@@ -56,25 +74,27 @@
           <div class="card-body p-3">
             <div class="row g-2 align-items-end">
               <div class="col-md-4">
-                <input type="text" class="form-control" id="searchInput" placeholder="Search users..." />
+                <input type="text" class="form-control" id="searchInput"
+                  data-i18n-placeholder="admin.users.search.placeholder" placeholder="Search users..." />
               </div>
               <div class="col-md-3">
                 <select class="form-select" id="roleFilter">
-                  <option value="">All Roles</option>
-                  <option value="ICT Admin">Admin</option>
-                  <option value="Requester">Requester</option>
-                  <option value="Technician">Technician</option>
+                  <option value=""><span data-i18n="admin.users.filter.allRoles">All Roles</span>
+                  <option value="ICT Admin"><span data-i18n="admin.users.filter.admin">Admin</span>
+                  <option value="Requester"><span data-i18n="admin.users.filter.requester">Requester</span>
+                  <option value="Technician"><span data-i18n="admin.users.filter.technician">Technician</span>
                 </select>
               </div>
               <div class="col-md-3">
                 <select class="form-select" id="statusFilter">
-                  <option value="">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value=""><span data-i18n="admin.users.filter.allStatuses">All Statuses</span>
+                  <option value="active"><span data-i18n="admin.users.filter.active">Active</span>
+                  <option value="inactive"><span data-i18n="admin.users.filter.inactive">Inactive</span>
                 </select>
               </div>
               <div class="col-md-2">
-                <button class="btn btn-primary w-100" id="searchBtn"><i class="bi bi-search me-1"></i>Search</button>
+                <button class="btn btn-primary w-100" id="searchBtn"><i class="bi bi-search me-1"></i><span
+                    data-i18n="admin.users.search">Search</span></button>
               </div>
             </div>
           </div>
@@ -85,7 +105,8 @@
           <div class="card-body p-3 d-flex align-items-center justify-content-between">
             <span class="text-muted small" id="adminUsersCount"></span>
             <button class="btn btn-sm btn-outline-secondary" id="resetUserFiltersBtn" style="display:none;">
-              <i class="bi bi-arrow-counterclockwise me-1"></i>Reset Filters
+              <i class="bi bi-arrow-counterclockwise me-1"></i><span data-i18n="admin.users.resetFilters">Reset
+                Filters</span>
             </button>
           </div>
           <div class="card-body p-0">
@@ -93,20 +114,33 @@
               <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
                   <tr>
-                    <th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Status</th><th>Created</th><th>Actions</th>
+                    <th><span data-i18n="admin.users.table.num">#</span></th>
+                    <th><span data-i18n="admin.users.table.name">Name</span></th>
+                    <th><span data-i18n="admin.users.table.email">Email</span></th>
+                    <th><span data-i18n="admin.users.table.role">Role</span></th>
+                    <th><span data-i18n="admin.users.table.department">Department</span></th>
+                    <th><span data-i18n="admin.users.table.status">Status</span></th>
+                    <th><span data-i18n="admin.users.table.created">Created</span></th>
+                    <th><span data-i18n="admin.users.table.actions">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody id="usersTableBody">
-                  <tr><td colspan="8" class="text-center text-muted py-4">Loading users...</td></tr>
+                  <tr>
+                    <td colspan="8" class="text-center text-muted py-4"><span data-i18n="admin.users.loading">Loading
+                        users...</span></td>
+                  </tr>
                 </tbody>
               </table>
             </div>
           </div>
-          <div class="card-footer bg-white d-flex align-items-center justify-content-between flex-wrap gap-2" id="adminUsersPaginationWrap" style="display:none;">
+          <div class="card-footer bg-white d-flex align-items-center justify-content-between flex-wrap gap-2"
+            id="adminUsersPaginationWrap" style="display:none;">
             <small class="text-muted" id="adminUsersPageInfo"></small>
             <div class="btn-group btn-group-sm">
-              <button type="button" class="btn btn-outline-secondary" id="adminUsersPrevBtn"><i class="bi bi-chevron-left"></i> Prev</button>
-              <button type="button" class="btn btn-outline-secondary" id="adminUsersNextBtn">Next <i class="bi bi-chevron-right"></i></button>
+              <button type="button" class="btn btn-outline-secondary" id="adminUsersPrevBtn"><i
+                  class="bi bi-chevron-left"></i> <span data-i18n="admin.users.prev">Prev</span></button>
+              <button type="button" class="btn btn-outline-secondary" id="adminUsersNextBtn"><span
+                  data-i18n="admin.users.next">Next</span> <i class="bi bi-chevron-right"></i></button>
             </div>
           </div>
         </div>
@@ -119,7 +153,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="userModalLabel">Add New User</h5>
+          <h5 class="modal-title fw-bold" id="userModalLabel"><span data-i18n="admin.users.modal.addTitle">Add New
+              User</span></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -127,58 +162,68 @@
           <form id="userForm" novalidate>
             <input type="hidden" id="userId" />
             <div class="mb-3">
-              <label for="userName" class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+              <label for="userName" class="form-label fw-semibold"><span data-i18n="admin.users.modal.fullName">Full
+                  Name</span> <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="userName" required />
             </div>
             <div class="mb-3">
-              <label for="userEmail" class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+              <label for="userEmail" class="form-label fw-semibold"><span
+                  data-i18n="admin.users.modal.email">Email</span> <span class="text-danger">*</span></label>
               <input type="email" class="form-control" id="userEmail" required />
             </div>
             <div class="row g-3 mb-3">
               <div class="col-6">
-                <label for="userRole" class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
+                <label for="userRole" class="form-label fw-semibold"><span
+                    data-i18n="admin.users.modal.role">Role</span> <span class="text-danger">*</span></label>
                 <select class="form-select" id="userRole" required>
-                  <option value="">-- Role --</option>
-                  <option value="ICT Admin">Admin</option>
-                  <option value="Requester">Requester</option>
-                  <option value="Technician">Technician</option>
+                  <option value=""><span data-i18n="admin.users.modal.rolePlaceholder">-- Role --</span>
+                  <option value="ICT Admin"><span data-i18n="admin.users.filter.admin">Admin</span>
+                  <option value="Requester"><span data-i18n="admin.users.filter.requester">Requester</span>
+                  <option value="Technician"><span data-i18n="admin.users.filter.technician">Technician</span>
                 </select>
               </div>
               <div class="col-6">
-                <label for="userStatus" class="form-label fw-semibold">Status</label>
+                <label for="userStatus" class="form-label fw-semibold"><span
+                    data-i18n="admin.users.modal.status">Status</span></label>
                 <select class="form-select" id="userStatus">
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="active"><span data-i18n="admin.users.filter.active">Active</span>
+                  <option value="inactive"><span data-i18n="admin.users.filter.inactive">Inactive</span>
                 </select>
               </div>
             </div>
             <div class="mb-3">
-              <label for="userDepartment" class="form-label fw-semibold">Department</label>
+              <label for="userDepartment" class="form-label fw-semibold"><span
+                  data-i18n="admin.users.modal.department">Department</span></label>
               <select class="form-select" id="userDepartment">
-                <option value="">-- Select Department --</option>
+                <option value=""><span data-i18n="admin.users.modal.selectDept">-- Select Department --</span>
                 <option value="Computer Maintenance">Computer Maintenance</option>
-                <option value="ICT Infrastructure and Security Services">ICT Infrastructure and Security Services</option>
+                <option value="ICT Infrastructure and Security Services">ICT Infrastructure and Security Services
+                </option>
                 <option value="Software Development">Software Development</option>
                 <option value="Learning and Technology">Learning and Technology</option>
                 <option value="System Administrations">System Administrations</option>
               </select>
             </div>
             <div class="mb-3">
-              <label for="userPhone" class="form-label fw-semibold">Phone</label>
+              <label for="userPhone" class="form-label fw-semibold"><span
+                  data-i18n="admin.users.modal.phone">Phone</span></label>
               <input type="tel" class="form-control" id="userPhone" />
             </div>
             <div class="mb-3" id="passwordField">
-              <label for="userPassword" class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+              <label for="userPassword" class="form-label fw-semibold"><span
+                  data-i18n="admin.users.modal.password">Password</span> <span class="text-danger">*</span></label>
               <input type="password" class="form-control" id="userPassword" minlength="8" />
-              <div class="form-text">Min. 8 characters. Leave blank to keep existing password when editing.</div>
+              <div class="form-text"><span data-i18n="admin.users.modal.passwordHint">Min. 8 characters. Leave blank to
+                  keep existing password when editing.</span></div>
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><span
+              data-i18n="admin.users.modal.cancel">Cancel</span></button>
           <button type="submit" form="userForm" class="btn btn-primary" id="saveUserBtn">
             <span class="spinner-border spinner-border-sm me-2 d-none" id="saveUserSpinner"></span>
-            <span id="saveUserLabel">Save User</span>
+            <span id="saveUserLabel" data-i18n="admin.users.modal.save">Save User</span>
           </button>
         </div>
       </div>
@@ -190,22 +235,31 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold"><i class="bi bi-person me-2 text-primary"></i>User Details</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-person me-2 text-primary"></i><span
+              data-i18n="admin.users.modal.viewTitle">User Details</span></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <dl class="row mb-0">
-            <dt class="col-4 text-muted">Name</dt><dd class="col-8" id="viewUserName">—</dd>
-            <dt class="col-4 text-muted">Email</dt><dd class="col-8" id="viewUserEmail">—</dd>
-            <dt class="col-4 text-muted">Role</dt><dd class="col-8" id="viewUserRole">—</dd>
-            <dt class="col-4 text-muted">Status</dt><dd class="col-8" id="viewUserStatus">—</dd>
-            <dt class="col-4 text-muted">Department</dt><dd class="col-8" id="viewUserDepartment">—</dd>
-            <dt class="col-4 text-muted">Phone</dt><dd class="col-8" id="viewUserPhone">—</dd>
-            <dt class="col-4 text-muted">Created</dt><dd class="col-8" id="viewUserCreated">—</dd>
+            <dt class="col-4 text-muted"><span data-i18n="admin.users.modal.name">Name</span></dt>
+            <dd class="col-8" id="viewUserName">—</dd>
+            <dt class="col-4 text-muted"><span data-i18n="admin.users.table.email">Email</span></dt>
+            <dd class="col-8" id="viewUserEmail">—</dd>
+            <dt class="col-4 text-muted"><span data-i18n="admin.users.table.role">Role</span></dt>
+            <dd class="col-8" id="viewUserRole">—</dd>
+            <dt class="col-4 text-muted"><span data-i18n="admin.users.table.status">Status</span></dt>
+            <dd class="col-8" id="viewUserStatus">—</dd>
+            <dt class="col-4 text-muted"><span data-i18n="admin.users.table.department">Department</span></dt>
+            <dd class="col-8" id="viewUserDepartment">—</dd>
+            <dt class="col-4 text-muted"><span data-i18n="admin.users.modal.phone">Phone</span></dt>
+            <dd class="col-8" id="viewUserPhone">—</dd>
+            <dt class="col-4 text-muted"><span data-i18n="admin.users.table.created">Created</span></dt>
+            <dd class="col-8" id="viewUserCreated">—</dd>
           </dl>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"><span
+              data-i18n="admin.users.modal.close">Close</span></button>
         </div>
       </div>
     </div>
@@ -216,27 +270,32 @@
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
         <div class="modal-header">
-          <h6 class="modal-title fw-bold" id="changeRoleModalLabel"><i class="bi bi-person-gear me-2 text-primary"></i>Change Role</h6>
+          <h6 class="modal-title fw-bold" id="changeRoleModalLabel"><i
+              class="bi bi-person-gear me-2 text-primary"></i><span data-i18n="admin.users.modal.changeRole">Change
+              Role</span></h6>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div id="changeRoleAlert" class="alert d-none" role="alert"></div>
-          <p class="mb-3 small text-muted">Changing the role for <strong id="changeRoleUserName"></strong></p>
+          <p class="mb-3 small text-muted"><span data-i18n="admin.users.modal.changeRoleDesc">Changing the role
+              for</span> <strong id="changeRoleUserName"></strong></p>
           <input type="hidden" id="changeRoleUserId" />
-          <label for="changeRoleSelect" class="form-label fw-semibold">New Role</label>
+          <label for="changeRoleSelect" class="form-label fw-semibold"><span data-i18n="admin.users.modal.newRole">New
+              Role</span></label>
           <select class="form-select" id="changeRoleSelect">
-            <option value="">-- Role --</option>
-            <option value="ICT Admin">Admin</option>
-            <option value="Requester">Requester</option>
-            <option value="Technician">Technician</option>
+            <option value=""><span data-i18n="admin.users.modal.rolePlaceholder">-- Role --</span>
+            <option value="ICT Admin"><span data-i18n="admin.users.filter.admin">Admin</span>
+            <option value="Requester"><span data-i18n="admin.users.filter.requester">Requester</span>
+            <option value="Technician"><span data-i18n="admin.users.filter.technician">Technician</span>
           </select>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary btn-sm" id="confirmChangeRoleBtn">
-            <span class="spinner-border spinner-border-sm me-1 d-none" id="changeRoleSpinner"></span>
-            <span id="changeRoleLabel">Change Role</span>
-          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"><span
+              data-i18n="admin.users.modal.cancel">Cancel</span>
+            <button type="button" class="btn btn-primary btn-sm" id="confirmChangeRoleBtn">
+              <span class="spinner-border spinner-border-sm me-1 d-none" id="changeRoleSpinner"></span>
+              <span id="changeRoleLabel" data-i18n="admin.users.modal.changeRole">Change Role</span>
+            </button>
         </div>
       </div>
     </div>
@@ -247,7 +306,8 @@
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
         <div class="modal-header border-0">
-          <h6 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Deactivate User</h6>
+          <h6 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle me-2"></i><span
+              data-i18n="admin.users.modal.deactivate">Deactivate User</span></h6>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -255,8 +315,10 @@
           <input type="hidden" id="deleteUserId" />
         </div>
         <div class="modal-footer border-0">
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-danger btn-sm" id="confirmDeleteUserBtn">Deactivate</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"><span
+              data-i18n="admin.users.modal.cancel">Cancel</span>
+            <button type="button" class="btn btn-danger btn-sm" id="confirmDeleteUserBtn"><span
+                data-i18n="admin.users.modal.deactivateBtn">Deactivate</span></button>
         </div>
       </div>
     </div>
@@ -264,9 +326,11 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/validation.js?v=6"></script>
+  <script src="/assets/js/api-config.js"></script>
   <script src="/assets/js/main.js?v=6"></script>
   <script src="/assets/js/notifications.js?v=6"></script>
   <script src="/assets/js/requests.js?v=6"></script>
-<script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/theme.js"></script>
 </body>
+
 </html>

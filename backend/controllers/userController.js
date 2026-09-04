@@ -7,10 +7,12 @@ const bcrypt     = require('bcryptjs');
 const mongoose   = require('mongoose');
 const User       = require('../models/User');
 const Technician = require('../models/Technician');
+const path       = require('path');
+const fs         = require('fs');
 const {
   validateObjectId, validateEmail, validatePassword, validateName,
   validatePhone, validateEnum, validateLength, sanitizeString,
-  VALID_ROLES, VALID_STATUSES,
+  VALID_ROLES, VALID_STATUSES, VALID_GENDERS,
 } = require('../middleware/validation');
 
 /* ── GET /api/users — list all users (admin only) ─────────── */
@@ -47,7 +49,7 @@ const getUserById = async (req, res, next) => {
 /* ── POST /api/users — admin creates any role ─────────────── */
 const createUser = async (req, res, next) => {
   try {
-    let { fullName, email, password, role, department, phone, status, specialization } = req.body;
+    let { fullName, email, password, role, department, phone, status, specialization, gender } = req.body;
 
     /* Debug: surface the exact payload so a "user not saved" report can be
        traced to the real cause (missing field / wrong enum / duplicate email). */
@@ -86,6 +88,11 @@ const createUser = async (req, res, next) => {
       if (phoneErr) return res.status(400).json({ success: false, message: phoneErr });
     }
 
+    if (gender) {
+      const genderErr = validateEnum(gender, VALID_GENDERS, 'gender');
+      if (genderErr) return res.status(400).json({ success: false, message: genderErr });
+    }
+
     const nameLenErr = validateLength(fullName, 'Full name', { max: 100 });
     if (nameLenErr) return res.status(400).json({ success: false, message: nameLenErr });
 
@@ -105,6 +112,7 @@ const createUser = async (req, res, next) => {
       department: department || null,
       phone:      phone || null,
       status:     status || 'active',
+      gender:     gender || null,
     });
     console.log('[POST /api/users] User.create SUCCESS:', user._id);
 
@@ -128,7 +136,7 @@ const createUser = async (req, res, next) => {
 /* ── PUT /api/users/:id — admin updates user ──────────────── */
 const updateUser = async (req, res, next) => {
   try {
-    let { fullName, email, role, department, phone, status, specialization } = req.body;
+    let { fullName, email, role, department, phone, status, specialization, gender } = req.body;
 
     const idErr = validateObjectId(req.params.id, 'User');
     if (idErr) return res.status(400).json({ success: false, message: idErr });
@@ -168,6 +176,11 @@ const updateUser = async (req, res, next) => {
       if (phoneErr) return res.status(400).json({ success: false, message: phoneErr });
     }
 
+    if (gender !== undefined && gender !== null && gender !== '') {
+      const genderErr = validateEnum(gender, VALID_GENDERS, 'gender');
+      if (genderErr) return res.status(400).json({ success: false, message: genderErr });
+    }
+
     const update = {};
     if (fullName !== undefined)   update.fullName   = fullName;
     if (email !== undefined)      update.email      = email.toLowerCase();
@@ -175,6 +188,7 @@ const updateUser = async (req, res, next) => {
     if (department !== undefined) update.department = department;
     if (phone !== undefined)      update.phone      = phone;
     if (status !== undefined)     update.status     = status;
+    if (gender !== undefined)     update.gender     = gender;
 
     const user = await User.findByIdAndUpdate(
       req.params.id, update, { new: true, runValidators: true }
@@ -255,7 +269,7 @@ const changePassword = async (req, res, next) => {
 /* ── PUT /api/users/profile — update own profile ──────────── */
 const updateMyProfile = async (req, res, next) => {
   try {
-    let { fullName, phone, department } = req.body;
+    let { fullName, phone, department, gender } = req.body;
 
     fullName = fullName ? sanitizeString(fullName) : '';
 
@@ -267,12 +281,17 @@ const updateMyProfile = async (req, res, next) => {
       if (phoneErr) return res.status(400).json({ success: false, message: phoneErr });
     }
 
+    if (gender !== undefined && gender !== null && gender !== '') {
+      const genderErr = validateEnum(gender, VALID_GENDERS, 'gender');
+      if (genderErr) return res.status(400).json({ success: false, message: genderErr });
+    }
+
     const nameLenErr = validateLength(fullName, 'Full name', { max: 100 });
     if (nameLenErr) return res.status(400).json({ success: false, message: nameLenErr });
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { fullName, phone: phone || null, department: department || null },
+      { fullName, phone: phone || null, department: department || null, gender: gender || null },
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -320,4 +339,85 @@ const changeMyPassword = async (req, res, next) => {
   }
 };
 
-module.exports = { getAllUsers, getUserById, createUser, updateUser, deleteUser, changePassword, updateMyProfile, changeMyPassword };
+/* ── POST /api/users/profile-image — upload profile image ───── */
+const uploadProfileImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(422).json({ success: false, message: 'No image file provided.' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      // Clean up uploaded file if user not found
+      if (req.file && req.file.path) {
+        fs.unlink(req.file.path, () => {});
+      }
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const oldFilename = user.profileImage;
+
+    // Save new profile image filename first
+    user.profileImage = req.file.filename;
+
+    // Update database before deleting old file
+    await user.save({ validateBeforeSave: false });
+
+    // Delete old profile image AFTER successful DB update
+    if (oldFilename) {
+      const oldPath = path.join(__dirname, '..', 'uploads', oldFilename);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    // Return the image URL for immediate frontend display
+    const imageUrl = `/uploads/${req.file.filename}`;
+    res.json({
+      success: true,
+      message: 'Profile photo updated successfully.',
+      data: { profileImage: imageUrl }
+    });
+  } catch (err) {
+    // CRITICAL: If DB update failed, the old image is still intact.
+    // The new file on disk will be orphaned; clean it up so the user
+    // is not left with a phantom file, but the old image is preserved.
+    if (req.file && req.file.path) {
+      const newlySaved = path.join(__dirname, '..', 'uploads', req.file.filename);
+      if (fs.existsSync(newlySaved)) {
+        fs.unlinkSync(newlySaved);
+      }
+    }
+    next(err);
+  }
+};
+
+/* ── DELETE /api/users/profile-image — remove profile image ─── */
+const removeProfileImage = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    if (!user.profileImage) {
+      return res.status(400).json({ success: false, message: 'No profile image to remove.' });
+    }
+
+    // Delete the image file
+    const imagePath = path.join(__dirname, '..', 'uploads', user.profileImage);
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+
+    // Clear the profileImage field
+    user.profileImage = null;
+    await user.save({ validateBeforeSave: false });
+
+    res.json({ success: true, message: 'Profile photo removed successfully.', data: { profileImage: null } });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getAllUsers, getUserById, createUser, updateUser, deleteUser, changePassword, updateMyProfile, changeMyPassword, uploadProfileImage, removeProfileImage };

@@ -49,6 +49,24 @@
   z-index: 2000;
   box-shadow: 0 4px 16px -6px rgba(16,24,40,.28);
 }
+
+/* Switch placed at the top of the left sidebar (dashboard header) */
+.app-theme-switch.app-theme-in-sidebar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.18);
+  color: #e2e8f0;
+  border-radius: 50%;
+}
+.app-theme-switch.app-theme-in-sidebar:hover {
+  background: rgba(59,130,246,.25);
+  border-color: #60a5fa;
+  color: #ffffff;
+}
 /* On the dark landing navbar we keep the same button but it sits on
    a dark surface, so restore the visible surface/ink colours. */
 .app-theme-switch.app-theme-float {
@@ -58,6 +76,34 @@
 }
 
 html[data-theme="dark"] .app-theme-switch .theme-sun { display: inline; }
+
+/* ── Language switcher (shared) ────────────────────────────── */
+.lang-switch { display: inline-flex; align-items: center; flex-shrink: 0; }
+.lang-select {
+  width: auto;
+  min-width: 88px;
+  padding: .30rem .7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: .82rem;
+  font-weight: 500;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.lang-select:hover { border-color: var(--primary); }
+.lang-select:focus-visible { outline: none; box-shadow: 0 0 0 .25rem rgba(37,99,235,.22); }
+/* On the dark landing navbar / auth top bar, keep the pill readable */
+.main-navbar .lang-select,
+html[data-theme="dark"] .main-navbar .lang-select,
+html[data-theme="dark"] .topbar .lang-select,
+html[data-theme="dark"] .auth-body .lang-select {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+html[data-theme="dark"] .lang-select option { background-color: #1e293b; color: var(--ink); }
 html[data-theme="dark"] .app-theme-switch .theme-moon { display: none; }
 
 /* ── Shared Toast (from main.js) ───────────────────────────── */
@@ -133,6 +179,87 @@ html[data-theme="dark"] .table-responsive::-webkit-scrollbar-thumb { background:
 html[data-theme="dark"] .topbar {
   background: rgba(30,41,59,.92) !important;
   border-bottom-color: var(--border) !important;
+}
+
+/* ── Landing-page navbar (clean navy in dark mode) ─────────── */
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar {
+  background: rgba(15,23,42,.96) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid #1e293b !important;
+  box-shadow: 0 6px 24px -12px rgba(0,0,0,.55);
+}
+html[data-theme="dark"] .main-navbar.scrolled {
+  box-shadow: 0 10px 32px -14px rgba(0,0,0,.6);
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .brand-text-main {
+  color: #f1f5f9 !important;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .brand-text-sub {
+  color: #94a3b8 !important;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item {
+  color: #94a3b8 !important;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item i,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-login i {
+  color: #94a3b8 !important;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item:hover {
+  color: #93c5fd !important;
+  background: rgba(59,130,246,.14);
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active {
+  color: #93c5fd !important;
+  background: rgba(59,130,246,.18) !important;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active::after {
+  background: linear-gradient(90deg, #60a5fa, #22d3ee) !important;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-login {
+  color: #93c5fd !important;
+  border-color: #3b82f6 !important;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-login:hover {
+  background: rgba(59,130,246,.14);
+  color: #dbeafe !important;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-register {
+  color: #fff !important;
+  background: linear-gradient(135deg,#2563eb,#1d4ed8);
+}
+html[data-theme="dark"] #mainNavbar .lang-select {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+html[data-theme="dark"] #mainNavbar .lang-select option {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+html[data-theme="dark"] #mainNavbar .app-theme-switch {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+html[data-theme="dark"] #mainNavbar .app-theme-switch:hover {
+  border-color: #3b82f6 !important;
+  color: #93c5fd !important;
+}
+html[data-theme="dark"] .main-navbar .navbar-toggler {
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+html[data-theme="dark"] .main-navbar .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%23e2e8f0' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .collapse.show,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .collapsing {
+  background: #0f172a !important;
+  border-bottom-color: #1e293b !important;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .navbar-nav .nav-link {
+  color: #e2e8f0 !important;
 }
 
 /* ── Sidebar stays navy in both themes (brand). Keep as is. ── */
@@ -409,8 +536,145 @@ html[data-theme="dark"] .card small.text-muted { color: var(--muted) !important;
 
 /* ── Offline banner (red) is fine in both themes ───────────── */
 
-/* ── Landing page (index.html) ─────────────────────────────── */
-html[data-theme="dark"] .hero-section { background: linear-gradient(135deg, #1d4ed8 0%, #0b1220 100%); }
+/* index.html <body> carries no class (unlike .auth-body/.dashboard-body).
+   All overrides below are scoped to that landing page only so the shared
+   theme system also drives the public home page to dark. Inline
+   `style="background:#f8faff"` sections are beaten with !important. */
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) {
+  background-color: var(--bg-body);
+  color: var(--ink);
+}
+
+/* Stats bar (white in source) */
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .stats-bar {
+  background: var(--surface) !important;
+  color: var(--ink);
+}
+html[data-theme="dark"] .stats-bar .stat-item { color: var(--ink); }
+html[data-theme="dark"] .stats-bar .stat-number,
+html[data-theme="dark"] .stats-bar .stat-value { color: var(--ink); }
+
+/* Sections with inline `background:#f8faff` */
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) section[style*="background:#f8faff"] {
+  background: var(--bg-body) !important;
+}
+
+/* Ensure EVERY landing section surface turns dark in dark mode,
+   including ones with hard-coded white inline backgrounds (e.g. the
+   Workflow section uses `background:#ffffff`) and unstyled sections
+   (e.g. Contact). Inline `style=...` normally beats stylesheets, so we
+   force with !important and a specific background-attachment key that
+   the sections actually use. */
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) section[style*="background:#ffffff"],
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) section[style*="background:#fff"],
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) section[style*="background-color:#ffffff"] {
+  background: var(--bg-body) !important;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) #workflow,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) #contact {
+  background-color: var(--bg-body) !important;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) #contact .card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--ink);
+}
+
+/* Landing custom cards that stay white (not Bootstrap .card) */
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .metric-card,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .feature-card,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .service-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--ink);
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .metric-card h3,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .feature-card h5,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .service-card h5,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .metric-card .fw-bold { color: var(--ink); }
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .metric-card p,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .feature-card p,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .service-card p { color: var(--muted); }
+
+/* Workflow steps + contact cards stay white in source → darken them */
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .workflow-step,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-card,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-contact-info {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--ink);
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .workflow-step .fw-semibold,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-card h5,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-contact-info .fw-semibold { color: var(--ink); }
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .workflow-step .text-muted,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-card .text-muted { color: var(--muted) !important; }
+
+/* Modern contact form card + value/note/pill in dark mode */
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-form-card {
+  background: linear-gradient(180deg, var(--surface) 0%, #151d33 100%) !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, .5);
+  color: var(--ink);
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-form-card .form-control,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-form-card .form-select {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: var(--ink);
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-form-card .form-control::placeholder {
+  color: #64748b;
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-value { color: var(--ink); }
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-note { color: #94a3b8 !important; }
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-pill {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, .14);
+  border-color: rgba(59, 130, 246, .3);
+}
+
+/* Section label pill (light blue in source) */
+html[data-theme="dark"] .section-label { background: #1e3a5f !important; color: #93c5fd !important; }
+html[data-theme="dark"] .section-title { color: var(--ink); }
+
+/* Colour icon/step chips keep their hue but get darkened surfaces.
+   (targets the landing page only) */
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .feature-icon,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .service-icon,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .contact-icon,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .step-num { filter: brightness(.82); }
+
+/* Workflow step labels described by coloured chips */
+html[data-theme="dark"] .workflow-connector { color: #64748b; }
+
+/* About Us cards (attractive info/tile chips) — dark surfaces */
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-info-card,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-stat-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--ink);
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-info-card h5,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-stat-card .fw-bold { color: var(--ink); }
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-value,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-tech {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-value:hover,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-tech:hover {
+  background: #1e3a5f;
+  border-color: var(--primary-border);
+}
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-value span,
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-tech .fw-semibold { color: #e2e8f0; }
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-tech .text-muted { color: #94a3b8 !important; }
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .about-stat-icon { filter: brightness(.85); }
+
+/* Cards on the landing page that use Bootstrap `.card` get the same
+   dark surface as elsewhere but keep readable text. */
+html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .card { border-color: var(--border) !important; }
 
 /* Report chart bar fill labels/values inherit text colors */
 

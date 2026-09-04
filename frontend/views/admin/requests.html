@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Request Management � Admin</title>
+  <title>Request Management — Admin</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/admin.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
-<link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
+
 <body class="dashboard-body">
 
   <div class="d-flex">
@@ -19,29 +22,44 @@
       <a href="../index.html" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-shield-check fs-3 text-info"></i>
-          <div class="small fw-bold mt-1" id="panelLabel">Management Panel</div>
+          <div class="small fw-bold mt-1" id="panelLabel"><span data-i18n="side.panel.admin">Management Panel</span>
+          </div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
-        <li><a href="dashboard.html"   class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-        <li><a href="users.html"       class="nav-link text-white-50"><i class="bi bi-people me-2"></i>Users</a></li>
-        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i>Technicians</a></li>
-        <li><a href="assets.html"      class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i>ICT Assets</a></li>
-        <li><a href="requests.html"    class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-clipboard-check me-2"></i>Requests</a></li>
-        <li><a href="categories.html"  class="nav-link text-white-50"><i class="bi bi-tags me-2"></i>Categories</a></li>
-        <li><a href="reports.html"     class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i>Reports</a></li>
-        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i>Feedback</a></li>
-        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a></li>
-        <li><a href="settings.html"    class="nav-link text-white-50"><i class="bi bi-gear me-2"></i>Settings</a></li>
-      </ul>
-      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
-        <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
-      </div>
+        <li><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i><span
+              data-i18n="side.dashboard">Dashboard</span></a></li>
+        <li><a href="users.html" class="nav-link text-white-50"><i class="bi bi-people me-2"></i><span
+              data-i18n="side.users">Users</span></a></li>
+        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i><span
+              data-i18n="side.technicians">Technicians</span></a></li>
+        <li><a href="assets.html" class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i><span
+              data-i18n="side.assets">ICT Assets</span></a></li>
+        <li><a href="requests.html" class="nav-link text-white active bg-white bg-opacity-25 rounded"><i
+              class="bi bi-clipboard-check me-2"></i><span data-i18n="side.requests">Requests</span></a></li>
+        <li><a href="categories.html" class="nav-link text-white-50"><i class="bi bi-tags me-2"></i><span
+              data-i18n="side.categories">Categories</span></a></li>
+        <li><a href="reports.html" class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i><span
+              data-i18n="side.reports">Reports</span></a></li>
+        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i><span
+              data-i18n="side.feedback">Feedback</span></a></li>
+        <li><a href="commits.html" class="nav-link text-white-50"><i class="bi bi-git-branch me-2"></i><span
+              data-i18n="side.commits">Commits</span></a></li>
+        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span
+              data-i18n="side.notifications">Notifications</span></a></li>
+        <li><a href="settings.html" class="nav-link text-white-50"><i class="bi bi-gear me-2"></i><span
+              data-i18n="side.settings">Settings</span></a></li>
+
+        <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+          <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i
+              class="bi bi-box-arrow-right me-1"></i><span data-i18n="admin.logout">Logout</span></a>
+        </div>
     </nav>
 
     <div class="flex-grow-1">
-      <header class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
-        <h5 class="mb-0 fw-bold">Maintenance Request Management</h5>
+      <header
+        class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
+        <h5 class="mb-0 fw-bold"><span data-i18n="admin.requests.title">Maintenance Request Management</span></h5>
         <div class="d-flex align-items-center gap-3">
           <div id="notifBellContainer"></div>
           <span class="profile-avatar profile-avatar-sm" data-avatar aria-label="Profile">
@@ -58,36 +76,39 @@
           <div class="card-body p-3">
             <div class="row g-2 align-items-end">
               <div class="col-md-3">
-                <input type="text" class="form-control" id="searchInput" placeholder="Search title or requester..." />
+                <input type="text" class="form-control" id="searchInput"
+                  data-i18n-placeholder="admin.requests.search.placeholder"
+                  placeholder="Search title or requester..." />
               </div>
               <div class="col-md-2">
                 <select class="form-select" id="statusFilter">
-                  <option value="">All Statuses</option>
-                  <option value="submitted">Submitted</option>
-                  <option value="under_review">Under Review</option>
-                  <option value="assigned">Assigned</option>
-                  <option value="accepted">Accepted</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="closed">Closed</option>
+                  <option value=""><span data-i18n="admin.requests.filter.allStatuses">All Statuses</span>
+                  <option value="submitted"><span data-i18n="admin.requests.filter.submitted">Submitted</span>
+                  <option value="under_review"><span data-i18n="admin.requests.filter.underReview">Under Review</span>
+                  <option value="assigned"><span data-i18n="admin.requests.filter.assigned">Assigned</span>
+                  <option value="accepted"><span data-i18n="admin.requests.filter.accepted">Accepted</span>
+                  <option value="in_progress"><span data-i18n="admin.requests.filter.inProgress">In Progress</span>
+                  <option value="resolved"><span data-i18n="admin.requests.filter.resolved">Resolved</span>
+                  <option value="closed"><span data-i18n="admin.requests.filter.closed">Closed</span>
                 </select>
               </div>
               <div class="col-md-2">
                 <select class="form-select" id="priorityFilter">
-                  <option value="">All Priorities</option>
-                  <option value="critical">Critical</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
+                  <option value=""><span data-i18n="admin.requests.filter.allPriorities">All Priorities</span>
+                  <option value="critical"><span data-i18n="admin.requests.filter.critical">Critical</span>
+                  <option value="high"><span data-i18n="admin.requests.filter.high">High</span>
+                  <option value="medium"><span data-i18n="admin.requests.filter.medium">Medium</span>
+                  <option value="low"><span data-i18n="admin.requests.filter.low">Low</span>
                 </select>
               </div>
               <div class="col-md-2">
                 <select class="form-select" id="categoryFilter">
-                  <option value="">All Categories</option>
+                  <option value=""><span data-i18n="admin.requests.filter.allCategories">All Categories</span>
                 </select>
               </div>
               <div class="col-md-3 d-flex gap-2">
-                <button class="btn btn-primary flex-grow-1" id="searchBtn"><i class="bi bi-search me-1"></i>Search</button>
+                <button class="btn btn-primary flex-grow-1" id="searchBtn"><i class="bi bi-search me-1"></i><span
+                    data-i18n="admin.requests.search">Search</span></button>
                 <button class="btn btn-outline-secondary" id="exportBtn"><i class="bi bi-download"></i></button>
               </div>
             </div>
@@ -101,12 +122,22 @@
               <table class="table table-hover mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th>#ID</th><th>Title</th><th>Requester</th><th>Dept</th>
-                    <th>Category</th><th>Priority</th><th>Status</th><th>Date</th><th>Actions</th>
+                    <th><span data-i18n="admin.requests.table.id">#ID</span></th>
+                    <th><span data-i18n="admin.requests.table.title">Title</span></th>
+                    <th><span data-i18n="admin.requests.table.requester">Requester</span></th>
+                    <th><span data-i18n="admin.requests.table.dept">Dept</span></th>
+                    <th><span data-i18n="admin.requests.table.category">Category</span></th>
+                    <th><span data-i18n="admin.requests.table.priority">Priority</span></th>
+                    <th><span data-i18n="admin.requests.table.status">Status</span></th>
+                    <th><span data-i18n="admin.requests.table.date">Date</span></th>
+                    <th><span data-i18n="admin.requests.table.actions">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody id="requestsTableBody">
-                  <tr><td colspan="9" class="text-center text-muted py-4">Loading requests...</td></tr>
+                  <tr>
+                    <td colspan="9" class="text-center text-muted py-4"><span data-i18n="admin.requests.loading">Loading
+                        requests...</span></td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -117,11 +148,13 @@
   </div>
 
   <!-- Request Detail & Assign Modal -->
-  <div class="modal fade" id="requestDetailModal" tabindex="-1" aria-labelledby="requestDetailModalLabel" aria-hidden="true">
+  <div class="modal fade" id="requestDetailModal" tabindex="-1" aria-labelledby="requestDetailModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="requestDetailModalLabel">Request Details</h5>
+          <h5 class="modal-title fw-bold" id="requestDetailModalLabel"><span
+              data-i18n="admin.requests.detail.title">Request Details</span></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -131,42 +164,52 @@
             <!-- Assignment Panel -->
             <div class="col-md-5">
               <div class="card border-0 bg-light p-3">
-                <h6 class="fw-semibold mb-3"><i class="bi bi-person-check me-2 text-primary"></i>Assign Technician</h6>
+                <h6 class="fw-semibold mb-3"><i class="bi bi-person-check me-2 text-primary"></i><span
+                    data-i18n="admin.requests.detail.assignTechnician">Assign Technician</span></h6>
                 <div id="assignAlert" class="alert d-none" role="alert"></div>
                 <div id="currentAssignment" class="mb-3"></div>
                 <div class="mb-3">
-                  <label for="assignTechSelect" class="form-label fw-semibold">Select Technician</label>
+                  <label for="assignTechSelect" class="form-label fw-semibold"><span
+                      data-i18n="admin.requests.detail.selectTechnician">Select Technician</span></label>
                   <select class="form-select" id="assignTechSelect">
-                    <option value="">-- Available Technicians --</option>
+                    <option value=""><span data-i18n="admin.requests.detail.availableTechnicians">-- Available
+                        Technicians --</span></option>
                   </select>
                 </div>
                 <div class="mb-3">
-                  <label for="assignNotes" class="form-label fw-semibold">Notes</label>
-                  <textarea class="form-control" id="assignNotes" rows="3" placeholder="Instructions..."></textarea>
+                  <label for="assignNotes" class="form-label fw-semibold"><span
+                      data-i18n="admin.requests.detail.notes">Notes</span></label>
+                  <textarea class="form-control" id="assignNotes" rows="3"
+                    data-i18n-placeholder="admin.requests.detail.notes.placeholder"
+                    placeholder="Instructions..."></textarea>
                 </div>
                 <button type="button" class="btn btn-primary w-100" id="doAssignBtn">
                   <span class="spinner-border spinner-border-sm me-2 d-none" id="doAssignSpinner"></span>
-                  Assign Technician
+                  <span data-i18n="admin.requests.detail.assignTechnician">Assign Technician</span>
                 </button>
                 <button type="button" class="btn btn-outline-danger w-100 mt-2 d-none" id="removeAssignmentBtn">
                   <span class="spinner-border spinner-border-sm me-2 d-none" id="removeAssignmentSpinner"></span>
-                  <i class="bi bi-person-x me-1"></i>Remove Assignment
+                  <i class="bi bi-person-x me-1"></i><span data-i18n="admin.requests.detail.removeAssignment">Remove
+                    Assignment</span>
                 </button>
               </div>
               <!-- Status Update -->
               <div class="card border-0 bg-light p-3 mt-3">
-                <h6 class="fw-semibold mb-3"><i class="bi bi-arrow-repeat me-2 text-warning"></i>Update Status</h6>
+                <h6 class="fw-semibold mb-3"><i class="bi bi-arrow-repeat me-2 text-warning"></i><span
+                    data-i18n="admin.requests.detail.updateStatus">Update Status</span></h6>
                 <div class="d-flex gap-2">
                   <select class="form-select" id="newStatusSelect">
-                    <option value="submitted">Submitted</option>
-                    <option value="under_review">Under Review</option>
-                    <option value="assigned">Assigned</option>
-                    <option value="accepted">Accepted</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="closed">Closed</option>
+                    <option value="submitted"><span data-i18n="admin.requests.filter.submitted">Submitted</span>
+                    <option value="under_review"><span data-i18n="admin.requests.filter.underReview">Under
+                        Review</span>
+                    <option value="assigned"><span data-i18n="admin.requests.filter.assigned">Assigned</span>
+                    <option value="accepted"><span data-i18n="admin.requests.filter.accepted">Accepted</span>
+                    <option value="in_progress"><span data-i18n="admin.requests.filter.inProgress">In Progress</span>
+                    <option value="resolved"><span data-i18n="admin.requests.filter.resolved">Resolved</span>
+                    <option value="closed"><span data-i18n="admin.requests.filter.closed">Closed</span>
                   </select>
-                  <button type="button" class="btn btn-warning" id="updateStatusBtn">Update</button>
+                  <button type="button" class="btn btn-warning" id="updateStatusBtn"><span
+                      data-i18n="admin.requests.detail.updateBtn">Update</span></button>
                 </div>
               </div>
             </div>
@@ -174,19 +217,22 @@
         </div>
         <div class="modal-footer">
           <input type="hidden" id="modalRequestId" />
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><span
+              data-i18n="admin.requests.detail.close">Close</span></button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Admin Service Feedback Modal -->
-  <div class="modal fade" id="adminFeedbackModal" tabindex="-1" aria-labelledby="adminFeedbackModalLabel" aria-hidden="true">
+  <div class="modal fade" id="adminFeedbackModal" tabindex="-1" aria-labelledby="adminFeedbackModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title fw-bold" id="adminFeedbackModalLabel">
-            <i class="bi bi-clipboard2-check text-primary me-1"></i>Add Service Feedback
+            <i class="bi bi-clipboard2-check text-primary me-1"></i><span data-i18n="admin.requests.fb.addFeedback">Add
+              Service Feedback</span>
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -196,110 +242,131 @@
           <input type="hidden" id="adminFbRequestId" />
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label fw-semibold small">Service Handling Quality <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold small"><span
+                  data-i18n="admin.requests.fb.serviceHandlingQuality">Service Handling Quality</span> <span
+                  class="text-danger">*</span></label>
               <select class="form-select" id="afServiceHandlingQuality">
-                <option value="">-- Select --</option>
-                <option>Excellent</option>
-                <option>Good</option>
-                <option>Satisfactory</option>
-                <option>Needs Improvement</option>
-                <option>Poor</option>
+                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
+                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option><span data-i18n="admin.requests.fb.good">Good</span>
+                <option><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
+                <option><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold small">Technician Performance Evaluation</label>
+              <label class="form-label fw-semibold small"><span
+                  data-i18n="admin.requests.fb.technicianPerformance">Technician Performance Evaluation</span></label>
               <select class="form-select" id="afTechnicianPerformance">
-                <option value="">-- Select --</option>
-                <option>Excellent</option>
-                <option>Good</option>
-                <option>Satisfactory</option>
-                <option>Needs Improvement</option>
+                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
+                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option><span data-i18n="admin.requests.fb.good">Good</span>
+                <option><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
+                <option><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold small">Response Time Evaluation</label>
+              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.responseTime">Response Time
+                  Evaluation</span></label>
               <select class="form-select" id="afResponseTime">
-                <option value="">-- Select --</option>
-                <option>Excellent</option>
-                <option>Good</option>
-                <option>Slow</option>
+                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
+                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option><span data-i18n="admin.requests.fb.good">Good</span>
+                <option><span data-i18n="admin.requests.fb.slow">Slow</span>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold small">Resolution Quality</label>
+              <label class="form-label fw-semibold small"><span
+                  data-i18n="admin.requests.fb.resolutionQuality">Resolution Quality</span></label>
               <select class="form-select" id="afResolutionQuality">
-                <option value="">-- Select --</option>
-                <option>Excellent</option>
-                <option>Good</option>
-                <option>Satisfactory</option>
-                <option>Needs Improvement</option>
-                <option>Poor</option>
+                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
+                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option><span data-i18n="admin.requests.fb.good">Good</span>
+                <option><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
+                <option><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold small">Documentation Quality</label>
+              <label class="form-label fw-semibold small"><span
+                  data-i18n="admin.requests.fb.documentationQuality">Documentation Quality</span></label>
               <select class="form-select" id="afDocumentationQuality">
-                <option value="">-- Select --</option>
-                <option>Excellent</option>
-                <option>Good</option>
-                <option>Satisfactory</option>
-                <option>Needs Improvement</option>
-                <option>Poor</option>
+                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
+                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option><span data-i18n="admin.requests.fb.good">Good</span>
+                <option><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
+                <option><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold small">Policy / Procedure Compliance</label>
+              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.policyCompliance">Policy /
+                  Procedure Compliance</span></label>
               <select class="form-select" id="afPolicyCompliance">
-                <option value="">-- Select --</option>
-                <option>Compliant</option>
-                <option>Partial</option>
-                <option>Non-Compliant</option>
+                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
+                <option><span data-i18n="admin.requests.fb.compliant">Compliant</span>
+                <option><span data-i18n="admin.requests.fb.partial">Partial</span>
+                <option><span data-i18n="admin.requests.fb.nonCompliant">Non-Compliant</span>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold small">Overall Service Quality <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.overallQuality">Overall
+                  Service Quality</span> <span class="text-danger">*</span></label>
               <select class="form-select" id="afOverallServiceQuality">
-                <option value="">-- Select --</option>
-                <option>Excellent</option>
-                <option>Good</option>
-                <option>Satisfactory</option>
-                <option>Needs Improvement</option>
-                <option>Poor</option>
+                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
+                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option><span data-i18n="admin.requests.fb.good">Good</span>
+                <option><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
+                <option><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold small">Admin Comment <span class="text-danger">*</span></label>
-              <textarea class="form-control" id="afAdminComment" rows="3" maxlength="2000" placeholder="Evaluation of this request / service..."></textarea>
+              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.adminComment">Admin
+                  Comment</span> <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="afAdminComment" rows="3" maxlength="2000"
+                data-i18n-placeholder="admin.requests.fb.adminComment.placeholder"
+                placeholder="Evaluation of this request / service..."></textarea>
             </div>
             <div class="col-12">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="afFollowUpRequired" />
-                <label class="form-check-label small" for="afFollowUpRequired">Follow-up Required</label>
+                <label class="form-check-label small" for="afFollowUpRequired"><span
+                    data-i18n="admin.requests.fb.followUpRequired">Follow-up Required</span></label>
               </div>
             </div>
             <div class="col-12 d-none" id="afFollowUpWrap">
-              <label class="form-label fw-semibold small">Follow-up Notes</label>
-              <textarea class="form-control" id="afFollowUpNotes" rows="2" maxlength="1000" placeholder="What follow-up is required..."></textarea>
+              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.followUpNotes">Follow-up
+                  Notes</span></label>
+              <textarea class="form-control" id="afFollowUpNotes" rows="2" maxlength="1000"
+                data-i18n-placeholder="admin.requests.fb.followUpNotes.placeholder"
+                placeholder="What follow-up is required..."></textarea>
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold small">Administrative Recommendation</label>
-              <textarea class="form-control" id="afAdminRecommendation" rows="2" maxlength="1000" placeholder="Management recommendation..."></textarea>
+              <label class="form-label fw-semibold small"><span
+                  data-i18n="admin.requests.fb.adminRecommendation">Administrative Recommendation</span></label>
+              <textarea class="form-control" id="afAdminRecommendation" rows="2" maxlength="1000"
+                data-i18n-placeholder="admin.requests.fb.adminRecommendation.placeholder"
+                placeholder="Management recommendation..."></textarea>
             </div>
             <div class="col-12">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="afConfirmed" />
                 <label class="form-check-label small" for="afConfirmed">
-                  I confirm that this service evaluation is accurate. <span class="text-danger">*</span>
+                  <span data-i18n="admin.requests.fb.confirm">I confirm that this service evaluation is accurate.</span>
+                  <span class="text-danger">*</span>
                 </label>
               </div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><span
+              data-i18n="admin.requests.fb.cancel">Cancel</span></button>
           <button type="button" class="btn btn-primary px-4" id="saveAdminFbBtn">
             <span class="spinner-border spinner-border-sm me-2 d-none" id="saveAdminFbSpinner"></span>
-            <i class="bi bi-clipboard-check me-1"></i>Submit Admin Feedback
+            <i class="bi bi-clipboard-check me-1"></i><span data-i18n="admin.requests.fb.submitFeedback">Submit Admin
+              Feedback</span>
           </button>
         </div>
       </div>
@@ -307,9 +374,11 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/api-config.js"></script>
   <script src="/assets/js/main.js?v=6"></script>
   <script src="/assets/js/notifications.js?v=6"></script>
   <script src="/assets/js/requests.js?v=6"></script>
-<script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/theme.js"></script>
 </body>
+
 </html>

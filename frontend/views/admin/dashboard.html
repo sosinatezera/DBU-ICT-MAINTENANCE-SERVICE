@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();
+  <script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'){ document.documentElement.setAttribute( 'lang', l );}}catch(e){ }})();</script>
+</script>
 
 <head>
   <meta charset="UTF-8" />
@@ -11,7 +13,7 @@
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/admin.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
-<link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
 
 <body class="dashboard-body">
@@ -22,49 +24,58 @@
       <a href="../index.html" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-shield-check fs-3 text-info"></i>
-          <div class="small fw-bold mt-1" id="panelLabel">Management Panel</div>
+          <div class="small fw-bold mt-1" id="panelLabel"><span data-i18n="side.panel.admin">Management Panel</span>
+          </div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
         <li><a href="dashboard.html" class="nav-link text-white active bg-white bg-opacity-25 rounded"><i
-              class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-        <li><a href="users.html" class="nav-link text-white-50"><i class="bi bi-people me-2"></i>Users</a></li>
-        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i>Technicians</a>
+              class="bi bi-speedometer2 me-2"></i><span data-i18n="side.dashboard">Dashboard</span></a></li>
+        <li><a href="users.html" class="nav-link text-white-50"><i class="bi bi-people me-2"></i><span
+              data-i18n="side.users">Users</span></a></li>
+        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i><span
+              data-i18n="side.technicians">Technicians</span></a>
         </li>
-        <li><a href="assets.html" class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i>ICT Assets</a>
+        <li><a href="assets.html" class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i><span
+              data-i18n="side.assets">ICT Assets</span></a>
         </li>
-        <li><a href="requests.html" class="nav-link text-white-50"><i
-              class="bi bi-clipboard-check me-2"></i>Requests</a></li>
-        <li><a href="categories.html" class="nav-link text-white-50"><i class="bi bi-tags me-2"></i>Categories</a></li>
-        <li><a href="reports.html" class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i>Reports</a>
+        <li><a href="requests.html" class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i><span
+              data-i18n="side.requests">Requests</span></a></li>
+        <li><a href="categories.html" class="nav-link text-white-50"><i class="bi bi-tags me-2"></i><span
+              data-i18n="side.categories">Categories</span></a></li>
+        <li><a href="reports.html" class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i><span
+              data-i18n="side.reports">Reports</span></a>
         </li>
-        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i
-              class="bi bi-chat-dots me-2"></i>Feedback</a></li>
-        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications
+        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i><span
+              data-i18n="side.feedback">Feedback</span></a></li>
+        <li><a href="commits.html" class="nav-link text-white-50"><i class="bi bi-git-branch me-2"></i><span
+              data-i18n="side.commits">Commits</span></a></li>
+        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span
+              data-i18n="side.notifications">Notifications</span>
             <span class="badge bg-danger ms-1" id="sidebarNotifBadge" style="display:none;"></span></a></li>
-        <li><a href="settings.html" class="nav-link text-white-50"><i class="bi bi-gear me-2"></i>Settings</a></li>
-      </ul>
-      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <span class="profile-avatar profile-avatar-sm" data-avatar aria-label="Profile">
-            <img class="profile-avatar-image" alt="Profile" hidden />
-            <span class="profile-avatar-initials">A</span>
-          </span>
-          <span class="small" id="sidebarUserName">Administrator</span>
+        <li><a href="settings.html" class="nav-link text-white-50"><i class="bi bi-gear me-2"></i><span
+              data-i18n="side.settings">Settings</span></a></li>
+
+        <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="profile-avatar profile-avatar-sm" data-avatar aria-label="Profile">
+              <img class="profile-avatar-image" alt="Profile" hidden />
+              <span class="profile-avatar-initials">A</span>
+            </span>
+            <span class="small" id="sidebarUserName">Administrator</span>
+          </div>
+          <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
+            <i class="bi bi-box-arrow-right me-1"></i><span data-i18n="admin.logout">Logout</span></a>
         </div>
-        <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
-          <i class="bi bi-box-arrow-right me-1"></i>Logout
-        </a>
-      </div>
     </nav>
 
     <!-- -- Main -- -->
     <div class="flex-grow-1">
       <header
         class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
-        <h5 class="mb-0 fw-bold">Admin Dashboard</h5>
+        <h5 class="mb-0 fw-bold"><span data-i18n="admin.dashboard.title">Admin Dashboard</span></h5>
         <div class="d-flex align-items-center gap-3">
-          <span class="badge bg-danger" id="pendingBadge">0 Pending</span>
+          <span class="badge bg-danger" id="pendingBadge"><span data-i18n="admin.pendingBadge">0 Pending</span></span>
           <div id="notifBellContainer"></div>
           <span class="profile-avatar profile-avatar-sm" data-avatar aria-label="Profile">
             <img class="profile-avatar-image" alt="Profile" hidden />
@@ -75,9 +86,11 @@
       </header>
 
       <main class="p-4">
-        <!-- Admin Welcome Image -->
-        <div class="mb-4">
-          <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80&auto=format&fit=crop" alt="ICT admin technology workspace" style="
+        <div id="dashboardMain">
+          <!-- Admin Welcome Image -->
+          <div class="mb-4">
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80&auto=format&fit=crop"
+              alt="ICT admin technology workspace" style="
               width:100%;
               height:220px;
               object-fit:cover;
@@ -85,10 +98,8 @@
               border-radius:16px;
               box-shadow:0 8px 25px rgba(0,0,0,.12);
             " />
-        </div>
+          </div>
 
-        <!-- KPI Cards -->
-        <div class="row g-3 mb-4">
           <!-- KPI Cards -->
           <div class="row g-3 mb-4">
             <div class="col-6 col-xl-3">
@@ -96,7 +107,7 @@
                 <div class="bg-primary bg-opacity-10 p-3 rounded"><i class="bi bi-people fs-3 text-primary"></i></div>
                 <div>
                   <h4 class="fw-bold mb-0" id="kpiUsers">0</h4>
-                  <small class="text-muted">Total Users</small>
+                  <small class="text-muted"><span data-i18n="admin.kpi.totalUsers">Total Users</span></small>
                 </div>
               </div>
             </div>
@@ -105,7 +116,7 @@
                 <div class="bg-info bg-opacity-10 p-3 rounded"><i class="bi bi-pc-display fs-3 text-info"></i></div>
                 <div>
                   <h4 class="fw-bold mb-0" id="kpiAssets">0</h4>
-                  <small class="text-muted">ICT Assets</small>
+                  <small class="text-muted"><span data-i18n="admin.kpi.ictAssets">ICT Assets</span></small>
                 </div>
               </div>
             </div>
@@ -116,7 +127,7 @@
                 </div>
                 <div>
                   <h4 class="fw-bold mb-0" id="kpiPending">0</h4>
-                  <small class="text-muted">Pending Requests</small>
+                  <small class="text-muted"><span data-i18n="admin.kpi.pendingRequests">Pending Requests</span></small>
                 </div>
               </div>
             </div>
@@ -126,7 +137,7 @@
                 </div>
                 <div>
                   <h4 class="fw-bold mb-0" id="kpiCompleted">0</h4>
-                  <small class="text-muted">Completed</small>
+                  <small class="text-muted"><span data-i18n="admin.kpi.completed">Completed</span></small>
                 </div>
               </div>
             </div>
@@ -137,7 +148,7 @@
                 </div>
                 <div>
                   <h4 class="fw-bold mb-0" id="kpiOverdue">0</h4>
-                  <small class="text-muted">Overdue</small>
+                  <small class="text-muted"><span data-i18n="admin.kpi.overdue">Overdue</span></small>
                 </div>
               </div>
             </div>
@@ -147,7 +158,7 @@
                     class="bi bi-gear-wide-connected fs-3 text-secondary"></i></div>
                 <div>
                   <h4 class="fw-bold mb-0" id="kpiInProgress">0</h4>
-                  <small class="text-muted">In Progress</small>
+                  <small class="text-muted"><span data-i18n="admin.kpi.inProgress">In Progress</span></small>
                 </div>
               </div>
             </div>
@@ -156,7 +167,7 @@
                 <div class="bg-warning bg-opacity-10 p-3 rounded"><i class="bi bi-wrench fs-3 text-warning"></i></div>
                 <div>
                   <h4 class="fw-bold mb-0" id="kpiTechnicians">0</h4>
-                  <small class="text-muted">Technicians</small>
+                  <small class="text-muted"><span data-i18n="admin.kpi.technicians">Technicians</span></small>
                 </div>
               </div>
             </div>
@@ -166,7 +177,7 @@
                 </div>
                 <div>
                   <h4 class="fw-bold mb-0" id="kpiTotal">0</h4>
-                  <small class="text-muted">Total Requests</small>
+                  <small class="text-muted"><span data-i18n="admin.kpi.totalRequests">Total Requests</span></small>
                 </div>
               </div>
             </div>
@@ -177,28 +188,30 @@
             <div class="col-lg-8">
               <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                  <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history text-primary me-2"></i>Recent Maintenance
-                    Requests</h6>
-                  <a href="requests.html" class="btn btn-outline-primary btn-sm">View All</a>
+                  <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history text-primary me-2"></i><span
+                      data-i18n="admin.recentMaintenance">Recent Maintenance Requests</span></h6>
+                  <a href="requests.html" class="btn btn-outline-primary btn-sm"><span data-i18n="admin.viewAll">View
+                      All</span></a>
                 </div>
                 <div class="card-body p-0">
                   <div class="table-responsive">
                     <table class="table table-hover mb-0 align-middle">
                       <thead class="table-light">
                         <tr>
-                          <th class="ps-3">#ID</th>
-                          <th>Title / Requester</th>
-                          <th>Dept</th>
-                          <th>Priority</th>
-                          <th>Status</th>
-                          <th>Date</th>
+                          <th class="ps-3"><span data-i18n="admin.table.id">#ID</span></th>
+                          <th><span data-i18n="admin.table.titleReq">Title / Requester</span></th>
+                          <th><span data-i18n="admin.table.dept">Dept</span></th>
+                          <th><span data-i18n="admin.table.priority">Priority</span></th>
+                          <th><span data-i18n="admin.table.status">Status</span></th>
+                          <th><span data-i18n="admin.table.date">Date</span></th>
                           <th></th>
                         </tr>
                       </thead>
                       <tbody id="recentRequestsBody">
                         <tr>
                           <td colspan="7" class="text-center text-muted py-4">
-                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading...
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div><span
+                              data-i18n="admin.loading">Loading...</span>
                           </td>
                         </tr>
                       </tbody>
@@ -211,31 +224,39 @@
             <!-- Right column -->
             <div class="col-lg-4 d-flex flex-column gap-4">
 
-              <!-- Quick Actions -->
+              <!-- <span data-i18n="admin.quickActions">Quick Actions</span> -->
               <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
-                  <h6 class="mb-0 fw-bold"><i class="bi bi-lightning-charge text-warning me-2"></i>Quick Actions</h6>
+                  <h6 class="mb-0 fw-bold"><i class="bi bi-lightning-charge text-warning me-2"></i><span
+                      data-i18n="admin.quickActions">Quick Actions</span></h6>
                 </div>
                 <div class="card-body d-flex flex-column gap-2 p-3">
                   <a href="users.html" class="btn btn-outline-primary text-start btn-sm"><i
-                      class="bi bi-person-plus me-2"></i>Add New User</a>
+                      class="bi bi-person-plus me-2"></i>
+                    <span data-i18n="admin.addNewUser">Add New User</span></a>
                   <a href="technicians.html" class="btn btn-outline-warning text-start btn-sm"><i
-                      class="bi bi-wrench me-2"></i>Manage Technicians</a>
+                      class="bi bi-wrench me-2"></i>
+                    <span data-i18n="admin.manageTechnicians">Manage Technicians</span></a>
                   <a href="assets.html" class="btn btn-outline-info text-start btn-sm"><i
-                      class="bi bi-pc-display me-2"></i>Add ICT Asset</a>
+                      class="bi bi-pc-display me-2"></i>
+                    <span data-i18n="admin.addIctAsset">Add ICT Asset</span></a>
                   <a href="requests.html" class="btn btn-outline-danger text-start btn-sm"><i
-                      class="bi bi-clipboard-check me-2"></i>Review Requests</a>
+                      class="bi bi-clipboard-check me-2"></i>
+                    <span data-i18n="admin.reviewRequests">Review Requests</span></a>
                   <a href="reports.html" class="btn btn-outline-success text-start btn-sm"><i
-                      class="bi bi-bar-chart-line me-2"></i>View Reports</a>
+                      class="bi bi-bar-chart-line me-2"></i>
+                    <span data-i18n="admin.viewReports">View Reports</span></a>
                   <a href="categories.html" class="btn btn-outline-secondary text-start btn-sm"><i
-                      class="bi bi-tags me-2"></i>Manage Categories</a>
+                      class="bi bi-tags me-2"></i>
+                    <span data-i18n="admin.manageCategories">Manage Categories</span></a>
                 </div>
               </div>
 
               <!-- Status Mini Chart -->
               <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
-                  <h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart text-success me-2"></i>Requests by Status</h6>
+                  <h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart text-success me-2"></i><span
+                      data-i18n="admin.requestsByStatus">Requests by Status</span></h6>
                 </div>
                 <div class="card-body p-3" id="statusMiniChart">
                   <div class="text-center text-muted py-2">
@@ -244,10 +265,11 @@
                 </div>
               </div>
 
-              <!-- Recent Activity -->
+              <!-- <span data-i18n="admin.recentActivity">Recent Activity</span> -->
               <div class="card border-0 shadow-sm flex-grow-1">
                 <div class="card-header bg-white py-3">
-                  <h6 class="mb-0 fw-bold"><i class="bi bi-activity text-info me-2"></i>Recent Activity</h6>
+                  <h6 class="mb-0 fw-bold"><i class="bi bi-activity text-info me-2"></i><span
+                      data-i18n="admin.recentActivity">Recent Activity</span></h6>
                 </div>
                 <div class="card-body p-3" id="recentActivityDash">
                   <div class="text-center text-muted py-2">
@@ -256,10 +278,11 @@
                 </div>
               </div>
 
-              <!-- Service Feedback -->
+              <!-- <span data-i18n="admin.serviceFeedback">Service Feedback</span> -->
               <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
-                  <h6 class="mb-0 fw-bold"><i class="bi bi-star text-warning me-2"></i>Service Feedback</h6>
+                  <h6 class="mb-0 fw-bold"><i class="bi bi-star text-warning me-2"></i><span
+                      data-i18n="admin.serviceFeedback">Service Feedback</span></h6>
                 </div>
                 <div class="card-body p-0" id="serviceFeedbackPanel">
                   <div class="text-center text-muted py-3">
@@ -270,233 +293,254 @@
 
             </div>
           </div>
+        </div>
 
-          <!-- -- Settings Section -- -->
-          <div class="row g-4 mb-2">
+        <!-- -- Settings Section -- -->
+        <div id="settingsSection" class="row g-4 mb-2 d-none">
 
-            <!-- Quick Profile Settings -->
-            <div class="col-lg-4">
-              <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                  <h6 class="mb-0 fw-bold"><i class="bi bi-person-gear text-primary me-2"></i>My Profile</h6>
-                  <a href="settings.html#profile" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-pencil me-1"></i>Edit
-                  </a>
+          <!-- Quick Profile Settings -->
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-person-gear text-primary me-2"></i><span
+                    data-i18n="admin.settings.myProfile">My Profile</span></h6>
+                <a href="settings.html#profile" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-pencil me-1"></i><span data-i18n="admin.settings.edit">Edit</span>
+                </a>
+              </div>
+              <div class="card-body p-3">
+                <!-- Avatar + info -->
+                <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded">
+                  <div class="profile-avatar profile-avatar-md rounded-circle" id="profileAvatar" data-avatar
+                    aria-label="Profile">
+                    <img class="profile-avatar-image" alt="Profile Photo" hidden />
+                    <span class="profile-avatar-initials">A</span>
+                  </div>
+                  <div>
+                    <div class="fw-bold" id="profileFullName">—</div>
+                    <div class="text-muted small" id="profileRoleBadge"></div>
+                    <div class="text-muted small" id="profileEmailDisplay">—</div>
+                  </div>
                 </div>
-                <div class="card-body p-3">
-                  <!-- Avatar + info -->
-                  <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded">
-                    <div class="profile-avatar profile-avatar-md rounded-circle" id="profileAvatar" data-avatar
-                      aria-label="Profile">
-                      <img class="profile-avatar-image" alt="Profile Photo" hidden />
-                      <span class="profile-avatar-initials">A</span>
-                    </div>
-                    <div>
-                      <div class="fw-bold" id="profileFullName">—</div>
-                      <div class="text-muted small" id="profileRoleBadge"></div>
-                      <div class="text-muted small" id="profileEmailDisplay">—</div>
-                    </div>
+                <div class="row g-2 small">
+                  <div class="col-6">
+                    <div class="text-muted"><span data-i18n="admin.settings.profile.department">Department</span></div>
+                    <div class="fw-semibold" id="profileDeptDisplay">—</div>
                   </div>
-                  <div class="row g-2 small">
-                    <div class="col-6">
-                      <div class="text-muted">Department</div>
-                      <div class="fw-semibold" id="profileDeptDisplay">—</div>
-                    </div>
-                    <div class="col-6">
-                      <div class="text-muted">Phone</div>
-                      <div class="fw-semibold" id="profilePhoneDisplay">—</div>
-                    </div>
+                  <div class="col-6">
+                    <div class="text-muted"><span data-i18n="admin.settings.phone">Phone</span></div>
+                    <div class="fw-semibold" id="profilePhoneDisplay">—</div>
                   </div>
-                  <hr class="my-3" />
-                  <!-- Inline password change -->
-                  <div class="small fw-semibold text-muted mb-2">Change Password</div>
-                  <div id="pwdChangeAlert" class="alert d-none py-2 small"></div>
-                  <div class="mb-2">
-                    <input type="password" class="form-control form-control-sm" id="dashCurrentPwd"
-                      placeholder="Current password" autocomplete="current-password" />
-                  </div>
-                  <div class="mb-2">
-                    <input type="password" class="form-control form-control-sm" id="dashNewPwd"
-                      placeholder="New password (min 8 chars)" autocomplete="new-password" />
-                  </div>
-                  <div class="mb-2">
-                    <input type="password" class="form-control form-control-sm" id="dashConfirmPwd"
-                      placeholder="Confirm new password" autocomplete="new-password" />
-                  </div>
-                  <button class="btn btn-sm btn-primary w-100" id="dashChangePwdBtn">
-                    <span class="spinner-border spinner-border-sm me-1 d-none" id="dashPwdSpinner"></span>
-                    <i class="bi bi-lock me-1"></i>Update Password
-                  </button>
                 </div>
+                <hr class="my-3" />
+                <!-- Inline password change -->
+                <div class="small fw-semibold text-muted mb-2"><span data-i18n="admin.settings.changePassword">Change
+                    Password</span></div>
+                <div id="pwdChangeAlert" class="alert d-none py-2 small"></div>
+                <div class="mb-2">
+                  <input type="password" class="form-control form-control-sm" id="dashCurrentPwd"
+                    data-i18n-placeholder="admin.settings.currentPassword.placeholder" placeholder="Current password"
+                    autocomplete="current-password" />
+                </div>
+                <div class="mb-2">
+                  <input type="password" class="form-control form-control-sm" id="dashNewPwd"
+                    data-i18n-placeholder="admin.settings.newPassword.placeholder"
+                    placeholder="New password (min 8 chars)" autocomplete="new-password" />
+                </div>
+                <div class="mb-2">
+                  <input type="password" class="form-control form-control-sm" id="dashConfirmPwd"
+                    data-i18n-placeholder="admin.settings.confirmPassword.placeholder"
+                    placeholder="Confirm new password" autocomplete="new-password" />
+                </div>
+                <button class="btn btn-sm btn-primary w-100" id="dashChangePwdBtn">
+                  <span class="spinner-border spinner-border-sm me-1 d-none" id="dashPwdSpinner"></span>
+                  <i class="bi bi-lock me-1"></i><span data-i18n="admin.settings.security.updatePassword">Update
+                    Password</span>
+                </button>
               </div>
             </div>
-
-            <!-- System Settings Summary -->
-            <div class="col-lg-4">
-              <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                  <h6 class="mb-0 fw-bold"><i class="bi bi-gear text-secondary me-2"></i>System Settings</h6>
-                  <a href="settings.html" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-arrow-right me-1"></i>Manage
-                  </a>
-                </div>
-                <div class="card-body p-3">
-                  <div class="list-group list-group-flush">
-
-                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
-                      <div>
-                        <div class="small fw-semibold">Allow Public Registration</div>
-                        <div class="text-muted" style="font-size:.75rem;">Users can self-register</div>
-                      </div>
-                      <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="quickRegToggle" checked />
-                      </div>
-                    </div>
-
-                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
-                      <div>
-                        <div class="small fw-semibold">Email Notifications</div>
-                        <div class="text-muted" style="font-size:.75rem;">Notify on status changes</div>
-                      </div>
-                      <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="quickEmailToggle" checked />
-                      </div>
-                    </div>
-
-                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
-                      <div>
-                        <div class="small fw-semibold">Technician Auto-Notify</div>
-                        <div class="text-muted" style="font-size:.75rem;">Notify technicians on new requests</div>
-                      </div>
-                      <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="quickTechNotif" checked />
-                      </div>
-                    </div>
-
-                    <div class="list-group-item px-0 py-2">
-                      <div class="small fw-semibold mb-1">SLA Response Time</div>
-                      <div class="input-group input-group-sm">
-                        <input type="number" class="form-control" id="quickSLA" value="24" min="1" />
-                        <span class="input-group-text">hours</span>
-                      </div>
-                    </div>
-
-                    <div class="list-group-item px-0 py-2">
-                      <div class="small fw-semibold mb-1">Default Priority</div>
-                      <select class="form-select form-select-sm" id="quickPriority">
-                        <option value="low">Low</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="high">High</option>
-                      </select>
-                    </div>
-
-                  </div>
-                  <button class="btn btn-sm btn-primary w-100 mt-3" id="saveQuickSettingsBtn">
-                    <i class="bi bi-save me-1"></i>Save Settings
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Notification & Security Summary -->
-            <div class="col-lg-4">
-              <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                  <h6 class="mb-0 fw-bold"><i class="bi bi-shield-lock text-danger me-2"></i>Security & Notifications
-                  </h6>
-                  <a href="settings.html" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-arrow-right me-1"></i>Full Settings
-                  </a>
-                </div>
-                <div class="card-body p-3">
-
-                  <!-- Security info -->
-                  <div class="small fw-bold text-muted text-uppercase mb-2">Security</div>
-                  <div class="list-group list-group-flush mb-3">
-                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
-                      <span class="small">Session Timeout</span>
-                      <span class="badge bg-light text-dark border">60 min</span>
-                    </div>
-                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
-                      <span class="small">Max Login Attempts</span>
-                      <span class="badge bg-light text-dark border">5 attempts</span>
-                    </div>
-                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
-                      <span class="small">Min Password Length</span>
-                      <span class="badge bg-light text-dark border">8 chars</span>
-                    </div>
-                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
-                      <span class="small">Strong Password</span>
-                      <span class="badge bg-success">Enabled</span>
-                    </div>
-                  </div>
-
-                  <!-- Notification summary -->
-                  <div class="small fw-bold text-muted text-uppercase mb-2">Notifications</div>
-                  <div class="d-flex flex-column gap-2">
-                    <div class="d-flex justify-content-between align-items-center p-2 rounded"
-                      style="background:#f8f9fa;">
-                      <span class="small">On Submission</span>
-                      <span class="badge bg-success">On</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center p-2 rounded"
-                      style="background:#f8f9fa;">
-                      <span class="small">On Assignment</span>
-                      <span class="badge bg-success">On</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center p-2 rounded"
-                      style="background:#f8f9fa;">
-                      <span class="small">On Status Change</span>
-                      <span class="badge bg-success">On</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center p-2 rounded"
-                      style="background:#f8f9fa;">
-                      <span class="small">On Resolution</span>
-                      <span class="badge bg-success">On</span>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-
           </div>
+
+          <!-- <span data-i18n="admin.settings.systemSettings">System Settings</span> Summary -->
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-gear text-secondary me-2"></i><span
+                    data-i18n="admin.settings.systemSettings">System Settings</span></h6>
+                <a href="settings.html" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-arrow-right me-1"></i><span data-i18n="admin.settings.manage">Manage</span>
+                </a>
+              </div>
+              <div class="card-body p-3">
+                <div class="list-group list-group-flush">
+
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="small fw-semibold"><span data-i18n="admin.settings.allowPublicRegistration">Allow
+                          Public Registration</span></div>
+                      <div class="text-muted" style="font-size:.75rem;"><span
+                          data-i18n="admin.settings.usersCanSelfRegister">Users can self-register</span></div>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" id="quickRegToggle" checked />
+                    </div>
+                  </div>
+
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="small fw-semibold">Email Notifications</div>
+                      <div class="text-muted" style="font-size:.75rem;"><span
+                          data-i18n="admin.settings.notifyOnStatusChanges">Notify on status changes</span></div>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" id="quickEmailToggle" checked />
+                    </div>
+                  </div>
+
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="small fw-semibold"><span data-i18n="admin.settings.technicianAutoNotify">Technician
+                          Auto-Notify</span></div>
+                      <div class="text-muted" style="font-size:.75rem;"><span
+                          data-i18n="admin.settings.notifyOnNewRequests">Notify technicians on new requests</span></div>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" id="quickTechNotif" checked />
+                    </div>
+                  </div>
+
+                  <div class="list-group-item px-0 py-2">
+                    <div class="small fw-semibold mb-1"><span data-i18n="admin.settings.slaResponseTime">SLA Response
+                        Time</span></div>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" id="quickSLA" value="24" min="1" />
+                      <span class="input-group-text"><span data-i18n="admin.settings.hours">hours</span></span>
+                    </div>
+                  </div>
+
+                  <div class="list-group-item px-0 py-2">
+                    <div class="small fw-semibold mb-1"><span data-i18n="admin.settings.defaultPriority">Default
+                        Priority</span></div>
+                    <select class="form-select form-select-sm" id="quickPriority">
+                      <option value="low"><span data-i18n="admin.settings.priority.low">Low</span>
+                      <option value="medium" selected>Medium</option>
+                      <option value="high"><span data-i18n="admin.settings.priority.high">High</span>
+                    </select>
+                  </div>
+
+                </div>
+                <button class="btn btn-sm btn-primary w-100 mt-3" id="saveQuickSettingsBtn">
+                  <i class="bi bi-save me-1"></i><span data-i18n="admin.settings.saveSettings">Save Settings</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notification & Security Summary -->
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-shield-lock text-danger me-2"></i>Security & Notifications
+                </h6>
+                <a href="settings.html" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-arrow-right me-1"></i><span data-i18n="admin.settings.fullSettings">Full
+                    Settings</span>
+                </a>
+              </div>
+              <div class="card-body p-3">
+
+                <!-- Security info -->
+                <div class="small fw-bold text-muted text-uppercase mb-2"><span
+                    data-i18n="admin.settings.security">Security</span></div>
+                <div class="list-group list-group-flush mb-3">
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span class="small"><span data-i18n="admin.settings.sessionTimeout">Session Timeout</span></span>
+                    <span class="badge bg-light text-dark border">60 min</span>
+                  </div>
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span class="small"><span data-i18n="admin.settings.maxLoginAttempts">Max Login
+                        Attempts</span></span>
+                    <span class="badge bg-light text-dark border">5 attempts</span>
+                  </div>
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span class="small"><span data-i18n="admin.settings.minPasswordLength">Min Password
+                        Length</span></span>
+                    <span class="badge bg-light text-dark border">8 chars</span>
+                  </div>
+                  <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span class="small"><span data-i18n="admin.settings.strongPassword">Strong Password</span></span>
+                    <span class="badge bg-success"><span data-i18n="admin.settings.enabled">Enabled</span></span>
+                  </div>
+                </div>
+
+                <!-- Notification summary -->
+                <div class="small fw-bold text-muted text-uppercase mb-2"><span
+                    data-i18n="admin.settings.notifications">Notifications</span></div>
+                <div class="d-flex flex-column gap-2">
+                  <div class="d-flex justify-content-between align-items-center p-2 rounded"
+                    style="background:#f8f9fa;">
+                    <span class="small"><span data-i18n="admin.settings.onSubmission">On Submission</span></span>
+                    <span class="badge bg-success">On</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center p-2 rounded"
+                    style="background:#f8f9fa;">
+                    <span class="small"><span data-i18n="admin.settings.onAssignment">On Assignment</span></span>
+                    <span class="badge bg-success">On</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center p-2 rounded"
+                    style="background:#f8f9fa;">
+                    <span class="small"><span data-i18n="admin.settings.onStatusChange">On Status Change</span></span>
+                    <span class="badge bg-success">On</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center p-2 rounded"
+                    style="background:#f8f9fa;">
+                    <span class="small"><span data-i18n="admin.settings.onResolution">On Resolution</span></span>
+                    <span class="badge bg-success">On</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
 
       </main>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/api-config.js"></script>
   <script src="/assets/js/main.js?v=6"></script>
   <script src="/assets/js/notifications.js?v=6"></script>
   <script src="/assets/js/reports.js?v=6"></script>
   <script>
     /* -- Dashboard Settings Widget Logic -- */
     document.addEventListener( 'DOMContentLoaded', async () =>
-    {
+  {
 
       // Load profile info into settings widget
       try
-      {
+  {
         const { user } = await apiRequest( '/auth/me' );
 
-        // Avatar (photo > image URL > default ADMIN image > initial)
-        const avatar = document.getElementById( 'profileAvatar' );
-        if ( avatar ) applyProfileAvatar( user, avatar );
+  // Avatar (photo > image URL > default ADMIN image > initial)
+  const avatar = document.getElementById( 'profileAvatar' );
+  if ( avatar ) applyProfileAvatar( user, avatar );
 
         // Profile fields
         const setText = ( id, val ) => { const e = document.getElementById( id ); if ( e ) e.textContent = val || '—'; };
-        setText( 'profileFullName', user.fullName );
-        setText( 'profileEmailDisplay', user.email );
-        setText( 'profilePhoneDisplay', user.phone || '—' );
-        setText( 'profileDeptDisplay', user.department || '—' );
+  setText( 'profileFullName', user.fullName );
+  setText( 'profileEmailDisplay', user.email );
+  setText( 'profilePhoneDisplay', user.phone || '—' );
+  setText( 'profileDeptDisplay', user.department || '—' );
 
-        // Role badge
-        const roleEl = document.getElementById( 'profileRoleBadge' );
-        if ( roleEl )
-        {
+  // Role badge
+  const roleEl = document.getElementById( 'profileRoleBadge' );
+  if ( roleEl )
+  {
           const roleC = { 'ICT Admin': 'danger', Technician: 'warning', Requester: 'primary' };
-          roleEl.innerHTML = `<span class="badge bg-${ roleC[user.role] || 'secondary' } text-capitalize">${ user.role }</span>`;
+  roleEl.innerHTML = `<span class="badge bg-${ roleC[user.role] || 'secondary' } text-capitalize">${ user.role }</span>`;
         }
 
       } catch ( _ ) { }
@@ -504,108 +548,176 @@
       // -- Inline Password Change (verifies the current password via the
       //    self-service endpoint, matching the Settings page) --
       document.getElementById( 'dashChangePwdBtn' )?.addEventListener( 'click', async () =>
-      {
+  {
         const currentPwd = document.getElementById( 'dashCurrentPwd' ).value;
-        const newPwd = document.getElementById( 'dashNewPwd' ).value;
-        const confirmPwd = document.getElementById( 'dashConfirmPwd' ).value;
-        const alert = document.getElementById( 'pwdChangeAlert' );
+  const newPwd = document.getElementById( 'dashNewPwd' ).value;
+  const confirmPwd = document.getElementById( 'dashConfirmPwd' ).value;
+  const alert = document.getElementById( 'pwdChangeAlert' );
 
         const showPwdMsg = ( msg, type ) =>
-        {
-          alert.className = `alert alert-${ type } py-2 small`;
-          alert.textContent = msg;
-          alert.classList.remove( 'd-none' );
+  {
+    alert.className = `alert alert-${ type } py-2 small`;
+  alert.textContent = msg;
+  alert.classList.remove( 'd-none' );
           setTimeout( () => alert.classList.add( 'd-none' ), 4000 );
         };
 
-        if ( !currentPwd ) { showPwdMsg( 'Please enter your current password.', 'warning' ); return; }
-        if ( !newPwd ) { showPwdMsg( 'Please enter a new password.', 'warning' ); return; }
-        if ( newPwd.length < 8 ) { showPwdMsg( 'Password must be at least 8 characters.', 'warning' ); return; }
-        if ( newPwd !== confirmPwd ) { showPwdMsg( 'Passwords do not match.', 'danger' ); return; }
+  if ( !currentPwd ) { showPwdMsg( 'Please enter your current password.', 'warning' ); return; }
+  if ( !newPwd ) { showPwdMsg( 'Please enter a new password.', 'warning' ); return; }
+  if ( newPwd.length < 8 ) { showPwdMsg( 'Password must be at least 8 characters.', 'warning' ); return; }
+  if ( newPwd !== confirmPwd ) { showPwdMsg( 'Passwords do not match.', 'danger' ); return; }
 
-        const btn = document.getElementById( 'dashChangePwdBtn' );
-        const spinner = document.getElementById( 'dashPwdSpinner' );
-        btn.disabled = true;
-        spinner.classList.remove( 'd-none' );
+  const btn = document.getElementById( 'dashChangePwdBtn' );
+  const spinner = document.getElementById( 'dashPwdSpinner' );
+  btn.disabled = true;
+  spinner.classList.remove( 'd-none' );
 
-        try
-        {
-          await apiRequest( '/users/change-password', {
-            method: 'PUT',
-            body: { currentPassword: currentPwd, newPassword: newPwd },
-          } );
-          showPwdMsg( 'Password updated successfully.', 'success' );
-          document.getElementById( 'dashCurrentPwd' ).value = '';
-          document.getElementById( 'dashNewPwd' ).value = '';
-          document.getElementById( 'dashConfirmPwd' ).value = '';
+  try
+  {
+    await apiRequest( '/users/change-password', {
+      method: 'PUT',
+      body: { currentPassword: currentPwd, newPassword: newPwd },
+    } );
+  showPwdMsg( 'Password updated successfully.', 'success' );
+  document.getElementById( 'dashCurrentPwd' ).value = '';
+  document.getElementById( 'dashNewPwd' ).value = '';
+  document.getElementById( 'dashConfirmPwd' ).value = '';
         } catch ( err )
-        {
-          showPwdMsg( err.message, 'danger' );
+  {
+    showPwdMsg( err.message, 'danger' );
         } finally
-        {
-          btn.disabled = false;
-          spinner.classList.add( 'd-none' );
+  {
+    btn.disabled = false;
+  spinner.classList.add( 'd-none' );
         }
       } );
 
-      // -- Load current settings from the backend --
-      async function loadQuickSettings ()
-      {
+  // -- Load current settings from the backend --
+  async function loadQuickSettings ()
+  {
         try
-        {
+  {
           const { data } = await apiRequest( '/settings' );
-          if ( data )
-          {
-            document.getElementById( 'quickRegToggle' ).checked = !!data.publicRegistration;
-            document.getElementById( 'quickEmailToggle' ).checked = !!data.emailNotifications;
-            document.getElementById( 'quickTechNotif' ).checked = !!data.techAutoNotify;
-            document.getElementById( 'quickSLA' ).value = data.slaResponseHours ?? 24;
-            document.getElementById( 'quickPriority' ).value = data.defaultPriority || 'medium';
+  if ( data )
+  {
+    document.getElementById( 'quickRegToggle' ).checked = !!data.publicRegistration;
+  document.getElementById( 'quickEmailToggle' ).checked = !!data.emailNotifications;
+  document.getElementById( 'quickTechNotif' ).checked = !!data.techAutoNotify;
+  document.getElementById( 'quickSLA' ).value = data.slaResponseHours ?? 24;
+  document.getElementById( 'quickPriority' ).value = data.defaultPriority || 'medium';
           }
         } catch ( _ ) { /* leave defaults in place */ }
       }
-      loadQuickSettings();
+  loadQuickSettings();
 
       // -- Save Quick Settings to the backend (real save, no fake success) --
       document.getElementById( 'saveQuickSettingsBtn' )?.addEventListener( 'click', async () =>
-      {
+  {
         const btn = document.getElementById( 'saveQuickSettingsBtn' );
-        const original = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
-        try
-        {
-          // General / quick settings
-          await apiRequest( '/settings/general', {
-            method: 'PUT',
-            body: {
-              publicRegistration: document.getElementById( 'quickRegToggle' ).checked,
-              techAutoNotify: document.getElementById( 'quickTechNotif' ).checked,
-              slaResponseHours: document.getElementById( 'quickSLA' ).value,
-              defaultPriority: document.getElementById( 'quickPriority' ).value,
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+  try
+  {
+    // General / quick settings
+    await apiRequest( '/settings/general', {
+      method: 'PUT',
+      body: {
+        publicRegistration: document.getElementById( 'quickRegToggle' ).checked,
+        techAutoNotify: document.getElementById( 'quickTechNotif' ).checked,
+        slaResponseHours: document.getElementById( 'quickSLA' ).value,
+        defaultPriority: document.getElementById( 'quickPriority' ).value,
+      },
+    } );
+  // Email notifications live under /settings/notifications
+  await apiRequest( '/settings/notifications', {
+    method: 'PUT',
+  body: {
+    emailNotifications: document.getElementById( 'quickEmailToggle' ).checked,
             },
           } );
-          // Email notifications live under /settings/notifications
-          await apiRequest( '/settings/notifications', {
-            method: 'PUT',
-            body: {
-              emailNotifications: document.getElementById( 'quickEmailToggle' ).checked,
-            },
-          } );
-          showToast( 'Settings saved successfully!', 'success' );
+  showToast( 'Settings saved successfully!', 'success' );
         } catch ( err )
-        {
-          showToast( err.message || 'Could not save settings.', 'danger' );
+  {
+    showToast( err.message || 'Could not save settings.', 'danger' );
         } finally
-        {
-          btn.disabled = false;
-          btn.innerHTML = original;
+  {
+    btn.disabled = false;
+  btn.innerHTML = original;
         }
       } );
 
     } );
   </script>
-<script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/theme.js"></script>
+  <script>
+      // -- Sidebar Navigation Toggle --
+      document.addEventListener('DOMContentLoaded', () => {
+        const sidebarLinks = document.querySelectorAll('#sidebar .nav-link');
+  const settingsSection = document.getElementById('settingsSection');
+  const mainContent = document.getElementById('dashboardMain');
+
+  // Initialize: show the dashboard, hide settings
+  function showDashboard() {
+    // Dashboard becomes active
+    sidebarLinks.forEach( l =>
+    {
+      if ( l.getAttribute( 'href' ) === 'dashboard.html' )
+      {
+        l.classList.add( 'active', 'bg-white', 'bg-opacity-25' );
+        l.classList.remove( 'text-white-50' );
+      } else
+      {
+        l.classList.remove( 'active', 'bg-white', 'bg-opacity-25' );
+        l.classList.add( 'text-white-50' );
+      }
+    } );
+  if (settingsSection) settingsSection.classList.add('d-none');
+  if (mainContent) mainContent.classList.remove('d-none');
+        }
+
+  function showSettings() {
+    // Settings becomes active
+    sidebarLinks.forEach( l =>
+    {
+      if ( l.getAttribute( 'href' ) === 'settings.html' )
+      {
+        l.classList.add( 'active', 'bg-white', 'bg-opacity-25' );
+        l.classList.remove( 'text-white-50' );
+      } else
+      {
+        l.classList.remove( 'active', 'bg-white', 'bg-opacity-25' );
+        l.classList.add( 'text-white-50' );
+      }
+    } );
+  if (settingsSection) settingsSection.classList.remove('d-none');
+  if (mainContent) mainContent.classList.add('d-none');
+        }
+
+        // Handle sidebar navigation clicks
+        sidebarLinks.forEach(link => {
+    link.addEventListener( 'click', ( e ) =>
+    {
+      // Get the target view from href attribute
+      const href = link.getAttribute( 'href' );
+
+      if ( href === 'settings.html' )
+      {
+        e.preventDefault();
+        showSettings();
+      } else if ( href === 'dashboard.html' )
+      {
+        e.preventDefault();
+        showDashboard();
+      }
+      // For other links (users, technicians, etc.), let them navigate normally
+    } );
+        });
+
+  // Initialize - show dashboard by default
+  showDashboard();
+      });
+  </script>
 </body>
 
 </html>

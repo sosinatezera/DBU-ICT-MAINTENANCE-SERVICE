@@ -183,8 +183,10 @@ h6 { font-size: .8125rem; font-weight: 600; }   /* 13px */
 
 /* Sidebar */
 .sidebar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  bottom: 0;
   height: 100vh;
   overflow-y: auto;
   flex-shrink: 0;
@@ -777,11 +779,9 @@ h6 { font-size: .8125rem; font-weight: 600; }   /* 13px */
   box-shadow: 0 0 0 2px var(--primary);
 }
 
-/* ── Hero Section (Landing) ────────────────────────────────── */
-.hero-section {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  padding: 5rem 0;
-}
+/* ── Hero Section (Landing) ──────────────────────────────────
+   Background image + overlay is defined in index.html inline <style>.
+   Only add layout helpers here — never set background or padding. */
 
 /* ── Workflow Steps ────────────────────────────────────────── */
 .workflow-step { transition: var(--transition); }
@@ -848,4 +848,161 @@ h6 { font-size: .8125rem; font-weight: 600; }   /* 13px */
 
   .profile-avatar-lg { width: 72px; height: 72px; min-width: 72px; }
   .profile-avatar-lg .profile-avatar-initials { font-size: 1.35rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL COMPACT DENSITY LAYER
+   Applies throughout the app (all roles) via the SHARED style.css.
+   Goals: fit more content on screen while preserving hierarchy and
+   readability. Because theme.css loads after this file but only
+   adjusts COLORS (never font-size/padding/height/gap), this layer
+   does not conflict with the light/dark theme mechanism.
+   Hierarchy preserved:
+     Page title (.page-title) > section (.section-title) > body > metadata
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Base text ───────────── (body .875rem → .8125rem, still readable ≥13px) ── */
+body {
+  font-size: .8125rem;
+  line-height: 1.45;
+}
+
+/* ── Type scale (slightly tighter than the default) ────────── */
+h1 { font-size: 1.325rem; }
+h2 { font-size: 1.125rem; }
+h3 { font-size: 1rem;     }
+h4 { font-size: .9375rem; }
+h5 { font-size: .875rem;  }
+h6 { font-size: .8125rem; }
+
+.page-title    { font-size: 1.15rem; }
+.section-title { font-size: 1rem;    }
+.card-title    { font-size: .9375rem; }
+
+/* ── Cards / panels: trim padding so more content fits ──────── */
+.card { --bs-card-spacer-y: .9rem; --bs-card-spacer-x: 1rem; }
+.card-body  { padding: .9rem 1rem; }
+.card-header{ padding: .6rem 1rem; font-size: .875rem; font-weight: 600; }
+.card-footer{ padding: .6rem 1rem; }
+
+/* ── Tables: tighter rows, still readable ──────────────────── */
+.table th,
+.table td {
+  padding: .45rem .65rem;
+  font-size: .8125rem;
+}
+.table thead th   { font-size: .6875rem; }
+.table-responsive { font-size: .8125rem; }
+
+/* ── Forms: compact controls ───────────────────────────────── */
+.form-control,
+.form-select {
+  padding: .34rem .55rem;
+  font-size: .8125rem;
+  min-height: 34px;
+}
+.form-label       { font-size: .75rem; margin-bottom: .2rem; }
+.form-text        { font-size: .6875rem; }
+.input-group-text { padding: .34rem .55rem; font-size: .8125rem; }
+.form-check-input { margin-top: .2em; }
+
+/* ── Buttons: compact ──────────────────────────────────────── */
+.btn {
+  padding: .32rem .7rem;
+  font-size: .8125rem;
+  line-height: 1.4;
+}
+.btn-sm { padding: .22rem .5rem; font-size: .75rem; }
+.btn-lg { padding: .42rem .9rem; font-size: .875rem; }
+
+/* ── Badges / dropdowns / modals / alerts ──────────────────── */
+.badge { font-size: .6875rem; }
+.dropdown-menu { font-size: .8125rem; }
+.dropdown-item { padding: .3rem .85rem; font-size: .8125rem; }
+.modal-body    { padding: 1rem; }
+.modal-header  { padding: .75rem 1rem; }
+.modal-footer  { padding: .6rem 1rem; }
+.alert         { padding: .6rem .9rem; font-size: .8125rem; margin-bottom: .8rem; }
+
+/* ── Spacing utilities sanctioned by the compact grid ───────── */
+.alert, .card.mb-3, .card.mb-4 { margin-bottom: .9rem !important; }
+.gap-2 { --bs-gap-y: .5rem !important; --bs-gap-x: .5rem !important; }
+.gap-3 { --bs-gap-y: .75rem !important; --bs-gap-x: .75rem !important; }
+.row.g-3 { --bs-gutter-y: .75rem; --bs-gutter-x: .75rem; }
+
+/* ── Empty states / list groups ─────────────────────────────── */
+.empty-state { padding: 1.75rem .75rem; }
+.empty-state i { font-size: 2.25rem; margin-bottom: .6rem; }
+.empty-state .empty-title { font-size: .9375rem; }
+.empty-state .empty-desc  { font-size: .8125rem; margin-bottom: .6rem; }
+.list-group-item { padding: .5rem .85rem; font-size: .8125rem; }
+
+/* ── Sidebar & navbar: tighter but keep hierarchy ───────────── */
+.topbar { min-height: 52px; }
+.topbar h5 { font-size: .875rem; }
+.topbar .text-muted, .topbar .small { font-size: .75rem; }
+#sidebar .sidebar-brand { padding: .3rem 0 .6rem; margin-bottom: .6rem !important; }
+#sidebar .nav-link { padding: .4rem .7rem; font-size: .8125rem; }
+#sidebar .nav-link i  { font-size: 1rem; }
+.sidebar .small, .sidebar .text-white-50 { font-size: .75rem; }
+
+/* ── KPI / stat cards (denser numbers) ──────────────────────── */
+.kpi-card { padding: .9rem 1rem; }
+.kpi-card .fs-4, .kpi-card h4 { font-size: 1.15rem; }
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.footer { font-size: .75rem; padding: .6rem 0; }
+
+/* ── Nav tabs & pagination (Bootstrap) ──────────────────────── */
+.nav-tabs .nav-link { padding: .4rem .7rem; font-size: .8125rem; }
+.pagination { --bs-pagination-padding-y: .3rem; --bs-pagination-padding-x: .55rem; --bs-pagination-font-size: .8125rem; }
+
+/* ── Notifications / toasts ─────────────────────────────────── */
+.app-toast { font-size: .8125rem; padding: .5rem .7rem; }
+
+/* ── Sticky dashboard sidebar ────────────────────────────────────
+   The sidebar stays fixed (always visible, top-left) while only the
+   main content scrolls. Width variable is set per role:
+   default (Requester) = 240px, Admin override = 250px in admin.css.
+   Mobile drawer (< 992px) is handled in responsive.css.
+
+   The `.flex-grow-1` main column must be able to shrink below its
+   content's natural width (min-width: 0), otherwise a wide table can
+   force the row wider than the viewport and make the right column
+   ("Quick Actions") overlap the left column ("Recent Maintenance
+   Requests").                                  */
+body.dashboard-body {
+  --sbw: 240px;
+}
+
+body.dashboard-body > .d-flex > .flex-grow-1,
+body.dashboard-body > .d-flex > .main-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (min-width: 992px) {
+  #sidebar.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 1030;
+    width: var(--sbw) !important;
+  }
+
+  body.dashboard-body > .d-flex > .flex-grow-1 {
+    margin-left: var(--sbw);
+  }
+}
+
+@media (max-width: 991.98px) {
+  body.dashboard-body > .d-flex > .flex-grow-1 { margin-left: 0 !important; }
+}
+
+/* Print goal is unchanged: readable on paper */
+@media print {
+  .alert, .toast, .toast-container { display: none !important; }
 }

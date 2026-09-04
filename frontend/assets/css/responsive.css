@@ -66,6 +66,33 @@ html, body { overflow-x: hidden; }
   .hero-section p.lead { font-size: .95rem; }
 }
 
+/* Hero content on tablet / mobile: stack vertically, keep everything
+   inside the viewport, prevent decorative pseudo-elements from causing
+   horizontal overflow. */
+@media (max-width: 991.98px) {
+  .hero-section {
+    min-height: auto;
+    padding: 3.5rem 0 !important;
+    overflow: hidden;
+  }
+  .hero-section .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .hero-section::before,
+  .hero-section::after {
+    display: none;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .hero-section .hero-title { font-size: 1.85rem; line-height: 1.2; }
+  .hero-section .hero-badge { font-size: .7rem; padding: .3rem .8rem; }
+  .hero-section .hero-subtitle { font-size: .95rem; }
+  .hero-section .d-flex.flex-wrap.gap-3 > .btn { width: 100%; }
+  .hero-section .d-flex.gap-4 { flex-wrap: wrap; gap: 1rem !important; }
+}
+
 /* ── Dashboard Cards ───────────────────────────────────────── */
 @media (max-width: 575.98px) {
   .card-body.p-4 { padding: 1rem !important; }

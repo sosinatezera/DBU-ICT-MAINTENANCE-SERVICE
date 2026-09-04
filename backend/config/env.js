@@ -17,6 +17,10 @@ module.exports = {
   UPLOAD_PATH:   process.env.UPLOAD_PATH   || 'uploads/',
   MAX_FILE_SIZE: process.env.MAX_FILE_SIZE  || 5 * 1024 * 1024,
 
+  // Frontend base URL (used to build password-reset links). Matches the
+  // developer origin by default; override for production (e.g. https://app.example.com).
+  FRONTEND_URL:  process.env.FRONTEND_URL  || 'http://localhost:3000',
+
   // Email
   SMTP_HOST:     process.env.SMTP_HOST     || '',
   SMTP_PORT:     process.env.SMTP_PORT     || 587,

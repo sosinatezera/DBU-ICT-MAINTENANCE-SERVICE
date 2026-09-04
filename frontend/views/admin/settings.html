@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,8 +12,9 @@
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/admin.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
-<link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
+
 <body class="dashboard-body">
 
   <div class="d-flex">
@@ -20,34 +23,50 @@
       <a href="../index.html" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-shield-check fs-3 text-info"></i>
-          <div class="small fw-bold mt-1" id="panelLabel">Management Panel</div>
+          <div class="small fw-bold mt-1" id="panelLabel"><span data-i18n="side.panel.admin">Management Panel</span>
+          </div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
-        <li><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-        <li><a href="users.html" class="nav-link text-white-50"><i class="bi bi-people me-2"></i>Users</a></li>
-        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i>Technicians</a></li>
-        <li><a href="assets.html" class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i>ICT Assets</a></li>
-        <li><a href="requests.html" class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i>Requests</a></li>
-        <li><a href="categories.html" class="nav-link text-white-50"><i class="bi bi-tags me-2"></i>Categories</a></li>
-        <li><a href="reports.html" class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i>Reports</a></li>
-        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i>Feedback</a></li>
-        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i>Notifications</a></li>
-        <li><a href="settings.html" class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-gear me-2"></i>Settings</a></li>
-      </ul>
-      <div class="mt-auto pt-3 border-top border-white border-opacity-25">
-        <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
-      </div>
+        <li><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i><span
+              data-i18n="side.dashboard">Dashboard</span></a></li>
+        <li><a href="users.html" class="nav-link text-white-50"><i class="bi bi-people me-2"></i><span
+              data-i18n="side.users">Users</span></a></li>
+        <li><a href="technicians.html" class="nav-link text-white-50"><i class="bi bi-wrench me-2"></i><span
+              data-i18n="side.technicians">Technicians</span></a></li>
+        <li><a href="assets.html" class="nav-link text-white-50"><i class="bi bi-pc-display me-2"></i><span
+              data-i18n="side.assets">ICT Assets</span></a></li>
+        <li><a href="requests.html" class="nav-link text-white-50"><i class="bi bi-clipboard-check me-2"></i><span
+              data-i18n="side.requests">Requests</span></a></li>
+        <li><a href="categories.html" class="nav-link text-white-50"><i class="bi bi-tags me-2"></i><span
+              data-i18n="side.categories">Categories</span></a></li>
+        <li><a href="reports.html" class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i><span
+              data-i18n="side.reports">Reports</span></a></li>
+        <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i><span
+              data-i18n="side.feedback">Feedback</span></a></li>
+        <li><a href="commits.html" class="nav-link text-white-50"><i class="bi bi-git-branch me-2"></i><span
+              data-i18n="side.commits">Commits</span></a></li>
+        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span
+              data-i18n="side.notifications">Notifications</span></a></li>
+        <li><a href="settings.html" class="nav-link text-white active bg-white bg-opacity-25 rounded"><i
+              class="bi bi-gear me-2"></i><span data-i18n="side.settings">Settings</span></a></li>
+
+        <div class="mt-auto pt-3 border-top border-white border-opacity-25">
+          <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i
+              class="bi bi-box-arrow-right me-1"></i><span data-i18n="admin.logout">Logout</span></a>
+        </div>
     </nav>
 
     <!-- Main Content -->
     <div class="flex-grow-1">
-      <header class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm" style="position:sticky;top:0;z-index:100;">
+      <header
+        class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm"
+        style="position:sticky;top:0;z-index:100;">
         <div class="d-flex align-items-center gap-3">
           <button class="btn btn-sm btn-outline-secondary d-inline-flex d-lg-none" id="sidebarToggle">
             <i class="bi bi-list fs-5"></i>
           </button>
-          <h5 class="mb-0 fw-bold">Settings</h5>
+          <h5 class="mb-0 fw-bold"><span data-i18n="page.settings">Settings</span></h5>
         </div>
         <div id="notifBellContainer"></div>
       </header>
@@ -60,22 +79,22 @@
         <ul class="nav nav-tabs settings-nav mb-4" id="settingsTabs" role="tablist">
           <li class="nav-item">
             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#generalTab" type="button">
-              <i class="bi bi-sliders me-1"></i>General
+              <i class="bi bi-sliders me-1"></i><span data-i18n="admin.settings.tabs.general">General</span>
             </button>
           </li>
           <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#notifTab" type="button">
-              <i class="bi bi-bell me-1"></i>Notifications
+              <i class="bi bi-bell me-1"></i><span data-i18n="admin.settings.tabs.notifications">Notifications</span>
             </button>
           </li>
           <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#securityTab" type="button">
-              <i class="bi bi-shield-lock me-1"></i>Security
+              <i class="bi bi-shield-lock me-1"></i><span data-i18n="admin.settings.tabs.security">Security</span>
             </button>
           </li>
           <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#profileTab" type="button">
-              <i class="bi bi-person-circle me-1"></i>My Profile
+              <i class="bi bi-person-circle me-1"></i><span data-i18n="admin.settings.tabs.myProfile">My Profile</span>
             </button>
           </li>
         </ul>
@@ -88,31 +107,43 @@
           <div class="tab-pane fade show active" id="generalTab">
             <div class="card border-0 shadow-sm">
               <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-gear me-2 text-primary"></i>General Configuration</h6>
-                <small class="text-muted">Configure system-wide settings for the Smart Computer Maintenance Service.</small>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-gear me-2 text-primary"></i><span
+                    data-i18n="admin.settings.general.title">General Configuration</span></h6>
+                <small class="text-muted"><span data-i18n="admin.settings.general.desc">Configure system-wide settings
+                    for the Smart Computer Maintenance Service.</span></small>
               </div>
               <div class="card-body p-4">
                 <form id="generalSettingsForm">
                   <!-- System Identity -->
                   <div class="settings-section mb-4">
                     <h6 class="settings-section-title fw-semibold text-muted text-uppercase small mb-3">
-                      <i class="bi bi-info-circle me-1"></i>System Identity
+                      <i class="bi bi-info-circle me-1"></i><span data-i18n="admin.settings.general.identity">System
+                        Identity</span>
                     </h6>
                     <div class="row g-3">
                       <div class="col-md-6">
-                        <label for="settingSystemName" class="form-label fw-semibold">System Name</label>
-                        <input type="text" class="form-control" id="settingSystemName" placeholder="Smart Computer Maintenance Service Request and Tracking System" />
-                        <div class="form-text">Displayed in the browser title and header.</div>
+                        <label for="settingSystemName" class="form-label fw-semibold"><span
+                            data-i18n="admin.settings.general.systemName">System Name</span></label>
+                        <input type="text" class="form-control" id="settingSystemName"
+                          placeholder="Smart Computer Maintenance Service Request and Tracking System" />
+                        <div class="form-text"><span data-i18n="admin.settings.general.systemName.hint">Displayed in the
+                            browser title and header.</span></div>
                       </div>
                       <div class="col-md-6">
-                        <label for="settingOrgName" class="form-label fw-semibold">Organization Name</label>
-                        <input type="text" class="form-control" id="settingOrgName" placeholder="Debre Berhan University" />
-                        <div class="form-text">Name of your institution or organization.</div>
+                        <label for="settingOrgName" class="form-label fw-semibold"><span
+                            data-i18n="admin.settings.general.orgName">Organization Name</span></label>
+                        <input type="text" class="form-control" id="settingOrgName"
+                          placeholder="Debre Berhan University" />
+                        <div class="form-text"><span data-i18n="admin.settings.general.orgName.hint">Name of your
+                            institution or organization.</span></div>
                       </div>
                       <div class="col-12">
-                        <label for="settingSystemDesc" class="form-label fw-semibold">System Description</label>
-                        <textarea class="form-control" id="settingSystemDesc" rows="2" placeholder="Brief description of the system..."></textarea>
-                        <div class="form-text">Optional description shown on the public landing page.</div>
+                        <label for="settingSystemDesc" class="form-label fw-semibold"><span
+                            data-i18n="admin.settings.general.systemDesc">System Description</span></label>
+                        <textarea class="form-control" id="settingSystemDesc" rows="2"
+                          placeholder="Brief description of the system..."></textarea>
+                        <div class="form-text"><span data-i18n="admin.settings.general.systemDesc.hint">Optional
+                            description shown on the public landing page.</span></div>
                       </div>
                     </div>
                   </div>
@@ -122,18 +153,21 @@
                   <!-- Regional -->
                   <div class="settings-section mb-4">
                     <h6 class="settings-section-title fw-semibold text-muted text-uppercase small mb-3">
-                      <i class="bi bi-globe me-1"></i>Regional &amp; Format
+                      <i class="bi bi-globe me-1"></i><span data-i18n="admin.settings.general.regional">Regional &amp;
+                        Format</span>
                     </h6>
                     <div class="row g-3">
                       <div class="col-md-4">
-                        <label for="settingLanguage" class="form-label fw-semibold">Default Language</label>
+                        <label for="settingLanguage" class="form-label fw-semibold"><span
+                            data-i18n="admin.settings.general.language">Default Language</span></label>
                         <select class="form-select" id="settingLanguage">
-                          <option value="en">English</option>
-                          <option value="am">Amharic</option>
+                          <option value="en"><span data-i18n="admin.settings.language.english">English</span>
+                          <option value="am"><span data-i18n="admin.settings.language.amharic">Amharic</span>
                         </select>
                       </div>
                       <div class="col-md-4">
-                        <label for="settingTimezone" class="form-label fw-semibold">Time Zone</label>
+                        <label for="settingTimezone" class="form-label fw-semibold"><span
+                            data-i18n="admin.settings.general.timezone">Time Zone</span></label>
                         <select class="form-select" id="settingTimezone">
                           <option value="Africa/Addis_Ababa">East Africa Time (EAT)</option>
                           <option value="Africa/Nairobi">Nairobi</option>
@@ -141,7 +175,8 @@
                         </select>
                       </div>
                       <div class="col-md-4">
-                        <label for="settingDateFormat" class="form-label fw-semibold">Date Format</label>
+                        <label for="settingDateFormat" class="form-label fw-semibold"><span
+                            data-i18n="admin.settings.general.dateFormat">Date Format</span></label>
                         <select class="form-select" id="settingDateFormat">
                           <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                           <option value="YYYY-MM-DD">YYYY-MM-DD</option>
@@ -158,10 +193,12 @@
                   <div class="d-flex align-items-center gap-2">
                     <button type="submit" class="btn btn-primary px-4" id="saveGeneralBtn">
                       <span class="spinner-border spinner-border-sm me-2 d-none" id="saveGeneralSpinner"></span>
-                      <i class="bi bi-check-lg me-1"></i>Save Changes
+                      <i class="bi bi-check-lg me-1"></i><span data-i18n="admin.settings.general.saveChanges">Save
+                        Changes</span>
                     </button>
                     <button type="reset" class="btn btn-outline-secondary">
-                      <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                      <i class="bi bi-arrow-counterclockwise me-1"></i><span
+                        data-i18n="admin.settings.general.reset">Reset</span>
                     </button>
                   </div>
                 </form>
@@ -175,22 +212,28 @@
           <div class="tab-pane fade" id="notifTab">
             <div class="card border-0 shadow-sm">
               <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-bell me-2 text-warning"></i>Notification Preferences</h6>
-                <small class="text-muted">Control which notifications are generated for system events.</small>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-bell me-2 text-warning"></i><span
+                    data-i18n="admin.settings.notif.title">Notification Preferences</span></h6>
+                <small class="text-muted"><span data-i18n="admin.settings.notif.desc">Control which notifications are
+                    generated for system events.</span></small>
               </div>
               <div class="card-body p-4">
                 <form id="notifSettingsForm">
                   <div class="settings-section mb-4">
                     <h6 class="settings-section-title fw-semibold text-muted text-uppercase small mb-3">
-                      <i class="bi bi-envelope me-1"></i>Event Notifications
+                      <i class="bi bi-envelope me-1"></i><span data-i18n="admin.settings.notif.eventNotifications">Event
+                        Notifications</span>
                     </h6>
 
                     <div class="list-group list-group-flush">
                       <!-- New Request -->
-                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                      <div
+                        class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
                         <div>
-                          <div class="fw-semibold">New Maintenance Request</div>
-                          <small class="text-muted">Notify when a new request is submitted</small>
+                          <div class="fw-semibold"><span data-i18n="admin.settings.notif.newMaintenanceRequest">New
+                              Maintenance Request</span></div>
+                          <small class="text-muted"><span data-i18n="admin.settings.notif.notifyOnNewRequest">Notify
+                              when a new request is submitted</span></small>
                         </div>
                         <div class="form-check form-switch mb-0">
                           <input class="form-check-input" type="checkbox" id="notifNewRequest" checked />
@@ -198,10 +241,13 @@
                       </div>
 
                       <!-- Assignment -->
-                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                      <div
+                        class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
                         <div>
-                          <div class="fw-semibold">Request Assignment</div>
-                          <small class="text-muted">Notify when a technician is assigned to a request</small>
+                          <div class="fw-semibold"><span data-i18n="admin.settings.notif.requestAssignment">Request
+                              Assignment</span></div>
+                          <small class="text-muted"><span data-i18n="admin.settings.notif.notifyOnAssignment">Notify
+                              when a technician is assigned to a request</span></small>
                         </div>
                         <div class="form-check form-switch mb-0">
                           <input class="form-check-input" type="checkbox" id="notifAssignment" checked />
@@ -209,10 +255,13 @@
                       </div>
 
                       <!-- Status Change -->
-                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                      <div
+                        class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
                         <div>
-                          <div class="fw-semibold">Status Change</div>
-                          <small class="text-muted">Notify when a request status changes</small>
+                          <div class="fw-semibold"><span data-i18n="admin.settings.notif.statusChange">Status
+                              Change</span></div>
+                          <small class="text-muted"><span data-i18n="admin.settings.notif.notifyOnStatusChange">Notify
+                              when a request status changes</span></small>
                         </div>
                         <div class="form-check form-switch mb-0">
                           <input class="form-check-input" type="checkbox" id="notifStatusChange" checked />
@@ -220,10 +269,13 @@
                       </div>
 
                       <!-- Completion -->
-                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                      <div
+                        class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
                         <div>
-                          <div class="fw-semibold">Maintenance Completion</div>
-                          <small class="text-muted">Notify when a request is resolved or closed</small>
+                          <div class="fw-semibold"><span
+                              data-i18n="admin.settings.notif.maintenanceCompletion">Maintenance Completion</span></div>
+                          <small class="text-muted"><span data-i18n="admin.settings.notif.notifyOnCompletion">Notify
+                              when a request is resolved or closed</span></small>
                         </div>
                         <div class="form-check form-switch mb-0">
                           <input class="form-check-input" type="checkbox" id="notifCompletion" checked />
@@ -231,10 +283,13 @@
                       </div>
 
                       <!-- System/Security -->
-                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                      <div
+                        class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
                         <div>
-                          <div class="fw-semibold">System &amp; Security Alerts</div>
-                          <small class="text-muted">Notify on account changes, security events, and system updates</small>
+                          <div class="fw-semibold"><span data-i18n="admin.settings.notif.systemSecurityAlerts">System
+                              &amp; Security Alerts</span></div>
+                          <small class="text-muted"><span data-i18n="admin.settings.notif.notifyOnSystemSecurity">Notify
+                              on account changes, security events, and system updates</span></small>
                         </div>
                         <div class="form-check form-switch mb-0">
                           <input class="form-check-input" type="checkbox" id="notifSystemSecurity" checked />
@@ -242,10 +297,13 @@
                       </div>
 
                       <!-- Email -->
-                      <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
+                      <div
+                        class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center settings-toggle-row">
                         <div>
-                          <div class="fw-semibold">Email Notifications</div>
-                          <small class="text-muted">Send email copies for system notifications (requires email server configuration)</small>
+                          <div class="fw-semibold"><span data-i18n="admin.settings.notif.emailNotifications">Email
+                              Notifications</span></div>
+                          <small class="text-muted"><span data-i18n="admin.settings.notif.emailNotificationsDesc">Send
+                              email copies for system notifications (requires email server configuration)</span></small>
                         </div>
                         <div class="form-check form-switch mb-0">
                           <input class="form-check-input" type="checkbox" id="emailNotifications" />
@@ -255,7 +313,10 @@
 
                     <div class="alert alert-info small mt-3 mb-0">
                       <i class="bi bi-info-circle me-1"></i>
-                      <strong>Note:</strong> Email notifications are currently UI-only. The backend generates in-app notifications for all events. Email delivery requires an external SMTP server configuration.
+                      <strong><span data-i18n="admin.settings.notif.emailNote">Note</span>:</strong> <span
+                        data-i18n="admin.settings.notif.emailNoteDesc">Email notifications are currently UI-only. The
+                        backend generates in-app notifications for all events. Email delivery requires an external SMTP
+                        server configuration.</span>
                     </div>
                   </div>
 
@@ -264,10 +325,12 @@
                   <div class="d-flex align-items-center gap-2">
                     <button type="submit" class="btn btn-primary px-4" id="saveNotifBtn">
                       <span class="spinner-border spinner-border-sm me-2 d-none" id="saveNotifSpinner"></span>
-                      <i class="bi bi-check-lg me-1"></i>Save Notification Preferences
+                      <i class="bi bi-check-lg me-1"></i><span data-i18n="admin.settings.notif.savePreferences">Save
+                        Notification Preferences</span>
                     </button>
                     <button type="reset" class="btn btn-outline-secondary">
-                      <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                      <i class="bi bi-arrow-counterclockwise me-1"></i><span
+                        data-i18n="admin.settings.general.reset">Reset</span>
                     </button>
                   </div>
                 </form>
@@ -282,39 +345,51 @@
             <!-- Change Password -->
             <div class="card border-0 shadow-sm mb-4">
               <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-key me-2 text-danger"></i>Change Password</h6>
-                <small class="text-muted">Update your account password. Choose a strong password.</small>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-key me-2 text-danger"></i><span
+                    data-i18n="admin.settings.changePassword">Change Password</span></h6>
+                <small class="text-muted"><span data-i18n="admin.settings.changePasswordSubtitle">Update your account
+                    password. Choose a strong password.</span></small>
               </div>
               <div class="card-body p-4">
                 <div id="passwordAlert" class="alert d-none" role="alert"></div>
                 <form id="changePasswordForm">
                   <div class="row g-3">
                     <div class="col-12">
-                      <label for="currentPassword" class="form-label fw-semibold">Current Password</label>
+                      <label for="currentPassword" class="form-label fw-semibold"><span
+                          data-i18n="admin.settings.security.currentPassword">Current Password</span></label>
                       <div class="input-group">
                         <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
-                        <input type="password" class="form-control" id="currentPassword" placeholder="Enter current password" required />
+                        <input type="password" class="form-control" id="currentPassword"
+                          data-i18n-placeholder="admin.settings.security.currentPassword.placeholder"
+                          placeholder="Enter current password" required />
                         <button class="btn btn-outline-secondary" type="button" data-toggle-password="currentPassword">
                           <i class="bi bi-eye"></i>
                         </button>
                       </div>
                     </div>
                     <div class="col-md-6">
-                      <label for="newPassword" class="form-label fw-semibold">New Password</label>
+                      <label for="newPassword" class="form-label fw-semibold"><span
+                          data-i18n="admin.settings.security.newPassword">New Password</span></label>
                       <div class="input-group">
                         <span class="input-group-text bg-light"><i class="bi bi-shield-lock"></i></span>
-                        <input type="password" class="form-control" id="newPassword" placeholder="Enter new password" required minlength="8" />
+                        <input type="password" class="form-control" id="newPassword"
+                          data-i18n-placeholder="admin.settings.security.newPassword.placeholder"
+                          placeholder="Enter new password" required minlength="8" />
                         <button class="btn btn-outline-secondary" type="button" data-toggle-password="newPassword">
                           <i class="bi bi-eye"></i>
                         </button>
                       </div>
-                      <div class="form-text">Minimum 8 characters. Use a mix of letters, numbers, and symbols.</div>
+                      <div class="form-text"><span data-i18n="admin.settings.security.newPassword.hint">Minimum 8
+                          characters. Use a mix of letters, numbers, and symbols.</span></div>
                     </div>
                     <div class="col-md-6">
-                      <label for="confirmPassword" class="form-label fw-semibold">Confirm New Password</label>
+                      <label for="confirmPassword" class="form-label fw-semibold"><span
+                          data-i18n="admin.settings.security.confirmPassword">Confirm New Password</span></label>
                       <div class="input-group">
                         <span class="input-group-text bg-light"><i class="bi bi-shield-check"></i></span>
-                        <input type="password" class="form-control" id="confirmPassword" placeholder="Re-enter new password" required minlength="8" />
+                        <input type="password" class="form-control" id="confirmPassword"
+                          data-i18n-placeholder="admin.settings.security.confirmPassword.placeholder"
+                          placeholder="Re-enter new password" required minlength="8" />
                         <button class="btn btn-outline-secondary" type="button" data-toggle-password="confirmPassword">
                           <i class="bi bi-eye"></i>
                         </button>
@@ -326,7 +401,8 @@
                   <div class="mt-4">
                     <button type="submit" class="btn btn-danger px-4" id="savePasswordBtn">
                       <span class="spinner-border spinner-border-sm me-2 d-none" id="savePasswordSpinner"></span>
-                      <i class="bi bi-shield-check me-1"></i>Update Password
+                      <i class="bi bi-shield-check me-1"></i><span
+                        data-i18n="admin.settings.security.updatePassword">Update Password</span>
                     </button>
                   </div>
                 </form>
@@ -336,39 +412,47 @@
             <!-- Account Security Info -->
             <div class="card border-0 shadow-sm">
               <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-shield-check me-2 text-success"></i>Account Security</h6>
-                <small class="text-muted">Read-only security information for your account.</small>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-shield-check me-2 text-success"></i><span
+                    data-i18n="admin.settings.security.accountSecurity">Account Security</span></h6>
+                <small class="text-muted"><span data-i18n="admin.settings.security.accountSecurityDesc">Read-only
+                    security information for your account.</span></small>
               </div>
               <div class="card-body p-4">
                 <div class="row g-3">
                   <div class="col-md-6">
                     <div class="security-info-item p-3 rounded bg-light">
-                      <div class="text-muted small mb-1">Account Status</div>
-                      <div class="fw-semibold" id="securityStatus">Active</div>
+                      <div class="text-muted small mb-1"><span data-i18n="admin.settings.security.accountStatus">Account
+                          Status</span></div>
+                      <div class="fw-semibold" id="securityStatus"><span
+                          data-i18n="admin.settings.security.status.active">Active</span></div>
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="security-info-item p-3 rounded bg-light">
-                      <div class="text-muted small mb-1">Account Role</div>
+                      <div class="text-muted small mb-1"><span data-i18n="admin.settings.security.accountRole">Account
+                          Role</span></div>
                       <div class="fw-semibold" id="securityRole">—</div>
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="security-info-item p-3 rounded bg-light">
-                      <div class="text-muted small mb-1">Last Login</div>
+                      <div class="text-muted small mb-1"><span data-i18n="admin.settings.security.lastLogin">Last
+                          Login</span></div>
                       <div class="fw-semibold" id="securityLastLogin">—</div>
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="security-info-item p-3 rounded bg-light">
-                      <div class="text-muted small mb-1">Member Since</div>
+                      <div class="text-muted small mb-1"><span data-i18n="admin.settings.security.memberSince">Member
+                          Since</span></div>
                       <div class="fw-semibold" id="securityMemberSince">—</div>
                     </div>
                   </div>
                 </div>
                 <div class="alert alert-info small mt-3 mb-0">
                   <i class="bi bi-info-circle me-1"></i>
-                  Session timeout, max login attempts, and password policy are enforced by the server. Contact the system administrator for policy changes.
+                  <span data-i18n="admin.settings.policyEnforced">Session timeout, max login attempts, and password
+                    policy are enforced by the server. Contact the system administrator for policy changes.</span>
                 </div>
               </div>
             </div>
@@ -380,8 +464,10 @@
           <div class="tab-pane fade" id="profileTab">
             <div class="card border-0 shadow-sm">
               <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-person-circle me-2 text-info"></i>My Profile</h6>
-                <small class="text-muted">View and update your personal information.</small>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-person-circle me-2 text-info"></i><span
+                    data-i18n="admin.settings.myProfile">My Profile</span></h6>
+                <small class="text-muted"><span data-i18n="admin.settings.profile.desc">View and update your personal
+                    information.</span></small>
               </div>
               <div class="card-body p-4">
                 <div id="profileAlert" class="alert d-none" role="alert"></div>
@@ -389,7 +475,8 @@
                 <!-- Profile Header -->
                 <div class="d-flex align-items-center gap-4 mb-4 pb-3 border-bottom">
                   <div class="profile-avatar-lg" id="profileAvatar" role="img" aria-label="Admin profile picture">
-                    <img id="profileAvatarImage" src="/assets/images/admin-profile.jpg" alt="Admin Profile" class="profile-avatar-image" hidden />
+                    <img id="profileAvatarImage" src="/assets/images/admin.jpg" alt="Admin Profile"
+                      class="profile-avatar-image" hidden />
                     <span id="profileAvatarInitials" class="profile-avatar-initials">A</span>
                   </div>
                   <div>
@@ -402,49 +489,66 @@
                 <form id="profileForm">
                   <div class="settings-section mb-4">
                     <h6 class="settings-section-title fw-semibold text-muted text-uppercase small mb-3">
-                      <i class="bi bi-person me-1"></i>Personal Information
+                      <i class="bi bi-person me-1"></i><span data-i18n="admin.settings.profile.personalInfo">Personal
+                        Information</span>
                     </h6>
                     <div class="row g-3">
                       <div class="col-md-6">
-                        <label for="profileName" class="form-label fw-semibold">Full Name</label>
+                        <label for="profileName" class="form-label fw-semibold"><span
+                            data-i18n="admin.settings.profile.fullName">Full Name</span></label>
                         <input type="text" class="form-control" id="profileName" required />
                       </div>
                       <div class="col-md-6">
-                        <label for="profileEmail" class="form-label fw-semibold">Email Address</label>
-                        <input type="email" class="form-control" id="profileEmail" readonly style="background:#f8f9fa;" />
-                        <div class="form-text">Email cannot be changed from this page.</div>
+                        <label for="profileEmail" class="form-label fw-semibold"><span
+                            data-i18n="admin.settings.profile.emailAddress">Email Address</span></label>
+                        <input type="email" class="form-control" id="profileEmail" readonly
+                          style="background:#f8f9fa;" />
+                        <div class="form-text"><span data-i18n="admin.settings.profile.emailHint">Email cannot be
+                            changed from this page.</span></div>
                       </div>
                       <div class="col-md-6">
-                        <label for="profilePhone" class="form-label fw-semibold">Phone Number</label>
-                        <input type="tel" class="form-control" id="profilePhone" placeholder="+254 7XX XXX XXX" />
+                        <label for="profilePhone" class="form-label fw-semibold"><span
+                            data-i18n="admin.settings.profile.phoneNumber">Phone Number</span></label>
+                        <input type="tel" class="form-control" id="profilePhone"
+                          placeholder="0912 345 678 (09 or 07)" />
                       </div>
                       <div class="col-md-6">
-                        <label for="profileDept" class="form-label fw-semibold">Department</label>
-                        <input type="text" class="form-control" id="profileDept" placeholder="e.g. System Administration" />
+                        <label for="profileDept" class="form-label fw-semibold"><span
+                            data-i18n="admin.settings.profile.department">Department</span></label>
+                        <input type="text" class="form-control" id="profileDept"
+                          placeholder="e.g. System Administration" />
                       </div>
                     </div>
                   </div>
 
                   <div class="settings-section mb-4">
                     <h6 class="settings-section-title fw-semibold text-muted text-uppercase small mb-3">
-                      <i class="bi bi-person-bounding-box me-1"></i>Profile Photo
+                      <i class="bi bi-person-bounding-box me-1"></i><span
+                        data-i18n="admin.settings.profile.photo">Profile Photo</span>
                     </h6>
                     <div class="row g-3">
                       <div class="col-md-7">
-                        <label for="profilePhotoUpload" class="form-label fw-semibold">Upload Photo</label>
-                        <input type="file" class="form-control" id="profilePhotoUpload" accept="image/png,image/jpeg,image/jpg,image/webp" />
-                        <div class="form-text">Recommended square image, 1.5 MB max. Stored privately in your browser.</div>
+                        <label for="profilePhotoUpload" class="form-label fw-semibold"><span
+                            data-i18n="admin.settings.profile.uploadPhoto">Upload Photo</span></label>
+                        <input type="file" class="form-control" id="profilePhotoUpload"
+                          accept="image/png,image/jpeg,image/jpg,image/webp" />
+                        <div class="form-text"><span data-i18n="admin.settings.profile.uploadHint">Recommended square
+                            image, 1.5 MB max. Stored privately in your browser.</span></div>
                       </div>
                       <div class="col-md-5">
                         <label for="profileImageUrl" class="form-label fw-semibold">Image URL (optional)</label>
-                        <input type="url" class="form-control" id="profileImageUrl" placeholder="https://example.com/photo.jpg" />
-                        <div class="form-text">Used only when no photo is uploaded.</div>
+                        <input type="url" class="form-control" id="profileImageUrl"
+                          placeholder="https://example.com/photo.jpg" />
+                        <div class="form-text"><span data-i18n="admin.settings.profile.imageUrl.hint">Used only when no
+                            photo is uploaded.</span></div>
                       </div>
                       <div class="col-12 d-flex flex-wrap align-items-center gap-2">
                         <button type="button" class="btn btn-outline-danger btn-sm" id="removeProfilePhotoBtn">
-                          <i class="bi bi-image me-1"></i>Remove Custom Photo
+                          <i class="bi bi-image me-1"></i><span
+                            data-i18n="admin.settings.profile.removeCustomPhoto">Remove Custom Photo</span>
                         </button>
-                        <span class="text-muted small">Falls back to the default ADMIN image when no custom photo is set.</span>
+                        <span class="text-muted small"><span data-i18n="admin.settings.profile.fallbackHint">Falls back
+                            to the default ADMIN image when no custom photo is set.</span></span>
                       </div>
                     </div>
                   </div>
@@ -454,10 +558,12 @@
                   <div class="d-flex align-items-center gap-2">
                     <button type="submit" class="btn btn-primary px-4" id="saveProfileBtn">
                       <span class="spinner-border spinner-border-sm me-2 d-none" id="saveProfileSpinner"></span>
-                      <i class="bi bi-check-lg me-1"></i>Save Profile
+                      <i class="bi bi-check-lg me-1"></i><span data-i18n="admin.settings.profile.saveProfile">Save
+                        Profile</span>
                     </button>
                     <button type="reset" class="btn btn-outline-secondary">
-                      <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                      <i class="bi bi-arrow-counterclockwise me-1"></i><span
+                        data-i18n="admin.settings.general.reset">Reset</span>
                     </button>
                   </div>
                 </form>
@@ -470,10 +576,12 @@
     </div>
   </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/assets/js/validation.js?v=6"></script>
-<script src="/assets/js/main.js?v=6"></script>
-<script src="/assets/js/settings.js?v=6"></script>
-<script src="/assets/js/theme.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/validation.js?v=6"></script>
+  <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/main.js?v=6"></script>
+  <script src="/assets/js/settings.js?v=6"></script>
+  <script src="/assets/js/theme.js"></script>
 </body>
+
 </html>
