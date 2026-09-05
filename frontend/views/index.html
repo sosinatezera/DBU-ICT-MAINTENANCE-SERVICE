@@ -433,47 +433,91 @@
       overflow: hidden;
     }
 
-    /* Hero slides - continuous right-to-left loop */
-    .hero-slide {
+    /* Hero slides — professional sliding carousel (home1 → home6).
+       The track holds every slide in a row; the JS advances the track with a
+       transform: translateX() so images physically slide right → left in a
+       continuous loop (home6 slides back to home1 via a clone of slide 1). */
+    .hero-slider {
       position: absolute;
-      top: 0;
-      left: 0;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .hero-slide-track {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      will-change: transform;
+      transition: transform 1s ease-in-out;
+    }
+    .hero-slide-track.no-animation {
+      transition: none;
+    }
+    .hero-slide {
+      flex: 0 0 100%;
       width: 100%;
       height: 100%;
       background-size: cover;
       background-position: center center;
+      will-change: transform;
+      pointer-events: none;
+    }
+    .hero-slide-1 { background-image: url('/assets/images/home1.png'); }
+    .hero-slide-2 { background-image: url('/assets/images/home2.png'); }
+    .hero-slide-3 { background-image: url('/assets/images/home3.png'); }
+    .hero-slide-4 { background-image: url('/assets/images/home4.png'); }
+    .hero-slide-5 { background-image: url('/assets/images/home5.png'); }
+    .hero-slide-6 { background-image: url('/assets/images/home6.png'); }
+
+    /* Subtle overlay between the photos and the copy so text stays readable */
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
       z-index: 0;
-      will-change: transform, opacity;
-    }
-    .hero-slide-1 {
-      background-image: url('/assets/images/home1.png');
-      animation: slideRTL 25s linear infinite;
-    }
-    .hero-slide-2 {
-      background-image: url('/assets/images/home3.png');
-      animation: slideRTL 25s linear infinite;
-      animation-delay: 12.5s; /* half cycle delay for continuous flow */
+      background: linear-gradient(180deg, rgba(2, 6, 23, 0.55) 0%, rgba(2, 6, 23, 0.40) 45%, rgba(2, 6, 23, 0.55) 100%);
+      pointer-events: none;
     }
 
-    @keyframes slideRTL {
-      0%   { transform: translateX(100%); opacity: 0; }
-      10%  { transform: translateX(80%); opacity: 0.15; }
-      50%  { transform: translateX(0); opacity: 0.15; }
-      90%  { transform: translateX(-80%); opacity: 0.15; }
-      100% { transform: translateX(-100%); opacity: 0; }
+    /* Pagination dots */
+    .hero-dots {
+      position: absolute;
+      bottom: 1.25rem;
+      left: 0;
+      right: 0;
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .hero-dots button {
+      width: 10px;
+      height: 10px;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(15, 23, 42, 0.5);
+      background: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      transition: background .3s ease, transform .3s ease, border-color .3s ease;
+      pointer-events: auto;
+    }
+    html[data-theme="dark"] .hero-dots button {
+      border-color: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.28);
+    }
+    .hero-dots button.is-active {
+      background: #22d3ee;
+      border-color: #22d3ee;
+      transform: scale(1.25);
     }
 
-    /* Pause on hover for accessibility */
-    .hero-section:hover .hero-slide {
-      animation-play-state: paused;
-    }
-
-    /* Reduced motion */
+    /* Reduced motion: show the first slide statically, no sliding */
     @media (prefers-reduced-motion: reduce) {
+      .hero-slide-track {
+        transition: none;
+      }
       .hero-slide {
-        animation: none;
-        transform: translateX(0);
-        opacity: 0.15;
+        opacity: 1;
       }
     }
 
@@ -1193,15 +1237,14 @@
       color: var(--home-text-muted) !important;
     }
 
-    /* ── Hero (blue-neon workstation background kept) ── */
+    /* ── Hero: keep gradient tint behind the slideshow for readability ── */
     html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .hero-section,
     body:not(.dashboard-body):not(.auth-body) .hero-section {
       background:
         radial-gradient(ellipse 80% 60% at 50% 40%, transparent 40%, rgba(2, 6, 23, 0.85) 100%),
         radial-gradient(ellipse 60% 50% at 50% 45%, rgba(6, 182, 212, 0.06) 0%, transparent 70%),
-        linear-gradient(180deg, rgba(2, 6, 23, 0.72) 0%, rgba(2, 6, 23, 0.45) 45%, rgba(2, 6, 23, 0.55) 70%, rgba(2, 6, 23, 0.85) 100%),
-        url('/assets/images/home1.png') center / cover no-repeat !important;
-      background-blend-mode: overlay, screen, multiply, normal !important;
+        linear-gradient(180deg, rgba(2, 6, 23, 0.72) 0%, rgba(2, 6, 23, 0.45) 45%, rgba(2, 6, 23, 0.55) 70%, rgba(2, 6, 23, 0.85) 100%);
+      background-blend-mode: overlay, screen, multiply !important;
     }
 
     html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .hero-section::before,
@@ -1663,8 +1706,17 @@
 
   <!-- ===== HOME - HERO ===== -->
   <section class="hero-section text-white" id="home">
-    <div class="hero-slide hero-slide-1"></div>
-    <div class="hero-slide hero-slide-2"></div>
+    <div class="hero-slider" id="heroSlider">
+      <div class="hero-slide-track" id="heroTrack">
+        <div class="hero-slide hero-slide-1" role="img" aria-label="Hero image 1"></div>
+        <div class="hero-slide hero-slide-2" role="img" aria-label="Hero image 2"></div>
+        <div class="hero-slide hero-slide-3" role="img" aria-label="Hero image 3"></div>
+        <div class="hero-slide hero-slide-4" role="img" aria-label="Hero image 4"></div>
+        <div class="hero-slide hero-slide-5" role="img" aria-label="Hero image 5"></div>
+        <div class="hero-slide hero-slide-6" role="img" aria-label="Hero image 6"></div>
+      </div>
+    </div>
+    <div class="hero-overlay"></div>
     <div class="container position-relative" style="z-index:1;">
       <div class="row align-items-center g-5">
         <div class="col-lg-6">
@@ -1719,6 +1771,7 @@
         </div>
       </div>
     </div>
+    <div class="hero-dots" id="heroDots" aria-label="Hero slideshow navigation"></div>
   </section>
 
   <!-- ===== STATS BAR ===== -->
@@ -2560,6 +2613,161 @@
     {
       window.scrollTo( { top: 0, behavior: 'smooth' } );
     } );
+
+    /* ===== Hero sliding carousel (home1 → home6, ~4s per slide) ===== */
+    ( function initHeroSlideshow ()
+    {
+      const track = document.getElementById( 'heroTrack' );
+      const dotsWrap = document.getElementById( 'heroDots' );
+      if ( !track || !track.children.length ) return;
+
+      const slides = Array.prototype.slice.call( track.children );
+      const COUNT = slides.length;           /* 6 original slides */
+      const CLONE_INDEX = COUNT;             /* cloned slide 1 sits at index 6 */
+      const reduceMotion = window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+      const INTERVAL = 4000;                 /* pause between slides */
+      const DURATION = 1000;                 /* must match .hero-slide-track transition */
+
+      let current = 0;                       /* logical slide shown in [0..COUNT-1] */
+      let slot = 0;                          /* track index the transform points to */
+      let animating = false;                 /* true while a transform transition runs */
+      let timer = null;
+      let settleTimer = null;                /* safety net if transitionend is suppressed */
+
+      /* --- Preload all backgrounds so the first loop never flashes --- */
+      slides.forEach( slide =>
+      {
+        const bg = window.getComputedStyle( slide ).backgroundImage;
+        if ( !bg || bg === 'none' ) return;
+        const url = bg.replace( /^url\(["']?/, '' ).replace( /["']?\)$/, '' );
+        const img = new Image();
+        img.src = url;
+      } );
+
+      /* --- Clone slide 1 at the end for a seamless home6 → home1 loop --- */
+      const clone = slides[ 0 ].cloneNode( true );
+      clone.setAttribute( 'aria-hidden', 'true' );
+      track.appendChild( clone );
+
+      /* --- Build pagination dots (one per slide) --- */
+      slides.forEach( ( _, i ) =>
+      {
+        const dot = document.createElement( 'button' );
+        dot.type = 'button';
+        dot.className = 'hero-dot' + ( i === 0 ? ' is-active' : '' );
+        dot.setAttribute( 'aria-label', 'Go to slide ' + ( i + 1 ) );
+        dot.setAttribute( 'aria-pressed', i === 0 ? 'true' : 'false' );
+        dot.addEventListener( 'click', () =>
+        {
+          slideTo( i );
+          restartTimer(); /* continue auto-advance after manual selection */
+        } );
+        dotsWrap?.appendChild( dot );
+      } );
+
+      /* --- Slide the track to a given track index (calls translateX) --- */
+      function slideTo ( index )
+      {
+        slot = index;
+        track.style.transform = 'translateX(' + ( -index * 100 ) + '%)';
+        if ( index < COUNT )
+        {
+          current = index;
+          updateDots( index );
+        }
+        animating = true;
+        if ( settleTimer ) clearTimeout( settleTimer );
+        settleTimer = setTimeout( () =>
+        {
+          animating = false;
+          snapBack();
+        }, DURATION + 200 );
+      }
+
+      /* --- Snap back to the real slide 1 after reaching the clone --- */
+      function snapBack ()
+      {
+        if ( slot === CLONE_INDEX )
+        {
+          track.classList.add( 'no-animation' );
+          slot = 0;
+          current = 0;
+          track.style.transform = 'translateX(0%)';
+          void track.offsetWidth; /* force reflow before re-enabling transition */
+          track.classList.remove( 'no-animation' );
+          updateDots( 0 );
+        }
+      }
+
+      /* --- Advance one step; loop wraps home6 → home1 through the clone --- */
+      function advance ()
+      {
+        if ( reduceMotion || animating ) return;
+        snapBack();
+        slideTo( current + 1 );
+      }
+
+      /* --- Rotate dot active state --- */
+      function updateDots ( index )
+      {
+        if ( !dotsWrap ) return;
+        const dots = dotsWrap.children;
+        for ( let i = 0; i < dots.length; i++ )
+        {
+          const on = i === index;
+          dots[ i ].classList.toggle( 'is-active', on );
+          dots[ i ].setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+        }
+      }
+
+      /* --- Transition finished --- */
+      track.addEventListener( 'transitionend', evt =>
+      {
+        if ( evt.propertyName !== 'transform' ) return;
+        animating = false;
+        if ( settleTimer ) { clearTimeout( settleTimer ); settleTimer = null; }
+        snapBack();
+      } );
+
+      function restartTimer ()
+      {
+        if ( timer ) clearInterval( timer );
+        if ( !reduceMotion )
+        {
+          timer = setInterval( advance, INTERVAL );
+        }
+      }
+
+      function pauseTimer ()
+      {
+        if ( timer ) { clearInterval( timer ); timer = null; }
+      }
+
+      const hero = document.querySelector( '.hero-section' );
+
+      /* Pause when hovered or when scrolled out of view; resume otherwise */
+      if ( hero )
+      {
+        hero.addEventListener( 'mouseenter', pauseTimer );
+        hero.addEventListener( 'mouseleave', restartTimer );
+        new IntersectionObserver( entries =>
+        {
+          if ( !entries[ 0 ].isIntersecting ) pauseTimer();
+          else restartTimer();
+        }, { rootMargin: '0px 0px -10% 0px' } ).observe( hero );
+      }
+
+      /* Pause the auto-animation while the tab is hidden; resume on return */
+      document.addEventListener( 'visibilitychange', () =>
+      {
+        if ( document.hidden ) pauseTimer();
+        else restartTimer();
+      } );
+
+      /* Make sure the hero always paints from slide 1 on first paint */
+      slideTo( 0 );
+      restartTimer();
+    } )();
 
     /* ===== Live stats from public API =====
        API base is provided by the shared api-config.js loaded in <head>. */

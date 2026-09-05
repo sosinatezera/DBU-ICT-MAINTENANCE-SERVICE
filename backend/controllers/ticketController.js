@@ -139,14 +139,14 @@ const getTicketById = async (req, res, next) => {
         const tech = await Technician.findOne({ user: req.user.id });
         const ticketAssignedToUser = ticket.assignedTechnician &&
           String(ticket.assignedTechnician._id || ticket.assignedTechnician) === String(req.user.id);
-        const activeAssignment = tech
+        const hasAssignment = tech
           ? await Assignment.exists({
               ticket: ticket._id,
               technician: tech._id,
-              status: { $in: ['assigned', 'accepted', 'in_progress'] },
+              status: { $in: ['assigned', 'accepted', 'in_progress', 'completed'] },
             })
           : false;
-        if (!ticketAssignedToUser && !activeAssignment) {
+        if (!ticketAssignedToUser && !hasAssignment) {
           return res.status(403).json({ success: false, message: 'You can only view tickets assigned to you.' });
         }
       } else {
@@ -179,6 +179,14 @@ const createTicket = async (req, res, next) => {
 
     const eqErr = validateEnum(req.body.equipmentType, VALID_EQUIPMENT, 'equipment type');
     if (eqErr) return res.status(400).json({ success: false, message: eqErr });
+
+    /* Validate location — required */
+    const locErr = validateRequired(req.body.location, 'Location');
+    if (locErr) return res.status(422).json({ success: false, message: locErr });
+
+    const location = sanitizeString(req.body.location);
+    const locLenErr = validateLength(location, 'Location', { min: 2, max: 200 });
+    if (locLenErr) return res.status(400).json({ success: false, message: locLenErr });
 
     /* Validate category — required and must be in approved list */
     const catErr = validateRequired(req.body.category, 'Request category');
@@ -219,6 +227,7 @@ const createTicket = async (req, res, next) => {
       title:              req.body.title       || null,
       equipmentType:      req.body.equipmentType  || 'Other',
       category:           req.body.category    || null,
+      location:           location,
       assetId:            assetId,
       serialNumber:       req.body.serialNumber   || null,
       officeBlock:        req.body.officeBlock    || null,
@@ -306,7 +315,7 @@ const updateTicket = async (req, res, next) => {
 
     const {
       department, phone, serialNumber, officeBlock,
-      problemDescription, assignedTechnician,
+      problemDescription, assignedTechnician, location,
       identifiedProblem, resolutionResponse, isFixed, reasonIfNotFixed,
     } = req.body;
 
@@ -314,7 +323,7 @@ const updateTicket = async (req, res, next) => {
       req.params.id,
       {
         department, phone, equipmentType, serialNumber, officeBlock,
-        problemDescription, priority, assignedTechnician,
+        problemDescription, priority, assignedTechnician, location,
         identifiedProblem, resolutionResponse, isFixed, reasonIfNotFixed,
       },
       { new: true, runValidators: true }
@@ -583,21 +592,24 @@ function applyFeedbackToTicket(ticket, report) {
 }
 
 /* ── Ownership guard: is the current user's tech assigned to ticket? ──
-   Reused by submit / edit. Admin is always allowed. */
+   Reused by submit / edit / view. Admin is always allowed.
+   Includes 'completed' because a technician must be able to view and edit
+   reports for tickets they were assigned to, even after the ticket is
+   resolved and the assignment status transitions to 'completed'. */
 async function canSubmitFeedback(req, ticket) {
   if (req.user.role === 'ICT Admin') return true;
   if (req.user.role !== 'Technician') return false;
 
   const tech = await Technician.findOne({ user: req.user.id });
-  const activeAssignment = tech
+  const hasAssignment = tech
     ? await Assignment.exists({
         ticket: ticket._id,
         technician: tech._id,
-        status: { $in: ['assigned', 'accepted', 'in_progress'] },
+        status: { $in: ['assigned', 'accepted', 'in_progress', 'completed'] },
       })
     : false;
   const isAssigned =
-    activeAssignment ||
+    hasAssignment ||
     (ticket.assignedTechnician && String(ticket.assignedTechnician) === String(req.user.id));
   return isAssigned;
 }
@@ -746,7 +758,7 @@ const getTechnicianFeedback = async (req, res, next) => {
     const idErr = validateObjectId(req.params.id, 'Ticket');
     if (idErr) return res.status(400).json({ success: false, message: idErr });
 
-    const ticket = await Ticket.findById(req.params.id).select('technicianFeedback _id');
+    const ticket = await Ticket.findById(req.params.id).select('technicianFeedback _id assignedTechnician');
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found.' });
 
     const report = ticket.technicianFeedback;
@@ -1104,6 +1116,7 @@ function formatTicket(t, viewerRole = 'ICT Admin', viewerId = null) {
     title:               t.title,
     equipmentType:       t.equipmentType,
     category:            t.category,
+    location:            t.location || 'Not provided',
     assetId:             t.assetId?._id || t.assetId || null,
     asset_tag:           t.assetId?.asset_tag || null,
     asset_name:          t.assetId?.asset_name || null,

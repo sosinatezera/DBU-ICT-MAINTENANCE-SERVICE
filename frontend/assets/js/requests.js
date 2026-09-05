@@ -330,6 +330,7 @@ async function initSubmitRequest() {
   attachRealTimeValidation('requestForm', [
     { fieldId: 'requesterName', checks: [v => Validators.name(v, 'Full name')] },
     { fieldId: 'title', checks: [v => Validators.length(v, 'Title', 5, 200)] },
+    { fieldId: 'requestLocation', checks: [v => Validators.required(v, 'Location'), v => Validators.length(v, 'Location', 2, 200)] },
     { fieldId: 'description', checks: [v => Validators.length(v, 'Description', 20, 1000)] },
     { fieldId: 'requesterPhone', checks: [Validators.phone] },
   ]);
@@ -415,6 +416,7 @@ async function initSubmitRequest() {
     fd.append('priority',           document.getElementById('priority').value);
     fd.append('phone',              document.getElementById('requesterPhone').value.trim());
     fd.append('category',           catValue);
+    fd.append('location',           document.getElementById('requestLocation').value.trim());
 
     /* Append asset selection */
     const assetValue = document.getElementById('asset')?.value;
@@ -507,6 +509,10 @@ function validateRequestFormFields() {
 
   const titleErr = Validators.length(document.getElementById('title')?.value, 'Title', 5, 200);
   if (titleErr) { showFieldError('title', titleErr); hasError = true; } else { showFieldValid('title'); }
+
+  const locationVal = document.getElementById('requestLocation')?.value;
+  const locationErr = Validators.required(locationVal, 'Location') || Validators.length(locationVal, 'Location', 2, 200);
+  if (locationErr) { showFieldError('requestLocation', locationErr); hasError = true; } else { showFieldValid('requestLocation'); }
 
   const deviceType = document.querySelector('input[name="deviceType"]:checked')?.value;
   const devErr     = document.getElementById('deviceTypeError');
@@ -617,6 +623,7 @@ function showPreview() {
   const name    = document.getElementById('requesterName')?.value || '—';
   const phone   = document.getElementById('requesterPhone')?.value || '—';
   const title   = document.getElementById('title')?.value || '—';
+  const loc     = document.getElementById('requestLocation')?.value || '—';
   const catEl   = document.getElementById('category');
   const cat     = catEl?.value || '—';
   const pri     = document.getElementById('priority')?.value || '—';
@@ -643,6 +650,7 @@ function showPreview() {
     <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">Priority</div>
       <span class="badge bg-${priC} text-capitalize">${pri}</span></div>
     <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">Category</div><div>${escHtml(cat)}</div></div>
+    <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1"><i class="bi bi-geo-alt me-1"></i>Location</div><div class="fw-semibold">${escHtml(loc)}</div></div>
     <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">ICT Asset</div><div>${escHtml(asset)}</div></div>
     <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">Attachment</div>
       <div class="small text-truncate" title="${escHtml(attach)}"><i class="bi bi-paperclip me-1"></i>${escHtml(attach)}</div></div>
@@ -841,6 +849,7 @@ function renderTrackingCards(list) {
           </div>
           <h6 class="fw-semibold mb-1" title="${escHtml(r.problemDescription)}">${escHtml(heading)}</h6>
           <div class="small text-muted mb-2">${escHtml(r.equipmentType || 'Uncategorised')}${r.category ? ' · ' + escHtml(r.category) : ''}</div>
+          <div class="small text-muted mb-2"><i class="bi bi-geo-alt me-1"></i>${escHtml(r.location || 'Not provided')}</div>
           <div class="mb-2">${statusBadge(r.status)}</div>
           <div class="mt-auto pt-3 small text-muted">
             <div><i class="bi bi-calendar3 me-1"></i>Submitted ${formatDateTime(r.created_at)}</div>
@@ -868,13 +877,28 @@ function renderTrackingError(err) {
   const countEl = document.getElementById('trackingCount');
   if (countEl) countEl.textContent = '—';
 
+  /* Give users an accurate headline based on the real failure type instead of
+     always claiming the server is unreachable:
+       - err.network   → genuine network/connection failure
+       - err.status    → real HTTP error from the backend (401/403/404/422/500)
+       - otherwise     → timeout or unexpected error */
+  const isNetwork = !!err.network;
+  const isHttp    = typeof err.status === 'number';
+  const icon      = isNetwork ? 'bi-cloud-slash' : (isHttp ? 'bi-exclamation-triangle' : 'bi-hourglass-split');
+  const headline  = isNetwork
+    ? 'Unable to reach the server.'
+    : (isHttp ? `Request failed (${err.status}).` : 'The request did not complete.');
+  const subtitle  = isNetwork
+    ? 'The server could not be reached right now. Your requests are safe — check the connection and try again.'
+    : (isHttp ? 'The server responded with an error. Your requests are unchanged.' : 'The request timed out or did not complete. Please try again.');
+
   container.innerHTML = `
     <div class="col-12">
       <div class="card border-0 shadow-sm text-center py-5">
         <div class="card-body">
-          <i class="bi bi-cloud-slash fs-1 text-danger d-block mb-3"></i>
+          <i class="bi ${icon} fs-1 text-danger d-block mb-3"></i>
           <h6 class="fw-bold text-danger mb-1">Unable to load your requests.</h6>
-          <p class="text-muted mb-1">The server could not be reached right now. Your requests are safe — try again.</p>
+          <p class="text-muted mb-1">${escHtml(subtitle)}</p>
           <p class="small text-muted mb-3"><span class="text-danger">Reason:</span> ${escHtml(err.message)}</p>
           <button class="btn btn-primary" id="retryTrackingBtn">
             <i class="bi bi-arrow-clockwise me-1"></i>Try Again
@@ -923,6 +947,7 @@ async function openDetailModal(id) {
               <div class="mb-2"><div class="text-muted small mb-1">Priority</div>${priorityBadge(r.priority)}</div>
               <div class="mb-2"><div class="text-muted small mb-1">Equipment</div><span class="small">${escHtml(r.equipmentType||'—')}</span></div>
               <div class="mb-2"><div class="text-muted small mb-1">Category</div><span class="small">${escHtml(r.category||'—')}</span></div>
+              <div class="mb-2"><div class="text-muted small mb-1"><i class="bi bi-geo-alt me-1"></i>Location</div><span class="small fw-semibold">${escHtml(r.location||'Not provided')}</span></div>
               ${r.asset_tag ? `<div class="mb-2"><div class="text-muted small mb-1">ICT Asset</div><span class="small fw-semibold"><i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ''}</span></div>` : ''}
               ${r.attachment ? `<div class="mb-2"><div class="text-muted small mb-1">Attachment</div><a class="small" href="${escHtml(uploadUrl(r.attachment))}" target="_blank" rel="noopener"><i class="bi bi-paperclip me-1"></i>View attachment</a></div>` : ''}
               <div class="mb-2"><div class="text-muted small mb-1">Submitted</div><span class="small">${formatDateTime(r.created_at)}</span></div>
@@ -1676,7 +1701,7 @@ function renderAdminTable(requests) {
   const tbody = document.getElementById('requestsTableBody');
   if (!tbody) return;
   if (!requests.length) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="text-center py-5">
+    tbody.innerHTML = `<tr><td colspan="10"><div class="text-center py-5">
       <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i><p class="text-muted">No requests found.</p>
     </div></td></tr>`;
     return;
@@ -1687,6 +1712,7 @@ function renderAdminTable(requests) {
       <td class="text-truncate" style="max-width:160px;">${escHtml(r.problemDescription)}</td>
       <td>${escHtml(r.requester_name||'—')}</td>
       <td><span class="badge bg-light text-dark border">${escHtml(r.department||'—')}</span></td>
+      <td><span class="small"><i class="bi bi-geo-alt me-1 text-muted"></i>${escHtml(r.location||'—')}</span></td>
       <td>${escHtml(r.equipmentType||'—')}</td>
       <td>${priorityBadge(r.priority)}</td>
       <td>${statusBadge(r.status)}</td>
@@ -1722,6 +1748,7 @@ async function openAdminRequestModal(id) {
           <div class="col-6"><div class="text-muted small mb-1">Equipment</div><span class="small">${escHtml(r.equipmentType||'—')}</span></div>
           <div class="col-6"><div class="text-muted small mb-1">ICT Asset</div><span class="small">${r.asset_tag ? escHtml(r.asset_tag) + (r.asset_name ? ` — ${escHtml(r.asset_name)}` : '') : '—'}</span></div>
           <div class="col-6"><div class="text-muted small mb-1">Department</div><span class="small">${escHtml(r.department||'—')}</span></div>
+          <div class="col-6"><div class="text-muted small mb-1"><i class="bi bi-geo-alt me-1"></i>Location</div><span class="small fw-semibold">${escHtml(r.location||'Not provided')}</span></div>
           <div class="col-12"><div class="text-muted small mb-1">Submitted</div><span class="small">${formatDateTime(r.created_at)}</span></div>
           <div class="col-12"><div class="text-muted small mb-1">Description</div>
             <div class="p-2 bg-light rounded small" style="white-space:pre-wrap;max-height:80px;overflow-y:auto;">${escHtml(r.problemDescription)}</div>

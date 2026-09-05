@@ -4,9 +4,13 @@
    ============================================================ */
 
 /* API base is provided by the shared api-config.js (safe for all pages).
-   Fallback keeps main.js self-sufficient if the config was not included. */
+   Fallback keeps main.js self-sufficient if the config was not included.
+   NOTE: using `var` (not `const`) so the fallback binding is function/global
+   scoped and actually visible to apiRequest() below. A block-scoped `const`
+   here would leave API_BASE undefined and cause a ReferenceError that was
+   previously mis-reported as a network failure. */
 if (typeof API_BASE === 'undefined') {
-  const API_BASE = 'http://localhost:5000/api';
+  var API_BASE = 'http://localhost:5000/api';
 }
 
 /* ── Auth Helpers ─────────────────────────────────────────── */
@@ -45,16 +49,29 @@ async function apiRequest(endpoint, { method = 'GET', body = null, isFormData = 
     res = await fetch(`${API_BASE}${endpoint}`, opts);
   } catch (err) {
     clearTimeout(timer);
-    showOfflineBanner();
+    /* A genuine network-layer failure: the browser could not reach the server
+       at all (DNS, connection refused, CORS preflight failure, or a malformed
+       URL). Only show the offline banner here — NOT for real HTTP error
+       responses, which are handled below with their exact status. */
+    if (err && typeof err.status === 'number') {
+      throw err;
+    }
     if (err && err.name === 'AbortError') {
       throw new Error('Request timed out. The server did not respond. Please retry.');
     }
-    throw new Error('Cannot reach server. Is the backend running on port 5000?');
+    showOfflineBanner();
+    const e = new Error('Cannot reach server.');
+    e.network = true;
+    throw e;
   }
   clearTimeout(timer);
 
   hideOfflineBanner();
-  const data = await res.json().catch(() => ({}));
+
+  /* Parse the body defensively — some endpoints may return non-JSON. */
+  const text = await res.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
 
   if (res.status === 401) {
     Auth.clear();
@@ -70,7 +87,13 @@ async function apiRequest(endpoint, { method = 'GET', body = null, isFormData = 
   }
 
   if (!res.ok) {
-    const e = new Error(data.message || `Error ${res.status}`);
+    const friendly = {
+      403: 'You do not have permission to perform this action.',
+      404: `Endpoint not found: ${endpoint}`,
+      422: data.message || 'The submitted data is invalid.',
+      500: data.message || 'A server error occurred. Please try again.',
+    };
+    const e = new Error(data.message || friendly[res.status] || `Error ${res.status}`);
     e.status = res.status;
     e.data = data;
     throw e;
