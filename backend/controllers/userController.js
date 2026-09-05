@@ -7,6 +7,7 @@ const bcrypt     = require('bcryptjs');
 const mongoose   = require('mongoose');
 const User       = require('../models/User');
 const Technician = require('../models/Technician');
+const Assignment = require('../models/Assignment');
 const path       = require('path');
 const fs         = require('fs');
 const {
@@ -238,6 +239,56 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+/* ── DELETE /api/users/:id/permanent — HARD delete (admin only) ──
+   Truly removes the user document (and any linked Technician profile) from
+   MongoDB. Refuses to permanently delete the currently logged-in admin (they
+   would lock themselves out) and refuses technicians who still have active
+   assigned requests, so in-flight work is never orphaned. This is separate
+   from the soft-delete endpoint above and never changes status fields. */
+const permanentDeleteUser = async (req, res, next) => {
+  try {
+    const idErr = validateObjectId(req.params.id, 'User');
+    if (idErr) return res.status(400).json({ success: false, message: idErr });
+
+    const id = req.params.id;
+
+    /* Never allow an admin to permanently delete their own active account. */
+    if (String(id) === String(req.user.id)) {
+      return res.status(400).json({ success: false, message: 'You cannot permanently delete your own account.' });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    /* Technicians: remove the linked Technician profile too, but only when no
+       active assignments exist (mirrors the existing tech-deactivation guard). */
+    if (user.role === 'Technician') {
+      const tech = await Technician.findOne({ user: id });
+      if (tech) {
+        const active = await Assignment.countDocuments({
+          technician: tech._id,
+          status: { $in: ['assigned', 'accepted', 'in_progress'] },
+        });
+        if (active > 0) {
+          return res.status(409).json({
+            success: false,
+            message: 'Cannot permanently delete this technician — they still have active assigned requests. Reassign or complete them first.',
+          });
+        }
+        await Technician.deleteOne({ _id: tech._id });
+      }
+    }
+
+    await User.findByIdAndDelete(id);
+
+    res.json({ success: true, message: `User "${user.fullName}" permanently deleted.` });
+  } catch (err) {
+    next(err);
+  }
+};
+
 /* ── PUT /api/users/:id/password — admin resets password ──── */
 const changePassword = async (req, res, next) => {
   try {
@@ -451,4 +502,4 @@ const removeProfileImage = async (req, res, next) => {
   }
 };
 
-module.exports = { getAllUsers, getUserById, createUser, updateUser, deleteUser, changePassword, updateMyProfile, changeMyPassword, uploadProfileImage, removeProfileImage, deleteMyAccount };
+module.exports = { getAllUsers, getUserById, createUser, updateUser, deleteUser, permanentDeleteUser, changePassword, updateMyProfile, changeMyPassword, uploadProfileImage, removeProfileImage, deleteMyAccount };

@@ -2771,6 +2771,19 @@ async function initUserManagement() {
   });
   document.getElementById('confirmDeleteUserBtn')?.addEventListener('click', doDeleteUser);
   document.getElementById('confirmChangeRoleBtn')?.addEventListener('click', doChangeRole);
+  document.getElementById('confirmPermanentDeleteBtn')?.addEventListener('click', executePermanentDelete);
+
+  /* Permanent-delete modal close → always clear the selected-id/name state so a
+     stale row can never be reported as "this user" the next time the modal opens. */
+  const pmModalEl = document.getElementById('permanentDeleteModal');
+  if (pmModalEl) {
+    pmModalEl.addEventListener('hidden.bs.modal', () => {
+      _pendingPermanentDelete = null;
+      _permanentDeleting = false;
+      setLoading('confirmPermanentDeleteBtn', 'permanentDeleteSpinner', false);
+      resetPermanentDeleteModalViews();
+    });
+  }
 
   /* Event delegation for the dynamically rendered Actions dropdown.
      Since the table is re-rendered on refresh/filter, we bind one listener
@@ -2782,7 +2795,7 @@ async function initUserManagement() {
       const item = e.target.closest('[data-user-action]');
       if (item) {
         e.preventDefault();           // <a href="#"> must not jump the page
-        const id = item.getAttribute('data-id');
+        const id = item.getAttribute('data-id') || item.closest('tr[data-user-id]')?.getAttribute('data-user-id') || '';
         if (!id) { console.error('User action: missing user id.'); showToast('Could not identify the user.', 'danger'); return; }
         const what = item.getAttribute('data-user-action');
         const name = item.getAttribute('data-name') || 'this user';
@@ -2844,7 +2857,7 @@ function renderUsersTable() {
   }
 
   tbody.innerHTML = page.map((u, i) => `
-    <tr>
+    <tr data-user-id="${escHtml(u._id || '')}">
       <td class="text-muted">${escHtml(start + i + 1)}</td>
       <td><strong>${escHtml(u.fullName)}</strong></td>
       <td class="text-muted small">${escHtml(u.email)}</td>
@@ -2853,6 +2866,7 @@ function renderUsersTable() {
       <td>${userStatusBadge(u.status)}</td>
       <td><small class="text-muted">${formatDate(u.createdAt || u.created_at)}</small></td>
       <td class="text-nowrap">
+        ${u._id ? `
         <div class="dropdown">
           <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
                   data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false"
@@ -2866,7 +2880,7 @@ function renderUsersTable() {
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item text-danger" href="#" data-user-action="deactivate" data-id="${escHtml(u._id)}" data-name="${escHtml(u.fullName)}"><i class="bi bi-person-dash me-2"></i>Deactivate</a></li>
           </ul>
-        </div>
+        </div>` : `<span class="text-muted small">—</span>`}
       </td>
     </tr>`).join('');
 }
@@ -3091,6 +3105,152 @@ async function doDeleteUser() {
     showToast('User deactivated successfully.', 'success');
     await refreshUsersTable();
   } catch (err) { console.error('Delete user failed:', err); showToast(err.message,'danger'); }
+}
+
+/* ── Hard "Delete" from the Actions menu ───────────────────────
+   Truly removes the user (and any linked Technician profile) from MongoDB via
+   the dedicated admin endpoint DELETE /api/users/:id/permanent (enforced to
+   role 'ICT Admin' on the backend). A dedicated confirmation modal asks for
+   explicit consent first; only after it is confirmed is the API called. This
+   is completely separate from the Deactivate/Inactive action, which only
+   soft-deletes. */
+let _permanentDeleting = false;
+let _pendingPermanentDelete = null;   /* { id, name, email, role } — resolved from the current dataset */
+
+function _pmEl(id) { return document.getElementById(id); }
+
+function resetPermanentDeleteModalViews() {
+  const confirmView = _pmEl('permanentDeleteConfirmView');
+  const stateView   = _pmEl('permanentDeleteStateView');
+  if (confirmView) confirmView.classList.remove('d-none');
+  if (stateView)   stateView.classList.add('d-none');
+  _pmEl('permanentDeleteCancelBtn')?.classList.remove('d-none');
+  _pmEl('permanentDeleteCloseBtn')?.classList.add('d-none');
+  _pmEl('confirmPermanentDeleteBtn')?.classList.remove('d-none');
+  const alertEl = _pmEl('permanentDeleteAlert');
+  if (alertEl) { alertEl.className = 'alert d-none'; alertEl.innerHTML = ''; }
+  _pmEl('permanentDeleteUserId').value = '';
+  _pmEl('permanentDeleteUserName').textContent = '';
+  _pmEl('permanentDeleteUserEmail').textContent = '';
+  _pmEl('permanentDeleteUserRole').textContent = '';
+  _pmEl('permanentDeleteStateTitle').textContent = '';
+  _pmEl('permanentDeleteStateText').textContent = '';
+}
+
+function showPermanentDeleteState(title, text) {
+  _pmEl('permanentDeleteConfirmView')?.classList.add('d-none');
+  _pmEl('permanentDeleteStateView')?.classList.remove('d-none');
+  _pmEl('permanentDeleteCancelBtn')?.classList.add('d-none');
+  _pmEl('confirmPermanentDeleteBtn')?.classList.add('d-none');
+  _pmEl('permanentDeleteCloseBtn')?.classList.remove('d-none');
+  _pmEl('permanentDeleteStateTitle').textContent = title;
+  _pmEl('permanentDeleteStateText').textContent = text;
+}
+
+/* Open the permanent-delete modal for the row that was clicked.
+   The id passed in comes from the rendered row; we ALWAYS re-resolve the
+   canonical MongoDB _id from the current dataset (never a row index, email,
+   or display id) before showing a confirmation. */
+function openPermanentDeleteModal(id, name) {
+  resetPermanentDeleteModalViews();
+
+  const raw = String(id == null ? '' : id).trim();
+  if (!raw) {
+    console.error('Delete user: missing user id.');
+    showPermanentDeleteState('Invalid user reference', 'No user ID was found for the selected row. Please refresh the list and try again.');
+    new bootstrap.Modal(_pmEl('permanentDeleteModal')).show();
+    return;
+  }
+
+  const user = _allUsers.find(u => String(u._id || u.id) === raw);
+  console.log('[PERM DELETE] row id:', raw, '→ resolved:', user ? user._id : '(not in current dataset)');
+
+  if (!user) {
+    showPermanentDeleteState('User not found in list', 'This user could not be found in the current list. The list may be outdated — refresh it and try again.');
+    new bootstrap.Modal(_pmEl('permanentDeleteModal')).show();
+    return;
+  }
+
+  _pendingPermanentDelete = {
+    id:   String(user._id || user.id),
+    name: user.fullName || name || 'this user',
+    email: user.email || '',
+    role:  user.role || '',
+  };
+
+  _pmEl('permanentDeleteUserId').value = _pendingPermanentDelete.id;
+  _pmEl('permanentDeleteUserName').textContent  = _pendingPermanentDelete.name;
+  _pmEl('permanentDeleteUserEmail').textContent = _pendingPermanentDelete.email;
+  _pmEl('permanentDeleteUserRole').textContent  = _pendingPermanentDelete.role;
+  resetPermanentDeleteModalViews();
+  new bootstrap.Modal(_pmEl('permanentDeleteModal')).show();
+}
+
+async function executePermanentDelete() {
+  const id = _pmEl('permanentDeleteUserId')?.value;
+  if (!id) {
+    console.error('Delete user: missing user id.');
+    showPermanentDeleteState('Invalid user reference', 'No user ID is set for deletion. Please close and try again.');
+    return;
+  }
+  if (_permanentDeleting) return;                     // prevent duplicate requests
+
+  /* Re-verify the selected user against the CURRENT dataset so we can NEVER
+     delete the wrong record (stale DOM, duplicate names, wrong email, etc.). */
+  const user = _allUsers.find(u => String(u._id || u.id) === String(id));
+  if (!user) {
+    console.error('Permanent delete: requested user not in current dataset:', id);
+    showPermanentDeleteState('User not found in list', 'This user could not be found in the current list. The list may be outdated — refresh it and try again.');
+    return;
+  }
+
+  _permanentDeleting = true;
+  setLoading('confirmPermanentDeleteBtn', 'permanentDeleteSpinner', true);
+
+  const alertEl = _pmEl('permanentDeleteAlert');
+  if (alertEl) { alertEl.className = 'alert d-none'; alertEl.innerHTML = ''; }
+
+  try {
+    await apiRequest(`/users/${encodeURIComponent(id)}/permanent`, { method: 'DELETE' });
+    showToast('User permanently deleted.', 'success');
+    const modal = _pmEl('permanentDeleteModal');
+    if (modal && bootstrap.Modal.getInstance(modal)) bootstrap.Modal.getInstance(modal).hide();
+    _pendingPermanentDelete = null;
+    /* Re-fetch GET /api/users → the deleted user disappears from the table and
+       the on-screen user count is recomputed from the fresh server response. */
+    await refreshUsersTable();
+  } catch (err) {
+    console.error('Permanent delete failed:', err);
+    const status    = err && typeof err.status === 'number' ? err.status : null;
+    const serverMsg = /* friendly HTTP message echoed by apiRequest, if any */
+                      (err && err.data && err.data.message) || (err && err.message) || '';
+
+    if (status === 404 && serverMsg === 'Route not found.') {
+      /* Diagnostic: the running backend predates DELETE /:id/permanent and the
+         express fallthrough (server.js) answered. NOT evidence the user is gone. */
+      console.error('Permanent delete: endpoint not registered in backend (stale server). Restart the backend.');
+      showPermanentDeleteState('Delete service unavailable', 'The backend is running an outdated build that does not expose the permanent-delete endpoint. Restart the backend server, then try again.');
+    } else if (status === 404) {
+      showPermanentDeleteState('User could not be found', 'This user could not be found on the server — it may already have been removed. The list will be refreshed.');
+      await refreshUsersTable();
+    } else if (status === 403) {
+      showPermanentDeleteState('Permission denied', 'You do not have permission to permanently delete users.');
+    } else if (status === 400) {
+      showPermanentDeleteState('Invalid user ID', serverMsg || 'The user ID is invalid. Please refresh the list and try again.');
+    } else if (status === 409) {
+      if (alertEl) {
+        alertEl.className = 'alert alert-warning d-flex align-items-center gap-2';
+        alertEl.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i><span>${escHtml(serverMsg || 'This user cannot be permanently deleted while they still have active assigned requests.')}</span>`;
+      } else {
+        showToast(serverMsg, 'warning');
+      }
+    } else {
+      showPermanentDeleteState('Unable to verify this user', 'There was a problem reaching the server. Please try again.');
+    }
+  } finally {
+    _permanentDeleting = false;
+    setLoading('confirmPermanentDeleteBtn', 'permanentDeleteSpinner', false);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════

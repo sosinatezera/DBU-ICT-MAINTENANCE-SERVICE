@@ -3,7 +3,7 @@
  * System-wide settings — read & update (admin only)
  */
 const Settings = require('../models/Settings');
-const { validateEnum, validateLength, validateBoolean, validateRequired, sanitizeString, VALID_LANGUAGES, VALID_DATE_FORMATS } = require('../middleware/validation');
+const { validateEnum, validateLength, validateBoolean, validateRequired, sanitizeString, VALID_LANGUAGES, VALID_DATE_FORMATS, VALID_TIMEZONES } = require('../middleware/validation');
 
 const GENERAL_FIELDS = [
   'systemName', 'organizationName', 'systemDescription',
@@ -50,6 +50,11 @@ const updateGeneral = async (req, res, next) => {
     if (req.body.defaultLanguage !== undefined) {
       const langErr = validateEnum(req.body.defaultLanguage, VALID_LANGUAGES, 'language');
       if (langErr) return res.status(400).json({ success: false, message: langErr });
+    }
+
+    if (req.body.timezone !== undefined) {
+      const tzErr = validateEnum(req.body.timezone, VALID_TIMEZONES, 'time zone');
+      if (tzErr) return res.status(400).json({ success: false, message: tzErr });
     }
 
     if (req.body.dateFormat !== undefined) {

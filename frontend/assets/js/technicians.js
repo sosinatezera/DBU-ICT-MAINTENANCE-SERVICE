@@ -186,7 +186,12 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initTechDashboard() {
   if (!requireRole('Technician')) return;
   const dateEl = document.getElementById('currentDate');
-  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+  if (dateEl) {
+    const opts = { weekday:'long', day:'2-digit', month:'long', year:'numeric' };
+    const tz = (window.__ictPrefs && window.__ictPrefs.timezone()) || null;
+    if (tz) opts.timeZone = tz;
+    dateEl.textContent = new Intl.DateTimeFormat('en-GB', opts).format(new Date());
+  }
 
   await loadTechProfile();
   await loadDashboardTasks();
