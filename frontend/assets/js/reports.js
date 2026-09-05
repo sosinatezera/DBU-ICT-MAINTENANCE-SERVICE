@@ -365,7 +365,7 @@ function exportReportCSV() {
     : 'All time';
 
   rows.push(['Smart Computer Maintenance Service — Report']);
-  rows.push(['Generated', new Date().toLocaleString()]);
+  rows.push(['Generated', formatDateTime(new Date())]);
   rows.push(['Date Range', rangeLabel]);
   rows.push(['']);
 

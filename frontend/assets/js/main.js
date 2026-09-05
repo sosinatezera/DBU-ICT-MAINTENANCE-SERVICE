@@ -194,15 +194,128 @@ function priorityBadge(priority) {
   return `<span class="badge bg-${colour}">${label}</span>`;
 }
 
-/* ── Formatters ───────────────────────────────────────────── */
+/* ── System preferences (time zone + date format) ──────────
+   The ICT Admin chooses Ethiopian Time (EAT) / Ethiopian Calendar (EC) in
+   Settings → General → Regional & Format. The values are persisted in the
+   MongoDB Settings singleton, so after saving and refreshing the dashboard
+   the choice stays active. Non-admin pages cannot read /settings (admin-only
+   route → 403), so they keep the previous browser-local formatting, which for
+   Ethiopian users is already UTC+03:00. */
+let __sysTimezone   = null;   /* IANA zone, e.g. 'Africa/Addis_Ababa'          */
+let __sysDateFormat = null;   /* e.g. 'EC' = Ethiopian Calendar               */
+let __sysPrefsCached = false;
+
+function loadSystemPrefs() {
+  if (__sysPrefsCached) return;
+  __sysPrefsCached = true;
+  apiRequest('/settings')
+    .then(r => {
+      if (r && r.data) {
+        __sysTimezone   = r.data.timezone   || null;
+        __sysDateFormat = r.data.dateFormat || null;
+      }
+    })
+    .catch(() => { /* non-admin (403) or offline → keep previous defaults */ });
+}
+
+/* Hook used by the Settings page to refresh the cached prefs right after the
+   admin saves the General tab, so current-page formatting follows instantly. */
+window.__ictPrefs = {
+  timezone:   () => __sysTimezone,
+  dateFormat: () => __sysDateFormat,
+  refresh:    () => { __sysPrefsCached = false; loadSystemPrefs(); },
+};
+
+/* Ethiopian calendar — month names (Ge'ez/Amharic, English transliteration). */
+const EC_MONTHS = ['Meskerem', 'Tikemet', 'Hidar', 'Tahsas', 'Tir', 'Yekatit',
+  'Megabit', 'Miyazya', 'Ginbot', 'Sene', 'Hamle', 'Nehase', 'Pagume'];
+
+/* Gregorian wall-clock date/time parts in a given IANA time zone (falls back
+   to the browser's local time when `tz` is missing/invalid). */
+function wallClockParts(date, tz) {
+  const d = new Date(date);
+  if (isNaN(d)) return null;
+  const fallback = {
+    year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate(),
+    hour: d.getHours(), minute: d.getMinutes(),
+  };
+  if (!tz) return fallback;
+  try {
+    const opts = {
+      timeZone: tz,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    };
+    const parts = {};
+    new Intl.DateTimeFormat('en-GB', opts).formatToParts(d).forEach(p => {
+      if (p.type !== 'literal') parts[p.type] = p.value;
+    });
+    if (!parts.year || !parts.month || !parts.day) return fallback;
+    return {
+      year: +parts.year, month: +parts.month, day: +parts.day,
+      hour: +parts.hour, minute: +parts.minute,
+    };
+  } catch (_) {
+    return fallback;
+  }
+}
+
+/* Convert a Gregorian (y, m, d) date to the Ethiopian calendar.
+   Meskerem 1 (Enkutatash) begins 11 September (or 12 September when the EC
+   year is divisible by 4); the 13th month Pagume has 5 days (6 in a leap
+   year). Valid for Gregorian years ~1900–2099 where that correspondence is
+   fixed. Cross-checked against published reference dates, e.g. 4 September
+   2026 (UTC) = Nehase 29, 2018 EC, and Enkutatash 2019 EC = 11 September
+   2026. The year offset is −7 from September onwards and −8 until then. */
+function gregorianToEthiopian(y, m, d) {
+  const enkutDay = ecYear => (ecYear % 4 === 0 ? 12 : 11);
+  let ecYear;
+  if (m < 9)      { ecYear = y - 8; }
+  else if (m > 9) { ecYear = y - 7; }
+  else            { ecYear = (d >= enkutDay(y - 7)) ? y - 7 : y - 8; }
+  const startUTC = Date.UTC(ecYear + 7, 8, enkutDay(ecYear));
+  const dayIndex = Math.floor((Date.UTC(y, m - 1, d) - startUTC) / 86400000) + 1;
+  const month = Math.min(13, Math.floor((dayIndex - 1) / 30) + 1);
+  const day   = dayIndex - (month - 1) * 30;
+  return { year: ecYear, month, day };
+}
+
+/* ── Formatters ─────────────────────────────────────────────
+   Rendering honours the saved time zone (Ethiopian Time EAT = UTC+03:00) and,
+   when enabled, the Ethiopian Calendar. With no setting available the previous
+   browser-local behaviour is preserved exactly. */
+function formatEthiopianDate(parts) {
+  const e = gregorianToEthiopian(parts.year, parts.month, parts.day);
+  const mo = EC_MONTHS[(e.month - 1)] || `Month ${e.month}`;
+  return `${e.day} ${mo} ${e.year}`;
+}
+
 function formatDate(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const c = wallClockParts(d, __sysTimezone);
+  if (!c) return '—';
+  if (__sysDateFormat === 'EC') return formatEthiopianDate(c);
+  const opts = { day: '2-digit', month: 'short', year: 'numeric' };
+  if (__sysTimezone) opts.timeZone = __sysTimezone;
+  return new Intl.DateTimeFormat('en-GB', opts).format(new Date(d));
 }
+
 function formatDateTime(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const c = wallClockParts(d, __sysTimezone);
+  if (!c) return '—';
+  if (__sysDateFormat === 'EC') {
+    const hh = String(c.hour).padStart(2, '0');
+    const mm = String(c.minute).padStart(2, '0');
+    return `${formatEthiopianDate(c)}, ${hh}:${mm}`;
+  }
+  const opts = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+  if (__sysTimezone) opts.timeZone = __sysTimezone;
+  return new Intl.DateTimeFormat('en-GB', opts).format(new Date(d));
 }
+
+/* Relative time is elapsed real time, so it is identical in every time zone —
+   e.g. "2h ago" is the same instant whether viewed in UTC or EAT. */
 function timeAgo(d) {
   const s = (Date.now() - new Date(d)) / 1000;
   if (s < 60)    return 'just now';
@@ -421,6 +534,7 @@ async function loadNotificationCount() {
 document.addEventListener('DOMContentLoaded', () => {
   populateUserInfo();
   initSidebarToggle();
+  loadSystemPrefs();
 
   // Add toast slide-in animation
   if (!document.getElementById('toastStyle')) {

@@ -40,7 +40,8 @@ const VALID_REQUEST_CATEGORIES = [
 ];
 const VALID_GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
 const VALID_LANGUAGES = ['en', 'am'];
-const VALID_DATE_FORMATS = ['YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD-MM-YYYY'];
+const VALID_DATE_FORMATS = ['YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD-MM-YYYY', 'EC'];
+const VALID_TIMEZONES = ['Africa/Addis_Ababa', 'Africa/Nairobi', 'UTC'];
 
 /* ── Core Validators ────────────────────────────────────── */
 
@@ -211,4 +212,5 @@ module.exports = {
   VALID_GENDERS,
   VALID_LANGUAGES,
   VALID_DATE_FORMATS,
+  VALID_TIMEZONES,
 };

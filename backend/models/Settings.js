@@ -37,7 +37,7 @@ const settingsSchema = new mongoose.Schema(
     },
     dateFormat: {
       type: String,
-      enum: ['YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD-MM-YYYY'],
+      enum: ['YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD-MM-YYYY', 'EC'],
       default: 'DD/MM/YYYY',
     },
 

@@ -76,11 +76,10 @@
                   data-i18n-placeholder="admin.users.search.placeholder" placeholder="Search users..." />
               </div>
               <div class="col-md-3">
-                <select class="form-select" id="roleFilter">
-                  <option value=""><span data-i18n="admin.users.filter.allRoles">All Roles</span>
-                  <option value="ICT Admin"><span data-i18n="admin.users.filter.admin">Admin</span>
-                  <option value="Requester"><span data-i18n="admin.users.filter.requester">Requester</span>
-                  <option value="Technician"><span data-i18n="admin.users.filter.technician">Technician</span>
+<select class="form-select" id="roleFilter">
+                  <option value=""><span data-i18n="admin.users.filter.allRoles">All Roles</span>
+                  <option value="Requester"><span data-i18n="admin.users.filter.requester">Requester</span>
+                  <option value="Technician"><span data-i18n="admin.users.filter.technician">Technician</span>
                 </select>
               </div>
               <div class="col-md-3">
@@ -173,11 +172,10 @@
               <div class="col-6">
                 <label for="userRole" class="form-label fw-semibold"><span
                     data-i18n="admin.users.modal.role">Role</span> <span class="text-danger">*</span></label>
-                <select class="form-select" id="userRole" required>
-                  <option value=""><span data-i18n="admin.users.modal.rolePlaceholder">-- Role --</span>
-                  <option value="ICT Admin"><span data-i18n="admin.users.filter.admin">Admin</span>
-                  <option value="Requester"><span data-i18n="admin.users.filter.requester">Requester</span>
-                  <option value="Technician"><span data-i18n="admin.users.filter.technician">Technician</span>
+<select class="form-select" id="userRole" required>
+                  <option value=""><span data-i18n="admin.users.modal.rolePlaceholder">-- Role --</span>
+                  <option value="Requester"><span data-i18n="admin.users.filter.requester">Requester</span>
+                  <option value="Technician"><span data-i18n="admin.users.filter.technician">Technician</span>
                 </select>
               </div>
               <div class="col-6">
@@ -281,10 +279,9 @@
           <label for="changeRoleSelect" class="form-label fw-semibold"><span data-i18n="admin.users.modal.newRole">New
               Role</span></label>
           <select class="form-select" id="changeRoleSelect">
-            <option value=""><span data-i18n="admin.users.modal.rolePlaceholder">-- Role --</span>
-            <option value="ICT Admin"><span data-i18n="admin.users.filter.admin">Admin</span>
-            <option value="Requester"><span data-i18n="admin.users.filter.requester">Requester</span>
-            <option value="Technician"><span data-i18n="admin.users.filter.technician">Technician</span>
+            <option value=""><span data-i18n="admin.users.modal.rolePlaceholder">-- Role --</span>
+            <option value="Requester"><span data-i18n="admin.users.filter.requester">Requester</span>
+            <option value="Technician"><span data-i18n="admin.users.filter.technician">Technician</span>
           </select>
         </div>
         <div class="modal-footer">
@@ -299,7 +296,7 @@
     </div>
   </div>
 
-  <!-- Delete Confirm Modal -->
+<!-- Delete Confirm Modal -->
   <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
@@ -314,9 +311,52 @@
         </div>
         <div class="modal-footer border-0">
           <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"><span
-              data-i18n="admin.users.modal.cancel">Cancel</span>
+              data-i18n="admin.users.modal.cancel">Cancel</span>
             <button type="button" class="btn btn-danger btn-sm" id="confirmDeleteUserBtn"><span
                 data-i18n="admin.users.modal.deactivateBtn">Deactivate</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Permanent Delete Confirm Modal -->
+  <div class="modal fade" id="permanentDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header border-0">
+          <h6 class="modal-title fw-bold text-danger"><i class="bi bi-trash me-2"></i>Permanently Delete User</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Confirm view (user exists) -->
+          <div id="permanentDeleteConfirmView">
+            <p class="mb-1">Are you sure you want to permanently delete:</p>
+            <div class="p-3 rounded bg-light border mb-2">
+              <div class="fw-bold" id="permanentDeleteUserName"></div>
+              <div class="small text-muted" id="permanentDeleteUserEmail"></div>
+              <div class="small text-muted" id="permanentDeleteUserRole"></div>
+            </div>
+            <p class="small text-danger mb-0"><i class="bi bi-exclamation-triangle me-1"></i>This action cannot be
+              undone. The account and any linked technician profile will be removed from the system.</p>
+            <div id="permanentDeleteAlert" class="alert d-none mt-2 mb-0" role="alert"></div>
+          </div>
+          <!-- Not-found / error view (no active Delete button) -->
+          <div id="permanentDeleteStateView" class="d-none">
+            <div class="text-center py-2">
+              <i class="bi bi-search fs-2 text-muted d-block mb-2"></i>
+              <p class="mb-1 fw-semibold" id="permanentDeleteStateTitle"></p>
+              <p class="small text-muted mb-0" id="permanentDeleteStateText"></p>
+            </div>
+          </div>
+          <input type="hidden" id="permanentDeleteUserId" />
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" id="permanentDeleteCancelBtn">Cancel</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-bs-dismiss="modal" id="permanentDeleteCloseBtn">Close</button>
+          <button type="button" class="btn btn-danger btn-sm" id="confirmPermanentDeleteBtn">
+            <span class="spinner-border spinner-border-sm me-1 d-none" id="permanentDeleteSpinner"></span>
+            Delete Permanently
+          </button>
         </div>
       </div>
     </div>
@@ -325,9 +365,9 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/validation.js?v=6"></script>
   <script src="/assets/js/api-config.js"></script>
-  <script src="/assets/js/main.js?v=7"></script>
+  <script src="/assets/js/main.js?v=8"></script>
   <script src="/assets/js/notifications.js?v=6"></script>
-  <script src="/assets/js/requests.js?v=7"></script>
+  <script src="/assets/js/requests.js?v=12"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

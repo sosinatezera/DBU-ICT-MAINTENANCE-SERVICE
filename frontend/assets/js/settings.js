@@ -120,6 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       showAlert('settingsAlert', 'General settings saved successfully.', 'success');
       showToast('General settings saved.', 'success');
+      if (window.__ictPrefs) window.__ictPrefs.refresh();
     } catch (err) {
       showAlert('settingsAlert', err.message, 'danger');
     }
