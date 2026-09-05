@@ -59,6 +59,11 @@ const ticketSchema = new mongoose.Schema(
       ],
       default: 'Other',
     },
+    location: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     category: {
       type: String,
       trim: true,

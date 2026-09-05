@@ -476,6 +476,7 @@ async function openViewDetails(requestId) {
       ${r.title ? row('Title', escHtml(r.title)) : ''}
       ${row('Requester', escHtml(r.requester_name))}
       ${row('Department', escHtml(r.department))}
+      ${row('Location', `<i class="bi bi-geo-alt me-1"></i>${escHtml(r.location || 'Not provided')}`)}
       ${row('Equipment', escHtml(r.equipmentType))}
       ${r.asset_tag ? row('ICT Asset', `<i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ''}`) : ''}
       ${r.serialNumber ? row('Serial Number', escHtml(r.serialNumber)) : ''}
@@ -527,6 +528,7 @@ async function openUpdateModal(requestId, title, currentStatus) {
           <div class="col-sm-3"><span class="text-muted small d-block">Priority</span>${priorityBadge(r.priority)}</div>
           <div class="col-sm-3"><span class="text-muted small d-block">Status</span>${statusBadge(r.status)}</div>
           ${r.asset_tag ? `<div class="col-sm-6"><span class="text-muted small d-block">ICT Asset</span><strong><i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ''}</strong></div>` : ''}
+          <div class="col-sm-6"><span class="text-muted small d-block"><i class="bi bi-geo-alt me-1"></i>Location</span><strong>${escHtml(r.location || 'Not provided')}</strong></div>
           <div class="col-12"><span class="text-muted small d-block">Description</span>
             <div class="small p-2 bg-white border rounded" style="max-height:80px;overflow-y:auto;">${escHtml(r.problemDescription)}</div>
           </div>
@@ -707,6 +709,7 @@ function renderTechFeedbackCards(assignments) {
             <i class="bi bi-tag me-1"></i>${escHtml(r.equipmentType || '—')}
             ${r.department ? `&nbsp;·&nbsp;<i class="bi bi-building me-1"></i>${escHtml(r.department)}` : ''}
           </div>
+          <div class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${escHtml(r.location || 'Not provided')}</div>
           <div class="mb-2">
             ${statusBadge(r.status)}
             ${r.has_feedback
@@ -783,6 +786,7 @@ function renderAssignedCards(assignments) {
             <i class="bi bi-tag me-1"></i>${escHtml(r.equipmentType || '—')}
             ${r.department ? `&nbsp;·&nbsp;<i class="bi bi-building me-1"></i>${escHtml(r.department)}` : ''}
           </div>
+          <div class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${escHtml(r.location || 'Not provided')}</div>
           <div class="mb-2">${statusBadge(r.status)}</div>
           <div class="text-muted" style="font-size:.78rem;">
             <i class="bi bi-calendar3 me-1"></i>Assigned: ${formatDate(r.assigned_at)}
@@ -832,6 +836,7 @@ async function loadTaskInfoSection(requestId, sectionId) {
         <div class="col-3"><span class="text-muted small d-block">Status</span>${statusBadge(r.status)}</div>
         <div class="col-sm-6"><span class="text-muted small d-block">Equipment</span>${escHtml(r.equipmentType||'—')}</div>
         ${r.asset_tag ? `<div class="col-sm-6"><span class="text-muted small d-block">ICT Asset</span><strong><i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ''}</strong></div>` : ''}
+        <div class="col-sm-6"><span class="text-muted small d-block"><i class="bi bi-geo-alt me-1"></i>Location</span><strong>${escHtml(r.location || 'Not provided')}</strong></div>
         <div class="col-12"><span class="text-muted small d-block">Description</span>
           <div class="small p-2 bg-light rounded" style="max-height:70px;overflow-y:auto;">${escHtml(r.problemDescription)}</div>
         </div>
@@ -933,6 +938,7 @@ async function openFeedbackModal(requestId, title) {
           <div class="col-sm-4"><span class="text-muted small d-block">Status</span>${statusBadge(r.status)}</div>
           <div class="col-sm-6"><span class="text-muted small d-block">Equipment</span>${escHtml(r.equipmentType||'—')}</div>
           <div class="col-sm-6"><span class="text-muted small d-block">Requester</span>${escHtml(r.requester_name||'—')}</div>
+          <div class="col-sm-6"><span class="text-muted small d-block"><i class="bi bi-geo-alt me-1"></i>Location</span><strong>${escHtml(r.location || 'Not provided')}</strong></div>
           ${r.asset_tag ? `<div class="col-12"><span class="text-muted small d-block">ICT Asset</span><strong><i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ''}</strong></div>` : ''}
           <div class="col-12"><span class="text-muted small d-block">Description</span>
             <div class="small p-2 bg-light rounded" style="max-height:70px;overflow-y:auto;">${escHtml(r.problemDescription)}</div>
@@ -1346,7 +1352,7 @@ function renderHistoryTable(completed, maintMap) {
         <td><span class="text-muted">—</span></td>
         <td>
           <button class="btn btn-sm btn-outline-secondary" title="View details"
-                  onclick="viewHistoryDetail(${JSON.stringify(r.ticket_id)}, this)">
+                  onclick="viewHistoryDetail(${jsAttr(r.ticket_id)}, this)">
             <i class="bi bi-eye"></i>
           </button>
         </td>

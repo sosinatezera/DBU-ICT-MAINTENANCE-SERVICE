@@ -82,21 +82,33 @@ const getMyAssignments = async (req, res, next) => {
       .populate({ path: 'ticket', populate: [{ path: 'requester', select: 'fullName department' }] })
       .sort({ createdAt: -1 });
 
-    const data = assignments.map(a => ({
-      _id:              a._id,
-      ticket_id:        a.ticket?._id || null,
-      ticketId:         a.ticket?.ticketId,
-      title:            a.ticket?.title || a.ticket?.problemDescription?.substring(0, 80),
-      priority:         a.ticket?.priority,
-      status:           a.ticket?.status,
-      equipmentType:    a.ticket?.equipmentType,
-      category:         a.ticket?.category,
-      problemDescription: a.ticket?.problemDescription,
-      requester_name:   a.ticket?.requester?.fullName,
-      department:       a.ticket?.requester?.department,
-      assigned_at:      a.createdAt,
-      has_feedback:     !!(a.ticket?.technicianFeedback && a.ticket.technicianFeedback.technicianConfirmed),
-    }));
+    /* Deduplicate: keep only the latest assignment per ticket, excluding
+       reassigned assignments which are no longer valid. This prevents the
+       same ticket card from appearing multiple times on any page that
+       consumes this endpoint. */
+    const seen = new Set();
+    const data = assignments.reduce((acc, a) => {
+      if (a.status === 'reassigned') return acc;
+      const ticketKey = String(a.ticket?._id || '');
+      if (!ticketKey || seen.has(ticketKey)) return acc;
+      seen.add(ticketKey);
+      acc.push({
+        _id:              a._id,
+        ticket_id:        a.ticket?._id || null,
+        ticketId:         a.ticket?.ticketId,
+        title:            a.ticket?.title || a.ticket?.problemDescription?.substring(0, 80),
+        priority:         a.ticket?.priority,
+        status:           a.ticket?.status,
+        equipmentType:    a.ticket?.equipmentType,
+        category:         a.ticket?.category,
+        problemDescription: a.ticket?.problemDescription,
+        requester_name:   a.ticket?.requester?.fullName,
+        department:       a.ticket?.requester?.department,
+        assigned_at:      a.createdAt,
+        has_feedback:     !!(a.ticket?.technicianFeedback && a.ticket.technicianFeedback.technicianConfirmed),
+      });
+      return acc;
+    }, []);
 
     res.json({ success: true, data });
   } catch (err) { next(err); }
