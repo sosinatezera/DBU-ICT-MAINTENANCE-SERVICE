@@ -118,8 +118,11 @@ async function loadBellDropdown() {
            id="bell-notif-${n.id}"
            data-id="${n.id}"
            data-ticket="${n.ticket_id || ''}"
+           role="button" tabindex="0"
+           aria-label="${escHtml(n.title)}"
            style="cursor:pointer;transition:background .15s;"
-           onclick="openNotif(this)">
+           onclick="openNotif(this)"
+           onkeydown="notifBellKeydown(event, this)">
         <div class="flex-shrink-0 mt-1">
           <span class="rounded-circle d-inline-flex align-items-center justify-content-center"
                 style="width:32px;height:32px;background:${typeColourSoft(n.type)};">
@@ -164,11 +167,7 @@ async function openNotif(el) {
   const id     = el.getAttribute('data-id')     || '';
   const ticket = el.getAttribute('data-ticket') || '';
   await markReadBell(id, el);
-  if (ticket && typeof openDetailModal === 'function') {
-    openDetailModal(ticket);
-  } else if (ticket && window.location.pathname.includes('/user/')) {
-    window.location.href = 'tracking.html?id=' + encodeURIComponent(ticket);
-  }
+  openNotificationTicket(ticket);
 }
 
 async function markAllReadBell(e) {
@@ -229,8 +228,11 @@ async function loadNotificationsPage() {
       <div class="card border-0 shadow-sm mb-2 ${n.is_read ? '' : 'border-start border-3'}"
            id="notif-${n.id}"
            data-ticket="${n.ticket_id || ''}"
+           role="button" tabindex="0"
+           aria-label="Open ${escHtml(n.title)}"
            style="border-left:4px solid ${typeColour(n.type)}!important;cursor:pointer;"
-           onclick="markReadPage('${n.id}', this)">
+           onclick="markReadPage('${n.id}', this)"
+           onkeydown="notifCardKeydown(event, '${n.id}', this)">
         <div class="card-body py-2 px-3">
           <div class="d-flex align-items-start gap-3">
             <div class="flex-shrink-0 mt-1">
@@ -284,12 +286,8 @@ async function markReadPage(id, element) {
     } catch (_) {}
   }
 
-  /* Take the user to the ticket details too */
-  if (ticket && typeof openDetailModal === 'function') {
-    openDetailModal(ticket);
-  } else if (ticket && window.location.pathname.includes('/user/')) {
-    window.location.href = 'tracking.html?id=' + encodeURIComponent(ticket);
-  }
+  /* Open the related ticket using this role's existing detail interface */
+  openNotificationTicket(ticket);
 }
 
 async function deleteNotif(id, e) {
@@ -299,6 +297,70 @@ async function deleteNotif(id, e) {
     document.getElementById(`notif-${id}`)?.remove();
     refreshBellBadge();
   } catch (err) { showToast(err.message, 'danger'); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   OPEN THE RELATED TICKET — role-aware. Reuses each role's
+   existing detail interface when it exists on the current page,
+   otherwise navigates to that role's detail page (which auto-
+   opens the ticket). Tickets without a valid related id are
+   left alone (legacy notifications never pretend to open). ═══ */
+function openNotificationTicket(ticketId) {
+  const raw = String(ticketId || '').trim();
+  if (!raw || !/^[0-9a-f]{24}$/i.test(raw)) {
+    console.warn('Notification has no valid related ticket id; skipping navigation.', raw);
+    return;
+  }
+
+  const path = window.location.pathname;
+  const role = (typeof Auth !== 'undefined' && Auth.getUser && Auth.getUser())?.role || '';
+
+  /* Technician — use the view-ticket modal when present on this page. */
+  if (role === 'Technician') {
+    if (document.getElementById('viewTicketBody') && typeof openViewDetails === 'function') {
+      openViewDetails(raw);
+    } else if (document.getElementById('requestDetailBody') && typeof openDetailModal === 'function') {
+      openDetailModal(raw);
+    } else {
+      window.location.href = 'assigned-requests.html?id=' + encodeURIComponent(raw);
+    }
+    return;
+  }
+
+  /* ICT Admin — use the request info / assign modal when present. */
+  if (role === 'ICT Admin') {
+    if (document.getElementById('requestInfoSection') && typeof openAdminRequestModal === 'function') {
+      openAdminRequestModal(raw);
+    } else if (document.getElementById('requestDetailBody') && typeof openDetailModal === 'function') {
+      openDetailModal(raw);
+    } else {
+      window.location.href = 'requests.html?id=' + encodeURIComponent(raw);
+    }
+    return;
+  }
+
+  /* Requester / any other authenticated user */
+  if (document.getElementById('requestDetailBody') && typeof openDetailModal === 'function') {
+    openDetailModal(raw);
+  } else if (path.includes('/user/')) {
+    window.location.href = 'tracking.html?id=' + encodeURIComponent(raw);
+  } else if (typeof openDetailModal === 'function') {
+    openDetailModal(raw);
+  }
+}
+
+/* Keyboard activation for notification cards (Enter / Space). */
+function notifCardKeydown(e, id, el) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    markReadPage(id, el);
+  }
+}
+function notifBellKeydown(e, el) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    openNotif(el);
+  }
 }
 
 /* ── Helpers ──────────────────────────────────────────────── */
