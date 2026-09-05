@@ -915,6 +915,13 @@ function renderTrackingError(err) {
 /* ═══════════════════════════════════════════════════════════
    REQUEST DETAIL MODAL (shared — user tracking + admin)
    ═══════════════════════════════════════════════════════════ */
+function ticketErrorMessage(err) {
+  if (!err) return 'Unable to load ticket details. Please try again.';
+  if (err.status === 404) return 'Ticket details could not be found.';
+  if (err.status === 403) return 'You are not authorized to view this ticket.';
+  return 'Unable to load ticket details. Please try again.';
+}
+
 async function openDetailModal(id) {
   const body = document.getElementById('requestDetailBody');
   if (body) body.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>`;
@@ -980,7 +987,7 @@ async function openDetailModal(id) {
       }).join('');
     }
   } catch (err) {
-    if (body) body.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+    if (body) body.innerHTML = `<div class="alert alert-danger">${escHtml(ticketErrorMessage(err))}</div>`;
   }
 }
 
@@ -1695,6 +1702,11 @@ async function initAdminRequests() {
       }
     });
   }
+
+  /* Deep link support: admin/requests.html?id=<ticketId> (used by the
+     notification bell/page so the related ticket opens automatically). */
+  const deepLinkId = new URLSearchParams(window.location.search).get('id');
+  if (deepLinkId && /^[0-9a-f]{24}$/i.test(deepLinkId)) openAdminRequestModal(deepLinkId);
 }
 
 function renderAdminTable(requests) {
@@ -1846,7 +1858,7 @@ async function openAdminRequestModal(id) {
       };
     }
   } catch (err) {
-    if (section) section.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+    if (section) section.innerHTML = `<div class="alert alert-danger">${escHtml(ticketErrorMessage(err))}</div>`;
   }
 }
 

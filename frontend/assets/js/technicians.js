@@ -448,6 +448,13 @@ function updateAvailabilityUI(isAvailable) {
 }
 
 /* ── View Ticket Details ────────────────────────────────────── */
+function ticketErrorMessage(err) {
+  if (!err) return 'Unable to load ticket details. Please try again.';
+  if (err.status === 404) return 'Ticket details could not be found.';
+  if (err.status === 403) return 'You are not authorized to view this ticket.';
+  return 'Unable to load ticket details. Please try again.';
+}
+
 async function openViewDetails(requestId) {
   requestId = String(requestId || '').trim();
   if (!requestId || !/^[0-9a-f]{24}$/i.test(requestId)) {
@@ -491,7 +498,7 @@ async function openViewDetails(requestId) {
       ${row('Status', statusBadge(r.status))}
       ${row('Created', escHtml(formatDate(r.created_at)))}`;
   } catch (err) {
-    if (body) body.innerHTML = `<div class="alert alert-danger mb-0">${escHtml(err.message)}</div>`;
+    if (body) body.innerHTML = `<div class="alert alert-danger mb-0">${escHtml(ticketErrorMessage(err))}</div>`;
   }
 }
 
@@ -659,6 +666,11 @@ async function initAssignedRequests() {
       setLoading('saveTaskUpdateBtn', 'saveTaskSpinner', false);
     }
   });
+
+  /* Deep link support: assigned-requests.html?id=<ticketId> (used by the
+     notification bell/page so the related ticket opens automatically). */
+  const deepLinkId = new URLSearchParams(window.location.search).get('id');
+  if (deepLinkId && /^[0-9a-f]{24}$/i.test(deepLinkId)) openViewDetails(deepLinkId);
 }
 
 async function initTechFeedbackPage() {
