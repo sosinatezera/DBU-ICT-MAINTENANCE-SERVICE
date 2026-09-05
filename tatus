@@ -1,0 +1,44 @@
+warning: in the working copy of 'frontend/views/admin/admin-feedback.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/admin/dashboard.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/admin/notifications.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/admin/reports.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/admin/requests.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/admin/settings.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/admin/technicians.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/admin/users.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/technician/assigned-requests.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/technician/dashboard.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/technician/history.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/technician/maintenance.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/technician/notifications.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/technician/profile.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/technician/technician-feedback.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/user/dashboard.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/user/history.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/user/notifications.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/user/profile.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/views/user/request.html', LF will be replaced by CRLF the next time Git touches it
+ frontend/assets/js/main.js                         |  27 [32m+++[m[31m--[m
+ frontend/views/admin/admin-feedback.html           |   4 [32m+[m[31m-[m
+ frontend/views/admin/assets.html                   |   2 [32m+[m[31m-[m
+ frontend/views/admin/categories.html               |   4 [32m+[m[31m-[m
+ frontend/views/admin/dashboard.html                |   7 [32m+[m[31m-[m
+ frontend/views/admin/notifications.html            |   2 [32m+[m[31m-[m
+ frontend/views/admin/reports.html                  |   2 [32m+[m[31m-[m
+ frontend/views/admin/requests.html                 |   4 [32m+[m[31m-[m
+ frontend/views/admin/settings.html                 |   2 [32m+[m[31m-[m
+ frontend/views/admin/technicians.html              |   2 [32m+[m[31m-[m
+ frontend/views/admin/users.html                    |   4 [32m+[m[31m-[m
+ frontend/views/technician/assigned-requests.html   |   2 [32m+[m[31m-[m
+ frontend/views/technician/dashboard.html           |   2 [32m+[m[31m-[m
+ frontend/views/technician/history.html             |   2 [32m+[m[31m-[m
+ frontend/views/technician/maintenance.html         |   2 [32m+[m[31m-[m
+ frontend/views/technician/notifications.html       |   2 [32m+[m[31m-[m
+ frontend/views/technician/profile.html             |   2 [32m+[m[31m-[m
+ frontend/views/technician/technician-feedback.html |   2 [32m+[m[31m-[m
+ frontend/views/user/dashboard.html                 |   2 [32m+[m[31m-[m
+ frontend/views/user/history.html                   |   4 [32m+[m[31m-[m
+ frontend/views/user/notifications.html             |   2 [32m+[m[31m-[m
+ frontend/views/user/profile.html                   | 126 [32m++++++++++++++++++++[m[31m-[m
+ frontend/views/user/request.html                   |   4 [32m+[m[31m-[m
+ 23 files changed, 170 insertions(+), 42 deletions(-)

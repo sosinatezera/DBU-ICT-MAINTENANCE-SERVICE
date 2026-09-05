@@ -3,14 +3,17 @@
     Smart Computer Maintenance Service Request and Tracking System
    ============================================================ */
 
-/* API base is provided by the shared api-config.js (safe for all pages).
-   Fallback keeps main.js self-sufficient if the config was not included.
-   NOTE: using `var` (not `const`) so the fallback binding is function/global
-   scoped and actually visible to apiRequest() below. A block-scoped `const`
-   here would leave API_BASE undefined and cause a ReferenceError that was
-   previously mis-reported as a network failure. */
-if (typeof API_BASE === 'undefined') {
-  var API_BASE = 'http://localhost:5000/api';
+/* API base is declared exactly once, globally, by the shared api-config.js
+   (safe for all pages). NEVER redeclare the `API_BASE` identifier in this
+   file: a `var API_BASE` of the same name collides with the existing global
+   `const API_BASE` and throws "Identifier 'API_BASE' has already been
+   declared" at script instantiation, which kills this entire file so
+   apiRequest, escHtml, showToast, requireAuth, formatDate … all become
+   undefined and every page that calls them breaks. We only fall back to a
+   differently-named constant when api-config.js was not included. */
+const DEFAULT_API_BASE = 'http://localhost:5000/api';
+function resolveApiBase() {
+  return (typeof API_BASE !== 'undefined') ? API_BASE : DEFAULT_API_BASE;
 }
 
 /* ── Auth Helpers ─────────────────────────────────────────── */
@@ -46,7 +49,7 @@ async function apiRequest(endpoint, { method = 'GET', body = null, isFormData = 
 
   let res;
   try {
-    res = await fetch(`${API_BASE}${endpoint}`, opts);
+    res = await fetch(resolveApiBase() + endpoint, opts);
   } catch (err) {
     clearTimeout(timer);
     /* A genuine network-layer failure: the browser could not reach the server
@@ -221,7 +224,7 @@ function setText(id, val) {
    the backend origin (e.g. http://localhost:5000/uploads/<filename>). */
 function uploadUrl(filename) {
   if (!filename) return '#';
-  const base = typeof apiOrigin === 'function' ? apiOrigin() : API_BASE.replace(/\/api\/?$/, '');
+  const base = typeof apiOrigin === 'function' ? apiOrigin() : resolveApiBase().replace(/\/api\/?$/, '');
   return `${base}/uploads/${encodeURIComponent(String(filename))}`;
 }
 
@@ -290,6 +293,7 @@ function requireRole(...roles) {
 
 /* ── Profile Image (Avatar) ────────────────────────────────── */
 const DEFAULT_ADMIN_IMAGE = '/assets/images/admin.jpg';
+const DEFAULT_REQUESTER_IMAGE = '/assets/images/user.jpg';
 const PROFILE_IMAGE_PREFS_KEY = 'ict_profile_image_prefs';
 
 function getProfileImagePrefs(user) {
@@ -316,7 +320,7 @@ function setProfileImagePrefs(user, prefs) {
    regardless of which port the frontend is served from. */
 function profileUploadUrl(filename) {
   if (!filename) return null;
-  var base = (typeof apiOrigin === 'function') ? apiOrigin() : API_BASE.replace(/\/api\/?$/, '');
+  var base = (typeof apiOrigin === 'function') ? apiOrigin() : resolveApiBase().replace(/\/api\/?$/, '');
   /* filename may already contain '/uploads/' prefix from the backend response. */
   if (filename.indexOf('/uploads/') === 0) return base + filename;
   return base + '/uploads/' + encodeURIComponent(String(filename));
@@ -331,6 +335,7 @@ function resolveProfileAvatar(user) {
   /* Fall back to the profileImage stored in the database. */
   if (user.profileImage) return profileUploadUrl(user.profileImage);
   if (user.role === 'ICT Admin') return DEFAULT_ADMIN_IMAGE;
+  if (user.role === 'Requester') return DEFAULT_REQUESTER_IMAGE;
   return null;
 }
 
