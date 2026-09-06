@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-  <script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'){ document.documentElement.setAttribute( 'lang', l );}}catch(e){ }})();</script>
+  <script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'||l==='om'){ document.documentElement.setAttribute( 'lang', l );}}catch(e){ }})();</script>
   <script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Submit Request — Smart Computer Maintenance Service</title>
+  <title data-i18n="page.userRequest">Submit Request — Smart Computer Maintenance Service</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -91,7 +91,7 @@
       <a href="../index.html" class="text-decoration-none">
         <div class="text-center mb-4">
           <i class="bi bi-tools fs-3"></i>
-          <div class="fw-bold small mt-1">Smart Computer Maintenance</div>
+          <div class="fw-bold small mt-1" data-i18n="auth.brand">Smart Computer Maintenance</div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
@@ -120,7 +120,7 @@
           <span class="small" id="sidebarUserName" class="text-white-50"></span>
         </div>
         <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
-          <i class="bi bi-box-arrow-right me-1"></i>Logout
+          <i class="bi bi-box-arrow-right me-1"></i><span data-i18n="common.logout">Logout</span>
         </a>
       </div>
     </nav>
@@ -133,13 +133,10 @@
           <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle"><i
               class="bi bi-list"></i></button>
           <div>
-            <h5 class="mb-0 fw-bold">Submit Maintenance Request</h5>
-            <div class="text-muted small">Fill in the form below to report an ICT issue</div>
+            <h5 class="mb-0 fw-bold" data-i18n="req.submitTitle">Submit Maintenance Request</h5>
+            <div class="text-muted small" data-i18n="req.formHint">Fill in the form below to report an ICT issue</div>
           </div>
         </div>
-        <a href="dashboard.html" class="btn btn-sm btn-outline-secondary">
-          <i class="bi bi-arrow-left me-1"></i>Back
-        </a>
         <div class="d-flex align-items-center gap-3">
         </div>
       </header>
@@ -163,30 +160,30 @@
                 <div class="card-header bg-white py-3 border-bottom">
                   <h6 class="mb-0 fw-bold">
                     <span class="badge bg-primary rounded-circle me-2">1</span>
-                    Your Information
+                    <span data-i18n="req.yourInfo">Your Information</span>
                   </h6>
                 </div>
                 <div class="card-body p-4">
                   <div class="row g-3">
                     <div class="col-md-6">
                       <label for="requesterName" class="form-label fw-semibold">
-                        <i class="bi bi-person me-1 text-primary"></i>Full Name <span class="text-danger">*</span>
+                        <i class="bi bi-person me-1 text-primary"></i><span data-i18n="profile.fullName">Full Name</span> <span class="text-danger">*</span>
                       </label>
                       <input type="text" class="form-control form-control-lg" id="requesterName"
-                        placeholder="e.g. John Doe" required minlength="2" />
-                      <div class="invalid-feedback">Please enter your full name.</div>
+                        placeholder="e.g. John Doe" required minlength="2" data-i18n-placeholder="req.ph.name" />
+                      <div class="invalid-feedback" data-i18n="req.err.fullName">Please enter your full name.</div>
                     </div>
                     <div class="col-md-6">
                       <label for="requesterPhone" class="form-label fw-semibold">
-                        <i class="bi bi-telephone me-1 text-primary"></i>Phone Number <span class="text-danger">*</span>
+                        <i class="bi bi-telephone me-1 text-primary"></i><span data-i18n="profile.phone">Phone Number</span> <span class="text-danger">*</span>
                       </label>
                       <div class="input-group input-group-lg">
                         <span class="input-group-text"><i class="bi bi-telephone-fill text-muted"></i></span>
                         <input type="tel" class="form-control" id="requesterPhone" placeholder="0912 345 678 (09 or 07)"
-                          required />
+                          required data-i18n-placeholder="req.ph.phone" />
                       </div>
-                      <div class="form-text">We'll use this to contact you about your request.</div>
-                      <div class="invalid-feedback">Please enter your phone number.</div>
+                      <div class="form-text" data-i18n="req.contactNote">We'll use this to contact you about your request.</div>
+                      <div class="invalid-feedback" data-i18n="req.err.phone">Please enter your phone number.</div>
                     </div>
                   </div>
                 </div>
@@ -197,12 +194,12 @@
                 <div class="card-header bg-white py-3 border-bottom">
                   <h6 class="mb-0 fw-bold">
                     <span class="badge bg-primary rounded-circle me-2">2</span>
-                    Device Type
+                    <span data-i18n="req.deviceType">Device Type</span>
                   </h6>
                 </div>
                 <div class="card-body p-4">
                   <label class="form-label fw-semibold mb-3">
-                    Select the device that has a hardware/software fault <span class="text-danger">*</span>
+                    <span data-i18n="req.deviceType.label">Select the device that has a hardware/software fault</span> <span class="text-danger">*</span>
                   </label>
                   <div class="row g-3" id="deviceTypeCards"></div>
                   <div class="invalid-feedback d-block mt-2" id="deviceTypeError" style="display:none!important;"></div>
@@ -246,7 +243,7 @@
                 <div class="card-header bg-white py-3 border-bottom">
                   <h6 class="mb-0 fw-bold">
                     <span class="badge bg-primary rounded-circle me-2">3</span>
-                    Request Details
+                    <span data-i18n="req.details">Request Details</span>
                   </h6>
                 </div>
                 <div class="card-body p-4">
@@ -255,105 +252,105 @@
                     <!-- Title -->
                     <div class="col-12">
                       <label for="title" class="form-label fw-semibold">
-                        <i class="bi bi-tag me-1 text-primary"></i>Request Title <span class="text-danger">*</span>
+                        <i class="bi bi-tag me-1 text-primary"></i><span data-i18n="req.title">Request Title</span> <span class="text-danger">*</span>
                       </label>
                       <input type="text" class="form-control form-control-lg" id="title"
-                        placeholder="e.g. Laptop screen not working" required minlength="5" />
-                      <div class="invalid-feedback">Please provide a clear request title (min 5 characters).</div>
+                        placeholder="e.g. Laptop screen not working" required minlength="5" data-i18n-placeholder="req.ph.title" />
+                      <div class="invalid-feedback" data-i18n="req.err.title">Please provide a clear request title (min 5 characters).</div>
                     </div>
 
                     <!-- Location -->
                     <div class="col-12">
                       <label for="requestLocation" class="form-label fw-semibold">
-                        <i class="bi bi-geo-alt me-1 text-primary"></i>Location <span class="text-danger">*</span>
+                        <i class="bi bi-geo-alt me-1 text-primary"></i><span data-i18n="req.location">Location</span> <span class="text-danger">*</span>
                       </label>
                       <input type="text" class="form-control form-control-lg" id="requestLocation"
-                        placeholder="e.g. Block A, Room 101 / ICT Building, Lab 3" required maxlength="200" />
-                      <div class="invalid-feedback">Please enter the location where the maintenance is required.</div>
-                      <div class="form-text">Enter the building, floor, room, or office where the problem occurred.</div>
+                        placeholder="e.g. Block A, Room 101 / ICT Building, Lab 3" required maxlength="200" data-i18n-placeholder="req.ph.location" />
+                      <div class="invalid-feedback" data-i18n="req.err.location">Please enter the location where the maintenance is required.</div>
+                      <div class="form-text" data-i18n="req.locationHelp">Enter the building, floor, room, or office where the problem occurred.</div>
                     </div>
 
                     <!-- Category & Priority -->
                     <div class="col-md-6">
                       <label for="category" class="form-label fw-semibold">
-                        <i class="bi bi-tags me-1 text-primary"></i>Request Category <span class="text-danger">*</span>
+                        <i class="bi bi-tags me-1 text-primary"></i><span data-i18n="common.category">Request Category</span> <span class="text-danger">*</span>
                       </label>
                       <select class="form-select form-select-lg" id="category" required
                         aria-describedby="categoryFeedback">
-                        <option value="" disabled selected>Select Request Category</option>
-                        <option value="Hardware Problem">Hardware Problem</option>
-                        <option value="Software Problem">Software Problem</option>
-                        <option value="Internet Connectivity">Internet Connectivity</option>
-                        <option value="Printer / Scanner">Printer / Scanner</option>
-                        <option value="Computer / Laptop">Computer / Laptop</option>
-                        <option value="Account / Password">Account / Password</option>
-                        <option value="Email Problem">Email Problem</option>
-                        <option value="System / Application">System / Application</option>
-                        <option value="ICT Security">ICT Security</option>
-                        <option value="Other">Other</option>
+                        <option value="" disabled selected data-i18n="req.category.select">Select Request Category</option>
+                        <option value="Hardware Problem" data-i18n="req.category.hardware">Hardware Problem</option>
+                        <option value="Software Problem" data-i18n="req.category.software">Software Problem</option>
+                        <option value="Internet Connectivity" data-i18n="req.category.internet">Internet Connectivity</option>
+                        <option value="Printer / Scanner" data-i18n="req.category.printer">Printer / Scanner</option>
+                        <option value="Computer / Laptop" data-i18n="req.category.computer">Computer / Laptop</option>
+                        <option value="Account / Password" data-i18n="req.category.account">Account / Password</option>
+                        <option value="Email Problem" data-i18n="req.category.email">Email Problem</option>
+                        <option value="System / Application" data-i18n="req.category.system">System / Application</option>
+                        <option value="ICT Security" data-i18n="req.category.security">ICT Security</option>
+                        <option value="Other" data-i18n="req.category.other">Other</option>
                       </select>
-                      <div class="invalid-feedback" id="categoryFeedback">Please select a request category.</div>
+                      <div class="invalid-feedback" id="categoryFeedback" data-i18n="req.err.category">Please select a request category.</div>
                     </div>
 
                     <div class="col-md-6">
                       <label for="priority" class="form-label fw-semibold">
-                        <i class="bi bi-exclamation-triangle me-1 text-primary"></i>Priority <span
+                        <i class="bi bi-exclamation-triangle me-1 text-primary"></i><span data-i18n="common.priority">Priority</span> <span
                           class="text-danger">*</span>
                       </label>
                       <select class="form-select form-select-lg" id="priority" required>
-                        <option value="">-- Select Priority --</option>
-                        <option value="low">&#9679; Low — Not urgent</option>
-                        <option value="medium" selected>&#9679; Medium — Normal</option>
-                        <option value="high">&#9679; High — Urgent</option>
-                        <option value="critical">&#9679; Critical — Stop work</option>
+                        <option value="" data-i18n="req.priority.select">-- Select Priority --</option>
+                        <option value="low" data-i18n="req.priority.low">&#9679; Low — Not urgent</option>
+                        <option value="medium" selected data-i18n="req.priority.medium">&#9679; Medium — Normal</option>
+                        <option value="high" data-i18n="req.priority.high">&#9679; High — Urgent</option>
+                        <option value="critical" data-i18n="req.priority.critical">&#9679; Critical — Stop work</option>
                       </select>
-                      <div class="invalid-feedback">Please select a priority.</div>
+                      <div class="invalid-feedback" data-i18n="req.err.priority">Please select a priority.</div>
                       <!-- Color legend -->
                       <div class="d-flex gap-3 mt-2">
-                        <span class="small"><span style="color:#198754;font-size:1rem;">&#9679;</span> Low</span>
-                        <span class="small"><span style="color:#2563eb;font-size:1rem;">&#9679;</span> Medium</span>
-                        <span class="small"><span style="color:#fd7e14;font-size:1rem;">&#9679;</span> High</span>
-                        <span class="small"><span style="color:#dc3545;font-size:1rem;">&#9679;</span> Critical</span>
+                        <span class="small"><span style="color:#198754;font-size:1rem;">&#9679;</span> <span data-i18n="priority.low">Low</span></span>
+                        <span class="small"><span style="color:#2563eb;font-size:1rem;">&#9679;</span> <span data-i18n="priority.medium">Medium</span></span>
+                        <span class="small"><span style="color:#fd7e14;font-size:1rem;">&#9679;</span> <span data-i18n="priority.high">High</span></span>
+                        <span class="small"><span style="color:#dc3545;font-size:1rem;">&#9679;</span> <span data-i18n="priority.critical">Critical</span></span>
                       </div>
                     </div>
 
                     <!-- ICT Asset -->
                     <div class="col-12">
                       <label for="asset" class="form-label fw-semibold">
-                        <i class="bi bi-pc-display me-1 text-primary"></i>ICT Asset Tag
+                        <i class="bi bi-pc-display me-1 text-primary"></i><span data-i18n="req.assetTag">ICT Asset Tag</span>
                       </label>
                       <select class="form-select" id="asset" aria-describedby="assetFeedback assetHelp">
-                        <option value="" disabled selected>Loading ICT Assets...</option>
+                        <option value="" disabled selected data-i18n="req.loadingAssets">Loading ICT Assets...</option>
                       </select>
                       <div class="invalid-feedback" id="assetFeedback"></div>
-                      <div class="form-text" id="assetHelp">Select the asset tag if your device is registered in the
+                      <div class="form-text" id="assetHelp" data-i18n="req.assetHelp">Select the asset tag if your device is registered in the
                         system. Choose "No Asset / Not Applicable" if not applicable.</div>
                     </div>
 
                     <!-- Description -->
                     <div class="col-12">
                       <label for="description" class="form-label fw-semibold">
-                        <i class="bi bi-chat-text me-1 text-primary"></i>Problem Description <span
+                        <i class="bi bi-chat-text me-1 text-primary"></i><span data-i18n="req.problemDescription">Problem Description</span> <span
                           class="text-danger">*</span>
                       </label>
                       <textarea class="form-control" id="description" rows="5"
                         placeholder="Describe the problem in detail. Include:&#10;• When did it start?&#10;• What were you doing when it happened?&#10;• Any error messages you saw?"
-                        required minlength="20"></textarea>
+                        required minlength="20" data-i18n-placeholder="req.ph.description"></textarea>
                       <div class="d-flex justify-content-between mt-1">
-                        <div class="form-text">Be as detailed as possible to help the technician.</div>
+                        <div class="form-text" data-i18n="req.descriptionHint">Be as detailed as possible to help the technician.</div>
                         <span class="form-text" id="descCount">0 / 1000</span>
                       </div>
-                      <div class="invalid-feedback">Description must be at least 20 characters.</div>
+                      <div class="invalid-feedback" data-i18n="req.err.description">Description must be at least 20 characters.</div>
                     </div>
 
                     <!-- Attachment -->
                     <div class="col-12">
                       <label for="attachment" class="form-label fw-semibold">
-                        <i class="bi bi-paperclip me-1 text-primary"></i>Attach Screenshot / Document (Optional)
+                        <i class="bi bi-paperclip me-1 text-primary"></i><span data-i18n="req.attach">Attach Screenshot / Document (Optional)</span>
                       </label>
                       <input type="file" class="form-control" id="attachment"
                         accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx" />
-                      <div class="form-text">Max 5MB. Accepted: JPG, PNG, PDF, DOC.</div>
+                      <div class="form-text" data-i18n="req.attachHint">Max 5MB. Accepted: JPG, PNG, PDF, DOC.</div>
                     </div>
 
                   </div>
@@ -363,7 +360,7 @@
               <!-- - Preview Summary ------------------------------ -->
               <div class="card border-0 shadow-sm mb-4 d-none" id="summaryCard">
                 <div class="card-header bg-light py-3 border-bottom">
-                  <h6 class="mb-0 fw-bold"><i class="bi bi-eye me-2 text-success"></i>Request Summary — Please Review
+                  <h6 class="mb-0 fw-bold"><i class="bi bi-eye me-2 text-success"></i><span data-i18n="req.summary">Request Summary — Please Review</span>
                   </h6>
                 </div>
                 <div class="card-body p-4">
@@ -374,13 +371,13 @@
               <!-- - Submit Buttons ------------------------------- -->
               <div class="d-flex gap-3">
                 <button type="button" class="btn btn-outline-secondary btn-lg px-4" id="previewBtn">
-                  <i class="bi bi-eye me-1"></i>Preview
+                  <i class="bi bi-eye me-1"></i><span data-i18n="req.preview">Preview</span>
                 </button>
                 <button type="submit" class="btn btn-primary btn-lg px-5 fw-semibold flex-grow-1" id="submitBtn">
                   <span class="spinner-border spinner-border-sm me-2 d-none" id="submitSpinner"></span>
-                  <i class="bi bi-send me-1" id="submitIcon"></i><span id="submitBtnLabel">Submit Request</span>
+                  <i class="bi bi-send me-1" id="submitIcon"></i><span id="submitBtnLabel" data-i18n="req.submit">Submit Request</span>
                 </button>
-                <button type="button" class="btn btn-outline-danger btn-lg" id="clearBtn" title="Clear this form">
+                <button type="button" class="btn btn-outline-danger btn-lg" id="clearBtn" title="Clear this form" data-i18n-title="req.clearForm">
                   <i class="bi bi-trash"></i>
                 </button>
               </div>
@@ -397,19 +394,19 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="clearFormModalLabel"><i class="bi bi-trash me-2 text-danger"></i>Clear
-            this form?</h5>
+          <h5 class="modal-title fw-bold" id="clearFormModalLabel"><i class="bi bi-trash me-2 text-danger"></i><span data-i18n="req.clearFormTitle">Clear
+            this form?</span></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p class="mb-0">All information you entered in this form will be removed. Your request has not been submitted
+          <p class="mb-0" data-i18n="req.clearFormText">All information you entered in this form will be removed. Your request has not been submitted
             yet.</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" id="clearFormCancelBtn" data-bs-dismiss="modal"><i
-              class="bi bi-x-lg me-1"></i>Cancel</button>
-          <button type="button" class="btn btn-danger" id="clearFormConfirmBtn"><i class="bi bi-trash me-1"></i>Clear
-            Form</button>
+              class="bi bi-x-lg me-1"></i><span data-i18n="common.cancel">Cancel</span></button>
+          <button type="button" class="btn btn-danger" id="clearFormConfirmBtn"><i class="bi bi-trash me-1"></i><span data-i18n="req.clearFormConfirm">Clear
+            Form</span></button>
         </div>
       </div>
     </div>
@@ -418,6 +415,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/validation.js?v=6"></script>
   <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/lang.js?v=9"></script>
   <script src="/assets/js/main.js?v=7"></script>
   <script src="/assets/js/requests.js?v=8"></script>
   <script>

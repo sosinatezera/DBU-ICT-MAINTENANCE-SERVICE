@@ -102,7 +102,7 @@
 
 /* ── Status Update Buttons ─────────────────────────────────── */
 .status-action-btn {
-  font-size: .8rem;
+  font-size: .875rem;
   padding: .3rem .75rem;
   border-radius: var(--radius-pill);
   font-weight: 600;
@@ -133,7 +133,7 @@
 
 /* ── Request Detail in Modal ───────────────────────────────── */
 .request-detail-label {
-  font-size: .74rem;
+  font-size: .8125rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .6px;
@@ -141,7 +141,7 @@
   margin-bottom: .2rem;
 }
 
-.request-detail-value { font-size: .9rem; color: #111827; }
+.request-detail-value { font-size: 1rem; color: #111827; }
 
 /* ── Technician Profile Avatar ─────────────────────────────── */
 #sidebar .rounded-circle.bg-warning {

@@ -134,6 +134,7 @@ const getTicketById = async (req, res, next) => {
        - ICT Admin sees every ticket.
        - Technician sees only tickets assigned to them.
        - Everyone else sees only their own tickets. */
+    let denyMessage = null;
     if (req.user.role !== 'ICT Admin') {
       if (req.user.role === 'Technician') {
         const tech = await Technician.findOne({ user: req.user.id });
@@ -147,14 +148,28 @@ const getTicketById = async (req, res, next) => {
             })
           : false;
         if (!ticketAssignedToUser && !hasAssignment) {
-          return res.status(403).json({ success: false, message: 'You can only view tickets assigned to you.' });
+          denyMessage = 'You can only view tickets assigned to you.';
         }
       } else {
         const ownerId = ticket.requester?._id || ticket.requester;
         if (String(ownerId) !== String(req.user.id)) {
-          return res.status(403).json({ success: false, message: 'You can only view your own tickets.' });
+          denyMessage = 'You can only view your own tickets.';
         }
       }
+    }
+
+    /* Diagnostic — confirms ticket/user/role relationship before authorizing. */
+    console.log('[TICKET DETAIL]', {
+      ticketId: req.params.id,
+      userId:   String(req.user.id),
+      role:     req.user.role,
+      requester: String(ticket.requester?._id || ticket.requester || ''),
+      assignedTechnician: String(ticket.assignedTechnician?._id || ticket.assignedTechnician || ''),
+      granted:  !denyMessage,
+    });
+
+    if (denyMessage) {
+      return res.status(403).json({ success: false, message: denyMessage });
     }
 
     res.json({ success: true, data: formatTicket(ticket, req.user.role, req.user.id) });
@@ -260,19 +275,9 @@ const createTicket = async (req, res, next) => {
       });
     }
 
-    /* Notify available technicians */
-    const techs = await Technician.find({ available: true }).populate('user', '_id status');
-    for (const t of techs) {
-      if (t.user?.status === 'active') {
-        await Notification.create({
-          user:    t.user._id,
-          ticket:  ticket._id,
-          title:   `New Ticket: ${ticket.ticketId}`,
-          message: `${user?.fullName} reported a ${payload.equipmentType} issue. Priority: ${payload.priority}.`,
-          type:    'info',
-        });
-      }
-    }
+    /* Technicians only receive a ticket notification once they are actually
+       assigned to it ("New Assignment"); an unassigned technician must not get
+       a clickable "New Ticket" notification for a ticket they cannot open. */
 
     res.status(201).json({
       success: true,

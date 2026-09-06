@@ -55,7 +55,7 @@ html, body { overflow-x: hidden; }
 /* ── Topbar ────────────────────────────────────────────────── */
 @media (max-width: 767.98px) {
   .topbar { padding: 0.5rem 1rem !important; }
-  .topbar h5 { font-size: .95rem; }
+  .topbar h5 { font-size: 1rem; }
   .topbar .gap-3 { gap: .6rem !important; }
 }
 
@@ -144,7 +144,7 @@ html, body { overflow-x: hidden; }
 /* ── Workflow Steps ────────────────────────────────────────── */
 @media (max-width: 575.98px) {
   .workflow-step { padding: 0.65rem !important; }
-  .workflow-step span:not(.badge) { font-size: 0.85rem; }
+  .workflow-step span:not(.badge) { font-size: 0.9375rem; }
 }
 
 /* ── Reports ───────────────────────────────────────────────── */

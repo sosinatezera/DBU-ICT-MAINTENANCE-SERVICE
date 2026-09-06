@@ -70,7 +70,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     setVal('settingSystemName', currentSettings.systemName);
     setVal('settingOrgName', currentSettings.organizationName);
     setVal('settingSystemDesc', currentSettings.systemDescription);
-    setVal('settingLanguage', currentSettings.defaultLanguage);
+    const defaultLang = (currentSettings.defaultLanguage === 'en' || currentSettings.defaultLanguage === 'am')
+      ? currentSettings.defaultLanguage : 'en';
+    setVal('settingLanguage', defaultLang);
     setVal('settingTimezone', currentSettings.timezone);
     setVal('settingDateFormat', currentSettings.dateFormat);
   }

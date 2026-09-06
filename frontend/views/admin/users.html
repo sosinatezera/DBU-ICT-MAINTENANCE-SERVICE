@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
 <script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>User Management — Admin</title>
+  <title data-i18n="page.adminUsers">User Management — Admin</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -192,12 +192,12 @@
                   data-i18n="admin.users.modal.department">Department</span></label>
               <select class="form-select" id="userDepartment">
                 <option value=""><span data-i18n="admin.users.modal.selectDept">-- Select Department --</span>
-                <option value="Computer Maintenance">Computer Maintenance</option>
-                <option value="ICT Infrastructure and Security Services">ICT Infrastructure and Security Services
+                <option value="Computer Maintenance" data-i18n="auser.dept.computerMaintenance">Computer Maintenance</option>
+                <option value="ICT Infrastructure and Security Services" data-i18n="auser.dept.ictInfra">ICT Infrastructure and Security Services
                 </option>
-                <option value="Software Development">Software Development</option>
-                <option value="Learning and Technology">Learning and Technology</option>
-                <option value="System Administrations">System Administrations</option>
+                <option value="Software Development" data-i18n="auser.dept.softwareDev">Software Development</option>
+                <option value="Learning and Technology" data-i18n="auser.dept.learningTech">Learning and Technology</option>
+                <option value="System Administrations" data-i18n="auser.dept.systemAdmin">System Administrations</option>
               </select>
             </div>
             <div class="mb-3">
@@ -306,7 +306,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p class="mb-0">Are you sure you want to deactivate <strong id="deleteUserName"></strong>?</p>
+          <p class="mb-0"><span data-i18n="admin.users.modal.deactivateConfirm">Are you sure you want to deactivate</span> <strong id="deleteUserName"></strong>?</p>
           <input type="hidden" id="deleteUserId" />
         </div>
         <div class="modal-footer border-0">
@@ -324,20 +324,20 @@
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
         <div class="modal-header border-0">
-          <h6 class="modal-title fw-bold text-danger"><i class="bi bi-trash me-2"></i>Permanently Delete User</h6>
+          <h6 class="modal-title fw-bold text-danger"><i class="bi bi-trash me-2"></i><span data-i18n="admin.users.modal.permanentDelete">Permanently Delete User</span></h6>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <!-- Confirm view (user exists) -->
           <div id="permanentDeleteConfirmView">
-            <p class="mb-1">Are you sure you want to permanently delete:</p>
+            <p class="mb-1"><span data-i18n="admin.users.modal.permanentDeleteConfirm">Are you sure you want to permanently delete:</span></p>
             <div class="p-3 rounded bg-light border mb-2">
               <div class="fw-bold" id="permanentDeleteUserName"></div>
               <div class="small text-muted" id="permanentDeleteUserEmail"></div>
               <div class="small text-muted" id="permanentDeleteUserRole"></div>
             </div>
-            <p class="small text-danger mb-0"><i class="bi bi-exclamation-triangle me-1"></i>This action cannot be
-              undone. The account and any linked technician profile will be removed from the system.</p>
+            <p class="small text-danger mb-0"><i class="bi bi-exclamation-triangle me-1"></i><span data-i18n="admin.users.modal.permanentDeleteWarning">This action cannot be
+              undone. The account and any linked technician profile will be removed from the system.</span></p>
             <div id="permanentDeleteAlert" class="alert d-none mt-2 mb-0" role="alert"></div>
           </div>
           <!-- Not-found / error view (no active Delete button) -->
@@ -351,11 +351,11 @@
           <input type="hidden" id="permanentDeleteUserId" />
         </div>
         <div class="modal-footer border-0">
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" id="permanentDeleteCancelBtn">Cancel</button>
-          <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-bs-dismiss="modal" id="permanentDeleteCloseBtn">Close</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" id="permanentDeleteCancelBtn" data-i18n="common.cancel">Cancel</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-bs-dismiss="modal" id="permanentDeleteCloseBtn" data-i18n="common.close">Close</button>
           <button type="button" class="btn btn-danger btn-sm" id="confirmPermanentDeleteBtn">
             <span class="spinner-border spinner-border-sm me-1 d-none" id="permanentDeleteSpinner"></span>
-            Delete Permanently
+            <span data-i18n="admin.users.modal.deletePermanently">Delete Permanently</span>
           </button>
         </div>
       </div>
@@ -365,6 +365,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/validation.js?v=6"></script>
   <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/lang.js?v=9"></script>
   <script src="/assets/js/main.js?v=8"></script>
   <script src="/assets/js/notifications.js?v=7"></script>
   <script src="/assets/js/requests.js?v=12"></script>

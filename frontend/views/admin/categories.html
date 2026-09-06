@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
 <script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Category Management — Admin</title>
+  <title data-i18n="page.adminCategories">Category Management — Admin</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -63,7 +63,7 @@
           <div id="notifBellContainer"></div>
           <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#categoryModal"
             id="addCategoryBtn">
-            <i class="bi bi-plus-circle me-1"></i>Add Category
+            <i class="bi bi-plus-circle me-1"></i><span data-i18n="admin.categories.addCategory">Add Category</span>
           </button>
         </div>
       </header>
@@ -74,7 +74,7 @@
           <div class="col-lg-8">
             <div class="card border-0 shadow-sm">
               <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold">Maintenance Categories</h6>
+                <h6 class="mb-0 fw-bold" data-i18n="admin.categories.cardTitle">Maintenance Categories</h6>
               </div>
               <div class="card-body p-0">
                 <div class="table-responsive">
@@ -82,10 +82,10 @@
                     <thead class="table-light">
                       <tr>
                         <th>#</th>
-                        <th>Category Name</th>
-                        <th>Description</th>
-                        <th>Total Requests</th>
-                        <th>Actions</th>
+                        <th data-i18n="admin.categories.table.name">Category Name</th>
+                        <th data-i18n="admin.categories.table.description">Description</th>
+                        <th data-i18n="admin.categories.table.totalRequests">Total Requests</th>
+                        <th data-i18n="admin.categories.table.actions">Actions</th>
                       </tr>
                     </thead>
                     <tbody id="categoriesTableBody">
@@ -104,11 +104,11 @@
           <div class="col-lg-4">
             <div class="card border-0 shadow-sm">
               <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold">Requests by Category</h6>
+                <h6 class="mb-0 fw-bold" data-i18n="admin.categories.stats.title">Requests by Category</h6>
               </div>
               <div class="card-body">
                 <div id="categoryStats">
-                  <div class="text-center text-muted py-3">Loading stats...</div>
+                  <div class="text-center text-muted py-3" data-i18n="admin.categories.stats.loading">Loading stats...</div>
                 </div>
               </div>
             </div>
@@ -123,7 +123,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="categoryModalLabel">Add Category</h5>
+          <h5 class="modal-title fw-bold" id="categoryModalLabel" data-i18n="admin.categories.modal.addTitle">Add Category</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -134,13 +134,13 @@
               <label for="categoryName" class="form-label fw-semibold"><span
                   data-i18n="admin.categories.modal.name">Category Name</span> <span
                   class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="categoryName" placeholder="e.g. Hardware, Software, Internet"
+              <input type="text" class="form-control" id="categoryName" data-i18n-placeholder="admin.categories.modal.name.placeholder" placeholder="e.g. Hardware, Software, Internet"
                 required />
             </div>
             <div class="mb-3">
-              <label for="categoryDescription" class="form-label fw-semibold">Description</label>
+              <label for="categoryDescription" class="form-label fw-semibold" data-i18n="admin.categories.modal.description">Description</label>
               <textarea class="form-control" id="categoryDescription" rows="3"
-                placeholder="Brief description of this category..."></textarea>
+                data-i18n-placeholder="admin.categories.modal.description.placeholder" placeholder="Brief description of this category..."></textarea>
             </div>
           </form>
         </div>
@@ -149,7 +149,7 @@
               data-i18n="admin.categories.modal.cancel">Cancel</span>
             <button type="button" class="btn btn-primary" id="saveCategoryBtn">
               <span class="spinner-border spinner-border-sm me-2 d-none" id="saveCategorySpinner"></span>
-              Save Category
+              <span data-i18n="admin.categories.modal.save">Save Category</span>
             </button>
         </div>
       </div>
@@ -161,12 +161,12 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="categoryViewLabel">Category Details</h5>
+          <h5 class="modal-title fw-bold" id="categoryViewLabel" data-i18n="admin.categories.modal.viewTitle">Category Details</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="categoryViewBody"></div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-i18n="admin.categories.modal.close">Close</button>
         </div>
       </div>
     </div>
@@ -179,19 +179,20 @@
       <div class="modal-content">
         <div class="modal-header border-0 pb-0">
           <h5 class="modal-title fw-bold" id="deleteCategoryModalLabel">
-            <i class="bi bi-exclamation-triangle-fill text-danger me-1" aria-hidden="true"></i>Delete this category?
+            <i class="bi bi-exclamation-triangle-fill text-danger me-1" aria-hidden="true"></i><span
+              data-i18n="admin.categories.modal.deleteTitle">Delete this category?</span>
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body pt-2">
           <div id="deleteCategoryAlert" class="alert d-none" role="alert"></div>
           <p class="mb-2">
-            You are about to permanently delete
-            <strong class="text-primary" id="categoryDeleteName">this category</strong>.
+            <span data-i18n="admin.categories.modal.deleteDesc">You are about to permanently delete</span>
+            <strong class="text-primary" id="categoryDeleteName" data-i18n="cat.thisCategory">this category</strong>.
           </p>
           <div class="alert alert-warning py-2 small mb-2">
             <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-            This action cannot be undone. Deleting a category does not remove its requests.
+            <span data-i18n="admin.categories.modal.deleteWarning">This action cannot be undone. Deleting a category does not remove its requests.</span>
           </div>
           <div id="categoryDeleteInfo"></div>
         </div>
@@ -201,7 +202,8 @@
             <button type="button" class="btn btn-danger" id="deleteCategoryConfirmBtn">
               <span class="spinner-border spinner-border-sm me-2 d-none" id="deleteCategorySpinner" role="status"
                 aria-hidden="true"></span>
-              <i class="bi bi-trash me-1" aria-hidden="true"></i>Delete Category
+              <i class="bi bi-trash me-1" aria-hidden="true"></i><span
+                data-i18n="admin.categories.modal.deleteBtn">Delete Category</span>
             </button>
         </div>
       </div>
@@ -210,6 +212,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/lang.js?v=9"></script>
   <script src="/assets/js/main.js?v=8"></script>
   <script src="/assets/js/notifications.js?v=7"></script>
   <script src="/assets/js/requests.js?v=8"></script>

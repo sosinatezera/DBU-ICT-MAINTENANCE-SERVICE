@@ -74,8 +74,8 @@ html { box-sizing: border-box; }
 
 body {
   font-family: var(--font-base);
-  font-size: .875rem;
-  line-height: 1.55;
+  font-size: 1rem;
+  line-height: 1.6;
   color: var(--dark);
   background-color: var(--bg-body);
   margin: 0;
@@ -107,16 +107,16 @@ textarea:focus-visible,
 h1, h2, h3, h4, h5, h6 { color: var(--ink); letter-spacing: -.01em; line-height: 1.3; }
 
 /* ── Standard Typography Scale ─────────────────────────────── */
-h1 { font-size: 1.625rem; font-weight: 700; }   /* 26px */
+h1 { font-size: 1.75rem; font-weight: 700; }    /* 28px */
 h2 { font-size: 1.375rem; font-weight: 700; }   /* 22px */
 h3 { font-size: 1.125rem; font-weight: 700; }   /* 18px */
-h4 { font-size: 1rem;     font-weight: 600; }   /* 16px */
-h5 { font-size: .9375rem; font-weight: 600; }   /* 15px */
-h6 { font-size: .8125rem; font-weight: 600; }   /* 13px */
+h4 { font-size: 1.0625rem; font-weight: 600; }  /* 17px */
+h5 { font-size: 1rem;     font-weight: 600; }   /* 16px */
+h6 { font-size: .9375rem; font-weight: 600; }   /* 15px */
 
 /* Page / section titles */
-.page-title   { font-size: 1.35rem; font-weight: 700; color: var(--ink); letter-spacing: -.3px; margin: 0; }
-.section-title{ font-size: 1.125rem; font-weight: 700; color: var(--ink); }
+.page-title   { font-size: 1.5rem; font-weight: 700; color: var(--ink); letter-spacing: -.3px; margin: 0; }
+.section-title{ font-size: 1.25rem; font-weight: 700; color: var(--ink); }
 
 /* Thin, subtle scrollbars */
 * { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
@@ -239,7 +239,7 @@ h6 { font-size: .8125rem; font-weight: 600; }   /* 13px */
   font-weight: 700;
   letter-spacing: .4px;
   text-transform: uppercase;
-  font-size: .68rem;
+  font-size: .72rem;
   opacity: .95;
   margin-top: .15rem;
 }
@@ -287,6 +287,43 @@ h6 { font-size: .8125rem; font-weight: 600; }   /* 13px */
   margin-left: auto;
 }
 
+/* ── Sidebar menu indicator ──────────────────────────────────────
+   Chevron-right arrow (Bootstrap Icons glyph \f285) on every main
+   sidebar menu item across all dashboards (Admin / Technician /
+   Requester). Scoped to the top-level menu list so the profile and
+   logout links in the sidebar footer stay unchanged. The arrow is
+   vertically centered at the right edge and fades/slides in on
+   hover/active. Items that already carry a badge hide the arrow. */
+#sidebar .nav .nav-link::after {
+  content: "\f285";
+  font-family: "bootstrap-icons";
+  font-style: normal;
+  font-weight: 400;
+  font-variant: normal;
+  text-transform: none;
+  font-size: .8rem;
+  line-height: 1;
+  display: block;
+  position: absolute;
+  right: .55rem;
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  color: inherit;
+  opacity: .45;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+#sidebar .nav .nav-link:hover::after,
+#sidebar .nav .nav-link.active::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+#sidebar .nav .nav-link.active::after { color: #93c5fd; }
+
+#sidebar .nav .nav-link:has(.badge)::after { display: none; }
+
 /* Sidebar footer (profile / availability / logout) */
 #sidebar .mt-auto {
   margin-top: auto !important;
@@ -295,7 +332,7 @@ h6 { font-size: .8125rem; font-weight: 600; }   /* 13px */
 }
 
 #sidebar .mt-auto .d-flex i { color: rgba(255,255,255,.9); }
-#sidebar .mt-auto .small { color: rgba(226,232,240,.72); font-size: .74rem; }
+#sidebar .mt-auto .small { color: rgba(226,232,240,.72); font-size: .8125rem; }
 #sidebar .mt-auto .nav-link { padding: .38rem .55rem; font-size: .8rem; color: rgba(226,232,240,.72) !important; border-radius: var(--radius-sm); }
 #sidebar .mt-auto .nav-link:hover { background: rgba(255,255,255,.06) !important; color: #fff !important; }
 
@@ -319,7 +356,7 @@ h6 { font-size: .8125rem; font-weight: 600; }   /* 13px */
   letter-spacing: -.2px;
 }
 
-.topbar .text-muted.small { color: var(--muted) !important; font-size: .78rem; }
+.topbar .text-muted.small { color: var(--muted) !important; font-size: .85rem; }
 
 /* Dropdown menus (notifications / profile) */
 .dropdown-menu {
@@ -420,7 +457,7 @@ h6 { font-size: .8125rem; font-weight: 600; }   /* 13px */
   font-weight: 700;
   color: var(--ink);
   letter-spacing: -.2px;
-  font-size: .92rem;
+  font-size: 1.0625rem;
 }
 
 .card-header h6 i { opacity: .85; }
@@ -844,7 +881,7 @@ h6 { font-size: .8125rem; font-weight: 600; }   /* 13px */
     box-shadow: 4px 0 24px rgba(2,6,23,.35);
   }
 
-  .topbar h5 { font-size: .95rem; }
+  .topbar h5 { font-size: 1rem; }
 
   .profile-avatar-lg { width: 72px; height: 72px; min-width: 72px; }
   .profile-avatar-lg .profile-avatar-initials { font-size: 1.35rem; }
@@ -861,68 +898,68 @@ h6 { font-size: .8125rem; font-weight: 600; }   /* 13px */
      Page title (.page-title) > section (.section-title) > body > metadata
    ═══════════════════════════════════════════════════════════ */
 
-/* ── Base text ───────────── (body .875rem → .8125rem, still readable ≥13px) ── */
+/* ── Base text ───────────── (body 1rem, line-height 1.6 — comfortably readable) ── */
 body {
-  font-size: .8125rem;
-  line-height: 1.45;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
-/* ── Type scale (slightly tighter than the default) ────────── */
-h1 { font-size: 1.325rem; }
-h2 { font-size: 1.125rem; }
-h3 { font-size: 1rem;     }
-h4 { font-size: .9375rem; }
-h5 { font-size: .875rem;  }
-h6 { font-size: .8125rem; }
+/* ── Type scale (medium-to-large, clear hierarchy) ─────────── */
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.375rem; }
+h3 { font-size: 1.125rem; }
+h4 { font-size: 1.0625rem; }
+h5 { font-size: 1rem;     }
+h6 { font-size: .9375rem; }
 
-.page-title    { font-size: 1.15rem; }
-.section-title { font-size: 1rem;    }
-.card-title    { font-size: .9375rem; }
+.page-title    { font-size: 1.5rem; }
+.section-title { font-size: 1.25rem; }
+.card-title    { font-size: 1.0625rem; }
 
 /* ── Cards / panels: trim padding so more content fits ──────── */
 .card { --bs-card-spacer-y: .9rem; --bs-card-spacer-x: 1rem; }
 .card-body  { padding: .9rem 1rem; }
-.card-header{ padding: .6rem 1rem; font-size: .875rem; font-weight: 600; }
+.card-header{ padding: .6rem 1rem; font-size: 1rem; font-weight: 600; }
 .card-footer{ padding: .6rem 1rem; }
 
 /* ── Tables: tighter rows, still readable ──────────────────── */
 .table th,
 .table td {
   padding: .45rem .65rem;
-  font-size: .8125rem;
+  font-size: .9375rem;
 }
-.table thead th   { font-size: .6875rem; }
-.table-responsive { font-size: .8125rem; }
+.table thead th   { font-size: .75rem; }
+.table-responsive { font-size: .9375rem; }
 
 /* ── Forms: compact controls ───────────────────────────────── */
 .form-control,
 .form-select {
   padding: .34rem .55rem;
-  font-size: .8125rem;
+  font-size: .9375rem;
   min-height: 34px;
 }
-.form-label       { font-size: .75rem; margin-bottom: .2rem; }
-.form-text        { font-size: .6875rem; }
-.input-group-text { padding: .34rem .55rem; font-size: .8125rem; }
+.form-label       { font-size: .875rem; margin-bottom: .2rem; }
+.form-text        { font-size: .8125rem; }
+.input-group-text { padding: .34rem .55rem; font-size: .9375rem; }
 .form-check-input { margin-top: .2em; }
 
 /* ── Buttons: compact ──────────────────────────────────────── */
 .btn {
   padding: .32rem .7rem;
-  font-size: .8125rem;
+  font-size: .9375rem;
   line-height: 1.4;
 }
-.btn-sm { padding: .22rem .5rem; font-size: .75rem; }
-.btn-lg { padding: .42rem .9rem; font-size: .875rem; }
+.btn-sm { padding: .22rem .5rem; font-size: .8125rem; }
+.btn-lg { padding: .42rem .9rem; font-size: 1.0625rem; }
 
 /* ── Badges / dropdowns / modals / alerts ──────────────────── */
-.badge { font-size: .6875rem; }
-.dropdown-menu { font-size: .8125rem; }
-.dropdown-item { padding: .3rem .85rem; font-size: .8125rem; }
+.badge { font-size: .75rem; }
+.dropdown-menu { font-size: .9375rem; }
+.dropdown-item { padding: .3rem .85rem; font-size: .9375rem; }
 .modal-body    { padding: 1rem; }
 .modal-header  { padding: .75rem 1rem; }
 .modal-footer  { padding: .6rem 1rem; }
-.alert         { padding: .6rem .9rem; font-size: .8125rem; margin-bottom: .8rem; }
+.alert         { padding: .6rem .9rem; font-size: .9375rem; margin-bottom: .8rem; }
 
 /* ── Spacing utilities sanctioned by the compact grid ───────── */
 .alert, .card.mb-3, .card.mb-4 { margin-bottom: .9rem !important; }
@@ -933,32 +970,32 @@ h6 { font-size: .8125rem; }
 /* ── Empty states / list groups ─────────────────────────────── */
 .empty-state { padding: 1.75rem .75rem; }
 .empty-state i { font-size: 2.25rem; margin-bottom: .6rem; }
-.empty-state .empty-title { font-size: .9375rem; }
-.empty-state .empty-desc  { font-size: .8125rem; margin-bottom: .6rem; }
-.list-group-item { padding: .5rem .85rem; font-size: .8125rem; }
+.empty-state .empty-title { font-size: 1.0625rem; }
+.empty-state .empty-desc  { font-size: .9375rem; margin-bottom: .6rem; }
+.list-group-item { padding: .5rem .85rem; font-size: .9375rem; }
 
 /* ── Sidebar & navbar: tighter but keep hierarchy ───────────── */
 .topbar { min-height: 52px; }
-.topbar h5 { font-size: .875rem; }
-.topbar .text-muted, .topbar .small { font-size: .75rem; }
+.topbar h5 { font-size: 1.0625rem; }
+.topbar .text-muted, .topbar .small { font-size: .8125rem; }
 #sidebar .sidebar-brand { padding: .3rem 0 .6rem; margin-bottom: .6rem !important; }
-#sidebar .nav-link { padding: .4rem .7rem; font-size: .8125rem; }
-#sidebar .nav-link i  { font-size: 1rem; }
-.sidebar .small, .sidebar .text-white-50 { font-size: .75rem; }
+#sidebar .nav-link { padding: .4rem .7rem; font-size: .9375rem; }
+#sidebar .nav-link i  { font-size: 1.05rem; }
+.sidebar .small, .sidebar .text-white-50 { font-size: .8125rem; }
 
 /* ── KPI / stat cards (denser numbers) ──────────────────────── */
 .kpi-card { padding: .9rem 1rem; }
-.kpi-card .fs-4, .kpi-card h4 { font-size: 1.15rem; }
+.kpi-card .fs-4, .kpi-card h4 { font-size: 1.25rem; }
 
 /* ── Footer ─────────────────────────────────────────────────── */
-.footer { font-size: .75rem; padding: .6rem 0; }
+.footer { font-size: .875rem; padding: .6rem 0; }
 
 /* ── Nav tabs & pagination (Bootstrap) ──────────────────────── */
-.nav-tabs .nav-link { padding: .4rem .7rem; font-size: .8125rem; }
-.pagination { --bs-pagination-padding-y: .3rem; --bs-pagination-padding-x: .55rem; --bs-pagination-font-size: .8125rem; }
+.nav-tabs .nav-link { padding: .4rem .7rem; font-size: .9375rem; }
+.pagination { --bs-pagination-padding-y: .3rem; --bs-pagination-padding-x: .55rem; --bs-pagination-font-size: .9375rem; }
 
 /* ── Notifications / toasts ─────────────────────────────────── */
-.app-toast { font-size: .8125rem; padding: .5rem .7rem; }
+.app-toast { font-size: .9375rem; padding: .5rem .7rem; }
 
 /* ── Sticky dashboard sidebar ────────────────────────────────────
    The sidebar stays fixed (always visible, top-left) while only the
@@ -1005,4 +1042,229 @@ body.dashboard-body > .d-flex > .main-content {
 /* Print goal is unchanged: readable on paper */
 @media print {
   .alert, .toast, .toast-container { display: none !important; }
+}
+
+/* ── Professional App Shell (injected by main.js) ───────────────
+   Gives every dashboard the same professional structure as a modern
+   web app: a sticky topbar with page title + subtitle and a mobile
+   hamburger, plus a bottom-anchored footer. The markup is injected
+   client-side, so no per-page HTML edits. */
+
+/* Main column fills the viewport and stacks topbar → content → footer */
+body.dashboard-body > .d-flex > .flex-grow-1 {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+body.dashboard-body > .d-flex > .flex-grow-1 > main {
+  flex: 1 1 auto;
+}
+
+/* Sticky topbar on every dashboard (matches the inline style used on
+   admin/settings.html) */
+.topbar { position: sticky; top: 0; z-index: 100; }
+
+/* Left block: hamburger + (title / subtitle) */
+.topbar-title-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .05rem;
+  min-width: 0;
+}
+
+.topbar-title-stack h5 {
+  font-size: 1.05rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.topbar-subtitle {
+  font-size: .8rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* Mobile hamburger stays compact wherever it lives */
+#sidebarToggle {
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* Bottom-anchored app footer */
+.app-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding: .7rem 1.25rem;
+  font-size: .8125rem;
+}
+
+.app-footer .app-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-footer .app-footer-brand { font-weight: 600; color: var(--ink); }
+.app-footer .app-footer-copy   { color: var(--muted); }
+
+@media (max-width: 575.98px) {
+  .app-footer .app-footer-inner {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+@media print {
+  .app-footer { display: none !important; }
+}
+
+/* =========================================================
+   Public-navbar "Menu" — dedicated Quick Access control.
+   Distinct from the primary nav links (info/sections) and
+   the utility cluster (lang / theme / login / register).
+   ========================================================= */
+.menu-quick { position: relative; }
+
+.menu-quick-control {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font: inherit;
+  font-weight: 500;
+  font-size: .95rem;
+  line-height: 1.2;
+  color: var(--home-text, #0f172a);
+  background: rgba(37, 99, 235, .08);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: .55rem .9rem;
+  cursor: pointer;
+  transition: background-color .2s cubic-bezier(.4, 0, .2, 1),
+              color .2s cubic-bezier(.4, 0, .2, 1),
+              border-color .2s cubic-bezier(.4, 0, .2, 1),
+              box-shadow .2s cubic-bezier(.4, 0, .2, 1);
+}
+
+.menu-quick-control:hover {
+  color: var(--home-primary, #2563eb);
+  background: rgba(37, 99, 235, .12);
+  border-color: rgba(37, 99, 235, .25);
+}
+
+.menu-quick-control:focus-visible {
+  outline: 2px solid var(--home-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.menu-quick-control[aria-expanded="true"] {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--home-primary, #2563eb), var(--home-primary-strong, #1d4ed8));
+  border-color: transparent;
+  box-shadow: 0 6px 16px -8px rgba(37, 99, 235, .6);
+}
+
+.menu-quick-control i { pointer-events: none; }
+
+.menu-quick-chevron {
+  font-size: .7rem;
+  transition: transform .2s ease;
+}
+
+.menu-quick-control[aria-expanded="true"] .menu-quick-chevron {
+  transform: rotate(180deg);
+}
+
+.menu-quick-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  min-width: 260px;
+  background: var(--home-surface-3, #ffffff);
+  border: 1px solid var(--home-border, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px -12px rgba(15, 23, 42, .22);
+  padding: .5rem;
+  z-index: 1200;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+}
+
+.menu-quick.open .menu-quick-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.menu-quick-heading {
+  font-size: .72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--home-text-dim, #9ca3af);
+  padding: .45rem .7rem .55rem;
+}
+
+.menu-quick-link {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  padding: .55rem .7rem;
+  border-radius: 8px;
+  color: var(--home-text, #0f172a);
+  text-decoration: none;
+  font-size: .9rem;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.menu-quick-link i {
+  width: 16px;
+  text-align: center;
+  color: var(--home-primary, #2563eb);
+}
+
+.menu-quick-link:hover {
+  background: rgba(37, 99, 235, .08);
+  color: var(--home-primary, #2563eb);
+}
+
+.menu-quick-link:focus-visible {
+  outline: 2px solid var(--home-primary, #2563eb);
+  outline-offset: -2px;
+}
+
+.menu-quick-divider {
+  height: 1px;
+  margin: .35rem .3rem;
+  background: var(--home-border, #e2e8f0);
+}
+
+@media (max-width: 991.98px) {
+  .menu-quick { width: 100%; }
+
+  .menu-quick-control {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .menu-quick-panel {
+    position: static;
+    width: 100%;
+    margin-top: .35rem;
+    box-shadow: none;
+  }
+}
+
+@media print {
+  .menu-quick { display: none !important; }
 }

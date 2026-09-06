@@ -530,8 +530,117 @@ async function loadNotificationCount() {
   }
 }
 
+/* ── Professional App Shell ─────────────────────────────────
+   Client-side polish so every dashboard shares a professional
+   structure — sticky topbar with page title + subtitle, a mobile
+   hamburger, and a bottom-anchored footer — without per-page
+   HTML edits. */
+
+const PAGE_TOPBAR_SUBTITLES = {
+  'admin/dashboard':             'Overview of requests, assets, technicians and system activity.',
+  'admin/users':                 'Manage registered users and their access.',
+  'admin/technicians':           'Manage technician accounts, specializations and workloads.',
+  'admin/assets':                'Track ICT assets, ownership and maintenance state.',
+  'admin/requests':              'Review, assign and manage maintenance requests.',
+  'admin/categories':            'Organize request categories and service types.',
+  'admin/reports':               'Analyze request trends and team performance.',
+  'admin/admin-feedback':        'Review feedback and ratings submitted by users.',
+  'admin/notifications':         'View and manage system notifications.',
+  'admin/settings':              'System, notification, security and profile settings.',
+
+  'technician/dashboard':        'Your assigned requests, performance and recent activity.',
+  'technician/assigned-requests': 'Requests awaiting your review and action.',
+  'technician/maintenance':      'Record and update maintenance activities.',
+  'technician/history':          'Completed requests and past maintenance work.',
+  'technician/technician-feedback': 'Ratings and feedback left by requesters.',
+  'technician/notifications':    'Updates and alerts addressed to you.',
+  'technician/profile':          'Your profile, specialization and preferences.',
+
+  'user/dashboard':              'Track your requests and recent activity.',
+  'user/request':                'Submit a new maintenance request.',
+  'user/tracking':               'Check the live status of your requests.',
+  'user/history':                'View your past and completed requests.',
+  'user/feedback':               'Rate and review the service you received.',
+  'user/notifications':          'Updates on your requests.',
+  'user/profile':                'Your profile and preferences.',
+};
+
+function getCurrentRoleAndFile() {
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  const file  = (parts.pop() || 'dashboard.html').replace(/\.html$/i, '');
+  const role  = (parts.slice(-1)[0] || '').toLowerCase();
+  return { role, file };
+}
+
+function shellI18n(key, fallback) {
+  try {
+    if (typeof window.t === 'function') {
+      const v = window.t(key);
+      if (typeof v === 'string' && v && v !== key) return v;
+    }
+  } catch (_) { /* fall through to the English default */ }
+  return fallback;
+}
+
+function ensureTopbarHeaderStructure() {
+  const header = document.querySelector('.topbar');
+  if (!header) return;
+  const h5 = header.querySelector('h5');
+  if (!h5 || h5.closest('.topbar-title-stack')) return;
+
+  const { role, file } = getCurrentRoleAndFile();
+
+  /* A subtitle already sits right under the title on this page — move it
+     into the new stack instead of duplicating it. */
+  const adjacent = h5.nextElementSibling;
+  const hasDropSub = !!adjacent &&
+    (adjacent.matches('small') || (adjacent.classList && adjacent.classList.contains('text-muted')));
+
+  const stack = document.createElement('div');
+  stack.className = 'topbar-title-stack';
+
+  h5.parentNode.insertBefore(stack, h5);
+  stack.appendChild(h5);
+  if (hasDropSub && adjacent.parentNode === stack.parentNode) stack.appendChild(adjacent);
+
+  const subtitle = PAGE_TOPBAR_SUBTITLES[`${role}/${file}`];
+  if (subtitle && !stack.querySelector('.topbar-subtitle')) {
+    const sub = document.createElement('div');
+    sub.className = 'topbar-subtitle';
+    sub.textContent = subtitle;
+    stack.appendChild(sub);
+  }
+
+  /* Pages without a hamburger get one so the mobile drawer always opens */
+  if (!header.querySelector('#sidebarToggle')) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'sidebarToggle';
+    btn.className = 'btn btn-sm btn-outline-secondary d-inline-flex d-lg-none';
+    btn.setAttribute('aria-label', 'Toggle navigation');
+    btn.innerHTML = '<i class="bi bi-list fs-5"></i>';
+    stack.insertAdjacentElement('beforebegin', btn);
+  }
+}
+
+function injectAppFooter() {
+  const column = document.querySelector('body.dashboard-body > .d-flex > .flex-grow-1');
+  if (!column || column.querySelector('.app-footer')) return;
+
+  const footer = document.createElement('footer');
+  footer.className = 'app-footer';
+  footer.innerHTML = `
+    <div class="app-footer-inner">
+      <div class="app-footer-brand">${escHtml(shellI18n('footer.brand', 'Smart Computer Maintenance Service'))}</div>
+      <div class="app-footer-copy">${escHtml(shellI18n('footer.rights', 'All rights reserved.'))} &copy; ${new Date().getFullYear()}</div>
+    </div>`;
+  column.appendChild(footer);
+}
+
 /* ── DOM Ready ────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+  ensureTopbarHeaderStructure();
+  injectAppFooter();
   populateUserInfo();
   initSidebarToggle();
   loadSystemPrefs();

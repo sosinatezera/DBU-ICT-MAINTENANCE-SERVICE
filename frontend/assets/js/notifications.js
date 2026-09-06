@@ -313,7 +313,11 @@ function openNotificationTicket(ticketId) {
   }
 
   const path = window.location.pathname;
-  const role = (typeof Auth !== 'undefined' && Auth.getUser && Auth.getUser())?.role || '';
+  const sessionUser = (typeof Auth !== 'undefined' && Auth.getUser && Auth.getUser()) || null;
+  /* Normalize so a stale/non-canonical role in the session never falls through
+     to the wrong role branch (which would silently do nothing or open the wrong
+     modal). Roles in main.js are canonical: Requester / Technician / ICT Admin. */
+  const role = normalizeRole(sessionUser?.role) || '';
 
   /* Technician — use the view-ticket modal when present on this page. */
   if (role === 'Technician') {

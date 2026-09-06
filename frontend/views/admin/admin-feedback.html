@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
 <script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Feedback — Admin</title>
+  <title data-i18n="page.adminFeedback">Feedback — Admin</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -338,20 +338,20 @@
             <div class="col-12">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="afFollowUpRequired" />
-                <label class="form-check-label small" for="afFollowUpRequired">Follow-up Required</label>
+                <label class="form-check-label small" for="afFollowUpRequired" data-i18n="admin.requests.fb.followUpRequired">Follow-up Required</label>
               </div>
             </div>
             <div class="col-12 d-none" id="afFollowUpWrap">
               <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.followUpNotes">Follow-up
                   Notes</span></label>
               <textarea class="form-control" id="afFollowUpNotes" rows="2" maxlength="1000"
-                placeholder="What follow-up is required..."></textarea>
+                data-i18n-placeholder="admin.requests.fb.followUpNotes.placeholder" placeholder="What follow-up is required..."></textarea>
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold small"><span
                   data-i18n="admin.requests.fb.adminRecommendation">Administrative Recommendation</span></label>
               <textarea class="form-control" id="afAdminRecommendation" rows="2" maxlength="1000"
-                placeholder="Management recommendation..."></textarea>
+                data-i18n-placeholder="admin.requests.fb.adminRecommendation.placeholder" placeholder="Management recommendation..."></textarea>
             </div>
             <div class="col-12">
               <div class="form-check">
@@ -384,7 +384,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title fw-bold" id="reviewFeedbackModalLabel">
-            <i class="bi bi-eye text-primary me-1"></i>Review Maintenance Lifecycle
+            <i class="bi bi-eye text-primary me-1"></i><span data-i18n="admin.feedback.reviewLifecycle">Review Maintenance Lifecycle</span>
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -396,7 +396,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-i18n="common.close">Close</button>
         </div>
       </div>
     </div>
@@ -404,6 +404,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/lang.js?v=9"></script>
   <script src="/assets/js/main.js?v=8"></script>
   <script src="/assets/js/notifications.js?v=7"></script>
   <script src="/assets/js/requests.js?v=8"></script>

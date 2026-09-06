@@ -39,7 +39,7 @@ const VALID_REQUEST_CATEGORIES = [
   'Other'
 ];
 const VALID_GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
-const VALID_LANGUAGES = ['en', 'am'];
+const VALID_LANGUAGES = ['en', 'am', 'om'];
 const VALID_DATE_FORMATS = ['YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD-MM-YYYY', 'EC'];
 const VALID_TIMEZONES = ['Africa/Addis_Ababa', 'Africa/Nairobi', 'UTC'];
 
