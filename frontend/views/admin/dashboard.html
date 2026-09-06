@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
-<script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'){ document.documentElement.setAttribute( 'lang', l );}}catch(e){ }})();</script>
+<script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'||l==='om'){ document.documentElement.setAttribute( 'lang', l );}}catch(e){ }})();</script>
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard — Smart Computer Maintenance Service</title>
+  <title data-i18n="page.adminDashboard">Admin Dashboard — Smart Computer Maintenance Service</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -385,7 +385,7 @@
 
                   <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
                     <div>
-                      <div class="small fw-semibold">Email Notifications</div>
+                      <div class="small fw-semibold"><span data-i18n="page.settings.emailNotifications">Email Notifications</span></div>
                       <div class="text-muted" style="font-size:.75rem;"><span
                           data-i18n="admin.settings.notifyOnStatusChanges">Notify on status changes</span></div>
                     </div>
@@ -437,7 +437,7 @@
           <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
               <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-shield-lock text-danger me-2"></i>Security & Notifications
+                <h6 class="mb-0 fw-bold"><i class="bi bi-shield-lock text-danger me-2"></i><span data-i18n="adash.securityNotifications">Security & Notifications</span>
                 </h6>
                 <a href="settings.html" class="btn btn-outline-secondary btn-sm">
                   <i class="bi bi-arrow-right me-1"></i><span data-i18n="admin.settings.fullSettings">Full
@@ -646,6 +646,7 @@
 
     } );
   </script>
+  <script src="/assets/js/lang.js?v=9"></script>
   <script src="/assets/js/theme.js"></script>
   <script>
       // -- Sidebar Navigation Toggle --

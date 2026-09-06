@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'){document.documentElement.setAttribute('lang',l);}}catch(e){}})();</script>
+<script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'||l==='om'){document.documentElement.setAttribute('lang',l);}}catch(e){}})();</script>
 <script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Maintenance History — Technician</title>
+  <title data-i18n="page.techHistory">Maintenance History — Technician</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -20,7 +20,7 @@
       <a href="../index.html" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-wrench-adjustable fs-3 text-warning"></i>
-          <div class="small fw-bold mt-1">Technician Panel</div>
+          <div class="small fw-bold mt-1"><span data-i18n="side.panel.tech">Technician Panel</span></div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
@@ -38,13 +38,13 @@
           <i class="bi bi-person-circle fs-5"></i>
           <span class="small" id="sidebarUserName" class="text-white-50"></span>
         </div>
-        <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+        <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i><span data-i18n="side.logout">Logout</span></a>
       </div>
     </nav>
 
     <div class="flex-grow-1">
       <header class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
-        <h5 class="mb-0 fw-bold">My Maintenance History</h5>
+        <h5 class="mb-0 fw-bold" data-i18n="hist.myTitle">My Maintenance History</h5>
 <div class="d-flex align-items-center gap-2">
           <div id="notifBellContainer"></div>
           <span class="text-muted small d-none d-md-block" id="topUserName"></span>
@@ -57,25 +57,25 @@
           <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm text-center p-3">
               <h4 class="fw-bold text-primary mb-0" id="totalResolved">0</h4>
-              <small class="text-muted">Total Resolved</small>
+              <small class="text-muted" data-i18n="hist.totalResolved">Total Resolved</small>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm text-center p-3">
               <h4 class="fw-bold text-success mb-0" id="avgRating">0.0</h4>
-              <small class="text-muted">Average Rating</small>
+              <small class="text-muted" data-i18n="hist.avgRating">Average Rating</small>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm text-center p-3">
               <h4 class="fw-bold text-warning mb-0" id="thisMonth">0</h4>
-              <small class="text-muted">This Month</small>
+              <small class="text-muted" data-i18n="hist.thisMonth">This Month</small>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm text-center p-3">
               <h4 class="fw-bold text-info mb-0" id="avgResolutionTime">0h</h4>
-              <small class="text-muted">Avg. Resolution Time</small>
+              <small class="text-muted" data-i18n="hist.avgTime">Avg. Resolution Time</small>
             </div>
           </div>
         </div>
@@ -85,21 +85,21 @@
           <div class="card-body p-3">
             <div class="row g-2 align-items-end">
               <div class="col-md-4">
-                <label class="form-label small fw-semibold">Date From</label>
+                <label class="form-label small fw-semibold" data-i18n="hist.dateFrom">Date From</label>
                 <input type="date" class="form-control" id="dateFrom" />
               </div>
               <div class="col-md-4">
-                <label class="form-label small fw-semibold">Date To</label>
+                <label class="form-label small fw-semibold" data-i18n="hist.dateTo">Date To</label>
                 <input type="date" class="form-control" id="dateTo" />
               </div>
               <div class="col-md-2">
                 <button class="btn btn-primary w-100" id="filterBtn">
-                  <i class="bi bi-funnel me-1"></i>Filter
+                  <i class="bi bi-funnel me-1"></i><span data-i18n="common.filter">Filter</span>
                 </button>
               </div>
               <div class="col-md-2">
                 <button class="btn btn-outline-secondary w-100" id="exportBtn">
-                  <i class="bi bi-download me-1"></i>Export
+                  <i class="bi bi-download me-1"></i><span data-i18n="common.export">Export</span>
                 </button>
               </div>
             </div>
@@ -109,24 +109,24 @@
         <!-- History Table -->
         <div class="card border-0 shadow-sm">
           <div class="card-header bg-white py-3">
-            <h6 class="mb-0 fw-bold">Completed Tasks</h6>
+            <h6 class="mb-0 fw-bold" data-i18n="hist.completedTasks">Completed Tasks</h6>
           </div>
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table table-hover mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th>#ID</th>
-                    <th>Request Title</th>
-                    <th>Category</th>
-                    <th>Requester</th>
-                    <th>Completed Date</th>
-                    <th>Rating</th>
-                    <th>Details</th>
+                    <th data-i18n="trk.colId">#ID</th>
+                    <th data-i18n="common.title">Request Title</th>
+                    <th data-i18n="common.category">Category</th>
+                    <th data-i18n="hist.colRequester">Requester</th>
+                    <th data-i18n="hist.colCompleted">Completed Date</th>
+                    <th data-i18n="hist.colRating">Rating</th>
+                    <th data-i18n="hist.colDetails">Details</th>
                   </tr>
                 </thead>
                 <tbody id="historyTableBody">
-                  <tr><td colspan="7" class="text-center text-muted py-4">Loading history...</td></tr>
+                  <tr><td colspan="7" class="text-center text-muted py-4" data-i18n="hist.loading">Loading history...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -138,6 +138,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/lang.js?v=9"></script>
   <script src="/assets/js/main.js?v=7"></script>
   <script src="/assets/js/notifications.js?v=7"></script>
   <script src="/assets/js/technicians.js?v=8"></script>

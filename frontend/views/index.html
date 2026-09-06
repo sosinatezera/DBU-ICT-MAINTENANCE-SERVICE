@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
-<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart Computer Maintenance Service Request &amp; Tracking System</title>
+  <title data-i18n="page.home">Smart Computer Maintenance Service Request &amp; Tracking System</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
-  <link rel="stylesheet" href="/assets/css/style.css" />
-  <link rel="stylesheet" href="/assets/css/responsive.css" />
+  <link rel="stylesheet" href="/assets/css/style.css?v=12" />
+  <link rel="stylesheet" href="/assets/css/responsive.css?v=3" />
   <style>
     :root {
       --nav-height: 68px;
@@ -73,8 +73,20 @@
        White/light premium surface, navy + royal blue + cyan
        ========================================================= */
 
-    /* Base bar: clean white, translucent blur, subtle shadow */
+    /* Base bar: clean white, translucent blur, subtle shadow.
+       ROOT CAUSE OF THE INVISIBLE MENU DROPDOWN: the page-wide rule
+       `body:not(.dashboard-body):not(.auth-body)>*` below sets
+       `position:relative; z-index:1` on EVERY direct body child,
+       re-capping BOTH .main-navbar AND .hero-section at z-index:1.
+       With equal z-index, later DOM order paints on top, so the hero
+       (which follows the nav) painted OVER the navbar's whole stack —
+       hiding the Quick Access panel (and the mobile drawer) that
+       overflow below the bar. `position` + `z-index !important` lifts
+       the navbar stack above the hero so the dropdown actually paints
+       on screen. */
     .main-navbar {
+      position: relative;
+      z-index: 1050 !important;
       background: rgba(255, 255, 255, .96) !important;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -138,7 +150,7 @@
     .nav-link-item {
       color: var(--home-text-muted) !important;
       font-weight: 500;
-      font-size: .875rem;
+      font-size: .9375rem;
       padding: .5rem .72rem !important;
       border-radius: 9px;
       transition: color .22s cubic-bezier(.4, 0, .2, 1), background-color .22s cubic-bezier(.4, 0, .2, 1);
@@ -568,7 +580,7 @@
       color: #ffffff;
       border-radius: 50px;
       padding: .4rem .8rem;
-      font-size: .75rem;
+      font-size: .8125rem;
       font-weight: 500;
       margin-bottom: 1.5rem;
       letter-spacing: .1px;
@@ -718,7 +730,7 @@
     }
 
     .stat-label {
-      font-size: .75rem;
+      font-size: .8125rem;
       color: var(--home-text-dim);
       text-transform: uppercase;
       letter-spacing: .1em;
@@ -744,7 +756,7 @@
     /* ===== Section headings ===== */
     .section-label {
       display: inline-block;
-      font-size: .75rem;
+      font-size: .8125rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1.5px;
@@ -935,13 +947,13 @@
     .contact-value {
       font-weight: 600;
       color: var(--home-text);
-      font-size: .95rem;
+      font-size: 1rem;
       line-height: 1.5;
     }
 
     .contact-note {
       color: var(--home-text-muted);
-      font-size: .82rem;
+      font-size: .875rem;
       margin-top: .15rem;
     }
 
@@ -950,7 +962,7 @@
       display: inline-flex;
       align-items: center;
       gap: .35rem;
-      font-size: .85rem;
+      font-size: .9375rem;
       font-weight: 600;
       color: var(--home-primary);
       background: rgba(37, 99, 235, .08);
@@ -1401,29 +1413,97 @@
       color: var(--home-text) !important;
     }
 
-    /* ── Footer (dark surface) ── */
+    /* ── Footer (polished black enterprise/university footer) ── */
     body:not(.dashboard-body):not(.auth-body) footer {
-      background: var(--home-surface) !important;
-      color: var(--home-text-muted);
+      background: #000000 !important;
+      color: #f8fafc !important;
+      border-top: 1px solid rgba(255,255,255,.06);
     }
 
+    /* Menu links — light gray, white on hover */
     body:not(.dashboard-body):not(.auth-body) footer .footer-link {
-      color: var(--home-text-dim);
+      color: #94a3b8 !important;
+      font-size: .9375rem !important;
+      transition: color .18s ease;
     }
 
     body:not(.dashboard-body):not(.auth-body) footer .footer-link:hover {
-      color: var(--home-text);
+      color: #ffffff !important;
     }
 
+    /* Body / about paragraph — light gray on black */
     body:not(.dashboard-body):not(.auth-body) footer p,
-    body:not(.dashboard-body):not(.auth-body) footer span,
-    body:not(.dashboard-body):not(.auth-body) footer .text-white-50,
-    body:not(.dashboard-body):not(.auth-body) footer div[style*="color:rgba(255,255,255"] {
-      color: var(--home-text-muted) !important;
+    body:not(.dashboard-body):not(.auth-body) footer p span {
+      color: #94a3b8 !important;
+      font-size: .9375rem !important;
+      line-height: 1.7 !important;
     }
 
-    body:not(.dashboard-body):not(.auth-body) footer hr[style*="border-color:rgba(255,255,255,.1)"] {
-      border-color: var(--home-border-strong) !important;
+    /* Column headings — white, spaced uppercase */
+    body:not(.dashboard-body):not(.auth-body) footer .fw-semibold,
+    body:not(.dashboard-body):not(.auth-body) footer .fw-semibold span {
+      color: #e2e8f0 !important;
+      font-size: .8125rem !important;
+      font-weight: 600 !important;
+      letter-spacing: 1.2px !important;
+      text-transform: uppercase !important;
+    }
+
+    /* Brand name — white, prominent */
+    body:not(.dashboard-body):not(.auth-body) footer .fw-bold,
+    body:not(.dashboard-body):not(.auth-body) footer .fw-bold span {
+      color: #ffffff !important;
+      font-size: 1.125rem !important;
+      font-weight: 700 !important;
+      letter-spacing: -.2px !important;
+    }
+
+    /* System status rows — light text (green dot keeps inline color) */
+    body:not(.dashboard-body):not(.auth-body) footer #footerBackendLabel,
+    body:not(.dashboard-body):not(.auth-body) footer #footerBackendStatus {
+      color: #cbd5e1 !important;
+      font-size: .9375rem !important;
+    }
+
+    /* Divider — subtle dark gray */
+    body:not(.dashboard-body):not(.auth-body) footer hr,
+    body:not(.dashboard-body):not(.auth-body) footer hr[style*="border-color"] {
+      border-color: #1e293b !important;
+      opacity: 1;
+    }
+
+    /* Social buttons — bordered, rounded, smooth hover */
+    body:not(.dashboard-body):not(.auth-body) footer .footer-social-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      color: #cbd5e1;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.14);
+      font-size: 1rem;
+      text-decoration: none;
+      transition: border-color .18s ease, background-color .18s ease, color .18s ease, box-shadow .18s ease;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) footer .footer-social-btn:hover {
+      color: #ffffff;
+      border-color: #2563eb;
+      background: #2563eb;
+      box-shadow: 0 6px 16px -6px rgba(37,99,235,.55);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) footer .footer-social-btn:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+    }
+
+    /* Copyright line — dim muted */
+    body:not(.dashboard-body):not(.auth-body) footer span[style*="font-size:.8rem"] {
+      color: #64748b !important;
+      font-size: .8125rem !important;
     }
 
     /* ── Subtle tech pattern (extremely low opacity) ── */
@@ -1612,6 +1692,324 @@
       color: #22d3ee !important;
     }
 
+    /* ════════════════════════════════════════════════════════════
+       FOOTER REDESIGN — premium dark, near-black w/ dark-teal tone
+       Scoped with a high-specificity prefix + !important so it wins
+       over the generic black-footer rules above AND theme.css (which
+       loads after this inline stylesheet). Dark in BOTH site themes. */
+    @keyframes siteStatusPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer {
+      position: relative;
+      padding: 4.5rem 0 2.5rem;
+      background: radial-gradient(60% 110% at 50% -20%, rgba(20, 184, 166, .12), transparent 62%), #0a0f12 !important;
+      color: #a7b4c2 !important;
+      border-top: 1px solid rgba(45, 212, 191, .16) !important;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(42rem 16rem at 50% -4rem, rgba(45, 212, 191, .10), transparent 70%),
+        radial-gradient(30rem 12rem at 90% 110%, rgba(20, 184, 166, .06), transparent 70%);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Brand (top, centered) ── */
+    body:not(.dashboard-body):not(.auth-body) .site-brand-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 3.25rem;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-brand-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(160deg, rgba(45, 212, 191, .16), rgba(20, 184, 166, .05));
+      border: 1px solid rgba(45, 212, 191, .28);
+      color: #5eead4;
+      font-size: 1.35rem;
+      margin-bottom: 1.1rem;
+      box-shadow: 0 0 28px rgba(45, 212, 191, .18), inset 0 0 14px rgba(45, 212, 191, .10);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-brand-title {
+      color: #e6ecf2 !important;
+      font-size: 1.5rem !important;
+      font-weight: 700 !important;
+      letter-spacing: -.2px !important;
+      margin: 0 0 .75rem !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-brand-about {
+      color: #8d9baa !important;
+      font-size: .9375rem !important;
+      line-height: 1.7 !important;
+      max-width: 620px !important;
+      margin: 0 auto !important;
+    }
+
+    /* ── Columns ── */
+    body:not(.dashboard-body):not(.auth-body) .site-footer-columns {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem 3rem;
+      max-width: 1140px;
+      margin: 0 auto 3.25rem;
+      text-align: left;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-col-title {
+      color: #cdd9e4 !important;
+      font-size: .75rem !important;
+      font-weight: 700 !important;
+      letter-spacing: 2px !important;
+      text-transform: uppercase !important;
+      margin: 0 0 1.1rem !important;
+      padding-bottom: .65rem;
+      border-bottom: 1px solid rgba(45, 212, 191, .18);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-col-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(45, 212, 191, .28), transparent);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-links {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-links .footer-link {
+      color: #8d9baa !important;
+      font-size: .9375rem;
+      text-decoration: none;
+      transition: color .18s ease;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-links .footer-link:hover {
+      color: #5eead4 !important;
+    }
+
+    /* ── Contact details column ── */
+    body:not(.dashboard-body):not(.auth-body) .site-footer-contact {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: .95rem;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-contact .contact-detail {
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      font-size: .9375rem;
+      color: #8d9baa;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-contact .contact-detail i {
+      color: #5eead4;
+      font-size: .8rem;
+      line-height: 1.6;
+      margin-top: .24rem;
+      flex-shrink: 0;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-contact .contact-detail .footer-link {
+      color: #8d9baa !important;
+      text-decoration: none;
+      transition: color .18s ease;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-contact .contact-detail .footer-link:hover {
+      color: #5eead4 !important;
+    }
+
+    /* ── System status rows ── */
+    body:not(.dashboard-body):not(.auth-body) .site-footer-status {
+      display: flex;
+      flex-direction: column;
+      gap: .8rem;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-status-row {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .9375rem;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-status-row .status-value,
+    body:not(.dashboard-body):not(.auth-body) .site-footer-status-row .status-value span {
+      color: #cbd5e1 !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-status-row i.fa-circle {
+      color: #4ade80 !important;
+      text-shadow: 0 0 8px rgba(74, 222, 128, .85);
+      animation: siteStatusPulse 2.4s ease-in-out infinite;
+    }
+
+    /* ── Social ── */
+    body:not(.dashboard-body):not(.auth-body) .site-footer-social {
+      display: flex;
+      justify-content: center;
+      gap: .9rem;
+      margin-bottom: 2.25rem;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer .footer-social-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #a7b4c2;
+      background: rgba(45, 212, 191, .05);
+      border: 1px solid rgba(255, 255, 255, .10);
+      font-size: 1rem;
+      text-decoration: none;
+      transition: color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer .footer-social-btn:hover {
+      color: #5eead4;
+      border-color: rgba(45, 212, 191, .55);
+      box-shadow: 0 0 18px rgba(45, 212, 191, .22);
+      transform: translateY(-2px);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer .footer-social-btn:focus-visible {
+      outline: 2px solid #14b8a6;
+      outline-offset: 2px;
+    }
+
+    /* ── Divider + bottom ── */
+    body:not(.dashboard-body):not(.auth-body) .site-footer-divider {
+      border: 0;
+      border-top: 1px solid rgba(45, 212, 191, .18) !important;
+      margin: 0 auto 2rem;
+      max-width: 34rem;
+      opacity: 1;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.1rem;
+      text-align: center;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-bottom-links {
+      display: flex;
+      gap: 1.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-bottom-links .footer-link {
+      color: #8fa0b0 !important;
+      font-size: .9375rem;
+      text-decoration: none;
+      transition: color .18s ease;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-bottom-links .footer-link:hover {
+      color: #5eead4 !important;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer-copyright {
+      color: #5f6f82 !important;
+      font-size: .8125rem !important;
+      margin: 0 !important;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 991.98px) and (min-width: 768px) {
+      body:not(.dashboard-body):not(.auth-body) .site-footer-columns {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2.5rem 3rem;
+        max-width: 720px;
+      }
+    }
+
+    @media (max-width: 767.98px) {
+      body:not(.dashboard-body):not(.auth-body) .site-footer-columns {
+        grid-template-columns: 1fr;
+        gap: 2.25rem;
+        text-align: center;
+      }
+
+      body:not(.dashboard-body):not(.auth-body) .site-footer-col-title {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      body:not(.dashboard-body):not(.auth-body) .site-footer-col-title::after {
+        display: none;
+      }
+
+      body:not(.dashboard-body):not(.auth-body) .site-footer-links {
+        align-items: center;
+      }
+
+      body:not(.dashboard-body):not(.auth-body) .site-footer-status {
+        align-items: center;
+      }
+
+      body:not(.dashboard-body):not(.auth-body) .site-footer-status-row {
+        justify-content: center;
+      }
+
+      body:not(.dashboard-body):not(.auth-body) .site-footer-contact {
+        align-items: center;
+      }
+    }
+
+    /* ===== Scroll-to-top: glowing cyan ===== */
+    #scrollTopBtn {
+      background: linear-gradient(135deg, #22d3ee 0%, #0d9488 100%);
+      box-shadow: 0 0 20px rgba(34, 211, 238, .45), 0 6px 18px rgba(13, 148, 136, .35);
+      border: 1px solid rgba(125, 211, 252, .35);
+    }
+
+    #scrollTopBtn:hover {
+      background: linear-gradient(135deg, #22d3ee 0%, #14b8a6 100%);
+      box-shadow: 0 0 28px rgba(34, 211, 238, .6), 0 8px 22px rgba(13, 148, 136, .45);
+      border-color: rgba(125, 211, 252, .55);
+    }
+
     /* ===== Reduced motion ====== */
     @media (prefers-reduced-motion: reduce) {
       html {
@@ -1639,8 +2037,9 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css?v=4" />
   <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/lang.js?v=11"></script>
 </head>
 
 <body>
@@ -1671,8 +2070,8 @@
           </svg>
         </span>
         <div>
-          <div class="brand-text-main">Smart Computer Maintenance</div>
-          <div class="brand-text-sub">Service Request &amp; Tracking</div>
+          <div class="brand-text-main"><span data-i18n="home.brandMain">Smart Computer Maintenance</span></div>
+          <div class="brand-text-sub"><span data-i18n="home.brandSub">Service Request &amp; Tracking</span></div>
         </div>
       </a>
 
@@ -1693,6 +2092,20 @@
                 data-i18n="nav.services">Services</span></a></li>
           <li class="nav-item"><a class="nav-link nav-link-item" href="#contact"><span
                 data-i18n="nav.contact">Contact</span></a></li>
+          <li class="nav-item menu-quick">
+            <button type="button" class="menu-quick-control" id="menuQuickToggle"
+              aria-haspopup="menu" aria-expanded="false" aria-controls="menuQuickPanel">
+              <i class="fa-solid fa-bars" aria-hidden="true"></i>
+              <span data-i18n="nav.menu">Menu</span>
+              <i class="fa-solid fa-chevron-down menu-quick-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="menu-quick-panel" id="menuQuickPanel" role="menu" aria-label="Quick Access">
+              <a class="menu-quick-link" href="#site-footer" role="menuitem"><i
+                  class="fa-solid fa-angles-down" aria-hidden="true"></i><span data-i18n="nav.menu.footer">Footer</span></a>
+              <a class="menu-quick-link" href="/views/register.html" role="menuitem"><i
+                  class="fa-solid fa-user-plus" aria-hidden="true"></i><span data-i18n="nav.register">Register</span></a>
+            </div>
+          </li>
           <li class="nav-item"><a class="nav-link nav-link-item" href="#about"><span data-i18n="nav.about">About
                 Us</span></a></li>
         </ul>
@@ -1703,6 +2116,68 @@
       </div>
     </div>
   </nav>
+
+  <script>
+    /* ===== Quick Access Menu (navbar "Menu" item) =====
+       Standalone and self-contained so the toggle ALWAYS works, even if any
+       other script on this page throws. Delegated on document, uses only the
+       existing markup/CSS (blue pill #menuQuickToggle + #menuQuickPanel) and
+       is fully independent of the Bootstrap bundle. Shows the panel with the
+       .open class, rotates the chevron via aria-expanded, closes on a second
+       click, outside click, Escape, or after choosing an item. */
+    ( function bindQuickMenu ()
+    {
+      const wrap = document.querySelector( '.menu-quick' );
+      const toggle = document.getElementById( 'menuQuickToggle' );
+      if ( !wrap || !toggle ) return;
+
+      const setOpen = open =>
+      {
+        wrap.classList.toggle( 'open', open );
+        toggle.setAttribute( 'aria-expanded', open ? 'true' : 'false' );
+      };
+
+      document.addEventListener( 'click', event =>
+      {
+        /* Selecting an item closes the panel (and the mobile drawer, if open) */
+        if ( event.target.closest( '.menu-quick-link' ) )
+        {
+          setOpen( false );
+          const menu = document.getElementById( 'navMenu' );
+          if ( menu && menu.classList.contains( 'show' ) && window.bootstrap && bootstrap.Collapse )
+          {
+            bootstrap.Collapse.getInstance( menu )?.hide();
+          }
+          return;
+        }
+
+        /* The Menu button toggles open / closed */
+        if ( event.target.closest( '#menuQuickToggle' ) )
+        {
+          const isOpen = wrap.classList.contains( 'open' );
+          setOpen( !isOpen );
+          if ( isOpen ) toggle.focus();
+          return;
+        }
+
+        /* Clicking outside the open panel closes it */
+        if ( wrap.classList.contains( 'open' ) && !wrap.contains( event.target ) )
+        {
+          setOpen( false );
+        }
+      } );
+
+      /* Close on Escape and return focus to the trigger */
+      document.addEventListener( 'keydown', event =>
+      {
+        if ( event.key === 'Escape' && wrap.classList.contains( 'open' ) )
+        {
+          setOpen( false );
+          toggle.focus();
+        }
+      } );
+    } )();
+  </script>
 
   <!-- ===== HOME - HERO ===== -->
   <section class="hero-section text-white" id="home">
@@ -1759,7 +2234,7 @@
             <div style="width:1px;background:rgba(255,255,255,.2);"></div>
             <div>
               <div class="fw-bold fs-5">24/7</div>
-              <div style="font-size:.78rem;color:rgba(255,255,255,.6);">System Access</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="home.stat3.label">System Access</span></div>
             </div>
             <div style="width:1px;background:rgba(255,255,255,.2);"></div>
             <div>
@@ -1854,7 +2329,7 @@
   </section>
 
   <!-- ===== QUICK ACCESS CARDS ===== -->
-  <section class="py-5 my-2">
+  <section class="py-5 my-2" style="background:#ffffff;">
     <div class="container">
       <div class="text-center mb-5">
         <div class="section-label"><span data-i18n="quick.label">Quick Access</span></div>
@@ -2488,87 +2963,108 @@
   </section>
 
   <!-- ===== FOOTER ===== -->
-  <footer class="py-5 text-center">
-    <div class="container">
-      <div class="text-center mb-4">
-        <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
-          <div
-            style="width:36px;height:36px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;">
-            <i class="fa-solid fa-wrench" style="color:var(--home-text);font-size:.9rem;"></i>
-          </div>
-          <span class="fw-bold"><span data-i18n="footer.brand">Smart Computer Maintenance Service</span></span>
-        </div>
-        <p class="mb-0"
-          style="color:var(--home-text-soft);font-size:.875rem;line-height:1.7;max-width:560px;margin-inline:auto;">
+  <footer class="site-footer" id="site-footer">
+    <div class="container site-footer-inner">
+      <!-- Brand -->
+      <div class="site-brand-block">
+        <span class="site-brand-icon" aria-hidden="true"><i class="fa-solid fa-wrench"></i></span>
+        <h2 class="site-brand-title"><span data-i18n="footer.brand">Smart Computer Maintenance Service</span></h2>
+        <p class="site-brand-about">
           <span data-i18n="footer.about">Debre Berhan University's dedicated platform for managing hardware and
             software maintenance requests &#8212;
             replacing paper-based forms with a transparent digital workflow.</span>
         </p>
       </div>
-      <div class="row justify-content-center g-4 mb-4">
-        <div class="col-6 col-md-4">
-          <div class="fw-semibold mb-3 small" style="color:var(--home-text-soft);"><span
-              data-i18n="footer.nav">Navigation</span></div>
-          <div class="d-flex flex-column align-items-center gap-2">
-            <a href="#home" class="footer-link" style="color:var(--home-text);"><span
-                data-i18n="nav.home">Home</span></a>
-            <a href="#features" class="footer-link" style="color:var(--home-text);"><span
-                data-i18n="nav.features">Features</span></a>
-            <a href="#workflow" class="footer-link" style="color:var(--home-text);"><span
-                data-i18n="nav.workflow">Workflow</span></a>
-            <a href="#services" class="footer-link" style="color:var(--home-text);"><span
-                data-i18n="nav.services">Services</span></a>
-            <a href="#contact" class="footer-link" style="color:var(--home-text);"><span
-                data-i18n="nav.contact">Contact</span></a>
-            <a href="#about" class="footer-link" style="color:var(--home-text);"><span data-i18n="nav.about">About
-                Us</span></a>
+
+      <!-- Columns -->
+      <div class="site-footer-columns">
+        <div class="site-footer-col">
+          <h3 class="site-footer-col-title"><span data-i18n="footer.nav">Navigation</span></h3>
+          <ul class="site-footer-links">
+            <li><a href="#mainNavbar" class="footer-link"><span data-i18n="nav.menu">Menu</span></a></li>
+            <li><a href="#home" class="footer-link"><span data-i18n="nav.home">Home</span></a></li>
+            <li><a href="#features" class="footer-link"><span data-i18n="nav.features">Features</span></a></li>
+            <li><a href="#workflow" class="footer-link"><span data-i18n="nav.workflow">Workflow</span></a></li>
+            <li><a href="#services" class="footer-link"><span data-i18n="nav.services">Services</span></a></li>
+            <li><a href="#contact" class="footer-link"><span data-i18n="nav.contact">Contact</span></a></li>
+            <li><a href="#about" class="footer-link"><span data-i18n="nav.about">About Us</span></a></li>
+          </ul>
+        </div>
+        <div class="site-footer-col">
+          <h3 class="site-footer-col-title"><span data-i18n="footer.access">Access</span></h3>
+          <ul class="site-footer-links">
+            <li><a href="/views/login.html" class="footer-link"><span data-i18n="nav.login">Login</span></a></li>
+            <li><a href="/views/register.html" class="footer-link"><span data-i18n="nav.register">Register</span></a></li>
+            <li><a href="/views/login.html" class="footer-link"><span data-i18n="footer.admin">Admin Panel</span></a></li>
+            <li><a href="/views/login.html" class="footer-link"><span data-i18n="footer.tech">Technician</span></a></li>
+          </ul>
+        </div>
+        <div class="site-footer-col">
+          <h3 class="site-footer-col-title"><span data-i18n="footer.system">System</span></h3>
+          <div class="site-footer-status">
+            <div class="site-footer-status-row">
+              <span class="status-value" id="footerBackendLabel">
+                <i class="fa-solid fa-circle" style="font-size:.4rem;margin-right:4px;"></i><span
+                  data-i18n="footer.backend">Backend: Online</span>
+              </span>
+            </div>
+            <div class="site-footer-status-row">
+              <span class="status-value" id="footerBackendStatus">
+                <i class="fa-solid fa-circle" style="font-size:.4rem;margin-right:4px;"></i><span
+                  data-i18n="footer.api">API: Running</span>
+              </span>
+            </div>
           </div>
         </div>
-        <div class="col-6 col-md-4">
-          <div class="fw-semibold mb-3 small" style="color:var(--home-text-soft);"><span
-              data-i18n="footer.access">Access</span></div>
-          <div class="d-flex flex-column align-items-center gap-2">
-            <a href="/views/login.html" class="footer-link" style="color:var(--home-text);"><span
-                data-i18n="nav.login">Login</span></a>
-            <a href="/views/register.html" class="footer-link" style="color:var(--home-text);"><span
-                data-i18n="nav.register">Register</span></a>
-            <a href="/views/login.html" class="footer-link" style="color:var(--home-text);"><span
-                data-i18n="footer.admin">Admin Panel</span></a>
-            <a href="/views/login.html" class="footer-link" style="color:var(--home-text);"><span
-                data-i18n="footer.tech">Technician</span></a>
-          </div>
-        </div>
-        <div class="col-6 col-md-4">
-          <div class="fw-semibold mb-3 small" style="color:var(--home-text-soft);"><span
-              data-i18n="footer.system">System</span></div>
-          <div class="d-flex flex-column align-items-center gap-2">
-            <span style="color:var(--home-text-soft);font-size:.875rem;" id="footerBackendLabel">
-              <i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i><span
-                data-i18n="footer.backend">Backend: Online</span>
-            </span>
-            <span style="color:var(--home-text-soft);font-size:.875rem;" id="footerBackendStatus">
-              <i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i><span
-                data-i18n="footer.api">API: Running</span>
-            </span>
-          </div>
+        <div class="site-footer-col">
+          <h3 class="site-footer-col-title">Contact</h3>
+          <ul class="site-footer-contact">
+            <li class="contact-detail">
+              <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+              <span>ICT Helpdesk Location</span>
+            </li>
+            <li class="contact-detail">
+              <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+              <a href="mailto:admin@gmail.com" class="footer-link">admin@gmail.com</a>
+            </li>
+            <li class="contact-detail">
+              <i class="fa-solid fa-phone" aria-hidden="true"></i>
+              <a href="tel:+251911234567" class="footer-link">+251 911 234 567</a>
+            </li>
+            <li class="contact-detail">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              <span>Monday&#8211;Friday, 8:30 AM&#8211;5:30 PM</span>
+            </li>
+          </ul>
         </div>
       </div>
-      <!-- Scroll to top -->
-      <button id="scrollTopBtn" aria-label="Scroll to top">
-        <i class="fa-solid fa-arrow-up"></i>
-      </button>
-      <hr style="border-color:var(--home-border-weak);" />
-      <div class="d-flex flex-column align-items-center gap-3">
-        <div class="d-flex gap-3">
+
+      <!-- Social media -->
+      <div class="site-footer-social">
+        <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"
+          class="footer-social-btn"><i class="fa-brands fa-facebook-f"></i></a>
+        <a href="https://x.com/" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)"
+          class="footer-social-btn"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
+          class="footer-social-btn"><i class="fa-brands fa-linkedin-in"></i></a>
+        <a href="https://github.com/sosinatezera/DBU-ICT-MAINTENANCE-SERVICE" target="_blank"
+          rel="noopener noreferrer" aria-label="GitHub" class="footer-social-btn"><i class="fa-brands fa-github"></i></a>
+      </div>
+
+      <hr class="site-footer-divider" />
+
+      <!-- Bottom -->
+      <div class="site-footer-bottom">
+        <nav class="site-footer-bottom-links" aria-label="Footer links">
           <a href="https://github.com/sosinatezera/DBU-ICT-MAINTENANCE-SERVICE" target="_blank"
             rel="noopener noreferrer" class="footer-link"><i class="fa-brands fa-github me-1"></i>GitHub</a>
           <a href="/views/login.html" class="footer-link"><i class="fa-solid fa-right-to-bracket me-1"></i>Login</a>
           <a href="/views/register.html" class="footer-link"><i class="fa-solid fa-user-plus me-1"></i>Register</a>
-        </div>
-        <span class="text-center" style="color:var(--home-text-soft);font-size:.8rem;">
+        </nav>
+        <p class="site-footer-copyright">
           &copy; 2024 <span data-i18n="footer.rights">Debre Berhan University ICT Hardware &amp; Software Maintenance
             System. All rights reserved.</span>
-        </span>
+        </p>
       </div>
     </div>
   </footer>
@@ -2832,7 +3328,7 @@
       link.addEventListener( 'click', () =>
       {
         const menu = document.getElementById( 'navMenu' );
-        if ( menu.classList.contains( 'show' ) )
+        if ( menu.classList.contains( 'show' ) && window.bootstrap && bootstrap.Collapse )
         {
           bootstrap.Collapse.getInstance( menu )?.hide();
         }
@@ -2981,6 +3477,5 @@
     } );
   </script>
 <script src="/assets/js/theme.js"></script>
-  <script src="/assets/js/lang.js"></script>
 </body>
 </html>

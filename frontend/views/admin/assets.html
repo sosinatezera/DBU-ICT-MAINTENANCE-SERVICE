@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
 <script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ICT Asset Management — Admin</title>
+  <title data-i18n="page.adminAssets">ICT Asset Management — Admin</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -62,7 +62,7 @@
         <div class="d-flex align-items-center gap-2">
           <div id="notifBellContainer"></div>
           <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assetModal" id="addAssetBtn">
-            <i class="bi bi-plus-circle me-1"></i>Add Asset
+            <i class="bi bi-plus-circle me-1"></i><span data-i18n="admin.assets.addAsset">Add Asset</span>
           </button>
         </div>
       </header>
@@ -73,25 +73,28 @@
           <div class="card-body p-3">
             <div class="row g-2 align-items-end">
               <div class="col-md-4">
-                <input type="text" class="form-control" id="searchInput" placeholder="Search by name or tag..." />
+                <input type="text" class="form-control" id="searchInput" data-i18n-placeholder="admin.assets.search.placeholder" placeholder="Search by name or tag..." />
               </div>
               <div class="col-md-3">
                 <select class="form-select" id="categoryFilter">
-                  <option value=""><span data-i18n="admin.assets.filter.allCategories">All Categories</span>
-                  <option value="Computer">Computer</option>
-                  <option value="Printer">Printer</option>
-                  <option value="Network">Network Equipment</option>
-                  <option value="Server">Server</option>
-                  <option value="Peripheral">Peripheral</option>
-                  <option value="Other">Other</option>
+                  <option value="" data-i18n="admin.assets.filter.allCategories">All Categories</option>
+                  <option value="Computer" data-i18n="asset.category.computer">Computer</option>
+                  <option value="Printer" data-i18n="asset.category.printer">Printer</option>
+                  <option value="Network" data-i18n="asset.category.network">Network Equipment</option>
+                  <option value="Server" data-i18n="asset.category.server">Server</option>
+                  <option value="Peripheral" data-i18n="asset.category.peripheral">Peripheral</option>
+                  <option value="Other" data-i18n="asset.category.other">Other</option>
                 </select>
               </div>
               <div class="col-md-3">
                 <select class="form-select" id="statusFilter">
-                  <option value=""><span data-i18n="admin.assets.filter.allStatuses">All Statuses</span>
-                  <option value="active">Active</option>
-                  <option value="under_maintenance">Under Maintenance</option>
-                  <option value="decommissioned">Decommissioned</option>
+                  <option value="" data-i18n="admin.assets.filter.allStatuses">All Statuses</option>
+                  <option value="active" data-i18n="admin.assets.filter.active">Active</option>
+                  <option value="under_maintenance" data-i18n="admin.assets.filter.underMaintenance">Under Maintenance</option>
+                  <option value="decommissioned" data-i18n="admin.assets.filter.decommissioned">Decommissioned</option>
+                  <option value="active" data-i18n="status.active">Active</option>
+                  <option value="under_maintenance" data-i18n="status.underMaintenance">Under Maintenance</option>
+                  <option value="decommissioned" data-i18n="status.decommissioned">Decommissioned</option>
                 </select>
               </div>
               <div class="col-md-2">
@@ -110,14 +113,14 @@
                 <thead class="table-light">
                   <tr>
                     <th>#</th>
-                    <th>Asset Name</th>
-                    <th>Tag</th>
-                    <th>Category</th>
-                    <th>Department</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Warranty</th>
-                    <th>Actions</th>
+                    <th data-i18n="admin.assets.table.assetName">Asset Name</th>
+                    <th data-i18n="admin.assets.table.tag">Tag</th>
+                    <th data-i18n="admin.assets.table.category">Category</th>
+                    <th data-i18n="admin.assets.table.department">Department</th>
+                    <th data-i18n="admin.assets.table.location">Location</th>
+                    <th data-i18n="admin.assets.table.status">Status</th>
+                    <th data-i18n="admin.assets.table.warranty">Warranty</th>
+                    <th data-i18n="admin.assets.table.actions">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="assetsTableBody">
@@ -139,7 +142,7 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="assetModalLabel">Add New Asset</h5>
+          <h5 class="modal-title fw-bold" id="assetModalLabel" data-i18n="admin.assets.modal.addTitle">Add New Asset</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -154,45 +157,46 @@
                 <input type="text" class="form-control" id="assetName" required />
               </div>
               <div class="col-md-6">
-                <label for="assetTag" class="form-label fw-semibold">Asset Tag <span
+                <label for="assetTag" class="form-label fw-semibold"><span
+                    data-i18n="admin.assets.modal.assetTag">Asset Tag</span> <span
                     class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="assetTag" placeholder="e.g. ICT-2024-001" required />
+                <input type="text" class="form-control" id="assetTag" data-i18n-placeholder="admin.assets.modal.assetTag.placeholder" placeholder="e.g. ICT-2024-001" required />
               </div>
               <div class="col-md-6">
                 <label for="assetCategory" class="form-label fw-semibold"><span
                     data-i18n="admin.assets.modal.category">Category</span> <span class="text-danger">*</span></label>
                 <select class="form-select" id="assetCategory" required>
-                  <option value="">-- Select --</option>
-                  <option value="Computer">Computer</option>
-                  <option value="Printer">Printer</option>
-                  <option value="Network">Network Equipment</option>
-                  <option value="Server">Server</option>
-                  <option value="Peripheral">Peripheral</option>
-                  <option value="Other">Other</option>
+                  <option value="" data-i18n="admin.assets.modal.select">-- Select --</option>
+                  <option value="Computer" data-i18n="asset.category.computer">Computer</option>
+                  <option value="Printer" data-i18n="asset.category.printer">Printer</option>
+                  <option value="Network" data-i18n="asset.category.network">Network Equipment</option>
+                  <option value="Server" data-i18n="asset.category.server">Server</option>
+                  <option value="Peripheral" data-i18n="asset.category.peripheral">Peripheral</option>
+                  <option value="Other" data-i18n="asset.category.other">Other</option>
                 </select>
               </div>
               <div class="col-md-6">
-                <label for="assetStatus" class="form-label fw-semibold">Status</label>
+                <label for="assetStatus" class="form-label fw-semibold" data-i18n="admin.assets.modal.status">Status</label>
                 <select class="form-select" id="assetStatus">
-                  <option value="active">Active</option>
-                  <option value="under_maintenance">Under Maintenance</option>
-                  <option value="decommissioned">Decommissioned</option>
+                  <option value="active" data-i18n="status.active">Active</option>
+                  <option value="under_maintenance" data-i18n="status.underMaintenance">Under Maintenance</option>
+                  <option value="decommissioned" data-i18n="status.decommissioned">Decommissioned</option>
                 </select>
               </div>
               <div class="col-md-6">
-                <label for="assetDepartment" class="form-label fw-semibold">Department</label>
+                <label for="assetDepartment" class="form-label fw-semibold" data-i18n="admin.users.modal.department">Department</label>
                 <input type="text" class="form-control" id="assetDepartment" />
               </div>
               <div class="col-md-6">
-                <label for="assetLocation" class="form-label fw-semibold">Location</label>
-                <input type="text" class="form-control" id="assetLocation" placeholder="e.g. Room 205, Building A" />
+                <label for="assetLocation" class="form-label fw-semibold" data-i18n="admin.assets.modal.location">Location</label>
+                <input type="text" class="form-control" id="assetLocation" data-i18n-placeholder="admin.assets.modal.location.placeholder" placeholder="e.g. Room 205, Building A" />
               </div>
               <div class="col-md-6">
-                <label for="purchaseDate" class="form-label fw-semibold">Purchase Date</label>
+                <label for="purchaseDate" class="form-label fw-semibold" data-i18n="admin.assets.modal.purchaseDate">Purchase Date</label>
                 <input type="date" class="form-control" id="purchaseDate" />
               </div>
               <div class="col-md-6">
-                <label for="warrantyExpiry" class="form-label fw-semibold">Warranty Expiry</label>
+                <label for="warrantyExpiry" class="form-label fw-semibold" data-i18n="admin.assets.modal.warrantyExpiry">Warranty Expiry</label>
                 <input type="date" class="form-control" id="warrantyExpiry" />
               </div>
             </div>
@@ -203,7 +207,7 @@
               data-i18n="admin.assets.modal.cancel">Cancel</span>
             <button type="button" class="btn btn-primary" id="saveAssetBtn">
               <span class="spinner-border spinner-border-sm me-2 d-none" id="saveAssetSpinner"></span>
-              Save Asset
+              <span data-i18n="admin.assets.modal.save">Save Asset</span>
             </button>
         </div>
       </div>
@@ -212,6 +216,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/lang.js?v=9"></script>
   <script src="/assets/js/main.js?v=8"></script>
   <script src="/assets/js/notifications.js?v=7"></script>
   <script src="/assets/js/assets.js?v=6"></script>

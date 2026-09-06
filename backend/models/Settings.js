@@ -27,7 +27,7 @@ const settingsSchema = new mongoose.Schema(
     },
     defaultLanguage: {
       type: String,
-      enum: ['en', 'am'],
+      enum: ['en', 'am', 'om'],
       default: 'en',
     },
     timezone: {

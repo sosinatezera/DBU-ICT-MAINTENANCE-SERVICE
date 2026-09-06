@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
 <script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Settings - Admin</title>
+  <title data-i18n="page.adminSettings">Settings - Admin</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -123,7 +123,7 @@
                         <label for="settingSystemName" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.general.systemName">System Name</span></label>
                         <input type="text" class="form-control" id="settingSystemName"
-                          placeholder="Smart Computer Maintenance Service Request and Tracking System" />
+                          data-i18n-placeholder="set.placeholder.systemName" placeholder="Smart Computer Maintenance Service Request and Tracking System" />
                         <div class="form-text"><span data-i18n="admin.settings.general.systemName.hint">Displayed in the
                             browser title and header.</span></div>
                       </div>
@@ -131,7 +131,7 @@
                         <label for="settingOrgName" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.general.orgName">Organization Name</span></label>
                         <input type="text" class="form-control" id="settingOrgName"
-                          placeholder="Debre Berhan University" />
+                          data-i18n-placeholder="set.placeholder.universityName" placeholder="Debre Berhan University" />
                         <div class="form-text"><span data-i18n="admin.settings.general.orgName.hint">Name of your
                             institution or organization.</span></div>
                       </div>
@@ -139,7 +139,7 @@
                         <label for="settingSystemDesc" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.general.systemDesc">System Description</span></label>
                         <textarea class="form-control" id="settingSystemDesc" rows="2"
-                          placeholder="Brief description of the system..."></textarea>
+                          data-i18n-placeholder="set.placeholder.systemDescription" placeholder="Brief description of the system..."></textarea>
                         <div class="form-text"><span data-i18n="admin.settings.general.systemDesc.hint">Optional
                             description shown on the public landing page.</span></div>
                       </div>
@@ -160,27 +160,27 @@
                             data-i18n="admin.settings.general.language">Default Language</span></label>
                         <select class="form-select" id="settingLanguage">
                           <option value="en"><span data-i18n="admin.settings.language.english">English</span>
-                          <option value="am"><span data-i18n="admin.settings.language.amharic">Amharic</span>
+<option value="am"><span data-i18n="admin.settings.language.amharic">Amharic</span>
                         </select>
                       </div>
                       <div class="col-md-4">
                         <label for="settingTimezone" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.general.timezone">Time Zone</span></label>
                         <select class="form-select" id="settingTimezone">
-                          <option value="Africa/Addis_Ababa">Ethiopian Time (EAT) — Africa/Addis_Ababa (UTC+03:00)</option>
-                          <option value="Africa/Nairobi">Nairobi</option>
-                          <option value="UTC">UTC</option>
+                          <option value="Africa/Addis_Ababa" data-i18n="set.tz.eat">Ethiopian Time (EAT) — Africa/Addis_Ababa (UTC+03:00)</option>
+                          <option value="Africa/Nairobi" data-i18n="set.tz.nairobi">Nairobi</option>
+                          <option value="UTC" data-i18n="set.tz.utc">UTC</option>
                         </select>
                       </div>
                       <div class="col-md-4">
                         <label for="settingDateFormat" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.general.dateFormat">Date Format</span></label>
                         <select class="form-select" id="settingDateFormat">
-                          <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                          <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                          <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                          <option value="DD-MM-YYYY">DD-MM-YYYY</option>
-                          <option value="EC">Ethiopian Calendar (EC)</option>
+                          <option value="DD/MM/YYYY" data-i18n="set.df.dmy">DD/MM/YYYY</option>
+                          <option value="YYYY-MM-DD" data-i18n="set.df.ymd">YYYY-MM-DD</option>
+                          <option value="MM/DD/YYYY" data-i18n="set.df.mdy">MM/DD/YYYY</option>
+                          <option value="DD-MM-YYYY" data-i18n="set.df.dash">DD-MM-YYYY</option>
+                          <option value="EC" data-i18n="set.df.ec">Ethiopian Calendar (EC)</option>
                         </select>
                       </div>
                     </div>
@@ -509,13 +509,13 @@
                         <label for="profilePhone" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.profile.phoneNumber">Phone Number</span></label>
                         <input type="tel" class="form-control" id="profilePhone"
-                          placeholder="0912 345 678 (09 or 07)" />
+                          data-i18n-placeholder="set.profile.phonePlaceholder" placeholder="0912 345 678 (09 or 07)" />
                       </div>
                       <div class="col-md-6">
                         <label for="profileDept" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.profile.department">Department</span></label>
                         <input type="text" class="form-control" id="profileDept"
-                          placeholder="e.g. System Administration" />
+                          data-i18n-placeholder="set.profile.deptPlaceholder" placeholder="e.g. System Administration" />
                       </div>
                     </div>
                   </div>
@@ -535,9 +535,9 @@
                             image, 1.5 MB max. Stored privately in your browser.</span></div>
                       </div>
                       <div class="col-md-5">
-                        <label for="profileImageUrl" class="form-label fw-semibold">Image URL (optional)</label>
+                        <label for="profileImageUrl" class="form-label fw-semibold" data-i18n="set.profile.imageUrlLabel">Image URL (optional)</label>
                         <input type="url" class="form-control" id="profileImageUrl"
-                          placeholder="https://example.com/photo.jpg" />
+                          data-i18n-placeholder="set.profile.imageUrlPlaceholder" placeholder="https://example.com/photo.jpg" />
                         <div class="form-text"><span data-i18n="admin.settings.profile.imageUrl.hint">Used only when no
                             photo is uploaded.</span></div>
                       </div>
@@ -578,6 +578,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/validation.js?v=6"></script>
   <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/lang.js?v=9"></script>
   <script src="/assets/js/main.js?v=8"></script>
   <script src="/assets/js/notifications.js?v=7"></script>
   <script src="/assets/js/settings.js?v=7"></script>

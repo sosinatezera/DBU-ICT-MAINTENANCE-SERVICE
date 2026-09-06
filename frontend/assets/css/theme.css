@@ -262,6 +262,36 @@ html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .main-navbar .
   color: #e2e8f0 !important;
 }
 
+/* ── Landing navbar "Menu" Quick Access control (dark) ────── */
+html[data-theme="dark"] body .menu-quick-panel {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 18px 40px -12px rgba(0,0,0,.55);
+}
+html[data-theme="dark"] body .menu-quick-heading { color: #64748b; }
+html[data-theme="dark"] body .menu-quick-control {
+  color: #cbd5e1;
+  background: rgba(59, 130, 246, .12);
+  border-color: rgba(59, 130, 246, .22);
+}
+html[data-theme="dark"] body .menu-quick-control:hover {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, .18);
+  border-color: rgba(59, 130, 246, .4);
+}
+html[data-theme="dark"] body .menu-quick-control[aria-expanded="true"] {
+  color: #ffffff;
+  background: linear-gradient(135deg,#2563eb,#1d4ed8);
+  border-color: transparent;
+}
+html[data-theme="dark"] body .menu-quick-link { color: #cbd5e1; }
+html[data-theme="dark"] body .menu-quick-link i { color: #60a5fa; }
+html[data-theme="dark"] body .menu-quick-link:hover {
+  background: rgba(59, 130, 246, .14);
+  color: #93c5fd;
+}
+html[data-theme="dark"] body .menu-quick-divider { background: #1e293b; }
+
 /* ── Sidebar stays navy in both themes (brand). Keep as is. ── */
 
 /* ── Cards ─────────────────────────────────────────────────── */

@@ -42,7 +42,7 @@ body.dashboard-body {
 #sidebar .nav-link {
   padding: .5rem .85rem;
   border-radius: .5rem;
-  font-size: .845rem;
+  font-size: .9375rem;
   color: rgba(226,232,240,.74) !important;
   transition: background-color .18s ease, color .18s ease, border-color .18s ease;
 }
@@ -105,7 +105,7 @@ body.dashboard-body {
 
 /* KPI numbers + labels */
 .dashboard-body .card h4.fw-bold.mb-0 {
-  font-size: 1.65rem;
+  font-size: 1.75rem;
   letter-spacing: -.02em;
   line-height: 1.1;
 }
@@ -113,7 +113,7 @@ body.dashboard-body {
 .dashboard-body .card small.text-muted {
   display: block;
   margin-top: .1rem;
-  font-size: .76rem;
+  font-size: .85rem;
   letter-spacing: .1px;
   color: var(--admin-muted) !important;
 }
@@ -163,7 +163,7 @@ body.dashboard-body {
 .admin-table thead th:last-child {
   background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   color: #e2e8f0;
-  font-size: .68rem;
+  font-size: .75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .7px;
@@ -179,7 +179,7 @@ body.dashboard-body {
 .admin-table tbody td {
   padding: .65rem .9rem;
   border-bottom: 1px solid var(--admin-border-soft);
-  font-size: .84rem;
+  font-size: .9375rem;
   vertical-align: middle;
   color: #243043;
 }
@@ -193,7 +193,7 @@ body.dashboard-body {
   background-color: var(--admin-bg-soft);
   background-image: none;
   color: #334155;
-  font-size: .7rem;
+  font-size: .75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .5px;
@@ -216,7 +216,7 @@ body.dashboard-body {
 /* ── Action Buttons in Tables ──────────────────────────────── */
 .btn-action {
   padding: .28rem .6rem;
-  font-size: .76rem;
+  font-size: .875rem;
   line-height: 1.4;
   border-radius: .4rem;
   transition: var(--admin-ease);
@@ -365,7 +365,7 @@ body.dashboard-body {
 
 /* Technician name */
 .tech-card .fw-semibold.text-truncate {
-  font-size: .95rem;
+  font-size: 1.0625rem;
   color: var(--admin-ink);
   letter-spacing: -.01em;
 }
@@ -412,7 +412,7 @@ body.dashboard-body {
 .tech-card .card-footer .btn {
   height: 32px;
   padding: 0 .7rem;
-  font-size: .8rem;
+  font-size: .875rem;
   border-radius: .45rem;
   display: inline-flex;
   align-items: center;
@@ -548,7 +548,7 @@ body.dashboard-body {
 .report-bar-item { margin-bottom: .75rem; }
 
 .report-bar-label {
-  font-size: .8rem;
+  font-size: .875rem;
   font-weight: 500;
   margin-bottom: .2rem;
   display: flex;
@@ -573,7 +573,7 @@ body.dashboard-body {
 .nav-tabs .nav-link {
   color: var(--muted);
   font-weight: 500;
-  font-size: .86rem;
+  font-size: .9375rem;
   border-bottom: 2px solid transparent;
   padding: .55rem 1rem;
   transition: color .15s, border-color .15s, background .15s;
@@ -635,7 +635,7 @@ body.dashboard-body {
   text-align: left;
   padding: .65rem 1rem;
   border-radius: var(--radius-sm);
-  font-size: .875rem;
+  font-size: .9375rem;
   font-weight: 500;
   transition: all .2s ease;
 }
@@ -667,7 +667,7 @@ body.dashboard-body {
   align-items: center;
   gap: .5rem;
   padding: .55rem 1rem;
-  font-size: .875rem;
+  font-size: .9375rem;
   font-weight: 500;
   color: var(--muted);
   border: none;
@@ -688,7 +688,7 @@ body.dashboard-body {
 
 .settings-section-title {
   letter-spacing: .6px;
-  font-size: .74rem;
+  font-size: .8125rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
@@ -734,7 +734,7 @@ body.dashboard-body {
   .settings-nav::-webkit-scrollbar { display: none; }
   .settings-nav .nav-link {
     white-space: nowrap;
-    font-size: .8rem;
+    font-size: .875rem;
     padding: .5rem .75rem;
   }
 }
@@ -758,7 +758,7 @@ body.dashboard-body {
 @media (max-width: 575.98px) {
   /* Tighten card footers and filters on phones */
   .tech-card .card-footer { gap: .35rem; }
-  .tech-card .card-footer .btn { font-size: .78rem; padding: 0 .55rem; }
+  .tech-card .card-footer .btn { font-size: .8125rem; padding: 0 .55rem; }
 }
 
 /* ── Users table: Actions dropdown must NOT be clipped ──────

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'){document.documentElement.setAttribute('lang',l);}}catch(e){}})();</script>
+<script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'||l==='om'){document.documentElement.setAttribute('lang',l);}}catch(e){}})();</script>
 <script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Notifications — Technician</title>
+  <title data-i18n="page.techNotifications">Notifications — Technician</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -51,7 +51,7 @@
           </div>
         </div>
         <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
-          <i class="bi bi-box-arrow-right me-1"></i>Logout
+          <i class="bi bi-box-arrow-right me-1"></i><span data-i18n="side.logout">Logout</span>
         </a>
       </div>
     </nav>
@@ -60,17 +60,17 @@
     <div class="flex-grow-1">
       <header class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
         <div>
-          <h5 class="mb-0 fw-bold"><i class="bi bi-bell text-warning me-2"></i>Notifications</h5>
+          <h5 class="mb-0 fw-bold"><i class="bi bi-bell text-warning me-2"></i><span data-i18n="page.notifications">Notifications</span></h5>
           <small class="text-muted" id="unreadCount"></small>
         </div>
         <div class="d-flex align-items-center gap-2">
           <div class="form-check form-switch mb-0 me-2">
             <input class="form-check-input" type="checkbox" id="filterUnread" />
-            <label class="form-check-label small text-muted" for="filterUnread">Unread only</label>
+            <label class="form-check-label small text-muted" for="filterUnread"><span data-i18n="notif.unreadOnly">Unread only</span></label>
           </div>
           <div id="notifBellContainer"></div>
           <button class="btn btn-sm btn-outline-secondary" id="markAllReadBtn">
-            <i class="bi bi-check2-all me-1"></i>Mark All Read
+            <i class="bi bi-check2-all me-1"></i><span data-i18n="notif.markAllRead">Mark All Read</span>
           </button>
         </div>
       </header>
@@ -81,25 +81,25 @@
           <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm text-center p-3">
               <h4 class="fw-bold text-primary mb-0" id="totalNotifCount">—</h4>
-              <small class="text-muted">Total</small>
+              <small class="text-muted" data-i18n="notif.total">Total</small>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm text-center p-3">
               <h4 class="fw-bold text-danger mb-0" id="unreadNotifCount">—</h4>
-              <small class="text-muted">Unread</small>
+              <small class="text-muted" data-i18n="notif.unread">Unread</small>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm text-center p-3">
               <h4 class="fw-bold text-success mb-0" id="readNotifCount">—</h4>
-              <small class="text-muted">Read</small>
+              <small class="text-muted" data-i18n="notif.read">Read</small>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card border-0 shadow-sm text-center p-3">
               <button class="btn btn-sm btn-outline-danger w-100" id="clearAllBtn">
-                <i class="bi bi-trash me-1"></i>Clear All
+                <i class="bi bi-trash me-1"></i><span data-i18n="notif.clearAll">Clear All</span>
               </button>
             </div>
           </div>
@@ -121,6 +121,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/lang.js?v=9"></script>
   <script src="/assets/js/main.js?v=7"></script>
   <script src="/assets/js/notifications.js?v=7"></script>
   <script>

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'){document.documentElement.setAttribute('lang',l);}}catch(e){}})();</script>
+<script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'||l==='om'){document.documentElement.setAttribute('lang',l);}}catch(e){}})();</script>
 <script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Track Request — Smart Computer Maintenance Service</title>
+  <title data-i18n="page.userTracking">Track Request — Smart Computer Maintenance Service</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -29,7 +29,7 @@
       <a href="../index.html" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-tools fs-3"></i>
-          <div class="small fw-bold mt-1">Smart Computer Maintenance</div>
+          <div class="small fw-bold mt-1" data-i18n="trk.brandMain">Smart Computer Maintenance</div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
@@ -48,14 +48,14 @@
           <span class="small" id="sidebarUserName" class="text-white-50"></span>
         </div>
         <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
-          <i class="bi bi-box-arrow-right me-1"></i>Logout
+          <i class="bi bi-box-arrow-right me-1"></i><span data-i18n="common.logout">Logout</span>
         </a>
       </div>
     </nav>
 
     <div class="flex-grow-1">
       <header class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
-        <h5 class="mb-0 fw-bold">Track My Requests</h5>
+        <h5 class="mb-0 fw-bold" data-i18n="trk.title">Track My Requests</h5>
         <div class="d-flex align-items-center gap-3">
         </div>
       </header>
@@ -66,52 +66,52 @@
           <div class="card-body p-3">
             <div class="row g-2 align-items-end">
               <div class="col-12 col-md-4">
-                <label class="form-label small fw-semibold" for="searchInput">Search Requests</label>
+                <label class="form-label small fw-semibold" for="searchInput" data-i18n="common.search">Search Requests</label>
                 <div class="input-group">
                   <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                   <input type="text" class="form-control" id="searchInput"
-                         placeholder="Search by ID, title, device or description..." />
+                         placeholder="Search by ID, title, device or description..." data-i18n-placeholder="trk.ph.search" />
                 </div>
               </div>
               <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold" for="statusFilter">Status</label>
+                <label class="form-label small fw-semibold" for="statusFilter" data-i18n="common.status">Status</label>
                 <select class="form-select" id="statusFilter">
-                  <option value="">All Statuses</option>
-                  <option value="submitted">Submitted</option>
-                  <option value="under_review">Under Review</option>
-                  <option value="assigned">Assigned</option>
-                  <option value="accepted">Accepted</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="closed">Closed</option>
+                  <option value="" data-i18n="common.allStatuses">All Statuses</option>
+                  <option value="submitted" data-i18n="status.submitted">Submitted</option>
+                  <option value="under_review" data-i18n="status.review">Under Review</option>
+                  <option value="assigned" data-i18n="status.assigned">Assigned</option>
+                  <option value="accepted" data-i18n="status.accepted">Accepted</option>
+                  <option value="in_progress" data-i18n="status.inProgress">In Progress</option>
+                  <option value="resolved" data-i18n="status.resolved">Resolved</option>
+                  <option value="closed" data-i18n="status.closed">Closed</option>
                 </select>
               </div>
               <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold" for="priorityFilter">Priority</label>
+                <label class="form-label small fw-semibold" for="priorityFilter" data-i18n="common.priority">Priority</label>
                 <select class="form-select" id="priorityFilter">
-                  <option value="">All Priorities</option>
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
+                  <option value="" data-i18n="common.allPriorities">All Priorities</option>
+                  <option value="low" data-i18n="priority.low">Low</option>
+                  <option value="medium" data-i18n="priority.medium">Medium</option>
+                  <option value="high" data-i18n="priority.high">High</option>
+                  <option value="critical" data-i18n="priority.critical">Critical</option>
                 </select>
               </div>
               <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold" for="sortFilter">Sort By</label>
+                <label class="form-label small fw-semibold" for="sortFilter" data-i18n="trk.sortBy">Sort By</label>
                 <select class="form-select" id="sortFilter">
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
+                  <option value="newest" data-i18n="trk.sortNewest">Newest First</option>
+                  <option value="oldest" data-i18n="trk.sortOldest">Oldest First</option>
                 </select>
               </div>
               <div class="col-6 col-md-2">
-                <button class="btn btn-primary w-100" id="searchBtn">
+                <button class="btn btn-primary w-100" id="searchBtn" data-i18n="common.search">
                   <i class="bi bi-search me-1"></i>Search
                 </button>
               </div>
             </div>
             <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-              <span class="text-muted small"><i class="bi bi-box2 me-1"></i>Showing <strong id="trackingCount">0</strong> request(s)</span>
-              <button class="btn btn-outline-secondary btn-sm d-none" id="clearFiltersBtn">
+              <span class="text-muted small"><i class="bi bi-box2 me-1"></i><span data-i18n="trk.showing">Showing</span> <strong id="trackingCount">0</strong> <span data-i18n="trk.requests">request(s)</span></span>
+              <button class="btn btn-outline-secondary btn-sm d-none" id="clearFiltersBtn" data-i18n="trk.clearFilters">
                 <i class="bi bi-arrow-counterclockwise me-1"></i>Clear filters
               </button>
             </div>
@@ -158,16 +158,16 @@
           <div class="modal-dialog modal-lg">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="requestDetailModalLabel">Request Details</h5>
+                <h5 class="modal-title fw-bold" id="requestDetailModalLabel" data-i18n="udash.requestDetails">Request Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body" id="requestDetailBody">
-                <div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
+                <div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden" data-i18n="common.loading">Loading...</span></div></div>
               </div>
               <div class="modal-footer">
                 <!-- Status Timeline -->
                 <div class="w-100">
-                  <h6 class="fw-semibold mb-3">Status Timeline</h6>
+                  <h6 class="fw-semibold mb-3" data-i18n="udash.statusTimeline">Status Timeline</h6>
                   <div id="statusTimeline" class="d-flex flex-wrap gap-2"></div>
                 </div>
               </div>
@@ -181,6 +181,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/lang.js?v=9"></script>
   <script src="/assets/js/main.js?v=7"></script>
   <script src="/assets/js/requests.js?v=8"></script>
   <script src="/assets/js/theme.js"></script>
