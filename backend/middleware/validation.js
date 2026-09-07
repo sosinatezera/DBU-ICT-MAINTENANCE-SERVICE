@@ -7,15 +7,15 @@
 const mongoose = require('mongoose');
 
 /* ── Constants ──────────────────────────────────────────── */
-const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[\x21-\x7E]{8,100}$/;
+const PASSWORD_REGEX = /^(?=.{8,16}$)(?=.*[A-Za-z])(?=.*\d)(?!.*\s)[\x21-\x7E]+$/;
 /* Gmail-only: local part must contain at least one letter and end exactly with @gmail.com (case-insensitive domain) */
 const EMAIL_REGEX    = /^(?=[A-Za-z0-9._%+-]*[A-Za-z])[A-Za-z0-9._%+-]+@gmail\.com$/i;
 /* Phone: Ethiopian mobile — exactly 10 digits (0-9) only, starting with 09 or 07.
    No letters, spaces, +, -, or special chars. */
 const PHONE_REGEX   = /^(09|07)\d{8}$/;
-/* Full name: must contain at least one letter, allow letters/digits/spaces/apostrophes/dots/hyphens.
-   Rejects numbers-only and special-characters-only values; no length limit. */
-const NAME_REGEX    = /^(?=[\p{L}\d\s.'-]*[\p{L}])[\p{L}\d\s.'-]+$/u;
+/* Full name: letters and spaces only. No digits, no special characters.
+   Spaces allowed between names (e.g. "John Doe"). */
+const NAME_REGEX    = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
 
 const VALID_ROLES       = ['Requester', 'Technician', 'ICT Admin'];
 const VALID_STATUSES    = ['active', 'inactive'];
