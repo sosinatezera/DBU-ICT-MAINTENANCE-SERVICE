@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: ict-maintenance-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    rootDir: ./backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: FRONTEND_ORIGINS
+        value: https://smartcomputermaintenanceservice.netlify.app,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000
