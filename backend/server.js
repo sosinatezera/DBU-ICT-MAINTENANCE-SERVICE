@@ -30,6 +30,7 @@ const connectDB = require('./config/db');
 
 const { logger }       = require('./middleware/logger');
 const { errorHandler } = require('./middleware/errorHandler');
+const { verifySmtp, smtpConfigured } = require('./services/mailer');
 
 /* ── Connect to MongoDB ──────────────────────────────────── */
 connectDB();
@@ -110,6 +111,22 @@ const server = app.listen(PORT, () => {
   console.log('  ║  Roles: Requester | Technician | ICT Admin           ║');
   console.log('  ╚══════════════════════════════════════════════════════╝');
   console.log('');
+
+  /* ── Non-fatal SMTP status check ──────────────────────────
+     Email is optional. This NEVER blocks or crashes startup: it only reports
+     whether outbound email will work. No credentials are ever printed. */
+  try {
+    if (smtpConfigured()) {
+      verifySmtp().then((r) => {
+        if (r.ok) console.log(`  Email : ${r.detail}`);
+        else console.log('  Email : SMTP configured but connection failed — messages will be skipped (see scripts/verify-smtp.js).');
+      }).catch(() => console.log('  Email : SMTP check skipped (non-fatal).'));
+    } else {
+      console.log('  Email : SMTP not configured — email delivery disabled (optional, see backend/.env).');
+    }
+  } catch (err) {
+    console.log('  Email : SMTP status unavailable (non-fatal).');
+  }
 });
 
 server.on('error', (err) => {
