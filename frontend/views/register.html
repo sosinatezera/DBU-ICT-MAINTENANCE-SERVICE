@@ -108,7 +108,7 @@
                 </div>
               </div>
 
-              <!-- ── Other Department / User (conditional) ── -->
+              <!-- ── Other Department / Other User Category (conditional) ── -->
               <div class="mb-3 d-none" id="otherDepartmentContainer">
                 <label for="otherDepartment" class="form-label fw-semibold small" id="otherDeptLabel">Other Department Name</label>
                 <div class="input-group">
@@ -135,17 +135,17 @@
                 <div class="text-danger small mt-1 d-none" id="genderError"><span data-i18n="auth.gender.ph">Select Gender</span></div>
               </div>
 
-              <!-- ── Password ── -->
+<!-- ── Password ── -->
               <div class="mb-3">
                 <label for="password" class="form-label fw-semibold small"><span data-i18n="auth.form.password">Password</span> <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-lock text-muted"></i></span>
                   <input type="password" class="form-control" id="password"
-                         placeholder="Min. 8 characters" required minlength="8" autocomplete="new-password" />
-                  <button class="btn btn-outline-secondary" type="button" id="togglePwd">
-                    <i class="bi bi-eye" id="eyeIcon"></i>
-                  </button>
+                         placeholder="Min. 8 characters, Max. 16, letters & numbers" required minlength="8" maxlength="16" autocomplete="new-password" />
                 </div>
+                <div class="form-text">Minimum 8 characters, maximum 16. Must contain at least one letter and one number. No spaces.</div>
+                <div class="invalid-feedback">Password must be 8-16 characters, contain letters and numbers, and have no spaces.</div>
+              </div>
                 <div class="form-text">Must be at least 8 characters.</div>
                 <div class="invalid-feedback">Password must be at least 8 characters.</div>
               </div>
@@ -311,7 +311,7 @@ document.getElementById('gender').addEventListener('change', function () {
   }
 });
 
-/* Department change — show/hide Other Department Name */
+/* Department change — show/hide Other Department Name / Other User Category */
 document.getElementById('department').addEventListener('change', function () {
   const otherContainer = document.getElementById('otherDepartmentContainer');
   const otherInput     = document.getElementById('otherDepartment');
@@ -409,11 +409,18 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 
   if (deptSelect === 'other' || deptSelect === 'other_user') {
     const customDept = otherInput.value.trim();
+    const deptRegex = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
     if (!customDept) {
       otherInput.classList.add('is-invalid');
       otherErr.textContent = deptSelect === 'other_user'
         ? 'Please enter a user category.'
         : 'Please enter your department name.';
+      hasError = true;
+    } else if (!deptRegex.test(customDept)) {
+      otherInput.classList.add('is-invalid');
+      otherErr.textContent = deptSelect === 'other_user'
+        ? 'User category must contain letters and spaces only.'
+        : 'Department name must contain letters and spaces only.';
       hasError = true;
     } else {
       department = customDept;
