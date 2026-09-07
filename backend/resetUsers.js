@@ -435,8 +435,8 @@ async function runDirectMongo() {
 
   const bcryptPrefix = /^\$2[aby]?\$\d{2}\$/;
 
-  const adminVerify = await User.findOne({ email: ADMIN_EMAIL }).select('email password role status');
-  const techVerify  = await User.findOne({ email: TECH_EMAIL }).select('email password role status');
+  const adminVerify = await User.findOne({ email: ADMIN_EMAIL }).select('+password email role status');
+  const techVerify  = await User.findOne({ email: TECH_EMAIL }).select('+password email role status');
 
   if (adminVerify) {
     if (!bcryptPrefix.test(adminVerify.password)) {

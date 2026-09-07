@@ -114,8 +114,8 @@ function showOfflineBanner() {
       <div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc3545;color:#fff;
                   text-align:center;padding:10px 16px;font-size:.875rem;font-weight:500;">
         <i class="bi bi-wifi-off me-2"></i>
-        Cannot connect to backend server (port 5000). 
-        Start the backend with <code style="background:rgba(255,255,255,.2);padding:1px 6px;border-radius:3px;">node server.js</code>
+        Cannot connect to the backend API. 
+        Make sure the backend server is running and reachable.
         <button onclick="document.getElementById('offlineBanner').remove()" 
                 style="background:none;border:none;color:#fff;margin-left:12px;font-size:1rem;cursor:pointer;">✕</button>
       </div>`;

@@ -84,7 +84,7 @@ async function verifyDatabase() {
   console.log('\n  [1] DATABASE CHECK\n');
   for (const acc of ACCOUNTS) {
     const email = acc.email.trim().toLowerCase();
-    const user  = await User.findOne({ email: new RegExp(`^${escapeRegex(email)}$`, 'i') });
+    const user  = await User.findOne({ email: new RegExp(`^${escapeRegex(email)}$`, 'i') }).select('+password');
 
     if (!user) { bad(`Account "${email}" is MISSING from database — run: npm run seed:auth`); continue; }
 

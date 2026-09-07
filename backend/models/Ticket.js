@@ -211,6 +211,11 @@ const ticketSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+/* Frequently filtered/counted by requester, status, and assigned tech. */
+ticketSchema.index({ requester: 1, createdAt: -1 });
+ticketSchema.index({ status: 1 });
+ticketSchema.index({ assignedTechnician: 1, status: 1 });
+
 /* ── Auto-generate ticketId before saving ──────────────────── */
 ticketSchema.pre('save', async function (next) {
   if (this.ticketId) return next();

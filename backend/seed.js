@@ -37,8 +37,9 @@ function escapeRegex(str) {
 }
 
 async function findByEmail(email) {
-  /* Case-insensitive lookup so legacy mixed-case emails are also repaired. */
-  return User.findOne({ email: new RegExp(`^${escapeRegex(email)}$`, 'i') });
+  /* Case-insensitive lookup so legacy mixed-case emails are also repaired.
+     +password: needed by hashMatches() for the existing-hash comparison. */
+  return User.findOne({ email: new RegExp(`^${escapeRegex(email)}$`, 'i') }).select('+password');
 }
 
 async function hashMatches(plain, storedHash) {

@@ -9,4 +9,7 @@ const notificationSchema = new mongoose.Schema({
   is_read: { type: Boolean, default: false },
 }, { timestamps: true });
 
+/* Hot path: "my notifications" sorted newest-first — index user + createdAt. */
+notificationSchema.index({ user: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Notification', notificationSchema);
