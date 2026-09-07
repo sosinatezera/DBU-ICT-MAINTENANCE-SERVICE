@@ -9,6 +9,7 @@
     "seed": "node scripts/seed.js",
     "seed:auth": "node seed.js",
     "verify:auth": "node scripts/testAuth.js",
+    "verify:smtp": "node scripts/verify-smtp.js",
     "reset:users": "node resetUsers.js",
     "migrate:student-to-requester": "node migrateStudentToRequester.js"
   },

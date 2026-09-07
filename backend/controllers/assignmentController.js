@@ -7,6 +7,7 @@ const Ticket        = require('../models/Ticket');
 const User          = require('../models/User');
 const Technician    = require('../models/Technician');
 const Notification  = require('../models/Notification');
+const { sendEventEmail } = require('../services/mailer');
 const {
   validateObjectId, validateRequired, validateEnum, validateLength,
   sanitizeString, VALID_ASSIGN_STATUSES,
@@ -67,7 +68,7 @@ const createAssignment = async (req, res, next) => {
     }
 
     /* Verify technician exists — technician_id is a Technician._id (separate collection) */
-    const tech = await Technician.findById(technician_id).populate('user', 'fullName role status');
+    const tech = await Technician.findById(technician_id).populate('user', 'fullName role status email');
     if (!tech) {
       return res.status(400).json({ success: false, message: 'Invalid technician. Technician record not found.' });
     }
@@ -119,6 +120,16 @@ const createAssignment = async (req, res, next) => {
       type:    'info',
     });
 
+    /* Optional email to the technician (best-effort, never blocks the flow) */
+    if (techUser.email) {
+      sendEventEmail({
+        to: techUser.email,
+        subject: `New assignment — ticket ${ticket.ticketId}`,
+        text: `Hi ${techUser.fullName || 'there'},\n\nYou have been assigned ticket "${ticket.ticketId}" (${ticket.equipmentType}).\nPriority: ${ticket.priority}. Please log in to the portal to review it.\n\nSmart Computer Maintenance Service`,
+        html: `<p>Hi ${techUser.fullName || 'there'},</p><p>You have been assigned ticket <strong>${ticket.ticketId}</strong> (${ticket.equipmentType}).</p><p>Priority: <strong>${ticket.priority}</strong>.</p><p>Log in to the portal to review it.</p><p style="color:#888;">Smart Computer Maintenance Service</p>`,
+      }).catch(() => {}); /* email is best-effort only */
+    }
+
     /* Notify the requester */
     const ticketFull = await Ticket.findById(ticket_id).select('requester');
     if (ticketFull?.requester) {
@@ -129,6 +140,22 @@ const createAssignment = async (req, res, next) => {
         message: `Your service request #${ticket.ticketId} has been assigned to a technician.`,
         type:    'info',
       });
+
+      /* Optional email to the requester — the user lookup runs off the request
+         path so the assignment response is never delayed by e-mail. */
+      const requesterId = ticketFull.requester;
+      const subjectText = `Ticket ${ticket.ticketId} assigned — Smart Computer Maintenance Service`;
+      const notifyRequesterByEmail = async () => {
+        const u = await User.findById(requesterId).select('email');
+        if (!u || !u.email) return { delivered: false, info: 'Requester has no email.' };
+        return sendEventEmail({
+          to: u.email,
+          subject: subjectText,
+          text: `Your service request #${ticket.ticketId} has been assigned to a technician.\n\nYou can track its progress on the portal using ticket ID ${ticket.ticketId}.\n\nSmart Computer Maintenance Service`,
+          html: `<p>Your service request <strong>#${ticket.ticketId}</strong> has been assigned to a technician.</p><p>Track its progress on the portal with ticket ID <strong>${ticket.ticketId}</strong>.</p><p style="color:#888;">Smart Computer Maintenance Service</p>`,
+        });
+      };
+      notifyRequesterByEmail().catch(() => {}); /* email is best-effort only */
     }
 
     res.status(201).json({

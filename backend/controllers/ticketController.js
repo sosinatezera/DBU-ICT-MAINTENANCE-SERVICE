@@ -31,6 +31,10 @@ const VALID_TECH_PERFORMANCE = ['Excellent', 'Good', 'Satisfactory', 'Needs Impr
 const VALID_RESPONSE_EVAL   = ['Excellent', 'Good', 'Slow'];
 const VALID_POLICY_COMPLIANCE = ['Compliant', 'Non-Compliant', 'Partial'];
 
+/* Fire-and-forget outbound email (gated by SMTP config + Settings). It is
+   called WITHOUT await and with .catch() so it can never fail the request. */
+const { sendEventEmail } = require('../services/mailer');
+
 const Ticket       = require('../models/Ticket');
 const User         = require('../models/User');
 const Technician   = require('../models/Technician');
@@ -182,7 +186,7 @@ const getTicketById = async (req, res, next) => {
 const createTicket = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const user   = await User.findById(userId).select('fullName phone department');
+    const user   = await User.findById(userId).select('fullName phone department email');
 
     /* Validate required */
     const descErr = validateRequired(req.body.problemDescription, 'Problem description');
@@ -263,8 +267,18 @@ const createTicket = async (req, res, next) => {
       type:    'success',
     });
 
+    /* Optional email confirmation to the requester (never blocks the flow) */
+    if (user?.email) {
+      sendEventEmail({
+        to: user.email,
+        subject: `Ticket ${ticket.ticketId} received — Smart Computer Maintenance Service`,
+        text: `Hi ${user.fullName || ''},\n\nYour service request #${ticket.ticketId} has been submitted and is awaiting review.\n\nTrack it on the portal using ticket ID ${ticket.ticketId}.\n\nSmart Computer Maintenance Service`,
+        html: `<p>Hi ${user.fullName || 'there'},</p><p>Your service request <strong>#${ticket.ticketId}</strong> has been submitted and is awaiting review.</p><p>You can track its progress on the portal with ticket ID <strong>${ticket.ticketId}</strong>.</p><p style="color:#888;">Smart Computer Maintenance Service</p>`,
+      }).catch(() => {}); /* email is best-effort only */
+    }
+
     /* Notify all ICT Admins */
-    const admins = await User.find({ role: 'ICT Admin', status: 'active' }).select('_id');
+    const admins = await User.find({ role: 'ICT Admin', status: 'active' }).select('_id email');
     for (const admin of admins) {
       await Notification.create({
         user:    admin._id,
@@ -273,6 +287,15 @@ const createTicket = async (req, res, next) => {
         message: `Ticket "${ticket.ticketId}" submitted by ${user?.fullName}. Equipment: ${payload.equipmentType}.`,
         type:    payload.priority === 'critical' ? 'danger' : 'info',
       });
+      /* Optional email alert to each active admin (best-effort) */
+      if (admin.email) {
+        sendEventEmail({
+          to: admin.email,
+          subject: `New ${payload.priority.toUpperCase()} ticket ${ticket.ticketId}`,
+          text: `A new ${payload.priority} priority ticket (${ticket.ticketId}) was submitted by ${user?.fullName || 'a requester'}.\nEquipment: ${payload.equipmentType}.\n\nLog in to review it.\n\nSmart Computer Maintenance Service`,
+          html: `<p>A new <strong>${payload.priority.toUpperCase()}</strong> priority ticket (<strong>${ticket.ticketId}</strong>) was submitted by ${user?.fullName || 'a requester'}.</p><p>Equipment: ${payload.equipmentType}.</p><p>Log in to the admin portal to review it.</p><p style="color:#888;">Smart Computer Maintenance Service</p>`,
+        }).catch(() => {}); /* email is best-effort only */
+      }
     }
 
     /* Technicians only receive a ticket notification once they are actually

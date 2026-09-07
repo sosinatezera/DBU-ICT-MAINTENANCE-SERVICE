@@ -21,9 +21,12 @@ module.exports = {
   // developer origin by default; override for production (e.g. https://app.example.com).
   FRONTEND_URL:  process.env.FRONTEND_URL  || 'http://localhost:3000',
 
-  // Email
+  // Email (Gmail SMTP — optional; leave SMTP_HOST/SMTP_USER/SMTP_PASS blank to
+  // disable mail delivery. SMTP_PASS must be a GOOGLE APP PASSWORD, NOT the
+  // normal Gmail password — see .env.example for step-by-step instructions.)
   SMTP_HOST:     process.env.SMTP_HOST     || '',
-  SMTP_PORT:     process.env.SMTP_PORT     || 587,
-  SMTP_USER:     process.env.SMTP_USER     || '',
-  SMTP_PASS:     process.env.SMTP_PASS     || '',
+  SMTP_PORT:     process.env.SMTP_PORT     || 587,   // 587 → STARTTLS; 465 → implicit TLS
+  SMTP_USER:     process.env.SMTP_USER     || '',    // your.account@gmail.com
+  SMTP_PASS:     process.env.SMTP_PASS     || '',    // 16-char Google App Password
+  SMTP_FROM_NAME: process.env.SMTP_FROM_NAME || 'Smart Computer Maintenance Service',
 };
