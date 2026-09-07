@@ -19,7 +19,7 @@
 
   <div class="d-flex">
     <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3" style="min-height:100vh;width:250px;">
-      <a href="../index.html" class="text-decoration-none">
+      <a href="/" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-shield-check fs-3 text-info"></i>
           <div class="small fw-bold mt-1" id="panelLabel"><span data-i18n="side.panel.admin">Management Panel</span>
@@ -80,28 +80,28 @@
               </div>
               <div class="col-md-2">
                 <select class="form-select" id="statusFilter">
-                  <option value=""><span data-i18n="admin.requests.filter.allStatuses">All Statuses</span>
-                  <option value="submitted"><span data-i18n="admin.requests.filter.submitted">Submitted</span>
-                  <option value="under_review"><span data-i18n="admin.requests.filter.underReview">Under Review</span>
-                  <option value="assigned"><span data-i18n="admin.requests.filter.assigned">Assigned</span>
-                  <option value="accepted"><span data-i18n="admin.requests.filter.accepted">Accepted</span>
-                  <option value="in_progress"><span data-i18n="admin.requests.filter.inProgress">In Progress</span>
-                  <option value="resolved"><span data-i18n="admin.requests.filter.resolved">Resolved</span>
-                  <option value="closed"><span data-i18n="admin.requests.filter.closed">Closed</span>
+                  <option value=""><span data-i18n="admin.requests.filter.allStatuses">All Statuses</span>
+                  <option value="submitted"><span data-i18n="admin.requests.filter.submitted">Submitted</span>
+                  <option value="under_review"><span data-i18n="admin.requests.filter.underReview">Under Review</span>
+                  <option value="assigned"><span data-i18n="admin.requests.filter.assigned">Assigned</span>
+                  <option value="accepted"><span data-i18n="admin.requests.filter.accepted">Accepted</span>
+                  <option value="in_progress"><span data-i18n="admin.requests.filter.inProgress">In Progress</span>
+                  <option value="resolved"><span data-i18n="admin.requests.filter.resolved">Resolved</span>
+                  <option value="closed"><span data-i18n="admin.requests.filter.closed">Closed</span>
                 </select>
               </div>
               <div class="col-md-2">
                 <select class="form-select" id="priorityFilter">
-                  <option value=""><span data-i18n="admin.requests.filter.allPriorities">All Priorities</span>
-                  <option value="critical"><span data-i18n="admin.requests.filter.critical">Critical</span>
-                  <option value="high"><span data-i18n="admin.requests.filter.high">High</span>
-                  <option value="medium"><span data-i18n="admin.requests.filter.medium">Medium</span>
-                  <option value="low"><span data-i18n="admin.requests.filter.low">Low</span>
+                  <option value=""><span data-i18n="admin.requests.filter.allPriorities">All Priorities</span>
+                  <option value="critical"><span data-i18n="admin.requests.filter.critical">Critical</span>
+                  <option value="high"><span data-i18n="admin.requests.filter.high">High</span>
+                  <option value="medium"><span data-i18n="admin.requests.filter.medium">Medium</span>
+                  <option value="low"><span data-i18n="admin.requests.filter.low">Low</span>
                 </select>
               </div>
               <div class="col-md-2">
                 <select class="form-select" id="categoryFilter">
-                  <option value=""><span data-i18n="admin.requests.filter.allCategories">All Categories</span>
+                  <option value=""><span data-i18n="admin.requests.filter.allCategories">All Categories</span>
                 </select>
               </div>
               <div class="col-md-3 d-flex gap-2">
@@ -197,14 +197,14 @@
                     data-i18n="admin.requests.detail.updateStatus">Update Status</span></h6>
                 <div class="d-flex gap-2">
                   <select class="form-select" id="newStatusSelect">
-                    <option value="submitted"><span data-i18n="admin.requests.filter.submitted">Submitted</span>
+                    <option value="submitted"><span data-i18n="admin.requests.filter.submitted">Submitted</span>
                     <option value="under_review"><span data-i18n="admin.requests.filter.underReview">Under
-                        Review</span>
-                    <option value="assigned"><span data-i18n="admin.requests.filter.assigned">Assigned</span>
-                    <option value="accepted"><span data-i18n="admin.requests.filter.accepted">Accepted</span>
-                    <option value="in_progress"><span data-i18n="admin.requests.filter.inProgress">In Progress</span>
-                    <option value="resolved"><span data-i18n="admin.requests.filter.resolved">Resolved</span>
-                    <option value="closed"><span data-i18n="admin.requests.filter.closed">Closed</span>
+                        Review</span>
+                    <option value="assigned"><span data-i18n="admin.requests.filter.assigned">Assigned</span>
+                    <option value="accepted"><span data-i18n="admin.requests.filter.accepted">Accepted</span>
+                    <option value="in_progress"><span data-i18n="admin.requests.filter.inProgress">In Progress</span>
+                    <option value="resolved"><span data-i18n="admin.requests.filter.resolved">Resolved</span>
+                    <option value="closed"><span data-i18n="admin.requests.filter.closed">Closed</span>
                   </select>
                   <button type="button" class="btn btn-warning" id="updateStatusBtn"><span
                       data-i18n="admin.requests.detail.updateBtn">Update</span></button>
@@ -245,11 +245,11 @@
                   class="text-danger">*</span></label>
               <select class="form-select" id="afServiceHandlingQuality">
                 <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option><span data-i18n="admin.requests.fb.good">Good</span>
-                <option><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
-                <option><span data-i18n="admin.requests.fb.poor">Poor</span>
+                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
+                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
+                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>
             <div class="col-md-6">
@@ -257,10 +257,10 @@
                   data-i18n="admin.requests.fb.technicianPerformance">Technician Performance Evaluation</span></label>
               <select class="form-select" id="afTechnicianPerformance">
                 <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option><span data-i18n="admin.requests.fb.good">Good</span>
-                <option><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
+                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
+                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
               </select>
             </div>
             <div class="col-md-6">
@@ -268,9 +268,9 @@
                   Evaluation</span></label>
               <select class="form-select" id="afResponseTime">
                 <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option><span data-i18n="admin.requests.fb.good">Good</span>
-                <option><span data-i18n="admin.requests.fb.slow">Slow</span>
+                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
+                <option value="Slow"><span data-i18n="admin.requests.fb.slow">Slow</span>
               </select>
             </div>
             <div class="col-md-6">
@@ -278,11 +278,11 @@
                   data-i18n="admin.requests.fb.resolutionQuality">Resolution Quality</span></label>
               <select class="form-select" id="afResolutionQuality">
                 <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option><span data-i18n="admin.requests.fb.good">Good</span>
-                <option><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
-                <option><span data-i18n="admin.requests.fb.poor">Poor</span>
+                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
+                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
+                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>
             <div class="col-md-6">
@@ -290,11 +290,11 @@
                   data-i18n="admin.requests.fb.documentationQuality">Documentation Quality</span></label>
               <select class="form-select" id="afDocumentationQuality">
                 <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option><span data-i18n="admin.requests.fb.good">Good</span>
-                <option><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
-                <option><span data-i18n="admin.requests.fb.poor">Poor</span>
+                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
+                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
+                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>
             <div class="col-md-6">
@@ -302,9 +302,9 @@
                   Procedure Compliance</span></label>
               <select class="form-select" id="afPolicyCompliance">
                 <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option><span data-i18n="admin.requests.fb.compliant">Compliant</span>
-                <option><span data-i18n="admin.requests.fb.partial">Partial</span>
-                <option><span data-i18n="admin.requests.fb.nonCompliant">Non-Compliant</span>
+                <option value="Compliant"><span data-i18n="admin.requests.fb.compliant">Compliant</span>
+                <option value="Partial"><span data-i18n="admin.requests.fb.partial">Partial</span>
+                <option value="Non-Compliant"><span data-i18n="admin.requests.fb.nonCompliant">Non-Compliant</span>
               </select>
             </div>
             <div class="col-md-6">
@@ -312,11 +312,11 @@
                   Service Quality</span> <span class="text-danger">*</span></label>
               <select class="form-select" id="afOverallServiceQuality">
                 <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option><span data-i18n="admin.requests.fb.good">Good</span>
-                <option><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
-                <option><span data-i18n="admin.requests.fb.poor">Poor</span>
+                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
+                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
+                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
+                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>
             <div class="col-12">

@@ -309,6 +309,12 @@ function openNotificationTicket(ticketId) {
   const raw = String(ticketId || '').trim();
   if (!raw || !/^[0-9a-f]{24}$/i.test(raw)) {
     console.warn('Notification has no valid related ticket id; skipping navigation.', raw);
+    /* Stale or malformed notification (ticket deleted, legacy seed, or no ticket
+       reference). Never guess an id — surface a clear message instead so the user
+       is not left wondering why nothing happened. */
+    if (typeof showToast === 'function') {
+      showToast('Ticket details are no longer available or you are no longer assigned to this ticket.', 'warning');
+    }
     return;
   }
 
