@@ -451,7 +451,7 @@ function updateAvailabilityUI(isAvailable) {
 function ticketErrorMessage(err) {
   if (!err) return 'Unable to load ticket details. Please try again.';
   if (err.status === 404) return 'Ticket details could not be found.';
-  if (err.status === 403) return 'You are not authorized to view this ticket.';
+  if (err.status === 403) return 'Ticket details are no longer available or you are no longer assigned to this ticket.';
   return 'Unable to load ticket details. Please try again.';
 }
 
