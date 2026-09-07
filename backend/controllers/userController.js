@@ -372,7 +372,7 @@ const changeMyPassword = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'New password must be different from the current password.' });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).select('+password');
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }

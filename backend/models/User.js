@@ -44,6 +44,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Password is required.'],
       minlength: 8,
+      /* Stored as a bcrypt hash. select:false keeps the hash out of every default
+         query; code that needs it must re-add it with .select('+password'). */
+      select: false,
     },
     role: {
       type: String,

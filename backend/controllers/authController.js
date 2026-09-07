@@ -133,7 +133,8 @@ const login = async (req, res, next) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const user = await User.findOne({ email: normalizedEmail });
+    /* +password: the field is select:false in the schema; login needs the hash. */
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user) {
       /* Only log the input email on the server console — never the password. The
          client keeps receiving the generic message for security. */

@@ -37,4 +37,8 @@ const maintenanceRecordSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+/* Frequently queried by request and by technician. */
+maintenanceRecordSchema.index({ request: 1 });
+maintenanceRecordSchema.index({ technician: 1, createdAt: -1 });
+
 module.exports = mongoose.model('MaintenanceRecord', maintenanceRecordSchema);

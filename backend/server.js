@@ -28,6 +28,25 @@ const helmet    = require('helmet');
 const path      = require('path');
 const connectDB = require('./config/db');
 
+/* ── Production configuration guard ─────────────────────────
+   Fail fast in production (never silently) when the JWT secret is
+   missing or still the placeholder — a weak secret breaks all auth.
+   Local development is left untouched. */
+if (process.env.NODE_ENV === 'production') {
+  const jwtSecret = process.env.JWT_SECRET || '';
+  if (!jwtSecret || jwtSecret === 'change_this_secret') {
+    console.error('\n  [ERROR] NODE_ENV=production requires a strong JWT_SECRET.');
+    console.error('  Generate one (e.g. "openssl rand -hex 64") and set it in the');
+    console.error('  hosting provider\'s environment variables. Aborting startup.\n');
+    process.exit(1);
+  }
+  if (!process.env.FRONTEND_ORIGINS) {
+    console.warn('\n  [WARN] FRONTEND_ORIGINS is not set — CORS will only allow the default development origins.');
+    console.warn('  Set FRONTEND_ORIGINS to your deployed frontend origin(s), e.g.');
+    console.warn('  https://smartcomputermaintenanceservice.netlify.app\n');
+  }
+}
+
 const { logger }       = require('./middleware/logger');
 const { errorHandler } = require('./middleware/errorHandler');
 const { verifySmtp, smtpConfigured } = require('./services/mailer');
@@ -41,7 +60,11 @@ const app = express();
 /* CORS origins: default to local dev origins; override via the
    FRONTEND_ORIGINS env var (comma-separated list) for deployed setups.
    credentials:true is preserved and a wildcard is never allowed. */
-const defaultOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+const defaultOrigins = [
+  'http://localhost:3000', 'http://127.0.0.1:3000',
+  'http://localhost:5000', 'http://127.0.0.1:5000',
+  'https://smartcomputermaintenanceservice.netlify.app',
+];
 const allowedOrigins = process.env.FRONTEND_ORIGINS
   ? process.env.FRONTEND_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
   : defaultOrigins;

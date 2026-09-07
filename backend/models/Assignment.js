@@ -34,4 +34,9 @@ const assignmentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+/* Busiest join-table in the system — assignment existence + technician listing
+   queries filter on ticket/technician/status combinations. */
+assignmentSchema.index({ ticket: 1, technician: 1, status: 1 });
+assignmentSchema.index({ technician: 1, status: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Assignment', assignmentSchema);
