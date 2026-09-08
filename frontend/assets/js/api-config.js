@@ -9,54 +9,63 @@
 
    Exposes:  const API_BASE     (e.g. "http://localhost:5000/api")
              const API_UPLOAD_BASE  (the origin root for /uploads)
-             function apiOrigin()   → returns the origin root
+             function apiOrigin()   -> returns the origin root
 
-   ── Production ──────────────────────────────────────────────
-   The API base is resolved at runtime so the SAME static bundle
-   works locally and in production WITHOUT rebuilding:
-
-   1. Same-origin proxy (RECOMMENDED): serve the frontend and proxy
-      /api and /uploads to the backend — API_BASE becomes
-      https://<your-host>/api automatically.
-   2. Explicit override: inject a tiny <script> BEFORE this file:
-        window.__API_BASE__ = 'https://api.example.com/api';
-      e.g. <script>window.__API_BASE__='https://api.example.com/api'</script>
+   Resolution order:
+   1. Explicit override via window.__API_BASE__ (set BEFORE this file loads)
+   2. PRODUCTION_API_MAP hostname lookup
+   3. Localhost fallback (development)
+   4. Known backend URL as safety net for hosting platforms
    ============================================================ */
 
-/* Production URL mapping: Netlify frontend → Render backend */
-const PRODUCTION_API_MAP = {
-  'smartcomputer-maintenance-system.netlify.app': 'https://dbu-ict-maintenance-service.onrender.com/api',
-  'smartcomputermaintenanceservice.netlify.app': 'https://dbu-ict-maintenance-service.onrender.com/api',
+/* Known production backend URL — used as the final fallback when the
+   current hostname is NOT localhost and NOT in PRODUCTION_API_MAP.
+   This prevents hosting platforms (Netlify, Vercel, etc.) from
+   accidentally falling back to same-origin /api which doesn't exist. */
+var __KNOWN_BACKEND_URL = 'https://dbu-ict-maintenance-service.onrender.com/api';
+
+/* Production URL mapping: Netlify frontend -> Render backend */
+var PRODUCTION_API_MAP = {
+  'smartcomputer-maintenance-system.netlify.app': __KNOWN_BACKEND_URL,
+  'smartcomputermaintenanceservice.netlify.app':  __KNOWN_BACKEND_URL,
 };
 
-const API_BASE = (function () {
+var API_BASE = (function () {
   /* 1. Explicit deploy-time override (see comments above). */
-  if (typeof window.__API_BASE__ === 'string' && window.__API_BASE__) {
+  if (typeof window !== 'undefined' && typeof window.__API_BASE__ === 'string' && window.__API_BASE__) {
     return window.__API_BASE__;
   }
 
-  const { protocol, hostname } = window.location;
+  var protocol = window.location.protocol;
+  var hostname = window.location.hostname;
 
-  /* 2. Production / non-local host: map known frontend domains to the
-       Render backend origin. This ensures the Netlify-hosted frontend
-       always calls the Render API, not itself. */
+  /* 2. Production: map known frontend domains to the Render backend origin. */
   if (PRODUCTION_API_MAP[hostname]) {
     return PRODUCTION_API_MAP[hostname];
   }
 
-  const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
-  if (!isLocal) {
-    return `${protocol}//${hostname}/api`;
+  /* 3. Local development: static server on :3000, backend API on :5000. */
+  var isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+  if (isLocal) {
+    return 'http://localhost:5000/api';
   }
 
-  /* 3. Local development: static server on :3000, backend API on :5000. */
-  return 'http://localhost:5000/api';
+  /* 4. Unknown non-local hostname (new Netlify/Vercel subdomain, custom
+     domain, etc.). Never use same-origin — hosting platforms don't serve
+     the backend. Fall back to the known backend URL and log a warning
+     so developers can add the new hostname to PRODUCTION_API_MAP. */
+  console.warn(
+    '[api-config] Hostname "' + hostname + '" is not in PRODUCTION_API_MAP.',
+    'Falling back to known backend:', __KNOWN_BACKEND_URL,
+    '— Add this hostname to PRODUCTION_API_MAP to silence this warning.'
+  );
+  return __KNOWN_BACKEND_URL;
 })();
 
-/* Origin root (e.g. "http://localhost:5000") — used to build
-   attachment/upload URLs served from the backend /uploads route. */
+/* Origin root (e.g. "https://dbu-ict-maintenance-service.onrender.com") —
+   used to build attachment/upload URLs served from the backend /uploads route. */
 function apiOrigin() {
   return API_BASE.replace(/\/api\/?$/, '');
 }
 
-const API_UPLOAD_BASE = apiOrigin();
+var API_UPLOAD_BASE = apiOrigin();
