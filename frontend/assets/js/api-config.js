@@ -25,6 +25,7 @@
 
 /* Production URL mapping: Netlify frontend → Render backend */
 const PRODUCTION_API_MAP = {
+  'smartcomputer-maintenance-system.netlify.app': 'https://dbu-ict-maintenance-service.onrender.com/api',
   'smartcomputermaintenanceservice.netlify.app': 'https://dbu-ict-maintenance-service.onrender.com/api',
 };
 

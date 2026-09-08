@@ -8,7 +8,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: FRONTEND_ORIGINS
-        value: https://smartcomputermaintenanceservice.netlify.app,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000
+        value: https://smartcomputer-maintenance-system.netlify.app,https://smartcomputermaintenanceservice.netlify.app,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000
       - key: MONGO_URI
         value: mongodb+srv://meseretayele611_db_user:mesi212123@ict-maintenance.xhanajl.mongodb.net/ict_maintenance_db?retryWrites=true&w=majority&appName=ICT-Maintenance
       - key: JWT_SECRET

@@ -478,7 +478,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     setTimeout(() => { window.location.href = 'login.html'; }, 2500);
 
   } catch {
-    showAlert('registerAlert', 'Cannot connect to server. Make sure the backend is running.', 'warning');
+    showAlert('registerAlert', 'Cannot connect to the server. Please check your connection and try again.', 'warning');
     setLoading(false);
   }
 });
