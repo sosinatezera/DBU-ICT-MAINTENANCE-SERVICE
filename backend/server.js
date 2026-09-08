@@ -43,7 +43,7 @@ if (process.env.NODE_ENV === 'production') {
   if (!process.env.FRONTEND_ORIGINS) {
     console.warn('\n  [WARN] FRONTEND_ORIGINS is not set — CORS will only allow the default development origins.');
     console.warn('  Set FRONTEND_ORIGINS to your deployed frontend origin(s), e.g.');
-    console.warn('  https://smartcomputermaintenanceservice.netlify.app\n');
+    console.warn('  https://smartcomputer-maintenance-system.netlify.app\n');
   }
 }
 
@@ -57,17 +57,22 @@ connectDB();
 const app = express();
 
 /* ── Core Middleware ─────────────────────────────────────── */
-/* CORS origins: default to local dev origins; override via the
-   FRONTEND_ORIGINS env var (comma-separated list) for deployed setups.
-   credentials:true is preserved and a wildcard is never allowed. */
+/* CORS origins: combine the default development origins with any origins
+   provided via the FRONTEND_ORIGINS env var (comma-separated). This union
+   ensures known frontend origins (development AND the deployed Netlify
+   sites) are always allowed, while still letting operators add extra
+   origins through the environment. credentials:true is preserved and a
+   wildcard is never used. */
 const defaultOrigins = [
   'http://localhost:3000', 'http://127.0.0.1:3000',
   'http://localhost:5000', 'http://127.0.0.1:5000',
+  'https://smartcomputer-maintenance-system.netlify.app',
   'https://smartcomputermaintenanceservice.netlify.app',
 ];
-const allowedOrigins = process.env.FRONTEND_ORIGINS
+const envOrigins = process.env.FRONTEND_ORIGINS
   ? process.env.FRONTEND_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
-  : defaultOrigins;
+  : [];
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
 
 app.use(cors({
   origin: allowedOrigins,

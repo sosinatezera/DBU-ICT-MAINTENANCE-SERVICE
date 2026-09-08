@@ -194,7 +194,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       body:    JSON.stringify({ email, password }),
     });
   } catch {
-    showAlert('Cannot connect to server. Make sure the backend is running on port 5000.', 'warning');
+    showAlert('Cannot connect to the server. Please check your connection and try again.', 'warning');
     setLoading(false);
     return;
   }
