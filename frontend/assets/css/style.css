@@ -1160,6 +1160,12 @@ body.dashboard-body > .d-flex > .flex-grow-1 > main {
   border-color: rgba(37, 99, 235, .25);
 }
 
+.menu-quick-control.active {
+  color: var(--home-primary, #2563eb) !important;
+  background: rgba(37, 99, 235, .12) !important;
+  border-color: rgba(37, 99, 235, .25);
+}
+
 .menu-quick-control:focus-visible {
   outline: 2px solid var(--home-primary, #2563eb);
   outline-offset: 2px;

@@ -16,6 +16,7 @@
  *   /api/feedback      — Ticket feedback / ratings
  *   /api/reports       — Analytics and reports
  *   /api/maintenance   — Repair activity logs
+ *   /api/networking    — Direct user-to-user messages
  *   /api/inquiries     — Public contact/inquiry submissions
  *   /api/settings      — System settings (ICT Admin)
  *   /api/public        — Public stats (no auth)
@@ -103,6 +104,7 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/feedback',      require('./routes/feedback'));
 app.use('/api/reports',       require('./routes/reports'));
 app.use('/api/maintenance',   require('./routes/maintenance'));
+app.use('/api/networking',    require('./routes/networking'));
 app.use('/api/inquiries',    require('./routes/inquiries'));
 app.use('/api/settings',     require('./routes/settings'));
 app.use('/api/public',        require('./routes/public'));

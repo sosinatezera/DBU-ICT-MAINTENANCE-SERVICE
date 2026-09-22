@@ -74,7 +74,7 @@ function initNotificationBell() {
 
 async function refreshBellBadge() {
   try {
-    const { unread } = await apiRequest('/notifications');
+    const { unread } = await apiRequest('/notifications/unread-count');
     const badge = document.getElementById('notifBadge');
     const label = document.getElementById('notifUnreadLabel');
     if (badge) {
@@ -85,7 +85,8 @@ async function refreshBellBadge() {
       label.textContent = unread;
       label.style.display = unread > 0 ? '' : 'none';
     }
-  } catch (_) {}
+    return Number(unread) || 0;
+  } catch (_) { return 0; }
 }
 
 async function loadBellDropdown() {
@@ -279,8 +280,7 @@ async function markReadPage(id, element) {
       element.style.borderLeftColor = '#adb5bd';
       element.querySelectorAll('.notif-dot').forEach(s => s.remove());
       element.querySelector('h6')?.classList.add('text-muted');
-      refreshBellBadge();
-      const { unread } = await apiRequest('/notifications');
+      const unread = await refreshBellBadge();
       const countEl = document.getElementById('unreadCount');
       if (countEl) countEl.textContent = unread > 0 ? `${unread} unread` : 'All read';
     } catch (_) {}

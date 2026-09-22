@@ -18,9 +18,18 @@ async function initAdminDashboard() {
   document.getElementById('dashErrorBanner')?.remove();
   showSkeletons();
 
+  // Start dashboard API requests in parallel.
+  const dashboardRequests = await Promise.allSettled([
+    apiRequest('/reports/dashboard'),
+    apiRequest('/tickets'),
+    apiRequest('/reports/requests-by-status'),
+    apiRequest('/maintenance/my')
+  ]);
+
   try {
     /* ── KPI stats ── */
-    const { data: s } = await apiRequest('/reports/dashboard');
+    if (dashboardRequests[0].status === 'rejected') throw dashboardRequests[0].reason;
+    const { data: s } = dashboardRequests[0].value;
     animateCount('kpiUsers',       s.total_users);
     animateCount('kpiAssets',      s.total_assets);
     animateCount('kpiPending',     s.pending);
@@ -55,7 +64,8 @@ async function initAdminDashboard() {
 
   /* ── Recent requests table ── */
   try {
-    const { data: reqs } = await apiRequest('/tickets');
+    if (dashboardRequests[1].status === 'rejected') throw dashboardRequests[1].reason;
+    const { data: reqs } = dashboardRequests[1].value;
     const tbody = document.getElementById('recentRequestsBody');
     if (!tbody) return;
 
@@ -92,7 +102,8 @@ async function initAdminDashboard() {
 
   /* ── Status mini chart ── */
   try {
-    const { data: byStatus } = await apiRequest('/reports/requests-by-status');
+    if (dashboardRequests[2].status === 'rejected') throw dashboardRequests[2].reason;
+    const { data: byStatus } = dashboardRequests[2].value;
     renderMiniBars('statusMiniChart', byStatus, 'status', 'total', statusColour);
   } catch (err) {
     const el = document.getElementById('statusMiniChart');
@@ -101,7 +112,8 @@ async function initAdminDashboard() {
 
   /* ── Recent maintenance activity ── */
   try {
-    const { data: acts } = await apiRequest('/maintenance/my');
+    if (dashboardRequests[3].status === 'rejected') throw dashboardRequests[3].reason;
+    const { data: acts } = dashboardRequests[3].value;
     const panel = document.getElementById('recentActivityDash');
     if (!panel) return;
     if (!acts.length) {

@@ -120,15 +120,21 @@ async function verifySmtp() {
   } catch (err) {
     /* Generic, credential-free message. Do NOT echo err.message verbatim —
        a misbehaving SMTP relay could echo the AUTH payload back. */
-    return { ok: false, detail: 'SMTP verification failed. Check host, port, account and App Password.' };
+    return { ok: false, detail: "SMTP verification failed (code=" + ((err && err.code) || "UNKNOWN") + ", responseCode=" + ((err && err.responseCode) || "none") + ", command=" + ((err && err.command) || "none") + "). Check Gmail App Password and SMTP settings." };
   }
 }
 
 /**
  * Core send. Never rejects.
+ * @param {Object} opts
+ * @param {string} opts.to        — recipient address
+ * @param {string} [opts.replyTo] — address the recipient replies to (e.g. the contact sender)
+ * @param {string} opts.subject
+ * @param {string} [opts.text]
+ * @param {string} [opts.html]
  * @returns {Promise<{delivered:boolean, info:string}>}
  */
-async function sendEmail({ to, subject, text, html }) {
+async function sendEmail({ to, replyTo, subject, text, html }) {
   if (!smtpConfigured()) {
     return { delivered: false, info: 'SMTP not configured; email disabled.' };
   }
@@ -147,6 +153,7 @@ async function sendEmail({ to, subject, text, html }) {
     await transporter.sendMail({
       from: fromAddress(),
       to,
+      replyTo,
       subject,
       text,
       html,

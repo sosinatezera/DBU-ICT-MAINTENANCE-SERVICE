@@ -30,7 +30,15 @@ const Auth = {
 };
 
 /* ── API Request ──────────────────────────────────────────── */
-async function apiRequest(endpoint, { method = 'GET', body = null, isFormData = false } = {}) {
+/* Concurrent GET de-duplication: when two parts of a page start the exact same
+   GET at the same moment (e.g. a dashboard fetches /settings while an inline
+   widget also fetches /settings), the second caller reuses the in-flight
+   promise instead of opening a second HTTP+DB round-trip. This merges only
+   requests that are already running — there is NO response caching, so a later
+   fetch always talks to the server. */
+const _inFlightRequests = new Map();
+
+async function _apiRequestInner(endpoint, { method = 'GET', body = null, isFormData = false } = {}) {
   const headers = {};
   if (!isFormData) headers['Content-Type'] = 'application/json';
   const token = Auth.getToken();
@@ -102,6 +110,22 @@ async function apiRequest(endpoint, { method = 'GET', body = null, isFormData = 
     throw e;
   }
   return data;
+}
+
+/* Public wrapper — de-duplicates concurrent GETs, forwards everything else. */
+async function apiRequest(endpoint, opts = {}) {
+  const method = opts.method || 'GET';
+  if (method === 'GET') {
+    const key = `GET ${endpoint}`;
+    const existing = _inFlightRequests.get(key);
+    if (existing) return existing;
+    const p = _apiRequestInner(endpoint, opts).finally(() => {
+      if (_inFlightRequests.get(key) === p) _inFlightRequests.delete(key);
+    });
+    _inFlightRequests.set(key, p);
+    return p;
+  }
+  return _apiRequestInner(endpoint, opts);
 }
 
 /* ── Offline Banner ───────────────────────────────────────── */
@@ -208,6 +232,10 @@ let __sysPrefsCached = false;
 function loadSystemPrefs() {
   if (__sysPrefsCached) return;
   __sysPrefsCached = true;
+  /* /settings is an admin-only route. Non-admins cannot read it (403), so
+     skip the request entirely instead of burning a round-trip on every page. */
+  const user = Auth.getUser();
+  if (!user || user.role !== 'ICT Admin') return;
   apiRequest('/settings')
     .then(r => {
       if (r && r.data) {
@@ -515,7 +543,7 @@ function initSidebarToggle() {
 /* ── Notification Badge ───────────────────────────────────── */
 async function loadNotificationCount() {
   try {
-    const { unread } = await apiRequest('/notifications');
+    const { unread } = await apiRequest('/notifications/unread-count');
     ['notifBadge','topNotifBadge'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.textContent = unread || 0; el.style.display = unread > 0 ? '' : 'none'; }

@@ -27,7 +27,7 @@ const findDuplicate = (name, excludeId = null) => {
 
 /* GET /api/categories — list (any authenticated user; the request form uses this) */
 router.get('/', authenticate, async (req, res, next) => {
-  try { res.json({ success: true, data: await Category.find().sort({ name: 1 }) }); }
+  try { res.json({ success: true, data: await Category.find().sort({ name: 1 }).lean() }); }
   catch (err) { next(err); }
 });
 

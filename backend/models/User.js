@@ -85,4 +85,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+/* Hot path: admin user list filtered by role + status. */
+userSchema.index({ role: 1, status: 1 });
+
 module.exports = mongoose.model('User', userSchema);

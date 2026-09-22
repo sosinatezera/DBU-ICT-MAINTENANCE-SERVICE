@@ -1671,8 +1671,7 @@ async function loadAdminRequests() {
 async function initAdminRequests() {
   if (!requireRole('ICT Admin')) return;
   initAdminFeedbackModal();
-  await populateSelect('categoryFilter', '/categories', true);
-  await loadAdminRequests();
+  await Promise.all([populateSelect('categoryFilter', '/categories', true), loadAdminRequests()]);
 
   const doFilter = () => {
     const q  = document.getElementById('searchInput')?.value.toLowerCase()||'';
@@ -1745,7 +1744,16 @@ async function openAdminRequestModal(id) {
   if (section) section.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>`;
 
   try {
-    const { data: r } = await apiRequest(`/tickets/${id}`);
+    /* Fetch the ticket, the technician list and the assignments in parallel.
+       The ticket is required (failure aborts the modal, as before); the other
+       two degrade gracefully if they fail. */
+    const [ticketRes, techsRes, assignmentsRes] = await Promise.allSettled([
+      apiRequest(`/tickets/${id}`),
+      apiRequest('/technicians'),
+      apiRequest('/assignments'),
+    ]);
+    const r = ticketRes.status === 'fulfilled' ? ticketRes.value.data : null;
+    if (!r) throw ticketRes.reason;
 
     if (section) {
       const reportHtml = r.technician_feedback ? renderAdminReport(r.technician_feedback) : '';
@@ -1778,18 +1786,22 @@ async function openAdminRequestModal(id) {
 
     const sel = document.getElementById('assignTechSelect');
     if (sel) {
-      const { data: techs } = await apiRequest('/technicians');
-      const activeTechs = techs.filter(t => t.status === 'active');
-      sel.innerHTML = `<option value="">-- Select Technician --</option>` +
-        activeTechs.map(t => `<option value="${escHtml(t._id || t.id)}">${escHtml(t.fullName)} — ${escHtml(t.specialization||'General')} ${t.available?'✓':''}</option>`).join('');
+      if (techsRes.status === 'fulfilled') {
+        const techs = techsRes.value.data || [];
+        const activeTechs = techs.filter(t => t.status === 'active');
+        sel.innerHTML = `<option value="">-- Select Technician --</option>` +
+          activeTechs.map(t => `<option value="${escHtml(t._id || t.id)}">${escHtml(t.fullName)} — ${escHtml(t.specialization||'General')} ${t.available?'✓':''}</option>`).join('');
+      } else {
+        sel.innerHTML = `<option value="">-- Select Technician --</option>`;
+      }
     }
 
     /* Load the current assignment for this ticket (if any) */
     let currentAssignment = null;
-    try {
-      const { data: assignments } = await apiRequest('/assignments');
+    if (assignmentsRes.status === 'fulfilled') {
+      const assignments = assignmentsRes.value.data || [];
       currentAssignment = assignments.find(a => String(a.ticket_id) === String(id) && ['assigned','accepted','in_progress'].includes(a.status)) || null;
-    } catch (_) { currentAssignment = null; }
+    }
 
     const currentBox = document.getElementById('currentAssignment');
     if (currentBox) {

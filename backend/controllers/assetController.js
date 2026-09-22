@@ -24,7 +24,7 @@ const getAllAssets = async (req, res, next) => {
       filter.status = 'active';
     }
 
-    const assets = await ICTAsset.find(filter).sort({ asset_name: 1 });
+    const assets = await ICTAsset.find(filter).sort({ asset_name: 1 }).lean();
     res.json({ success: true, data: assets });
   } catch (err) { next(err); }
 };

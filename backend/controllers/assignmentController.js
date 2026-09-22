@@ -19,7 +19,8 @@ const getAllAssignments = async (req, res, next) => {
       .populate({ path: 'ticket',      select: 'ticketId status priority problemDescription equipmentType' })
       .populate({ path: 'technician',  populate: { path: 'user', select: 'fullName' } })
       .populate('assigned_by',         'fullName')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const data = list.map(a => ({
       _id:              a._id,
@@ -56,7 +57,7 @@ const createAssignment = async (req, res, next) => {
     if (techIdErr) return res.status(400).json({ success: false, message: techIdErr });
 
     /* Verify ticket exists */
-    const ticket = await Ticket.findById(ticket_id).select('ticketId equipmentType priority status');
+    const ticket = await Ticket.findById(ticket_id).select('ticketId equipmentType priority status requester');
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found.' });
 
     /* Prevent re-assigning a ticket that is already finished */
@@ -131,10 +132,9 @@ const createAssignment = async (req, res, next) => {
     }
 
     /* Notify the requester */
-    const ticketFull = await Ticket.findById(ticket_id).select('requester');
-    if (ticketFull?.requester) {
+    if (ticket?.requester) {
       await Notification.create({
-        user:    ticketFull.requester,
+        user:    ticket.requester,
         ticket:  ticket_id,
         title:   `#${ticket.ticketId} — Assigned`,
         message: `Your service request #${ticket.ticketId} has been assigned to a technician.`,
@@ -143,7 +143,7 @@ const createAssignment = async (req, res, next) => {
 
       /* Optional email to the requester — the user lookup runs off the request
          path so the assignment response is never delayed by e-mail. */
-      const requesterId = ticketFull.requester;
+      const requesterId = ticket.requester;
       const subjectText = `Ticket ${ticket.ticketId} assigned — Smart Computer Maintenance Service`;
       const notifyRequesterByEmail = async () => {
         const u = await User.findById(requesterId).select('email');

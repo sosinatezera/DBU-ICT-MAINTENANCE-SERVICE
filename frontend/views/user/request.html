@@ -145,7 +145,7 @@
         <!-- Support banner -->
         <div class="support-banner mb-4">
           <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1400&q=80&auto=format&fit=crop"
-            alt="ICT support technician assisting with a computer" />
+            alt="ICT support technician assisting with a computer" decoding="async" />
         </div>
         <div class="row justify-content-center">
           <div class="col-lg-9 col-xl-8">
@@ -229,7 +229,7 @@
     <div class="col-6 col-md-4">
       <input type="radio" class="btn-check device-radio" name="deviceType" id="${ t.id }" value="${ t.value }" ${ i === 0 ? ' required' : '' } />
       <label class="device-pick" for="${ t.id }">
-        <img src="${ t.image }" alt="${ t.alt }" />
+        <img src="${ t.image }" alt="${ t.alt }" loading="lazy" decoding="async" />
         <span class="device-pick-name">${ t.name }</span>
       </label>
     </div>`).join( '' );

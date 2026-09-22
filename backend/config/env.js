@@ -29,4 +29,7 @@ module.exports = {
   SMTP_USER:     process.env.SMTP_USER     || '',    // your.account@gmail.com
   SMTP_PASS:     process.env.SMTP_PASS     || '',    // 16-char Google App Password
   SMTP_FROM_NAME: process.env.SMTP_FROM_NAME || 'Smart Computer Maintenance Service',
+
+  // ICT Admin inbox — every successful contact-form submission is emailed here.
+  ADMIN_EMAIL:   process.env.ADMIN_EMAIL   || '',
 };

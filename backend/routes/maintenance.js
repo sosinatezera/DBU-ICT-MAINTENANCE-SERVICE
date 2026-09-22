@@ -22,7 +22,7 @@ router.get('/my', authenticate, async (req, res, next) => {
       const records = await MaintenanceRecord.find()
         .populate('request',    'ticketId status equipmentType')
         .populate({ path: 'technician', populate: { path: 'user', select: 'fullName' } })
-        .sort({ createdAt: -1 }).limit(30);
+        .sort({ createdAt: -1 }).limit(30).lean();
 
       return res.json({ success: true, data: records.map(r => ({
         _id:              r._id,
@@ -44,7 +44,7 @@ router.get('/my', authenticate, async (req, res, next) => {
 
     const records = await MaintenanceRecord.find({ technician: tech._id })
       .populate('request', 'ticketId status equipmentType')
-      .sort({ createdAt: -1 }).limit(20);
+      .sort({ createdAt: -1 }).limit(20).lean();
 
     res.json({ success: true, data: records.map(r => ({
       _id:              r._id,

@@ -128,8 +128,6 @@
                     <option value="" disabled selected><span data-i18n="auth.gender.ph">Select Gender</span></option>
                     <option value="Male"><span data-i18n="auth.gender.male">Male</span></option>
                     <option value="Female"><span data-i18n="auth.gender.female">Female</span></option>
-                    <option value="Other"><span data-i18n="auth.gender.other">Other</span></option>
-                    <option value="Prefer not to say"><span data-i18n="auth.gender.prefer">Prefer not to say</span></option>
                   </select>
                 </div>
                 <div class="text-danger small mt-1 d-none" id="genderError"><span data-i18n="auth.gender.ph">Select Gender</span></div>
@@ -142,6 +140,9 @@
                   <span class="input-group-text"><i class="bi bi-lock text-muted"></i></span>
                   <input type="password" class="form-control" id="password"
                          placeholder="Min. 8 characters, Max. 16, letters & numbers" required minlength="8" maxlength="16" autocomplete="new-password" />
+                  <button class="btn btn-outline-secondary" type="button" id="togglePwd" aria-label="Toggle password visibility">
+                    <i class="bi bi-eye" id="eyeIcon"></i>
+                  </button>
                 </div>
                 <div class="form-text">Minimum 8 characters, maximum 16. Must contain at least one letter and one number. No spaces.</div>
                 <div class="invalid-feedback">Password must be 8-16 characters, contain letters and numbers, and have no spaces.</div>
@@ -157,6 +158,9 @@
                   <span class="input-group-text"><i class="bi bi-lock-fill text-muted"></i></span>
                   <input type="password" class="form-control" id="confirmPassword"
                          placeholder="Repeat your password" required autocomplete="new-password" />
+                  <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPwd" aria-label="Toggle confirm password visibility">
+                    <i class="bi bi-eye" id="eyeConfirmIcon"></i>
+                  </button>
                 </div>
                 <div class="text-danger small mt-1 d-none" id="pwdMismatch">Passwords do not match.</div>
               </div>
@@ -487,6 +491,15 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 document.getElementById('togglePwd').addEventListener('click', () => {
   const pwd  = document.getElementById('password');
   const icon = document.getElementById('eyeIcon');
+  const show = pwd.type === 'password';
+  pwd.type       = show ? 'text' : 'password';
+  icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+});
+
+/* Confirm Password toggle */
+document.getElementById('toggleConfirmPwd').addEventListener('click', () => {
+  const pwd  = document.getElementById('confirmPassword');
+  const icon = document.getElementById('eyeConfirmIcon');
   const show = pwd.type === 'password';
   pwd.type       = show ? 'text' : 'password';
   icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
