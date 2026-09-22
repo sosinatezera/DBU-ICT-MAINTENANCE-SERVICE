@@ -2250,7 +2250,7 @@
   </section>
 
   <!-- ===== STATS BAR ===== -->
-  <section class="stats-bar">
+  <section class="stats-bar" id="home-stats">
     <div class="container">
       <div class="row g-0">
         <div class="col-6 col-md-3 stat-item">
@@ -2274,7 +2274,7 @@
   </section>
 
   <!-- ===== KEY METRICS DASHBOARD PREVIEW ===== -->
-  <section class="py-5 my-2" style="background:#f8faff;">
+  <section class="py-5 my-2" style="background:#f8faff;" id="home-metrics">
     <div class="container">
       <div class="text-center mb-5">
         <div class="section-label"><span data-i18n="metrics.label">Key Metrics</span></div>
@@ -2329,7 +2329,7 @@
   </section>
 
   <!-- ===== QUICK ACCESS CARDS ===== -->
-  <section class="py-5 my-2" style="background:#ffffff;">
+  <section class="py-5 my-2" style="background:#ffffff;" id="home-quick">
     <div class="container">
       <div class="text-center mb-5">
         <div class="section-label"><span data-i18n="quick.label">Quick Access</span></div>
@@ -2701,8 +2701,8 @@
                 </div>
                 <div>
                   <h6 class="fw-bold mb-1"><span data-i18n="contact.email">Email</span></h6>
-                  <a class="contact-pill" href="mailto:admin@gmail.com"><i
-                      class="fa-solid fa-paper-plane"></i>admin@gmail.com</a>
+                  <a class="contact-pill" href="mailto:takelemoges1@gmail.com"><i
+                      class="fa-solid fa-paper-plane"></i>takelemoges1@gmail.com</a>
                 </div>
               </div>
             </div>
@@ -2713,8 +2713,7 @@
                 </div>
                 <div>
                   <h6 class="fw-bold mb-1"><span data-i18n="contact.phone">Phone</span></h6>
-                  <a class="contact-pill" href="tel:+251911234567"><i class="fa-solid fa-phone-volume"></i>+251 911 234
-                    567</a>
+                  <a class="contact-pill" href="tel:0944467308"><i class="fa-solid fa-phone-volume"></i>0944467308</a>
                   <p class="contact-note mb-0"><span data-i18n="contact.emergency.note">Call for urgent system
                       support</span></p>
                 </div>
@@ -2738,73 +2737,44 @@
         <div class="col-lg-7">
           <div class="contact-form-card">
             <h5 class="fw-bold mb-1 text-center mb-2"><i class="fa-solid fa-paper-plane me-2"
-                style="color:var(--home-primary);"></i><span data-i18n="contact.form.title">Submit an
-                Inquiry</span></h5>
-            <p class="text-muted small mb-4 text-center"><span data-i18n="contact.form.subtitle">Describe your issue and
+                style="color:var(--home-primary);"></i><span data-i18n="contact.form.title">Send a
+                Message</span></h5>
+            <p class="text-muted small mb-4 text-center"><span data-i18n="contact.form.subtitle">Send us a message and
                 our team
                 will respond within 24 working hours.</span></p>
 
-            <!-- Login Required Prompt (shown when not logged in) -->
-            <div id="contactLoginPrompt" class="text-center py-4" style="display:none;">
-              <i class="bi bi-person-lock text-muted" style="font-size:2.5rem;"></i>
-              <h6 class="fw-bold mt-3 mb-2"><span data-i18n="contact.form.login.title">Login Required</span></h6>
-              <p class="text-muted small mb-3"><span data-i18n="contact.form.login.desc">You must be logged in to submit
-                  a service request.</span></p>
-              <a href="/views/login.html" class="btn btn-primary px-4 py-2 fw-semibold" style="border-radius:10px;">
-                <i class="bi bi-box-arrow-in-right me-1"></i><span data-i18n="contact.form.login.btn">Login to Submit
-                  Request</span>
-              </a>
-              <p class="text-muted small mt-3 mb-0">Don't have an account? <a href="/views/register.html"
-                  class="text-primary text-decoration-none fw-semibold"><span
-                    data-i18n="contact.form.login.register">Register here</span></a></p>
-            </div>
-
-            <!-- Inquiry Form (shown when logged in) -->
-            <form id="contactForm" style="display:none;">
+            <form id="contactForm" novalidate>
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label small fw-semibold"><span data-i18n="contact.form.name">Full
-                      Name</span></label>
-                  <input type="text" class="form-control" id="inquiryName" placeholder="e.g. John Doe" required>
+                  <label class="form-label small fw-semibold" for="contactName"><span
+                      data-i18n="contact.form.name">Name</span></label>
+                  <input type="text" class="form-control" id="contactName" placeholder="e.g. John Doe" required
+                    autocomplete="name">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small fw-semibold"><span data-i18n="contact.form.email">Email
-                      Address</span></label>
-                  <input type="email" class="form-control" id="inquiryEmail" placeholder="you@dbu.edu.et" required>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label small fw-semibold"><span
-                      data-i18n="contact.form.dept">Department</span></label>
-                  <input type="text" class="form-control" id="inquiryDept" placeholder="e.g. Computer Science">
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label small fw-semibold"><span data-i18n="contact.form.issue">Issue
-                      Type</span></label>
-                  <select class="form-select" id="inquiryType" required>
-                    <option value="" selected disabled>Select type</option>
-                    <option value="Hardware Problem">Hardware Problem</option>
-                    <option value="Software Problem">Software Problem</option>
-                    <option value="Internet Connectivity">Internet Connectivity</option>
-                    <option value="Printer / Scanner">Printer / Scanner</option>
-                    <option value="Computer / Laptop">Computer / Laptop</option>
-                    <option value="Account / Password">Account / Password</option>
-                    <option value="Email Problem">Email Problem</option>
-                    <option value="System / Application">System / Application</option>
-                    <option value="ICT Security">ICT Security</option>
-                    <option value="Other">Other</option>
-                  </select>
+                  <label class="form-label small fw-semibold" for="contactEmail"><span
+                      data-i18n="contact.form.email">Email</span></label>
+                  <input type="email" class="form-control" id="contactEmail" placeholder="you@example.com" required
+                    autocomplete="email">
                 </div>
                 <div class="col-12">
-                  <label class="form-label small fw-semibold"><span
-                      data-i18n="contact.form.desc">Description</span></label>
-                  <textarea class="form-control" id="inquiryDesc" rows="4"
-                    placeholder="Describe your issue in detail..." required></textarea>
+                  <label class="form-label small fw-semibold" for="contactSubject"><span
+                      data-i18n="contact.form.subject">Subject</span></label>
+                  <input type="text" class="form-control" id="contactSubject" placeholder="e.g. Printer not working"
+                    required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label small fw-semibold" for="contactMessage"><span
+                      data-i18n="contact.form.message">Message</span></label>
+                  <textarea class="form-control" id="contactMessage" rows="5"
+                    placeholder="Type your message here..." required></textarea>
                 </div>
                 <div class="col-12">
                   <div id="contactSuccess" class="alert alert-success" role="alert" style="display:none;">
                     <i class="fa-solid fa-circle-check me-2"></i><span id="contactSuccessMsg"
-                      data-i18n="contact.form.sent">Your inquiry has been submitted successfully. Our team will contact
-                      you shortly.</span>
+                      data-i18n="contact.form.sent">Your message has been sent successfully. Our team will respond
+                      within 24
+                      working hours.</span>
                   </div>
                   <div id="contactError" class="alert alert-danger" role="alert" style="display:none;">
                     <i class="fa-solid fa-circle-exclamation me-2"></i><span id="contactErrorMsg"
@@ -2813,8 +2783,8 @@
                   </div>
                   <button type="submit" id="contactSubmitBtn" class="btn fw-semibold px-4 py-2"
                     style="border-radius:10px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;box-shadow:0 8px 20px -8px rgba(37,99,235,.6);transition:transform .2s,box-shadow .2s;">
-                    <i class="fa-solid fa-paper-plane me-2"></i><span data-i18n="contact.form.submit">Submit
-                      Inquiry</span>
+                    <i class="fa-solid fa-paper-plane me-2"></i><span data-i18n="contact.form.submit">Send
+                      Message</span>
                   </button>
                 </div>
               </div>
@@ -3025,11 +2995,11 @@
             </li>
             <li class="contact-detail">
               <i class="fa-solid fa-envelope" aria-hidden="true"></i>
-              <a href="mailto:admin@gmail.com" class="footer-link">admin@gmail.com</a>
+              <a href="mailto:takelemoges1@gmail.com" class="footer-link">takelemoges1@gmail.com</a>
             </li>
             <li class="contact-detail">
               <i class="fa-solid fa-phone" aria-hidden="true"></i>
-              <a href="tel:+251911234567" class="footer-link">+251 911 234 567</a>
+              <a href="tel:0944467308" class="footer-link">0944467308</a>
             </li>
             <li class="contact-detail">
               <i class="fa-solid fa-clock" aria-hidden="true"></i>
@@ -3085,24 +3055,96 @@
       document.getElementById( 'scrollTopBtn' ).classList.toggle( 'visible', window.scrollY > 300 );
     } );
 
-    /* ===== Active nav link on scroll ===== */
-    const sections = document.querySelectorAll( 'section[id]' );
-    const navLinks = document.querySelectorAll( '.nav-link-item' );
-
-    const observer = new IntersectionObserver( ( entries ) =>
+    /* ===== Single-Section View Navigation =====
+       Clicking a navbar item shows ONLY its own section (no reload):
+         Home     → #home + #home-stats + #home-metrics + #home-quick
+         Features → #features      Workflow → #workflow
+         Services → #services      Contact  → #contact
+         About Us → #about         Menu     → #site-footer (footer content)
+       Only one section is visible at a time; the navbar stays visible;
+       the URL hash updates without a full page reload; the active nav
+       item is highlighted. In-page anchors (hero CTA, quick-access
+       cards, footer links) switch views the same way. */
+    ( function initViewNavigation ()
     {
-      entries.forEach( entry =>
+      const VIEWS = {
+        home: [ 'home', 'home-stats', 'home-metrics', 'home-quick' ],
+        features: [ 'features' ],
+        workflow: [ 'workflow' ],
+        services: [ 'services' ],
+        contact: [ 'contact' ],
+        about: [ 'about' ],
+        menu: [ 'site-footer' ],
+      };
+      const HASH_VIEW = {
+        'home': 'home', 'features': 'features', 'workflow': 'workflow',
+        'services': 'services', 'contact': 'contact', 'about': 'about',
+        'site-footer': 'menu', 'menu': 'menu',
+      };
+      const allIds = [ ...new Set( Object.values( VIEWS ).flat() ) ];
+      const sections = allIds.map( id => document.getElementById( id ) ).filter( Boolean );
+
+      function setActiveView ( name )
       {
-        if ( entry.isIntersecting )
+        if ( !VIEWS[ name ] ) return;
+        sections.forEach( el =>
         {
-          navLinks.forEach( l => l.classList.remove( 'active' ) );
-          const active = document.querySelector( `.nav-link-item[href="#${ entry.target.id }"]` );
-          if ( active ) active.classList.add( 'active' );
+          el.classList.toggle( 'd-none', !VIEWS[ name ].includes( el.id ) );
+        } );
+
+        /* Navbar highlight: section links, or the Menu button for footer */
+        document.querySelectorAll( '.nav-link-item' ).forEach( l => l.classList.remove( 'active' ) );
+        const toggle = document.getElementById( 'menuQuickToggle' );
+        if ( toggle ) toggle.classList.remove( 'active' );
+        if ( name === 'menu' )
+        {
+          if ( toggle ) toggle.classList.add( 'active' );
+        }
+        else
+        {
+          const link = document.querySelector( `.nav-link-item[href="#${ name }"]` );
+          if ( link ) link.classList.add( 'active' );
+        }
+      }
+
+      function navigate ( name, hash )
+      {
+        setActiveView( name );
+        if ( hash && history.replaceState ) history.replaceState( null, '', '#' + hash );
+        window.scrollTo( { top: 0, behavior: 'smooth' } );
+      }
+
+      /* Nav links + Menu button + menu-quick "Footer" item */
+      document.addEventListener( 'click', event =>
+      {
+        const toggle = event.target.closest( '#menuQuickToggle' );
+        if ( toggle )
+        {
+          navigate( 'menu', 'site-footer' );
+          const panel = document.getElementById( 'menuQuickPanel' );
+          const wrap = document.querySelector( '.menu-quick' );
+          if ( wrap && wrap.classList.contains( 'open' ) ) { wrap.classList.remove( 'open' ); }
+          if ( toggle.getAttribute( 'aria-expanded' ) === 'true' ) toggle.setAttribute( 'aria-expanded', 'false' );
+          return;
+        }
+
+        const link = event.target.closest( 'a[href^="#"]' );
+        if ( link )
+        {
+          const hash = link.getAttribute( 'href' ).slice( 1 );
+          const view = HASH_VIEW[ hash ];
+          if ( view )
+          {
+            event.preventDefault();
+            navigate( view, hash );
+          }
         }
       } );
-    }, { threshold: 0.3 } );
 
-    sections.forEach( s => observer.observe( s ) );
+      /* Honour an initial hash (e.g. #services) on first load */
+      const initial = HASH_VIEW[ window.location.hash.slice( 1 ) ] || 'home';
+      setActiveView( initial );
+    } )();
 
     /* ===== Scroll to top ===== */
     document.getElementById( 'scrollTopBtn' ).addEventListener( 'click', () =>
@@ -3337,46 +3379,29 @@
 
     window.addEventListener( 'load', loadStats );
 
-    /* ===== Contact / Inquiry Form ===== */
+    /* ===== Contact Form (public — no login required) ===== */
 
-    /* Check authentication status and show appropriate UI */
+    /* Pre-fill name/email when a logged-in user visits the page */
     ( function initContactForm ()
     {
-      const token = localStorage.getItem( 'ict_token' );
       const userStr = localStorage.getItem( 'ict_user' );
       let user = null;
       try { user = userStr ? JSON.parse( userStr ) : null; } catch ( _ ) { }
 
-      if ( token && user && user.role === 'Requester' )
+      if ( user )
       {
-        document.getElementById( 'contactLoginPrompt' ).style.display = 'none';
-        document.getElementById( 'contactForm' ).style.display = '';
-        /* Pre-fill name/email from authenticated user */
-        const nameEl = document.getElementById( 'inquiryName' );
-        const emailEl = document.getElementById( 'inquiryEmail' );
+        const nameEl = document.getElementById( 'contactName' );
+        const emailEl = document.getElementById( 'contactEmail' );
         if ( nameEl && user.fullName ) nameEl.value = user.fullName;
         if ( emailEl && user.email ) emailEl.value = user.email;
-        if ( nameEl ) nameEl.readOnly = true;
-        if ( emailEl ) emailEl.readOnly = true;
-      } else if ( token && user )
-      {
-        /* Logged in but wrong role — show message */
-        document.getElementById( 'contactLoginPrompt' ).style.display = '';
-        document.getElementById( 'contactLoginPrompt' ).querySelector( 'h6' ).textContent = 'Account Not Eligible';
-        document.getElementById( 'contactLoginPrompt' ).querySelector( 'p' ).textContent =
-          'Only Requester accounts can submit service requests. Please log in with a Requester account.';
-        document.getElementById( 'contactForm' ).style.display = 'none';
-      } else
-      {
-        document.getElementById( 'contactLoginPrompt' ).style.display = '';
-        document.getElementById( 'contactForm' ).style.display = 'none';
       }
     } )();
 
     attachRealTimeValidation( 'contactForm', [
-      { fieldId: 'inquiryName', checks: [v => Validators.name( v, 'Full name' )] },
-      { fieldId: 'inquiryEmail', checks: [Validators.email] },
-      { fieldId: 'inquiryDesc', checks: [v => Validators.length( v, 'Description', 5, 1000 )] },
+      { fieldId: 'contactName', checks: [v => Validators.required( v, 'Name' ), v => Validators.name( v, 'Name' )] },
+      { fieldId: 'contactEmail', checks: [Validators.genericEmail] },
+      { fieldId: 'contactSubject', checks: [v => Validators.required( v, 'Subject' ), v => Validators.length( v, 'Subject', 2, 200 )] },
+      { fieldId: 'contactMessage', checks: [v => Validators.required( v, 'Message' ), v => Validators.length( v, 'Message', 5, 2000 )] },
     ] );
 
     document.getElementById( 'contactForm' ).addEventListener( 'submit', async function ( e )
@@ -3394,72 +3419,55 @@
       /* Validate fields */
       let hasError = false;
 
-      const nameErr = Validators.name( document.getElementById( 'inquiryName' ).value, 'Full name' );
-      if ( nameErr ) { showFieldError( 'inquiryName', nameErr ); hasError = true; } else { showFieldValid( 'inquiryName' ); }
+      const nameErr = Validators.required( document.getElementById( 'contactName' ).value, 'Name' ) ||
+        Validators.name( document.getElementById( 'contactName' ).value, 'Name' );
+      if ( nameErr ) { showFieldError( 'contactName', nameErr ); hasError = true; } else { showFieldValid( 'contactName' ); }
 
-      const emailErr = Validators.email( document.getElementById( 'inquiryEmail' ).value );
-      if ( emailErr ) { showFieldError( 'inquiryEmail', emailErr ); hasError = true; } else { showFieldValid( 'inquiryEmail' ); }
+      const emailErr = Validators.genericEmail( document.getElementById( 'contactEmail' ).value );
+      if ( emailErr ) { showFieldError( 'contactEmail', emailErr ); hasError = true; } else { showFieldValid( 'contactEmail' ); }
 
-      if ( !document.getElementById( 'inquiryType' ).value )
-      {
-        showFieldError( 'inquiryType', 'Please select an issue type.' );
-        hasError = true;
-      } else { clearFieldValidation( 'inquiryType' ); }
+      const subjectErr = Validators.required( document.getElementById( 'contactSubject' ).value, 'Subject' ) ||
+        Validators.length( document.getElementById( 'contactSubject' ).value, 'Subject', 2, 200 );
+      if ( subjectErr ) { showFieldError( 'contactSubject', subjectErr ); hasError = true; } else { showFieldValid( 'contactSubject' ); }
 
-      const descErr = Validators.length( document.getElementById( 'inquiryDesc' ).value, 'Description', 5, 1000 );
-      if ( descErr ) { showFieldError( 'inquiryDesc', descErr ); hasError = true; } else { showFieldValid( 'inquiryDesc' ); }
+      const msgErr = Validators.required( document.getElementById( 'contactMessage' ).value, 'Message' ) ||
+        Validators.length( document.getElementById( 'contactMessage' ).value, 'Message', 5, 2000 );
+      if ( msgErr ) { showFieldError( 'contactMessage', msgErr ); hasError = true; } else { showFieldValid( 'contactMessage' ); }
 
       if ( hasError ) return;
 
-      /* Map contact form fields to Ticket model fields */
-      const token = localStorage.getItem( 'ict_token' );
-      const userStr = localStorage.getItem( 'ict_user' );
-      let user = null;
-      try { user = userStr ? JSON.parse( userStr ) : null; } catch ( _ ) { }
-
-      if ( !token || !user )
-      {
-        errorMsgEl.textContent = 'Your session has expired. Please log in again.';
-        errorEl.style.display = 'block';
-        return;
-      }
-
       const payload = {
-        problemDescription: document.getElementById( 'inquiryDesc' ).value.trim(),
-        category: document.getElementById( 'inquiryType' ).value,
-        department: document.getElementById( 'inquiryDept' ).value.trim() || user.department || null,
-        priority: 'medium',
+        fullName: document.getElementById( 'contactName' ).value.trim(),
+        email: document.getElementById( 'contactEmail' ).value.trim(),
+        subject: document.getElementById( 'contactSubject' ).value.trim(),
+        message: document.getElementById( 'contactMessage' ).value.trim(),
       };
 
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>' + ( window.t ? t( 'contact.form.submitting' ) : 'Submitting...' );
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>' + ( window.t ? t( 'contact.form.sending' ) : 'Sending...' );
 
       try
       {
-        const res = await fetch( API_BASE + '/tickets', {
+        const res = await fetch( API_BASE + '/inquiries', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token,
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify( payload ),
         } );
         const data = await res.json();
         if ( res.ok && data.success )
         {
-          const ticketId = data.data?.ticketId || 'N/A';
-          const status = data.data?.status || 'submitted';
-          successMsgEl.innerHTML = '<strong>' + ( window.t ? t( 'contact.form.sent.short' ) : 'Service request submitted successfully!' ) + '</strong><br>' +
-            ( window.t ? t( 'contact.form.rid' ) : 'Request ID' ) + ': <strong>' + ticketId + '</strong><br>' +
-            ( window.t ? t( 'contact.form.status' ) : 'Status' ) + ': <strong>' + status.charAt( 0 ).toUpperCase() + status.slice( 1 ).replace( '_', ' ' ) + '</strong>';
+          successMsgEl.textContent = window.t ? t( 'contact.form.sent' ) : 'Your message has been sent successfully. Our team will respond within 24 working hours.';
           successEl.style.display = 'block';
           document.getElementById( 'contactForm' ).reset();
           clearAllFieldValidations( 'contactForm' );
           /* Re-fill name/email after reset */
-          const nameEl = document.getElementById( 'inquiryName' );
-          const emailEl = document.getElementById( 'inquiryEmail' );
-          if ( nameEl && user.fullName ) nameEl.value = user.fullName;
-          if ( emailEl && user.email ) emailEl.value = user.email;
+          const userStr = localStorage.getItem( 'ict_user' );
+          let user = null;
+          try { user = userStr ? JSON.parse( userStr ) : null; } catch ( _ ) { }
+          const nameEl = document.getElementById( 'contactName' );
+          const emailEl = document.getElementById( 'contactEmail' );
+          if ( user && nameEl && user.fullName ) nameEl.value = user.fullName;
+          if ( user && emailEl && user.email ) emailEl.value = user.email;
         } else
         {
           errorMsgEl.textContent = data.message || ( window.t ? t( 'contact.form.error' ) : 'Submission failed. Please try again.' );
@@ -3472,7 +3480,7 @@
       } finally
       {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>' + ( window.t ? t( 'contact.form.submit' ) : 'Submit Inquiry' );
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>' + ( window.t ? t( 'contact.form.submit' ) : 'Send Message' );
       }
     } );
   </script>

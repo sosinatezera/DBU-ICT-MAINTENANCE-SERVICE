@@ -25,9 +25,14 @@ const inquirySchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
+    subject: {
+      type: String,
+      required: [true, 'Subject is required.'],
+      trim: true,
+      maxlength: 200,
+    },
     issueType: {
       type: String,
-      required: [true, 'Issue type is required.'],
       enum: [
         'Hardware Problem',
         'Software Problem',
@@ -37,11 +42,14 @@ const inquirySchema = new mongoose.Schema(
         'ICT Service Request',
         'Other',
       ],
+      default: 'Other',
     },
     description: {
       type: String,
-      required: [true, 'Description is required.'],
+      required: [true, 'Message is required.'],
       trim: true,
+      minlength: 5,
+      maxlength: 2000,
     },
     status: {
       type: String,

@@ -59,7 +59,8 @@ const getAllTickets = async (req, res, next) => {
       .populate('requester',         'fullName email department')
       .populate('assignedTechnician', 'fullName email')
       .populate('assetId',           'asset_tag asset_name')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json({ success: true, data: tickets.map(t => formatTicket(t, req.user.role, req.user.id)) });
   } catch (err) {
@@ -73,7 +74,8 @@ const getMyTickets = async (req, res, next) => {
     const tickets = await Ticket.find({ requester: req.user.id })
       .populate('assignedTechnician', 'fullName email')
       .populate('assetId',            'asset_tag asset_name')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     /* Diagnostic — confirms the authenticated user and the count actually
        matched in MongoDB, pinpointing any "tracking shows 0" report. */
@@ -91,7 +93,8 @@ const trackTicket = async (req, res, next) => {
     const ticket = await Ticket.findOne({ ticketId: req.params.ticketId })
       .populate('requester',          'fullName email department')
       .populate('assignedTechnician', 'fullName email')
-      .populate('assetId',            'asset_tag asset_name');
+      .populate('assetId',            'asset_tag asset_name')
+      .lean();
 
     if (!ticket) {
       return res.status(404).json({ success: false, message: 'Ticket not found.' });
@@ -128,7 +131,8 @@ const getTicketById = async (req, res, next) => {
     const ticket = await Ticket.findById(req.params.id)
       .populate('requester',          'fullName email department phone')
       .populate('assignedTechnician', 'fullName email')
-      .populate('assetId',            'asset_tag asset_name');
+      .populate('assetId',            'asset_tag asset_name')
+      .lean();
 
     if (!ticket) {
       return res.status(404).json({ success: false, message: 'Ticket not found.' });
@@ -279,8 +283,8 @@ const createTicket = async (req, res, next) => {
 
     /* Notify all ICT Admins */
     const admins = await User.find({ role: 'ICT Admin', status: 'active' }).select('_id email');
-    for (const admin of admins) {
-      await Notification.create({
+    await Promise.all(admins.map(admin => {
+      const notify = Notification.create({
         user:    admin._id,
         ticket:  ticket._id,
         title:   `New ${payload.priority.toUpperCase()} Ticket`,
@@ -296,7 +300,8 @@ const createTicket = async (req, res, next) => {
           html: `<p>A new <strong>${payload.priority.toUpperCase()}</strong> priority ticket (<strong>${ticket.ticketId}</strong>) was submitted by ${user?.fullName || 'a requester'}.</p><p>Equipment: ${payload.equipmentType}.</p><p>Log in to the admin portal to review it.</p><p style="color:#888;">Smart Computer Maintenance Service</p>`,
         }).catch(() => {}); /* email is best-effort only */
       }
-    }
+      return notify;
+    }));
 
     /* Technicians only receive a ticket notification once they are actually
        assigned to it ("New Assignment"); an unassigned technician must not get
@@ -497,15 +502,13 @@ const updateStatus = async (req, res, next) => {
     if (['resolved', 'closed'].includes(status)) {
       const admins = await User.find({ role: 'ICT Admin', status: 'active' }).select('_id');
       const statusDisplay = status === 'resolved' ? 'Resolved' : 'Closed';
-      for (const admin of admins) {
-        await Notification.create({
-          user:    admin._id,
-          ticket:  updated._id,
-          title:   `Ticket ${statusDisplay}: ${updated.ticketId}`,
-          message: `Ticket "${updated.ticketId}" has been marked as ${statusDisplay}.`,
-          type:    'success',
-        });
-      }
+      await Promise.all(admins.map(admin => Notification.create({
+        user:    admin._id,
+        ticket:  updated._id,
+        title:   `Ticket ${statusDisplay}: ${updated.ticketId}`,
+        message: `Ticket "${updated.ticketId}" has been marked as ${statusDisplay}.`,
+        type:    'success',
+      })));
     }
 
     const statusDisplay = {
@@ -701,15 +704,13 @@ const submitTechnicianFeedback = async (req, res, next) => {
     }
     if (report.status === 'Fixed') {
       const admins = await User.find({ role: 'ICT Admin', status: 'active' }).select('_id');
-      for (const a of admins) {
-        await Notification.create({
-          user:    a._id,
-          ticket:  ticket._id,
-          title:   `Ticket Resolved: ${ticket.ticketId}`,
-          message: `Ticket "${ticket.ticketId}" resolved by ${user.name || 'technician'}.`,
-          type:    'success',
-        });
-      }
+      await Promise.all(admins.map(a => Notification.create({
+        user:    a._id,
+        ticket:  ticket._id,
+        title:   `Ticket Resolved: ${ticket.ticketId}`,
+        message: `Ticket "${ticket.ticketId}" resolved by ${user.name || 'technician'}.`,
+        type:    'success',
+      })));
     }
 
     res.status(201).json({

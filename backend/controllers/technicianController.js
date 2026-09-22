@@ -11,7 +11,7 @@ const { validateObjectId, validateBoolean, validateLength, sanitizeString, valid
 
 const getAllTechnicians = async (req, res, next) => {
   try {
-    const techs = await Technician.find().populate('user', '-password').sort({ createdAt: 1 });
+    const techs = await Technician.find().populate('user', '-password').sort({ createdAt: 1 }).lean();
     const data = techs.map(t => ({
       id:             t._id,
       _id:            t._id,
@@ -80,7 +80,8 @@ const getMyAssignments = async (req, res, next) => {
 
     const assignments = await Assignment.find({ technician: tech._id })
       .populate({ path: 'ticket', populate: [{ path: 'requester', select: 'fullName department' }] })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     /* Deduplicate: keep only the latest assignment per ticket, excluding
        reassigned assignments which are no longer valid. This prevents the
@@ -215,8 +216,9 @@ const updateMyTechnicianProfile = async (req, res, next) => {
     if (department !== undefined) userUpdate.department = department;
     if (gender !== undefined) userUpdate.gender = gender || null;
 
+    let updatedUser = user;
     if (Object.keys(userUpdate).length > 0) {
-      await User.findByIdAndUpdate(req.user.id, userUpdate, { new: true, runValidators: true });
+      updatedUser = await User.findByIdAndUpdate(req.user.id, userUpdate, { new: true, runValidators: true });
     }
 
     // Update technician fields
@@ -226,13 +228,12 @@ const updateMyTechnicianProfile = async (req, res, next) => {
     if (shift !== undefined) techUpdate.shift = shift;
     if (available !== undefined) techUpdate.available = available;
 
+    let updatedTech = tech;
     if (Object.keys(techUpdate).length > 0) {
-      await Technician.findByIdAndUpdate(tech._id, techUpdate, { new: true, runValidators: true });
+      updatedTech = await Technician.findByIdAndUpdate(tech._id, techUpdate, { new: true, runValidators: true });
     }
 
     // Return updated profile
-    const updatedTech = await Technician.findOne({ user: req.user.id }).populate('user', '-password');
-    const updatedUser = await User.findById(req.user.id).select('-password');
 
     res.json({
       success: true,

@@ -8,12 +8,15 @@ const { validateObjectId } = require('../middleware/validation');
 // GET /api/notifications
 const getMyNotifications = async (req, res, next) => {
   try {
-    const notifications = await Notification.find({ user: req.user.id })
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .populate('ticket', 'ticketId');
-    const unread = notifications.filter(n => !n.is_read).length;
-    const data   = notifications.map(n => ({
+    const [unread, notifications] = await Promise.all([
+      Notification.countDocuments({ user: req.user.id, is_read: false }),
+      Notification.find({ user: req.user.id })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .populate('ticket', 'ticketId')
+        .lean(),
+    ]);
+    const data = notifications.map(n => ({
       id:         n._id,
       ticket_id:  n.ticket?._id || null,
       ticketId:   n.ticket?.ticketId || null,
@@ -24,6 +27,14 @@ const getMyNotifications = async (req, res, next) => {
       created_at: n.createdAt,
     }));
     res.json({ success: true, data, unread });
+  } catch (err) { next(err); }
+};
+
+// GET /api/notifications/unread-count
+const getUnreadCount = async (req, res, next) => {
+  try {
+    const unread = await Notification.countDocuments({ user: req.user.id, is_read: false });
+    res.json({ success: true, unread });
   } catch (err) { next(err); }
 };
 
@@ -65,4 +76,4 @@ const deleteNotification = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getMyNotifications, markAsRead, markAllRead, deleteNotification };
+module.exports = { getMyNotifications, getUnreadCount, markAsRead, markAllRead, deleteNotification };

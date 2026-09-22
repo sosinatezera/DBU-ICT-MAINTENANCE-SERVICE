@@ -69,7 +69,8 @@ const getAllFeedback = async (req, res, next) => {
         select: 'ticketId problemDescription status equipmentType department assignedTechnician adminFeedback.adminId',
         populate: { path: 'assignedTechnician', select: 'fullName' },
       })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     /* KPIs are computed by the backend from the same filtered dataset —
        never hard-coded in the frontend. */

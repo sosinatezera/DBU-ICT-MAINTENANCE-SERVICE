@@ -24,7 +24,7 @@ const getAllUsers = async (req, res, next) => {
     if (role)   filter.role   = role;
     if (status) filter.status = status;
 
-    const users = await User.find(filter).select('-password').sort({ createdAt: -1 });
+    const users = await User.find(filter).select('-password').sort({ createdAt: -1 }).lean();
     res.json({ success: true, data: users });
   } catch (err) {
     next(err);

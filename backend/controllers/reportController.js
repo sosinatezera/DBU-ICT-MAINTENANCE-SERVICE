@@ -107,7 +107,8 @@ const getTechnicianPerformance = async (req, res, next) => {
     const dateMatch   = buildDateMatch(req);
     const assignments = await Assignment.find()
       .populate({ path: 'technician', populate: { path: 'user', select: 'fullName' } })
-      .populate('ticket', 'status createdAt');
+      .populate('ticket', 'status createdAt')
+      .lean();
 
     const map = {};
     for (const a of assignments) {
@@ -156,7 +157,8 @@ const getRecentFeedback = async (req, res, next) => {
       .populate('user', 'fullName')
       .populate('request', 'ticketId equipmentType')
       .sort({ createdAt: -1 })
-      .limit(20);
+      .limit(20)
+      .lean();
     res.json({ success: true, data: feedback });
   } catch (err) { next(err); }
 };
@@ -186,7 +188,7 @@ const getRequestsByCategory = async (req, res, next) => {
     });
 
     /* Every Category from the collection gets a row (even with 0 requests) */
-    const cats = await Category.find().sort({ name: 1 });
+    const cats = await Category.find().sort({ name: 1 }).lean();
     const data = [];
     const matched = new Set();
 

@@ -11,5 +11,7 @@ const notificationSchema = new mongoose.Schema({
 
 /* Hot path: "my notifications" sorted newest-first — index user + createdAt. */
 notificationSchema.index({ user: 1, createdAt: -1 });
+/* Hot path: unread-count + mark-all-read for a single user. */
+notificationSchema.index({ user: 1, is_read: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Notification', notificationSchema);

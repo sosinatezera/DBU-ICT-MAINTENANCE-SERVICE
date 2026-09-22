@@ -35,16 +35,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   ]);
 
   try {
-    currentUser = (await apiRequest('/auth/me')).user;
-  } catch (_) {
-    showToast('Failed to load profile data.', 'danger');
-    return;
-  }
+    const [userRes, settingsRes] = await Promise.allSettled([
+      apiRequest('/auth/me'),
+      apiRequest('/settings'),
+    ]);
 
-  try {
-    currentSettings = (await apiRequest('/settings')).data;
+    if (userRes.status === 'rejected') {
+      showToast('Failed to load profile data.', 'danger');
+      return;
+    }
+    currentUser = userRes.value.user;
+
+    if (settingsRes.status === 'fulfilled') {
+      currentSettings = settingsRes.value.data;
+    } else {
+      showToast('Failed to load system settings.', 'danger');
+    }
   } catch (_) {
-    showToast('Failed to load system settings.', 'danger');
+    showToast('Failed to load settings page data.', 'danger');
+    return;
   }
 
   /* ── Profile photo state (uploaded photo / image URL) ───── */

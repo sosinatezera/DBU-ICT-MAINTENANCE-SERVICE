@@ -12,6 +12,8 @@ const VAL = {
   PASSWORD_REGEX: /^(?=.{8,16}$)(?=.*[A-Za-z])(?=.*\d)(?!.*\s)[\x21-\x7E]+$/,
   /* Gmail-only: local part must contain at least one letter and end exactly with @gmail.com (case-insensitive domain) */
   EMAIL_REGEX:    /^(?=[A-Za-z0-9._%+-]*[A-Za-z])[A-Za-z0-9._%+-]+@gmail\.com$/i,
+  /* Generic email: any domain, used by public forms (e.g. the contact page) */
+  GENERIC_EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   /* Phone: Ethiopian mobile — exactly 10 digits (0-9) only, starting with 09 or 07.
      No letters, spaces, +, -, or special chars. */
   PHONE_REGEX:    /^(09|07)\d{8}$/,
@@ -35,6 +37,15 @@ const Validators = {
     if (trimmed.length === 0) return 'Email is required.';
     if (trimmed.length > 254) return 'Email is too long.';
     if (!VAL.EMAIL_REGEX.test(trimmed)) return 'Please enter a valid Gmail address ending with @gmail.com.';
+    return null;
+  },
+
+  genericEmail(value) {
+    if (!value || typeof value !== 'string') return 'Email is required.';
+    const trimmed = value.trim();
+    if (trimmed.length === 0) return 'Email is required.';
+    if (trimmed.length > 254) return 'Email is too long.';
+    if (!VAL.GENERIC_EMAIL_REGEX.test(trimmed)) return 'Please enter a valid email address.';
     return null;
   },
 

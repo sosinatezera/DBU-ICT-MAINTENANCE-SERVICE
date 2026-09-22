@@ -10,6 +10,8 @@ const mongoose = require('mongoose');
 const PASSWORD_REGEX = /^(?=.{8,16}$)(?=.*[A-Za-z])(?=.*\d)(?!.*\s)[\x21-\x7E]+$/;
 /* Gmail-only: local part must contain at least one letter and end exactly with @gmail.com (case-insensitive domain) */
 const EMAIL_REGEX    = /^(?=[A-Za-z0-9._%+-]*[A-Za-z])[A-Za-z0-9._%+-]+@gmail\.com$/i;
+/* Generic email: any domain, used by public forms (e.g. the contact page) */
+const GENERIC_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /* Phone: Ethiopian mobile — exactly 10 digits (0-9) only, starting with 09 or 07.
    No letters, spaces, +, -, or special chars. */
 const PHONE_REGEX   = /^(09|07)\d{8}$/;
@@ -39,6 +41,8 @@ const VALID_REQUEST_CATEGORIES = [
   'Other'
 ];
 const VALID_GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
+/* Networking: maximum length of a single chat message body. */
+const MESSAGE_MAX_LENGTH = 2000;
 const VALID_LANGUAGES = ['en', 'am', 'om'];
 const VALID_DATE_FORMATS = ['YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD-MM-YYYY', 'EC'];
 const VALID_TIMEZONES = ['Africa/Addis_Ababa', 'Africa/Nairobi', 'UTC'];
@@ -69,6 +73,16 @@ function validateEmail(email) {
   if (trimmed.length === 0) return 'Email is required.';
   if (trimmed.length > 254) return 'Email is too long.';
   if (!EMAIL_REGEX.test(trimmed)) return 'Please enter a valid Gmail address ending with @gmail.com.';
+  return null;
+}
+
+/* Generic email validation (any domain) — used by public forms like the contact page. */
+function validateGenericEmail(email) {
+  if (!email || typeof email !== 'string') return 'Email is required.';
+  const trimmed = email.trim();
+  if (trimmed.length === 0) return 'Email is required.';
+  if (trimmed.length > 254) return 'Email is too long.';
+  if (!GENERIC_EMAIL_REGEX.test(trimmed)) return 'Please enter a valid email address.';
   return null;
 }
 
@@ -134,6 +148,18 @@ function validateBoolean(value, fieldName) {
   return null;
 }
 
+/* Networking: chat message body — required, trimmed, length-capped. */
+function validateMessage(content) {
+  if (content === undefined || content === null || typeof content !== 'string' || content.trim().length === 0) {
+    return 'Message is required.';
+  }
+  const trimmed = content.trim();
+  if (trimmed.length > MESSAGE_MAX_LENGTH) {
+    return `Message must be no more than ${MESSAGE_MAX_LENGTH} characters.`;
+  }
+  return null;
+}
+
 function validateInteger(value, fieldName, { min = 0, max = Infinity } = {}) {
   const num = Number(value);
   if (value === undefined || value === null) return null;
@@ -184,6 +210,7 @@ module.exports = {
   validateObjectId,
   validateRequired,
   validateEmail,
+  validateGenericEmail,
   validatePassword,
   validatePasswordMatch,
   validateName,
@@ -193,12 +220,15 @@ module.exports = {
   validateLength,
   validateBoolean,
   validateInteger,
+  validateMessage,
   sanitizeString,
   trimBody,
   runValidations,
   PASSWORD_REGEX,
   EMAIL_REGEX,
+  GENERIC_EMAIL_REGEX,
   PHONE_REGEX,
+  MESSAGE_MAX_LENGTH,
   VALID_ROLES,
   VALID_STATUSES,
   VALID_PRIORITIES,

@@ -193,10 +193,12 @@ async function initTechDashboard() {
     dateEl.textContent = new Intl.DateTimeFormat('en-GB', opts).format(new Date());
   }
 
-  await loadTechProfile();
-  await loadDashboardTasks();
-  await loadRecentActivity();
-  await loadTechFeedbackReports();
+  await Promise.all([
+    loadTechProfile(),
+    loadDashboardTasks(),
+    loadRecentActivity(),
+    loadTechFeedbackReports(),
+  ]);
   initAvailabilityToggle();
   initTechActionDelegation();
   initFeedbackHandlers();
@@ -213,15 +215,16 @@ async function loadTechFeedbackReports() {
     const { data: assignments } = await apiRequest('/technicians/my/assignments');
     const reported = (assignments || []).filter(a => a.has_feedback);
 
-    /* Fetch report details for the most recent few so the panel stays light. */
+    /* Fetch report details for the most recent few in parallel so the panel
+       stays light and the dashboard is not blocked by 5 serial round-trips. */
     const recent = reported.slice(0, 5);
-    const items = [];
-    for (const a of recent) {
-      try {
-        const { data: report } = await apiRequest(`/tickets/${encodeURIComponent(a.ticket_id || a.id)}/technician-feedback`);
-        items.push({ ticket: a.ticketId || a.ticket_id || 'Ticket', report });
-      } catch (_) { /* skip individual failures */ }
-    }
+    const results = await Promise.allSettled(recent.map(a =>
+      apiRequest(`/tickets/${encodeURIComponent(a.ticket_id || a.id)}/technician-feedback`)
+    ));
+    const items = recent.map((a, i) => ({
+      ticket: a.ticketId || a.ticket_id || 'Ticket',
+      report: results[i].status === 'fulfilled' ? results[i].value.data : null,
+    })).filter(it => it.report);
 
     if (!items.length) {
       panel.innerHTML = `
