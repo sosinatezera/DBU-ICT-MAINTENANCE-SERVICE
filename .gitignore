@@ -38,3 +38,7 @@ backend/uploads/*
 
 # Coverage
 coverage/
+
+# Netlify local files
+.netlify/
+backend/.netlify/
