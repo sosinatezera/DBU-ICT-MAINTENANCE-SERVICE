@@ -254,6 +254,11 @@ const createTicket = async (req, res, next) => {
       assetId:            assetId,
       serialNumber:       req.body.serialNumber   || null,
       officeBlock:        req.body.officeBlock    || null,
+      serviceType:        req.body.serviceType    || null,
+      networkDevice:      req.body.networkDevice  || null,
+      ipAddress:          req.body.ipAddress      || null,
+      macAddress:         req.body.macAddress     || null,
+      affectedUsers:      req.body.affectedUsers  || null,
       problemDescription: desc,
       priority:           req.body.priority       || 'medium',
       status:             'submitted',
@@ -275,9 +280,9 @@ const createTicket = async (req, res, next) => {
     if (user?.email) {
       sendEventEmail({
         to: user.email,
-        subject: `Ticket ${ticket.ticketId} received — Smart Computer Maintenance Service`,
-        text: `Hi ${user.fullName || ''},\n\nYour service request #${ticket.ticketId} has been submitted and is awaiting review.\n\nTrack it on the portal using ticket ID ${ticket.ticketId}.\n\nSmart Computer Maintenance Service`,
-        html: `<p>Hi ${user.fullName || 'there'},</p><p>Your service request <strong>#${ticket.ticketId}</strong> has been submitted and is awaiting review.</p><p>You can track its progress on the portal with ticket ID <strong>${ticket.ticketId}</strong>.</p><p style="color:#888;">Smart Computer Maintenance Service</p>`,
+        subject: `Ticket ${ticket.ticketId} received — Smart ICT Maintenance Management System`,
+        text: `Hi ${user.fullName || ''},\n\nYour service request #${ticket.ticketId} has been submitted and is awaiting review.\n\nTrack it on the portal using ticket ID ${ticket.ticketId}.\n\nSmart ICT Maintenance Management System`,
+        html: `<p>Hi ${user.fullName || 'there'},</p><p>Your service request <strong>#${ticket.ticketId}</strong> has been submitted and is awaiting review.</p><p>You can track its progress on the portal with ticket ID <strong>${ticket.ticketId}</strong>.</p><p style="color:#888;">Smart ICT Maintenance Management System</p>`,
       }).catch(() => {}); /* email is best-effort only */
     }
 
@@ -296,8 +301,8 @@ const createTicket = async (req, res, next) => {
         sendEventEmail({
           to: admin.email,
           subject: `New ${payload.priority.toUpperCase()} ticket ${ticket.ticketId}`,
-          text: `A new ${payload.priority} priority ticket (${ticket.ticketId}) was submitted by ${user?.fullName || 'a requester'}.\nEquipment: ${payload.equipmentType}.\n\nLog in to review it.\n\nSmart Computer Maintenance Service`,
-          html: `<p>A new <strong>${payload.priority.toUpperCase()}</strong> priority ticket (<strong>${ticket.ticketId}</strong>) was submitted by ${user?.fullName || 'a requester'}.</p><p>Equipment: ${payload.equipmentType}.</p><p>Log in to the admin portal to review it.</p><p style="color:#888;">Smart Computer Maintenance Service</p>`,
+          text: `A new ${payload.priority} priority ticket (${ticket.ticketId}) was submitted by ${user?.fullName || 'a requester'}.\nEquipment: ${payload.equipmentType}.\n\nLog in to review it.\n\nSmart ICT Maintenance Management System`,
+          html: `<p>A new <strong>${payload.priority.toUpperCase()}</strong> priority ticket (<strong>${ticket.ticketId}</strong>) was submitted by ${user?.fullName || 'a requester'}.</p><p>Equipment: ${payload.equipmentType}.</p><p>Log in to the admin portal to review it.</p><p style="color:#888;">Smart ICT Maintenance Management System</p>`,
         }).catch(() => {}); /* email is best-effort only */
       }
       return notify;
@@ -350,6 +355,7 @@ const updateTicket = async (req, res, next) => {
       department, phone, serialNumber, officeBlock,
       problemDescription, assignedTechnician, location,
       identifiedProblem, resolutionResponse, isFixed, reasonIfNotFixed,
+      serviceType, networkDevice, ipAddress, macAddress, affectedUsers,
     } = req.body;
 
     const ticket = await Ticket.findByIdAndUpdate(
@@ -358,6 +364,7 @@ const updateTicket = async (req, res, next) => {
         department, phone, equipmentType, serialNumber, officeBlock,
         problemDescription, priority, assignedTechnician, location,
         identifiedProblem, resolutionResponse, isFixed, reasonIfNotFixed,
+        serviceType, networkDevice, ipAddress, macAddress, affectedUsers,
       },
       { new: true, runValidators: true }
     );
@@ -1152,6 +1159,11 @@ function formatTicket(t, viewerRole = 'ICT Admin', viewerId = null) {
     serialNumber:        t.serialNumber,
     officeBlock:         t.officeBlock,
     problemDescription:  t.problemDescription,
+    serviceType:         t.serviceType,
+    networkDevice:       t.networkDevice,
+    ipAddress:           t.ipAddress,
+    macAddress:          t.macAddress,
+    affectedUsers:       t.affectedUsers,
     priority:            t.priority,
     status:              t.status,
     assignedTechnician:  t.assignedTechnician?.fullName || null,

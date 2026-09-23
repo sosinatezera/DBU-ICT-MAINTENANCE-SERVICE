@@ -49,8 +49,6 @@
               data-i18n="side.settings">Settings</span></a></li>
 
         <div class="mt-auto pt-3 border-top border-white border-opacity-25">
-          <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i
-              class="bi bi-box-arrow-right me-1"></i><span data-i18n="admin.logout">Logout</span></a>
         </div>
     </nav>
 
@@ -76,7 +74,7 @@
                   data-i18n-placeholder="admin.users.search.placeholder" placeholder="Search users..." />
               </div>
               <div class="col-md-3">
-<select class="form-select" id="roleFilter">
+                <select class="form-select" id="roleFilter">
                   <option value=""><span data-i18n="admin.users.filter.allRoles">All Roles</span>
                   <option value="Requester"><span data-i18n="admin.users.filter.requester">Requester</span>
                   <option value="Technician"><span data-i18n="admin.users.filter.technician">Technician</span>
@@ -172,7 +170,7 @@
               <div class="col-6">
                 <label for="userRole" class="form-label fw-semibold"><span
                     data-i18n="admin.users.modal.role">Role</span> <span class="text-danger">*</span></label>
-<select class="form-select" id="userRole" required>
+                <select class="form-select" id="userRole" required>
                   <option value=""><span data-i18n="admin.users.modal.rolePlaceholder">-- Role --</span>
                   <option value="Requester"><span data-i18n="admin.users.filter.requester">Requester</span>
                   <option value="Technician"><span data-i18n="admin.users.filter.technician">Technician</span>
@@ -192,12 +190,16 @@
                   data-i18n="admin.users.modal.department">Department</span></label>
               <select class="form-select" id="userDepartment">
                 <option value=""><span data-i18n="admin.users.modal.selectDept">-- Select Department --</span>
-                <option value="Computer Maintenance" data-i18n="auser.dept.computerMaintenance">Computer Maintenance</option>
-                <option value="ICT Infrastructure and Security Services" data-i18n="auser.dept.ictInfra">ICT Infrastructure and Security Services
+                <option value="Computer Maintenance" data-i18n="auser.dept.computerMaintenance">Computer Maintenance
+                </option>
+                <option value="ICT Infrastructure and Security Services" data-i18n="auser.dept.ictInfra">ICT
+                  Infrastructure and Security Services
                 </option>
                 <option value="Software Development" data-i18n="auser.dept.softwareDev">Software Development</option>
-                <option value="Learning and Technology" data-i18n="auser.dept.learningTech">Learning and Technology</option>
-                <option value="System Administrations" data-i18n="auser.dept.systemAdmin">System Administrations</option>
+                <option value="Learning and Technology" data-i18n="auser.dept.learningTech">Learning and Technology
+                </option>
+                <option value="System Administrations" data-i18n="auser.dept.systemAdmin">System Administrations
+                </option>
               </select>
             </div>
             <div class="mb-3">
@@ -296,7 +298,7 @@
     </div>
   </div>
 
-<!-- Delete Confirm Modal -->
+  <!-- Delete Confirm Modal -->
   <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
@@ -306,7 +308,8 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p class="mb-0"><span data-i18n="admin.users.modal.deactivateConfirm">Are you sure you want to deactivate</span> <strong id="deleteUserName"></strong>?</p>
+          <p class="mb-0"><span data-i18n="admin.users.modal.deactivateConfirm">Are you sure you want to
+              deactivate</span> <strong id="deleteUserName"></strong>?</p>
           <input type="hidden" id="deleteUserId" />
         </div>
         <div class="modal-footer border-0">
@@ -324,20 +327,23 @@
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
         <div class="modal-header border-0">
-          <h6 class="modal-title fw-bold text-danger"><i class="bi bi-trash me-2"></i><span data-i18n="admin.users.modal.permanentDelete">Permanently Delete User</span></h6>
+          <h6 class="modal-title fw-bold text-danger"><i class="bi bi-trash me-2"></i><span
+              data-i18n="admin.users.modal.permanentDelete">Permanently Delete User</span></h6>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <!-- Confirm view (user exists) -->
           <div id="permanentDeleteConfirmView">
-            <p class="mb-1"><span data-i18n="admin.users.modal.permanentDeleteConfirm">Are you sure you want to permanently delete:</span></p>
+            <p class="mb-1"><span data-i18n="admin.users.modal.permanentDeleteConfirm">Are you sure you want to
+                permanently delete:</span></p>
             <div class="p-3 rounded bg-light border mb-2">
               <div class="fw-bold" id="permanentDeleteUserName"></div>
               <div class="small text-muted" id="permanentDeleteUserEmail"></div>
               <div class="small text-muted" id="permanentDeleteUserRole"></div>
             </div>
-            <p class="small text-danger mb-0"><i class="bi bi-exclamation-triangle me-1"></i><span data-i18n="admin.users.modal.permanentDeleteWarning">This action cannot be
-              undone. The account and any linked technician profile will be removed from the system.</span></p>
+            <p class="small text-danger mb-0"><i class="bi bi-exclamation-triangle me-1"></i><span
+                data-i18n="admin.users.modal.permanentDeleteWarning">This action cannot be
+                undone. The account and any linked technician profile will be removed from the system.</span></p>
             <div id="permanentDeleteAlert" class="alert d-none mt-2 mb-0" role="alert"></div>
           </div>
           <!-- Not-found / error view (no active Delete button) -->
@@ -351,8 +357,10 @@
           <input type="hidden" id="permanentDeleteUserId" />
         </div>
         <div class="modal-footer border-0">
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" id="permanentDeleteCancelBtn" data-i18n="common.cancel">Cancel</button>
-          <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-bs-dismiss="modal" id="permanentDeleteCloseBtn" data-i18n="common.close">Close</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"
+            id="permanentDeleteCancelBtn" data-i18n="common.cancel">Cancel</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-bs-dismiss="modal"
+            id="permanentDeleteCloseBtn" data-i18n="common.close">Close</button>
           <button type="button" class="btn btn-danger btn-sm" id="confirmPermanentDeleteBtn">
             <span class="spinner-border spinner-border-sm me-1 d-none" id="permanentDeleteSpinner"></span>
             <span data-i18n="admin.users.modal.deletePermanently">Delete Permanently</span>

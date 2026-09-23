@@ -1,6 +1,6 @@
 /* ============================================================
    requests.js  —  All User/Admin Request Logic
-    Smart Computer Maintenance Service Request and Tracking System
+    Smart ICT Maintenance Management System
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -320,6 +320,20 @@ function renderMyFeedback(tickets) {
    prevents duplicate database records from repeated clicks. */
 let _submittingTicket = false;
 
+/* Request category value that unlocks the Network Maintenance detail fields.
+   Must match the backend whitelist (middleware/validation.js) exactly. */
+const NETWORK_CATEGORY = 'Network Maintenance';
+
+/* ── Show/hide the optional Network Maintenance details ─────
+   The extra network fields only matter when the requester picks the
+   "Network Maintenance" category. */
+function toggleNetworkSection() {
+  const cat = document.getElementById('category')?.value;
+  const sec = document.getElementById('networkDetailsSection');
+  if (!sec) return;
+  sec.classList.toggle('d-none', cat !== NETWORK_CATEGORY);
+}
+
 async function initSubmitRequest() {
   if (!requireRole('Requester')) return;
   const user = Auth.getUser();
@@ -343,6 +357,7 @@ async function initSubmitRequest() {
         clearFieldValidation('category');
         showFieldValid('category');
       }
+      toggleNetworkSection();
     });
     categoryEl.addEventListener('blur', () => {
       if (!categoryEl.value) {
@@ -422,6 +437,17 @@ async function initSubmitRequest() {
     const assetValue = document.getElementById('asset')?.value;
     if (assetValue && assetValue !== 'none') {
       fd.append('asset_id', assetValue);
+    }
+
+    /* Network Maintenance details — appended only when the category is
+       "Network Maintenance". All values are optional; empty strings become
+       null on the backend. */
+    if (catValue === NETWORK_CATEGORY) {
+      fd.append('serviceType',   document.getElementById('networkServiceType')?.value || '');
+      fd.append('networkDevice', (document.getElementById('networkDevice')?.value || '').trim());
+      fd.append('ipAddress',     (document.getElementById('ipAddress')?.value || '').trim());
+      fd.append('macAddress',    (document.getElementById('macAddress')?.value || '').trim());
+      fd.append('affectedUsers', document.getElementById('affectedUsers')?.value || '');
     }
 
     if (file) fd.append('attachment', file);
@@ -591,6 +617,12 @@ function clearRequestForm() {
   const alert = document.getElementById('requestAlert');
   if (alert) { alert.className = 'alert d-none'; alert.innerHTML = ''; }
 
+  /* Hide the Network Maintenance details block (its fields are reset above by
+     form.reset(); the section itself only reappears when that category is
+     chosen again). */
+  const netSec = document.getElementById('networkDetailsSection');
+  if (netSec) netSec.classList.add('d-none');
+
   /* Re-run the priority border-colour handler (reset restored "medium") */
   const pri = document.getElementById('priority');
   if (pri) pri.dispatchEvent(new Event('change'));
@@ -633,10 +665,19 @@ function showPreview() {
   const file    = document.getElementById('attachment')?.files[0];
   const attach  = file ? file.name : 'No attachment attached';
   const priC    = {low:'success',medium:'primary',high:'warning',critical:'danger'}[pri]||'secondary';
-  const devI    = {'Desktop Computer':'bi-pc-display','Laptop':'bi-laptop','Printer':'bi-printer',
+  const devI    = {'Desktop Computer':'bi-pc-display','Laptop':'bi-laptop','Network':'bi-wifi','Printer':'bi-printer',
                    'Scanner':'bi-scanner','Monitor':'bi-tv','Projector':'bi-projector',
                    'UPS / Power Supply':'bi-battery-charging','Keyboard / Mouse':'bi-keyboard',
                    'Other':'bi-hdd-stack'}[deviceType] || 'bi-hdd-stack';
+
+  /* Network Maintenance summary rows — shown only when the requester picked
+     the "Network Maintenance" category, so non-network requests stay clean. */
+  const networkRows = cat === NETWORK_CATEGORY ? `
+    <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">Service Type</div><div>${escHtml(document.getElementById('networkServiceType')?.value || '—')}</div></div>
+    <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">Network Device</div><div>${escHtml(document.getElementById('networkDevice')?.value || '—')}</div></div>
+    <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">IP Address</div><div>${escHtml(document.getElementById('ipAddress')?.value || '—')}</div></div>
+    <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">MAC Address</div><div>${escHtml(document.getElementById('macAddress')?.value || '—')}</div></div>
+    <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">Affected Users</div><div>${escHtml(document.getElementById('affectedUsers')?.value || '—')}</div></div>` : '';
 
   const card    = document.getElementById('summaryCard');
   const content = document.getElementById('summaryContent');
@@ -656,7 +697,8 @@ function showPreview() {
       <div class="small text-truncate" title="${escHtml(attach)}"><i class="bi bi-paperclip me-1"></i>${escHtml(attach)}</div></div>
     <div class="col-12"><div class="text-muted small mb-1">Title</div><div class="fw-semibold">${escHtml(title)}</div></div>
     <div class="col-12"><div class="text-muted small mb-1">Problem Description</div>
-      <div class="p-2 bg-white border rounded small" style="white-space:pre-wrap;max-height:80px;overflow-y:auto;">${escHtml(desc)}</div></div>`;
+      <div class="p-2 bg-white border rounded small" style="white-space:pre-wrap;max-height:80px;overflow-y:auto;">${escHtml(desc)}</div></div>
+    ${networkRows}`;
 
   card.classList.remove('d-none');
   card.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1672,21 +1714,40 @@ async function initAdminRequests() {
   if (!requireRole('ICT Admin')) return;
   initAdminFeedbackModal();
   await Promise.all([populateSelect('categoryFilter', '/categories', true), loadAdminRequests()]);
+  populateDepartmentFilter();
 
   const doFilter = () => {
-    const q  = document.getElementById('searchInput')?.value.toLowerCase()||'';
-    const st = document.getElementById('statusFilter')?.value||'';
-    const pr = document.getElementById('priorityFilter')?.value||'';
-    renderAdminTable(_allAdminRequests.filter(r =>
-      (!q  || (r.problemDescription||'').toLowerCase().includes(q)||(r.requester_name||'').toLowerCase().includes(q)) &&
-      (!st || r.status===st) && (!pr || r.priority===pr)
-    ));
+    const q      = document.getElementById('searchInput')?.value.toLowerCase()||'';
+    const st     = document.getElementById('statusFilter')?.value||'';
+    const pr     = document.getElementById('priorityFilter')?.value||'';
+    const cat    = document.getElementById('categoryFilter')?.value||'';
+    const dept   = document.getElementById('departmentFilter')?.value||'';
+    const dtFrom = document.getElementById('dateFromFilter')?.value||'';
+    const dtTo   = document.getElementById('dateToFilter')?.value||'';
+    renderAdminTable(_allAdminRequests.filter(r => {
+      /* Network Maintenance records are filtered by their own category value,
+         so a technician-equipment match is never mistaken for category. */
+      const ifrom = dtFrom ? new Date(dtFrom) : null;
+      const ito   = dtTo   ? new Date(dtTo + 'T23:59:59') : null;
+      const created = new Date(r.created_at);
+      const okDate = (!ifrom || created >= ifrom) && (!ito || created <= ito);
+      return (!q  || (r.problemDescription||'').toLowerCase().includes(q)
+                 || (r.requester_name||'').toLowerCase().includes(q)
+                 || (r.title||'').toLowerCase().includes(q)
+                 || (r.ticketId||'').toLowerCase().includes(q))
+        && (!st || r.status===st) && (!pr || r.priority===pr)
+        && (!cat || r.category===cat) && (!dept || r.department===dept) && okDate;
+    }));
   };
 
   document.getElementById('searchBtn')?.addEventListener('click', doFilter);
   document.getElementById('searchInput')?.addEventListener('keydown', e => { if(e.key==='Enter') doFilter(); });
   document.getElementById('statusFilter')?.addEventListener('change', doFilter);
   document.getElementById('priorityFilter')?.addEventListener('change', doFilter);
+  document.getElementById('categoryFilter')?.addEventListener('change', doFilter);
+  document.getElementById('departmentFilter')?.addEventListener('change', doFilter);
+  document.getElementById('dateFromFilter')?.addEventListener('change', doFilter);
+  document.getElementById('dateToFilter')?.addEventListener('change', doFilter);
 
   /* Event delegation for the dynamically rendered Actions buttons.
      Binds once on the tbody so it survives every table re-render. */
@@ -1706,6 +1767,22 @@ async function initAdminRequests() {
      notification bell/page so the related ticket opens automatically). */
   const deepLinkId = new URLSearchParams(window.location.search).get('id');
   if (deepLinkId && /^[0-9a-f]{24}$/i.test(deepLinkId)) openAdminRequestModal(deepLinkId);
+}
+
+/* Fill the Department filter with the departments found in the loaded requests. */
+function populateDepartmentFilter() {
+  const sel = document.getElementById('departmentFilter');
+  if (!sel) return;
+  const depts = [];
+  _allAdminRequests.forEach(r => {
+    const d = (r.department || '').trim();
+    if (d && !depts.includes(d)) depts.push(d);
+  });
+  depts.sort((a, b) => a.localeCompare(b));
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">All Departments</option>` +
+    depts.map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+  sel.value = cur;
 }
 
 function renderAdminTable(requests) {
@@ -1773,6 +1850,18 @@ async function openAdminRequestModal(id) {
           <div class="col-12"><div class="text-muted small mb-1">Description</div>
             <div class="p-2 bg-light rounded small" style="white-space:pre-wrap;max-height:80px;overflow-y:auto;">${escHtml(r.problemDescription)}</div>
           </div>
+          ${r.category === NETWORK_CATEGORY ? `
+          <div class="col-12"><div class="text-muted small mb-1">Network Maintenance Details</div>
+            <div class="p-2 bg-light rounded small">
+              <div class="row g-2">
+                <div class="col-md-6"><i class="bi bi-router me-1 text-primary"></i>Service Type: <span class="fw-semibold">${escHtml(r.serviceType||'—')}</span></div>
+                <div class="col-md-6"><i class="bi bi-hdd-network me-1 text-primary"></i>Network Device: <span class="fw-semibold">${escHtml(r.networkDevice||'—')}</span></div>
+                <div class="col-md-6"><i class="bi bi-ip me-1 text-primary"></i>IP Address: <span class="fw-semibold">${escHtml(r.ipAddress||'—')}</span></div>
+                <div class="col-md-6"><i class="bi bi-hexagon me-1 text-primary"></i>MAC Address: <span class="fw-semibold">${escHtml(r.macAddress||'—')}</span></div>
+                <div class="col-md-6"><i class="bi bi-people me-1 text-primary"></i>Affected Users: <span class="fw-semibold">${escHtml(r.affectedUsers||'—')}</span></div>
+              </div>
+            </div>
+          </div>` : ''}
         </div>
         <div class="d-flex justify-content-end mb-2">
           <button type="button" class="btn btn-sm btn-primary btn-admin-feedback"

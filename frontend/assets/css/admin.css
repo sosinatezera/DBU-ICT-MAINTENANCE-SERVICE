@@ -1,6 +1,6 @@
 /* ============================================================
    admin.css — Administrator Panel Styles
-   DBU ICT Maintenance Request & Tracking System
+   MAU ICT Maintenance Request & Tracking System
    Professional enterprise refinement of the existing admin UI.
    Loaded only on admin pages, so all rules are admin-scoped.
    ============================================================ */
@@ -616,6 +616,59 @@ body.dashboard-body {
   border-top: 1px solid var(--admin-border-soft);
   background: var(--admin-bg-soft);
   gap: .5rem;
+}
+
+/* Admin surfaces inherit the shared brand system while keeping dense data views scannable. */
+body.dashboard-body {
+  --admin-ink: var(--text);
+  --admin-muted: var(--muted);
+  --admin-border: var(--border);
+  --admin-border-soft: var(--border-light);
+  --admin-surface: var(--surface);
+  --admin-bg-soft: var(--surface-soft);
+}
+
+.dashboard-body .card.p-3.d-flex.flex-row.align-items-center.gap-3,
+.kpi-card {
+  border-radius: var(--radius-md);
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.dashboard-body .card.p-3.d-flex.flex-row.align-items-center.gap-3:hover,
+.kpi-card:hover {
+  border-color: var(--primary-border) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.admin-table thead th {
+  background: var(--primary) !important;
+  color: #fff;
+  border-bottom-color: var(--primary-dark);
+}
+
+.admin-table tbody td { border-bottom-color: var(--border-light); }
+.dashboard-body .table-hover tbody tr:hover { background: var(--primary-subtle); }
+
+#sidebar.sidebar {
+  background: linear-gradient(180deg, #0b1f3a 0%, #071426 100%) !important;
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--primary);
+  --bs-btn-border-color: var(--primary);
+  --bs-btn-hover-bg: var(--primary-hover);
+  --bs-btn-hover-border-color: var(--primary-hover);
+  --bs-btn-active-bg: var(--primary-deep);
+  --bs-btn-active-border-color: var(--primary-deep);
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
 }
 
 .modal-body { padding: 1.25rem; }

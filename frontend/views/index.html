@@ -6,12 +6,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="page.home">Smart Computer Maintenance Service Request &amp; Tracking System</title>
+  <title data-i18n="page.home">Smart ICT Maintenance Management System</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css?v=12" />
   <link rel="stylesheet" href="/assets/css/responsive.css?v=3" />
+  <link rel="stylesheet" href="/assets/css/home-layout.css?v=1" />
+  <script src="/assets/js/api-config.js"></script>
   <style>
     :root {
       --nav-height: 68px;
@@ -68,39 +70,136 @@
       overflow-x: hidden;
     }
 
-    /* =========================================================
-       NAVBAR — Professional university ICT-service header
-       White/light premium surface, navy + royal blue + cyan
-       ========================================================= */
-
-    /* Base bar: clean white, translucent blur, subtle shadow.
-       ROOT CAUSE OF THE INVISIBLE MENU DROPDOWN: the page-wide rule
-       `body:not(.dashboard-body):not(.auth-body)>*` below sets
-       `position:relative; z-index:1` on EVERY direct body child,
-       re-capping BOTH .main-navbar AND .hero-section at z-index:1.
-       With equal z-index, later DOM order paints on top, so the hero
-       (which follows the nav) painted OVER the navbar's whole stack —
-       hiding the Quick Access panel (and the mobile drawer) that
-       overflow below the bar. `position` + `z-index !important` lifts
-       the navbar stack above the hero so the dropdown actually paints
-       on screen. */
     .main-navbar {
-      position: relative;
-      z-index: 1050 !important;
-      background: rgba(255, 255, 255, .96) !important;
+      position: sticky;
+      top: 0;
+      z-index: 1050;
+      min-height: var(--nav-height);
+      background: rgba(255, 255, 255, .96);
+      border-bottom: 1px solid var(--home-border);
+      box-shadow: 0 6px 24px -12px rgba(15, 23, 42, .18);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 6px 24px -12px rgba(15, 23, 42, .18), 0 1px 0 rgba(226, 232, 240, .9) inset;
-      border-bottom: 1px solid rgba(226, 232, 240, .9);
-      min-height: var(--nav-height);
-      padding-top: .5rem;
-      padding-bottom: .5rem;
-      transition: border-color .25s cubic-bezier(.4, 0, .2, 1), box-shadow .25s cubic-bezier(.4, 0, .2, 1);
     }
 
-    .main-navbar.scrolled {
-      box-shadow: 0 10px 32px -14px rgba(15, 23, 42, .24);
-      border-bottom-color: rgba(203, 213, 225, .95);
+    .main-navbar .navbar-collapse {
+      align-items: center;
+    }
+
+    .menu-quick {
+      position: relative;
+    }
+
+    .menu-quick-control {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .55rem .8rem;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      background: rgba(242, 183, 5, .1);
+      color: var(--home-text);
+      font: 500 .9375rem/1.2 'Segoe UI', system-ui, sans-serif;
+      cursor: pointer;
+    }
+
+    .menu-quick-control:hover,
+    .menu-quick-control[aria-expanded="true"] {
+      background: rgba(242, 183, 5, .2);
+      border-color: rgba(183, 121, 0, .3);
+    }
+
+    .menu-quick-control i {
+      pointer-events: none;
+    }
+
+    .menu-quick-chevron {
+      font-size: .7rem;
+      transition: transform .2s ease;
+    }
+
+    .menu-quick-control[aria-expanded="true"] .menu-quick-chevron {
+      transform: rotate(180deg);
+    }
+
+    .menu-quick-panel {
+      position: absolute;
+      top: calc(100% + .5rem);
+      left: 0;
+      z-index: 1060;
+      min-width: 240px;
+      padding: .45rem;
+      border: 1px solid var(--home-border);
+      border-radius: 11px;
+      background: #fff;
+      box-shadow: 0 16px 34px rgba(24, 33, 43, .16);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px);
+      transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+    }
+
+    .menu-quick.open .menu-quick-panel {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .menu-quick-link {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .55rem .65rem;
+      border-radius: 8px;
+      color: var(--home-text);
+      text-decoration: none;
+      font-size: .86rem;
+    }
+
+    .menu-quick-link:hover {
+      background: rgba(242, 183, 5, .12);
+      color: #925f00;
+    }
+
+    .main-navbar .navbar-toggler {
+      border-color: var(--home-border-strong);
+    }
+
+    .main-navbar .navbar-toggler:focus {
+      box-shadow: 0 0 0 3px rgba(242, 183, 5, .22);
+    }
+
+    .main-navbar .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%231f2933' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+    }
+
+    @media (max-width: 991.98px) {
+
+      .main-navbar .collapse.show,
+      .main-navbar .collapsing {
+        margin-top: .5rem;
+        padding: .65rem 1rem 1rem;
+        background: rgba(255, 255, 255, .99);
+        border-bottom: 1px solid var(--home-border);
+        border-radius: 0 0 14px 14px;
+        box-shadow: 0 14px 28px -16px rgba(15, 23, 42, .28);
+      }
+
+      .menu-quick {
+        width: 100%;
+      }
+
+      .menu-quick-control {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .menu-quick-panel {
+        position: static;
+        width: 100%;
+        margin-top: .35rem;
+        box-shadow: none;
+      }
     }
 
     .navbar-brand {
@@ -230,141 +329,22 @@
       font-weight: 600;
       box-shadow: 0 4px 14px -8px rgba(37, 99, 235, .6);
       transition: transform .22s cubic-bezier(.4, 0, .2, 1),
-        box-shadow .22s cubic-bezier(.4, 0, .2, 1),
-        background .22s cubic-bezier(.4, 0, .2, 1);
-      margin-left: .35rem;
-      min-height: 38px;
+        box-shadow .22s cubic-bezier(.4, 0, .2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: nowrap;
+      margin-inline: auto;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .main-navbar .navbar-nav .nav-link {
       white-space: nowrap;
     }
 
-    .btn-nav-register:hover {
-      background: linear-gradient(135deg, var(--home-primary-strong) 0%, var(--home-primary) 100%);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 18px -8px rgba(37, 99, 235, .7);
-    }
-
-    /* ── Language selector: globe icon + dropdown arrow ── */
-    #mainNavbar .lang-switch {
-      display: inline-flex;
-      align-items: center;
-      margin-left: .3rem;
-    }
-
-    #mainNavbar .lang-select {
-      width: auto;
-      min-width: 64px;
-      height: 38px;
-      padding: .25rem .6rem .25rem 1.9rem;
-      border: 1px solid var(--home-border-strong);
-      border-radius: 9px;
-      background-color: #fff;
-      color: var(--home-text);
-      font-size: .8125rem;
-      font-weight: 500;
-      cursor: pointer;
-      line-height: 1.2;
-      appearance: none;
-      outline: none;
-      background-image:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M2 12h20'/%3E%3Cpath d='M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z'/%3E%3C/svg%3E"),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E");
-      background-repeat: no-repeat, no-repeat;
-      background-position: left .55rem center, right .55rem center;
-      background-size: 16px, 12px;
-      transition: border-color .22s cubic-bezier(.4, 0, .2, 1),
-        box-shadow .22s cubic-bezier(.4, 0, .2, 1);
-    }
-
-    #mainNavbar .lang-select:hover,
-    #mainNavbar .lang-select:focus {
-      border-color: var(--home-primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
-    }
-
-    #mainNavbar .lang-select option {
-      background: #fff;
-      color: var(--home-text);
-    }
-
-    /* ── Dark mode control: compact circular icon button ── */
-    #mainNavbar .app-theme-switch {
-      width: 38px;
-      height: 38px;
-      border: 1px solid var(--home-border-strong);
-      border-radius: 50%;
-      background: #fff;
-      color: var(--home-text);
-      font-size: 1rem;
-      line-height: 1;
-      cursor: pointer;
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-left: .3rem;
-      transition: border-color .22s cubic-bezier(.4, 0, .2, 1),
-        color .22s cubic-bezier(.4, 0, .2, 1),
-        box-shadow .22s cubic-bezier(.4, 0, .2, 1),
-        transform .22s cubic-bezier(.4, 0, .2, 1);
-    }
-
-    #mainNavbar .app-theme-switch:hover {
-      border-color: var(--home-primary);
-      color: var(--home-primary);
-      box-shadow: 0 4px 12px -6px rgba(37, 99, 235, .5);
-      transform: translateY(-1px);
-    }
-
-    #mainNavbar .app-theme-switch:focus-visible {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, .18);
-    }
-
-    /* ── Navbar toggler (tablet / mobile) ── */
-    .navbar-toggler {
-      border: 1px solid var(--home-border-strong);
-      border-radius: 9px;
-      padding: .42rem;
-      color: var(--home-text);
-    }
-
-    .navbar-toggler:focus {
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
-    }
-
-    /* Restore a visible, colour-unlocked icon on the light bar */
-    .navbar-toggler-icon {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%230f172a' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
-      width: 24px;
-      height: 24px;
-      filter: none;
-    }
-
-    /* Desktop: centre links, prevent wrapping */
-    @media (min-width: 992px) {
-      .main-navbar .navbar-collapse {
-        display: flex;
-        align-items: center;
-        flex-grow: 1;
-      }
-
-      .main-navbar .navbar-nav {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        flex-wrap: nowrap;
-        margin-inline: auto;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .main-navbar .navbar-nav .nav-link {
-        white-space: nowrap;
-      }
-
-      .main-navbar #navMenu .d-flex {
-        margin-left: .5rem;
-      }
+    .main-navbar #navMenu .d-flex {
+      margin-left: .5rem;
     }
 
     /* Keep everything on one clean line on small-desktop tablets */
@@ -430,6 +410,16 @@
       .navbar-nav .nav-link:hover {
         color: var(--home-primary) !important;
       }
+
+      .lang-switch,
+      .app-theme-switch.app-theme-in-navbar {
+        margin: .25rem auto;
+      }
+
+      .main-navbar .d-flex.align-items-center.gap-2.mt-2.mt-lg-0 {
+        justify-content: center !important;
+        flex-wrap: wrap;
+      }
     }
 
     /* ===== Hero ===== */
@@ -455,6 +445,7 @@
       z-index: 0;
       overflow: hidden;
     }
+
     .hero-slide-track {
       display: flex;
       width: 100%;
@@ -462,9 +453,11 @@
       will-change: transform;
       transition: transform 1s ease-in-out;
     }
+
     .hero-slide-track.no-animation {
       transition: none;
     }
+
     .hero-slide {
       flex: 0 0 100%;
       width: 100%;
@@ -474,12 +467,30 @@
       will-change: transform;
       pointer-events: none;
     }
-    .hero-slide-1 { background-image: url('/assets/images/home1.png'); }
-    .hero-slide-2 { background-image: url('/assets/images/home2.png'); }
-    .hero-slide-3 { background-image: url('/assets/images/home3.png'); }
-    .hero-slide-4 { background-image: url('/assets/images/home4.png'); }
-    .hero-slide-5 { background-image: url('/assets/images/home5.png'); }
-    .hero-slide-6 { background-image: url('/assets/images/home6.png'); }
+
+    .hero-slide-1 {
+      background-image: url('/assets/images/home1.png');
+    }
+
+    .hero-slide-2 {
+      background-image: url('/assets/images/home2.png');
+    }
+
+    .hero-slide-3 {
+      background-image: url('/assets/images/home3.png');
+    }
+
+    .hero-slide-4 {
+      background-image: url('/assets/images/home4.png');
+    }
+
+    .hero-slide-5 {
+      background-image: url('/assets/images/home5.png');
+    }
+
+    .hero-slide-6 {
+      background-image: url('/assets/images/home6.png');
+    }
 
     /* Subtle overlay between the photos and the copy so text stays readable */
     .hero-overlay {
@@ -502,6 +513,7 @@
       gap: 10px;
       pointer-events: none;
     }
+
     .hero-dots button {
       width: 10px;
       height: 10px;
@@ -513,10 +525,12 @@
       transition: background .3s ease, transform .3s ease, border-color .3s ease;
       pointer-events: auto;
     }
+
     html[data-theme="dark"] .hero-dots button {
       border-color: rgba(255, 255, 255, 0.6);
       background: rgba(255, 255, 255, 0.28);
     }
+
     .hero-dots button.is-active {
       background: #22d3ee;
       border-color: #22d3ee;
@@ -528,6 +542,7 @@
       .hero-slide-track {
         transition: none;
       }
+
       .hero-slide {
         opacity: 1;
       }
@@ -537,6 +552,7 @@
     .hero-section {
       cursor: grab;
     }
+
     .hero-section:active {
       cursor: grabbing;
     }
@@ -1417,7 +1433,7 @@
     body:not(.dashboard-body):not(.auth-body) footer {
       background: #000000 !important;
       color: #f8fafc !important;
-      border-top: 1px solid rgba(255,255,255,.06);
+      border-top: 1px solid rgba(255, 255, 255, .06);
     }
 
     /* Menu links — light gray, white on hover */
@@ -1482,7 +1498,7 @@
       border-radius: 10px;
       color: #cbd5e1;
       background: transparent;
-      border: 1px solid rgba(255,255,255,.14);
+      border: 1px solid rgba(255, 255, 255, .14);
       font-size: 1rem;
       text-decoration: none;
       transition: border-color .18s ease, background-color .18s ease, color .18s ease, box-shadow .18s ease;
@@ -1492,7 +1508,7 @@
       color: #ffffff;
       border-color: #2563eb;
       background: #2563eb;
-      box-shadow: 0 6px 16px -6px rgba(37,99,235,.55);
+      box-shadow: 0 6px 16px -6px rgba(37, 99, 235, .55);
     }
 
     body:not(.dashboard-body):not(.auth-body) footer .footer-social-btn:focus-visible {
@@ -1698,8 +1714,15 @@
        over the generic black-footer rules above AND theme.css (which
        loads after this inline stylesheet). Dark in BOTH site themes. */
     @keyframes siteStatusPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .4; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: .4;
+      }
     }
 
     body:not(.dashboard-body):not(.auth-body) .site-footer {
@@ -2044,34 +2067,17 @@
 
 <body>
 
-  <!-- ===== NAVBAR ===== -->
+  <!-- ===== MAIN NAVBAR ===== -->
   <nav class="main-navbar navbar navbar-expand-lg" id="mainNavbar">
     <div class="container">
-      <a class="navbar-brand d-flex align-items-center gap-2 text-white text-decoration-none" href="/">
+      <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none" href="#home">
         <span class="navbar-brand-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 64 64" fill="none">
-            <rect width="64" height="64" rx="12" fill="#2563eb" />
-            <rect x="10" y="12" width="44" height="30" rx="3" fill="#fff" fill-opacity=".15" stroke="#fff"
-              stroke-width="2" />
-            <rect x="14" y="16" width="36" height="22" rx="2" fill="#fff" fill-opacity=".9" />
-            <circle cx="32" cy="27" r="6" fill="#2563eb" />
-            <circle cx="32" cy="27" r="3" fill="#fff" />
-            <rect x="30.5" y="19" width="3" height="3" rx="1" fill="#2563eb" />
-            <rect x="30.5" y="33" width="3" height="3" rx="1" fill="#2563eb" />
-            <rect x="19" y="25.5" width="3" height="3" rx="1" fill="#2563eb" />
-            <rect x="42" y="25.5" width="3" height="3" rx="1" fill="#2563eb" />
-            <rect x="28" y="42" width="8" height="5" rx="1" fill="#fff" fill-opacity=".6" />
-            <rect x="22" y="47" width="20" height="3" rx="1.5" fill="#fff" fill-opacity=".6" />
-            <path d="M44 46 L50 52 M44 46 C42 44 42 41 44 39 C46 37 49 37 51 39 L48 42 L46 40 L44 42 L46 44 Z"
-              stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none" />
-            <circle cx="14" cy="56" r="2" fill="#4ade80" />
-            <circle cx="20" cy="56" r="2" fill="#4ade80" opacity=".7" />
-            <circle cx="26" cy="56" r="2" fill="#fff" opacity=".4" />
-          </svg>
+          <img src="/assets/images/mau_logo.jpg" alt="Mekdela Amba University" data-home-image-id="mau-logo"
+            style="width:100%;height:100%;object-fit:contain;display:block;" />
         </span>
         <div>
-          <div class="brand-text-main"><span data-i18n="home.brandMain">Smart Computer Maintenance</span></div>
-          <div class="brand-text-sub"><span data-i18n="home.brandSub">Service Request &amp; Tracking</span></div>
+          <div class="brand-text-main"><span data-i18n="home.brandMain">Smart ICT Maintenance</span></div>
+          <div class="brand-text-sub"><span data-i18n="home.brandSub">Management System</span></div>
         </div>
       </a>
 
@@ -2092,24 +2098,10 @@
                 data-i18n="nav.services">Services</span></a></li>
           <li class="nav-item"><a class="nav-link nav-link-item" href="#contact"><span
                 data-i18n="nav.contact">Contact</span></a></li>
-          <li class="nav-item menu-quick">
-            <button type="button" class="menu-quick-control" id="menuQuickToggle"
-              aria-haspopup="menu" aria-expanded="false" aria-controls="menuQuickPanel">
-              <i class="fa-solid fa-bars" aria-hidden="true"></i>
-              <span data-i18n="nav.menu">Menu</span>
-              <i class="fa-solid fa-chevron-down menu-quick-chevron" aria-hidden="true"></i>
-            </button>
-            <div class="menu-quick-panel" id="menuQuickPanel" role="menu" aria-label="Quick Access">
-              <a class="menu-quick-link" href="#site-footer" role="menuitem"><i
-                  class="fa-solid fa-angles-down" aria-hidden="true"></i><span data-i18n="nav.menu.footer">Footer</span></a>
-              <a class="menu-quick-link" href="/views/register.html" role="menuitem"><i
-                  class="fa-solid fa-user-plus" aria-hidden="true"></i><span data-i18n="nav.register">Register</span></a>
-            </div>
-          </li>
           <li class="nav-item"><a class="nav-link nav-link-item" href="#about"><span data-i18n="nav.about">About
                 Us</span></a></li>
         </ul>
-        <div class="d-flex align-items-center gap-2 mt-2 mt-lg-0">
+        <div class="d-flex align-items-center gap-2 mt-2 mt-lg-0 flex-wrap justify-content-end">
           <a href="/views/login.html" class="btn btn-nav-login"><span data-i18n="nav.login">Login</span></a>
           <a href="/views/register.html" class="btn btn-nav-register"><span data-i18n="nav.register">Register</span></a>
         </div>
@@ -2117,78 +2109,24 @@
     </div>
   </nav>
 
-  <script>
-    /* ===== Quick Access Menu (navbar "Menu" item) =====
-       Standalone and self-contained so the toggle ALWAYS works, even if any
-       other script on this page throws. Delegated on document, uses only the
-       existing markup/CSS (blue pill #menuQuickToggle + #menuQuickPanel) and
-       is fully independent of the Bootstrap bundle. Shows the panel with the
-       .open class, rotates the chevron via aria-expanded, closes on a second
-       click, outside click, Escape, or after choosing an item. */
-    ( function bindQuickMenu ()
-    {
-      const wrap = document.querySelector( '.menu-quick' );
-      const toggle = document.getElementById( 'menuQuickToggle' );
-      if ( !wrap || !toggle ) return;
 
-      const setOpen = open =>
-      {
-        wrap.classList.toggle( 'open', open );
-        toggle.setAttribute( 'aria-expanded', open ? 'true' : 'false' );
-      };
-
-      document.addEventListener( 'click', event =>
-      {
-        /* Selecting an item closes the panel (and the mobile drawer, if open) */
-        if ( event.target.closest( '.menu-quick-link' ) )
-        {
-          setOpen( false );
-          const menu = document.getElementById( 'navMenu' );
-          if ( menu && menu.classList.contains( 'show' ) && window.bootstrap && bootstrap.Collapse )
-          {
-            bootstrap.Collapse.getInstance( menu )?.hide();
-          }
-          return;
-        }
-
-        /* The Menu button toggles open / closed */
-        if ( event.target.closest( '#menuQuickToggle' ) )
-        {
-          const isOpen = wrap.classList.contains( 'open' );
-          setOpen( !isOpen );
-          if ( isOpen ) toggle.focus();
-          return;
-        }
-
-        /* Clicking outside the open panel closes it */
-        if ( wrap.classList.contains( 'open' ) && !wrap.contains( event.target ) )
-        {
-          setOpen( false );
-        }
-      } );
-
-      /* Close on Escape and return focus to the trigger */
-      document.addEventListener( 'keydown', event =>
-      {
-        if ( event.key === 'Escape' && wrap.classList.contains( 'open' ) )
-        {
-          setOpen( false );
-          toggle.focus();
-        }
-      } );
-    } )();
-  </script>
 
   <!-- ===== HOME - HERO ===== -->
   <section class="hero-section text-white" id="home">
     <div class="hero-slider" id="heroSlider">
       <div class="hero-slide-track" id="heroTrack">
-        <div class="hero-slide hero-slide-1" role="img" aria-label="Hero image 1"></div>
-        <div class="hero-slide hero-slide-2" role="img" aria-label="Hero image 2"></div>
-        <div class="hero-slide hero-slide-3" role="img" aria-label="Hero image 3"></div>
-        <div class="hero-slide hero-slide-4" role="img" aria-label="Hero image 4"></div>
-        <div class="hero-slide hero-slide-5" role="img" aria-label="Hero image 5"></div>
-        <div class="hero-slide hero-slide-6" role="img" aria-label="Hero image 6"></div>
+        <div class="hero-slide hero-slide-1" role="img" aria-label="Hero image 1" data-home-image-id="hero-1"
+          draggable="false"></div>
+        <div class="hero-slide hero-slide-2" role="img" aria-label="Hero image 2" data-home-image-id="hero-2"
+          draggable="false"></div>
+        <div class="hero-slide hero-slide-3" role="img" aria-label="Hero image 3" data-home-image-id="hero-3"
+          draggable="false"></div>
+        <div class="hero-slide hero-slide-4" role="img" aria-label="Hero image 4" data-home-image-id="hero-4"
+          draggable="false"></div>
+        <div class="hero-slide hero-slide-5" role="img" aria-label="Hero image 5" data-home-image-id="hero-5"
+          draggable="false"></div>
+        <div class="hero-slide hero-slide-6" role="img" aria-label="Hero image 6" data-home-image-id="hero-6"
+          draggable="false"></div>
       </div>
     </div>
     <div class="hero-overlay"></div>
@@ -2197,11 +2135,11 @@
         <div class="col-lg-6">
           <div class="hero-badge">
             <i class="fa-solid fa-shield-halved"></i>
-            <span data-i18n="hero.badge">Debre Berhan University ICT Platform</span>
+            <span data-i18n="hero.badge">MAU ICT Platform</span>
           </div>
           <h1 class="hero-title text-white mb-4">
-            <span data-i18n="hero.title">Smart Computer Maintenance </span>
-            <span data-i18n="hero.title_span">Request &amp; Tracking System</span>
+            <span data-i18n="hero.title">Smart ICT Maintenance </span>
+            <span data-i18n="hero.title_span">Management System</span>
           </h1>
           <p class="hero-subtitle mb-4">
             <span data-i18n="hero.subtitle">Fast, transparent, and reliable computer, printer, and software maintenance
@@ -2234,7 +2172,8 @@
             <div style="width:1px;background:rgba(255,255,255,.2);"></div>
             <div>
               <div class="fw-bold fs-5">24/7</div>
-              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="home.stat3.label">System Access</span></div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="home.stat3.label">System
+                  Access</span></div>
             </div>
             <div style="width:1px;background:rgba(255,255,255,.2);"></div>
             <div>
@@ -2394,7 +2333,7 @@
         <h2 class="section-title"><span data-i18n="features.title">Platform Capabilities</span></h2>
         <p class="text-muted mx-auto" style="max-width:620px;"><span data-i18n="features.desc">A comprehensive toolkit
             designed to streamline the entire
-            ICT hardware and software maintenance lifecycle at Debre Berhan University.</span></p>
+            ICT hardware and software maintenance lifecycle at Mekdela Amba University.</span></p>
       </div>
       <div class="row g-4">
         <div class="col-md-6 col-lg-4">
@@ -2664,6 +2603,40 @@
             </ul>
           </div>
         </div>
+        <div class="col-md-6">
+          <div class="service-card" style="border-top:4px solid #7c3aed;">
+            <div class="service-icon" style="background:#ede9fe;">
+              <i class="fa-solid fa-network-wired" style="color:#7c3aed;"></i>
+            </div>
+            <h5 class="fw-bold mb-2"><span data-i18n="svc4.title">Network Maintenance</span></h5>
+            <p class="text-muted mb-3" style="font-size:.9rem;line-height:1.7;">
+              <span data-i18n="svc4.desc">Diagnosis and maintenance of campus Wi-Fi, wired LAN, routers, switches,
+                access points, and network connectivity for offices and labs.</span>
+            </p>
+            <ul class="list-unstyled mb-0">
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check" style="color:#7c3aed;font-size:.75rem;"></i>
+                <span class="text-muted small">Wi-Fi &amp; LAN Connectivity Issues</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check" style="color:#7c3aed;font-size:.75rem;"></i>
+                <span class="text-muted small">Router, Switch &amp; Access Point Maintenance</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check" style="color:#7c3aed;font-size:.75rem;"></i>
+                <span class="text-muted small">IP, DNS &amp; DHCP Configuration</span>
+              </li>
+              <li class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-check" style="color:#7c3aed;font-size:.75rem;"></i>
+                <span class="text-muted small">Network Cabling &amp; Physical Links</span>
+              </li>
+              <li class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-check" style="color:#7c3aed;font-size:.75rem;"></i>
+                <span class="text-muted small">Firewall &amp; Network Security Checks</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -2766,8 +2739,8 @@
                 <div class="col-12">
                   <label class="form-label small fw-semibold" for="contactMessage"><span
                       data-i18n="contact.form.message">Message</span></label>
-                  <textarea class="form-control" id="contactMessage" rows="5"
-                    placeholder="Type your message here..." required></textarea>
+                  <textarea class="form-control" id="contactMessage" rows="5" placeholder="Type your message here..."
+                    required></textarea>
                 </div>
                 <div class="col-12">
                   <div id="contactSuccess" class="alert alert-success" role="alert" style="display:none;">
@@ -2801,8 +2774,8 @@
       <div class="text-center mb-5">
         <div class="section-label"><span data-i18n="about.label">About Us</span></div>
         <h2 class="section-title"><span data-i18n="about.title">About the Platform</span></h2>
-        <p class="text-muted mx-auto" style="max-width:620px;"><span data-i18n="about.intro">The Smart Computer
-            Maintenance Service Request &amp; Tracking
+        <p class="text-muted mx-auto" style="max-width:620px;"><span data-i18n="about.intro">The Smart ICT Maintenance
+            Management
             System is designed to digitize and improve hardware and software maintenance request
             management for the community.</span></p>
       </div>
@@ -2938,9 +2911,9 @@
       <!-- Brand -->
       <div class="site-brand-block">
         <span class="site-brand-icon" aria-hidden="true"><i class="fa-solid fa-wrench"></i></span>
-        <h2 class="site-brand-title"><span data-i18n="footer.brand">Smart Computer Maintenance Service</span></h2>
+        <h2 class="site-brand-title"><span data-i18n="footer.brand">Smart ICT Maintenance Management System</span></h2>
         <p class="site-brand-about">
-          <span data-i18n="footer.about">Debre Berhan University's dedicated platform for managing hardware and
+          <span data-i18n="footer.about">Mekdela Amba University's dedicated platform for managing hardware and
             software maintenance requests &#8212;
             replacing paper-based forms with a transparent digital workflow.</span>
         </p>
@@ -2951,7 +2924,6 @@
         <div class="site-footer-col">
           <h3 class="site-footer-col-title"><span data-i18n="footer.nav">Navigation</span></h3>
           <ul class="site-footer-links">
-            <li><a href="#mainNavbar" class="footer-link"><span data-i18n="nav.menu">Menu</span></a></li>
             <li><a href="#home" class="footer-link"><span data-i18n="nav.home">Home</span></a></li>
             <li><a href="#features" class="footer-link"><span data-i18n="nav.features">Features</span></a></li>
             <li><a href="#workflow" class="footer-link"><span data-i18n="nav.workflow">Workflow</span></a></li>
@@ -2964,8 +2936,10 @@
           <h3 class="site-footer-col-title"><span data-i18n="footer.access">Access</span></h3>
           <ul class="site-footer-links">
             <li><a href="/views/login.html" class="footer-link"><span data-i18n="nav.login">Login</span></a></li>
-            <li><a href="/views/register.html" class="footer-link"><span data-i18n="nav.register">Register</span></a></li>
-            <li><a href="/views/login.html" class="footer-link"><span data-i18n="footer.admin">Admin Panel</span></a></li>
+            <li><a href="/views/register.html" class="footer-link"><span data-i18n="nav.register">Register</span></a>
+            </li>
+            <li><a href="/views/login.html" class="footer-link"><span data-i18n="footer.admin">Admin Panel</span></a>
+            </li>
             <li><a href="/views/login.html" class="footer-link"><span data-i18n="footer.tech">Technician</span></a></li>
           </ul>
         </div>
@@ -3017,8 +2991,8 @@
           class="footer-social-btn"><i class="fa-brands fa-x-twitter"></i></a>
         <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
           class="footer-social-btn"><i class="fa-brands fa-linkedin-in"></i></a>
-        <a href="https://github.com/sosinatezera/DBU-ICT-MAINTENANCE-SERVICE" target="_blank"
-          rel="noopener noreferrer" aria-label="GitHub" class="footer-social-btn"><i class="fa-brands fa-github"></i></a>
+        <a href="https://github.com/sosinatezera/DBU-ICT-MAINTENANCE-SERVICE" target="_blank" rel="noopener noreferrer"
+          aria-label="GitHub" class="footer-social-btn"><i class="fa-brands fa-github"></i></a>
       </div>
 
       <hr class="site-footer-divider" />
@@ -3032,7 +3006,8 @@
           <a href="/views/register.html" class="footer-link"><i class="fa-solid fa-user-plus me-1"></i>Register</a>
         </nav>
         <p class="site-footer-copyright">
-          &copy; 2024 <span data-i18n="footer.rights">Debre Berhan University ICT Hardware &amp; Software Maintenance
+          &copy; 2026 <span data-i18n="footer.rights">Mekdela Amba University ICT Hardware &amp; Software
+            Maintenance
             System. All rights reserved.</span>
         </p>
       </div>
@@ -3048,63 +3023,50 @@
   <script src="/assets/js/validation.js?v=6"></script>
   <script>
     /* ===== Navbar scroll effect ===== */
-    const navbar = document.getElementById( 'mainNavbar' );
     window.addEventListener( 'scroll', () =>
     {
-      navbar.classList.toggle( 'scrolled', window.scrollY > 40 );
       document.getElementById( 'scrollTopBtn' ).classList.toggle( 'visible', window.scrollY > 300 );
     } );
 
     /* ===== Single-Section View Navigation =====
-       Clicking a navbar item shows ONLY its own section (no reload):
+      Clicking an in-page section link shows ONLY its own section (no reload):
          Home     → #home + #home-stats + #home-metrics + #home-quick
          Features → #features      Workflow → #workflow
          Services → #services      Contact  → #contact
-         About Us → #about         Menu     → #site-footer (footer content)
-       Only one section is visible at a time; the navbar stays visible;
+         About Us → #about
+       Only one section is visible at a time;
        the URL hash updates without a full page reload; the active nav
        item is highlighted. In-page anchors (hero CTA, quick-access
        cards, footer links) switch views the same way. */
     ( function initViewNavigation ()
     {
       const VIEWS = {
-        home: [ 'home', 'home-stats', 'home-metrics', 'home-quick' ],
-        features: [ 'features' ],
-        workflow: [ 'workflow' ],
-        services: [ 'services' ],
-        contact: [ 'contact' ],
-        about: [ 'about' ],
-        menu: [ 'site-footer' ],
+        home: ['home', 'home-stats', 'home-metrics', 'home-quick'],
+        features: ['features'],
+        workflow: ['workflow'],
+        services: ['services'],
+        contact: ['contact'],
+        about: ['about'],
       };
       const HASH_VIEW = {
         'home': 'home', 'features': 'features', 'workflow': 'workflow',
         'services': 'services', 'contact': 'contact', 'about': 'about',
-        'site-footer': 'menu', 'menu': 'menu',
       };
-      const allIds = [ ...new Set( Object.values( VIEWS ).flat() ) ];
+      const allIds = [...new Set( Object.values( VIEWS ).flat() )];
       const sections = allIds.map( id => document.getElementById( id ) ).filter( Boolean );
 
       function setActiveView ( name )
       {
-        if ( !VIEWS[ name ] ) return;
+        if ( !VIEWS[name] ) return;
         sections.forEach( el =>
         {
-          el.classList.toggle( 'd-none', !VIEWS[ name ].includes( el.id ) );
+          el.classList.toggle( 'd-none', !VIEWS[name].includes( el.id ) );
         } );
 
-        /* Navbar highlight: section links, or the Menu button for footer */
-        document.querySelectorAll( '.nav-link-item' ).forEach( l => l.classList.remove( 'active' ) );
-        const toggle = document.getElementById( 'menuQuickToggle' );
-        if ( toggle ) toggle.classList.remove( 'active' );
-        if ( name === 'menu' )
-        {
-          if ( toggle ) toggle.classList.add( 'active' );
-        }
-        else
-        {
-          const link = document.querySelector( `.nav-link-item[href="#${ name }"]` );
-          if ( link ) link.classList.add( 'active' );
-        }
+        document.querySelectorAll( '.nav-link-item' ).forEach( link => link.classList.remove( 'active' ) );
+        const activeLink = document.querySelector( `.nav-link-item[href="#${ name }"]` );
+        if ( activeLink ) activeLink.classList.add( 'active' );
+
       }
 
       function navigate ( name, hash )
@@ -3114,25 +3076,14 @@
         window.scrollTo( { top: 0, behavior: 'smooth' } );
       }
 
-      /* Nav links + Menu button + menu-quick "Footer" item */
+      /* Section links and footer links use the single-view navigation. */
       document.addEventListener( 'click', event =>
       {
-        const toggle = event.target.closest( '#menuQuickToggle' );
-        if ( toggle )
-        {
-          navigate( 'menu', 'site-footer' );
-          const panel = document.getElementById( 'menuQuickPanel' );
-          const wrap = document.querySelector( '.menu-quick' );
-          if ( wrap && wrap.classList.contains( 'open' ) ) { wrap.classList.remove( 'open' ); }
-          if ( toggle.getAttribute( 'aria-expanded' ) === 'true' ) toggle.setAttribute( 'aria-expanded', 'false' );
-          return;
-        }
-
         const link = event.target.closest( 'a[href^="#"]' );
         if ( link )
         {
           const hash = link.getAttribute( 'href' ).slice( 1 );
-          const view = HASH_VIEW[ hash ];
+          const view = HASH_VIEW[hash];
           if ( view )
           {
             event.preventDefault();
@@ -3142,7 +3093,7 @@
       } );
 
       /* Honour an initial hash (e.g. #services) on first load */
-      const initial = HASH_VIEW[ window.location.hash.slice( 1 ) ] || 'home';
+      const initial = HASH_VIEW[window.location.hash.slice( 1 )] || 'home';
       setActiveView( initial );
     } )();
 
@@ -3183,7 +3134,7 @@
       } );
 
       /* --- Clone slide 1 at the end for a seamless home6 → home1 loop --- */
-      const clone = slides[ 0 ].cloneNode( true );
+      const clone = slides[0].cloneNode( true );
       clone.setAttribute( 'aria-hidden', 'true' );
       track.appendChild( clone );
 
@@ -3253,8 +3204,8 @@
         for ( let i = 0; i < dots.length; i++ )
         {
           const on = i === index;
-          dots[ i ].classList.toggle( 'is-active', on );
-          dots[ i ].setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+          dots[i].classList.toggle( 'is-active', on );
+          dots[i].setAttribute( 'aria-pressed', on ? 'true' : 'false' );
         }
       }
 
@@ -3290,7 +3241,7 @@
         hero.addEventListener( 'mouseleave', restartTimer );
         new IntersectionObserver( entries =>
         {
-          if ( !entries[ 0 ].isIntersecting ) pauseTimer();
+          if ( !entries[0].isIntersecting ) pauseTimer();
           else restartTimer();
         }, { rootMargin: '0px 0px -10% 0px' } ).observe( hero );
       }
@@ -3363,19 +3314,6 @@
         if ( cur >= target ) clearInterval( t );
       }, 40 );
     }
-
-    /* ===== Close mobile menu on link click ===== */
-    document.querySelectorAll( '.nav-link-item' ).forEach( link =>
-    {
-      link.addEventListener( 'click', () =>
-      {
-        const menu = document.getElementById( 'navMenu' );
-        if ( menu.classList.contains( 'show' ) && window.bootstrap && bootstrap.Collapse )
-        {
-          bootstrap.Collapse.getInstance( menu )?.hide();
-        }
-      } );
-    } );
 
     window.addEventListener( 'load', loadStats );
 
@@ -3484,6 +3422,8 @@
       }
     } );
   </script>
-<script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/home-layout.js?v=1"></script>
+  <script src="/assets/js/theme.js"></script>
 </body>
+
 </html>

@@ -1,6 +1,6 @@
 /* ============================================================
    responsive.css — Responsive / Mobile Overrides
-   DBU ICT Maintenance Request & Tracking System
+   MAU ICT Maintenance Request & Tracking System
    ============================================================ */
 
 /* ── Global mobile guards ──────────────────────────────────── */
@@ -136,11 +136,6 @@ html, body { overflow-x: hidden; }
   .auth-body .card-body { padding: 1.5rem !important; }
 }
 
-/* ── Landing Page Nav ──────────────────────────────────────── */
-@media (max-width: 767.98px) {
-  .navbar-collapse .btn { display: block; width: 100%; margin-top: 0.5rem; margin-left: 0 !important; }
-}
-
 /* ── Workflow Steps ────────────────────────────────────────── */
 @media (max-width: 575.98px) {
   .workflow-step { padding: 0.65rem !important; }
@@ -164,4 +159,23 @@ html, body { overflow-x: hidden; }
   .table-responsive table thead { display: table-header-group !important; }
   .table-responsive table tr,
   .table-responsive table td { display: table-row; }
+}
+
+/* Shared responsive polish */
+@media (max-width: 991.98px) {
+  .dashboard-body > .d-flex > .flex-grow-1 { width: 100%; }
+  .topbar { min-height: 56px; }
+  .topbar-title-stack h5 { max-width: 58vw; }
+}
+
+@media (max-width: 575.98px) {
+  .dashboard-body main { padding-left: .85rem !important; padding-right: .85rem !important; }
+  .topbar-title-stack h5 { font-size: .95rem; max-width: 54vw; }
+  .topbar-subtitle { display: none; }
+  .card-header { padding: .75rem .85rem; }
+  .card-body { padding: .85rem !important; }
+  .btn { min-height: 40px; }
+  .btn-sm { min-height: 32px; }
+  .table-responsive { border-radius: var(--radius-sm); }
+  .table-responsive table { min-width: 560px; }
 }

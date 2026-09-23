@@ -1,6 +1,6 @@
 /**
  * migrateStudentToRequester.js — Migration script to convert 'student' role users to 'Requester'
- * Smart Computer Maintenance Service Request and Tracking System
+ * Smart ICT Maintenance Management System
  *
  * This script safely migrates any existing users with role 'student' to 'Requester'.
  * It does NOT delete users - only updates their role.

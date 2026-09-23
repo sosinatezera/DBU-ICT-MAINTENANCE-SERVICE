@@ -1,6 +1,6 @@
 /* ============================================================
    theme.js — Global Light / Dark Theme Utility (shared)
-   DBU ICT Maintenance Request & Tracking System
+   MAU ICT Maintenance Management System
 
    Single source of truth for the application-wide theme.
    Exposes: getTheme, setTheme, toggleTheme, initTheme.
@@ -9,20 +9,20 @@
    Marker:      <html data-theme="dark"> (absence = light)
    ============================================================ */
 
-const THEME_STORAGE_KEY = 'theme';
+const THEME_STORAGE_KEY = "theme";
 
 function getTheme() {
-  return localStorage.getItem(THEME_STORAGE_KEY) || 'light';
+  return localStorage.getItem(THEME_STORAGE_KEY) || "light";
 }
 
 /* Apply the theme to <html>, persist when asked, and sync any
    switcher controls already present in the DOM. */
 function applyTheme(theme, save) {
-  const value = theme === 'dark' ? 'dark' : 'light';
-  if (value === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
+  const value = theme === "dark" ? "dark" : "light";
+  if (value === "dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
   } else {
-    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.removeAttribute("data-theme");
   }
   if (save) localStorage.setItem(THEME_STORAGE_KEY, value);
   syncThemeSwitchers(value);
@@ -33,53 +33,56 @@ function setTheme(theme) {
 }
 
 function toggleTheme() {
-  setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+  setTheme(getTheme() === "dark" ? "light" : "dark");
 }
 
 /* Reflect the current theme on every [data-theme-switch] control. */
 function syncThemeSwitchers(theme) {
-  const isDark = theme === 'dark';
-  document.querySelectorAll('[data-theme-switch]').forEach((btn) => {
-    btn.setAttribute('aria-pressed', isDark ? 'false' : 'true');
-    btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-    btn.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
-    const sun = btn.querySelector('.theme-sun');
-    const moon = btn.querySelector('.theme-moon');
-    if (sun) sun.style.display = isDark ? 'inline' : 'none';
-    if (moon) moon.style.display = isDark ? 'none' : 'inline';
+  const isDark = theme === "dark";
+  document.querySelectorAll("[data-theme-switch]").forEach((btn) => {
+    btn.setAttribute("aria-pressed", isDark ? "false" : "true");
+    btn.setAttribute(
+      "aria-label",
+      isDark ? "Switch to light mode" : "Switch to dark mode",
+    );
+    btn.title = isDark ? "Switch to light mode" : "Switch to dark mode";
+    const sun = btn.querySelector(".theme-sun");
+    const moon = btn.querySelector(".theme-moon");
+    if (sun) sun.style.display = isDark ? "inline" : "none";
+    if (moon) moon.style.display = isDark ? "none" : "inline";
   });
-  document.querySelectorAll('[data-theme-radio]').forEach((radio) => {
-    if (radio.value === (isDark ? 'dark' : 'light')) radio.checked = true;
+  document.querySelectorAll("[data-theme-radio]").forEach((radio) => {
+    if (radio.value === (isDark ? "dark" : "light")) radio.checked = true;
   });
 }
 
 /* Build a single switcher control and return it. */
 function buildThemeSwitch(onClick) {
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'app-theme-switch';
-  btn.setAttribute('data-theme-switch', '');
-  btn.setAttribute('aria-label', 'Switch theme');
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "app-theme-switch";
+  btn.setAttribute("data-theme-switch", "");
+  btn.setAttribute("aria-label", "Switch theme");
   btn.innerHTML =
     '<i class="bi bi-sun-fill theme-sun" style="display:none;"></i>' +
     '<i class="bi bi-moon-stars-fill theme-moon"></i>';
-  btn.addEventListener('click', onClick);
+  btn.addEventListener("click", onClick);
   return btn;
 }
 
 /* Inject the switcher into the page at the best available spot. */
 function injectThemeSwitch() {
-  if (document.body && document.body.classList.contains('auth-body')) return; // no toggle on login/register
-  if (document.querySelector('.app-theme-switch')) return; // already present
+  if (document.body && document.body.classList.contains("auth-body")) return; // no toggle on login/register
+  if (document.querySelector(".app-theme-switch")) return; // already present
 
-  const sidebarNav = document.querySelector('.sidebar');
+  const sidebarNav = document.querySelector(".sidebar");
   if (sidebarNav) {
     // Dashboard / role pages: place the toggle at the top of the left sidebar,
     // outside the brand link so clicking it does not trigger navigation.
     const btn = buildThemeSwitch(toggleTheme);
-    btn.classList.add('app-theme-in-sidebar');
-    btn.setAttribute('title', 'Toggle dark/light mode');
-    const brandLink = sidebarNav.querySelector('a[href]');
+    btn.classList.add("app-theme-in-sidebar");
+    btn.setAttribute("title", "Toggle dark/light mode");
+    const brandLink = sidebarNav.querySelector("a[href]");
     if (brandLink && brandLink.parentNode === sidebarNav) {
       brandLink.after(btn);
     } else {
@@ -88,53 +91,64 @@ function injectThemeSwitch() {
     return;
   }
 
-  const topbar = document.querySelector('.topbar');
+  const topbar = document.querySelector(".topbar");
   if (topbar) {
     // Dashboard / role pages without a sidebar: add to topbar's controls.
     const btn = buildThemeSwitch(toggleTheme);
-    btn.classList.add('app-theme-in-topbar');
+    btn.classList.add("app-theme-in-topbar");
     // Prefer an existing right-aligned action cluster, else append to topbar.
     const cluster =
-      topbar.querySelector('.d-flex.gap-3 > *')?.parentElement ||
-      topbar.querySelector('.d-flex.align-items-center.gap-3') ||
-      topbar.querySelector('.d-flex.justify-content-between > div:last-child') ||
+      topbar.querySelector(".d-flex.gap-3 > *")?.parentElement ||
+      topbar.querySelector(".d-flex.align-items-center.gap-3") ||
+      topbar.querySelector(
+        ".d-flex.justify-content-between > div:last-child",
+      ) ||
       topbar;
     cluster.appendChild(btn);
     return;
   }
 
-  const mainNavbar = document.getElementById('mainNavbar');
-  if (mainNavbar) {
-    // Landing page: add to the navbar's action cluster (Login/Register) on the
-    // right, or inside the nav menu. Avoid matching the .navbar-brand (it shares
-    // some utility classes), so scope to the nav menu / collapse region.
+  // Public navbar (index.html): inject into navbar action area
+  const navActions = document.querySelector(
+    ".main-navbar .d-flex.align-items-center.gap-2.mt-2.mt-lg-0",
+  );
+  if (navActions && !document.body.classList.contains("auth-body")) {
     const btn = buildThemeSwitch(toggleTheme);
-    btn.classList.add('app-theme-in-navbar');
+    btn.classList.add("app-theme-in-navbar");
+    const before = navActions.firstElementChild;
+    if (before) navActions.insertBefore(btn, before);
+    else navActions.appendChild(btn);
+    return;
+  }
+
+  const mainNavbar = document.getElementById("mainNavbar");
+  if (mainNavbar && !document.body.classList.contains("auth-body")) {
+    const btn = buildThemeSwitch(toggleTheme);
+    btn.classList.add("app-theme-in-navbar");
     const actions =
-      mainNavbar.querySelector('#navMenu .d-flex.align-items-center.gap-2') ||
-      mainNavbar.querySelector('#navMenu') ||
-      mainNavbar.querySelector('.navbar-collapse');
+      mainNavbar.querySelector("#navMenu .d-flex.align-items-center.gap-2") ||
+      mainNavbar.querySelector("#navMenu") ||
+      mainNavbar.querySelector(".navbar-collapse");
     if (actions) {
-      actions.appendChild(btn);
-    } else {
-      const container = mainNavbar.querySelector('.container') || mainNavbar;
-      container.appendChild(btn);
+      const before = actions.firstElementChild;
+      if (before) actions.insertBefore(btn, before);
+      else actions.appendChild(btn);
     }
     return;
   }
 
   // Public / auth pages (login, register): floating top-right.
   const btn = buildThemeSwitch(toggleTheme);
-  btn.classList.add('app-theme-float');
+  btn.classList.add("app-theme-float");
   document.body.appendChild(btn);
 }
 
 /* Bind existing or newly injected switcher controls. */
 function bindThemeSwitchers() {
-  document.querySelectorAll('[data-theme-switch]').forEach((btn) => {
+  document.querySelectorAll("[data-theme-switch]").forEach((btn) => {
     if (btn.dataset.themeBound) return;
-    btn.dataset.themeBound = '1';
-    btn.addEventListener('click', toggleTheme);
+    btn.dataset.themeBound = "1";
+    btn.addEventListener("click", toggleTheme);
   });
 }
 
@@ -143,10 +157,12 @@ function initTheme() {
   const theme = getTheme();
   applyTheme(theme, false);
   injectThemeSwitch();
-  syncThemeSwitchers(theme); /* sync freshly-injected switch icons to saved theme */
+  syncThemeSwitchers(
+    theme,
+  ); /* sync freshly-injected switch icons to saved theme */
   bindThemeSwitchers();
 }
 
-if (typeof window !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', initTheme);
+if (typeof window !== "undefined") {
+  document.addEventListener("DOMContentLoaded", initTheme);
 }

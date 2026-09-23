@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-  <script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'||l==='om'){ document.documentElement.setAttribute( 'lang', l );}}catch(e){ }})();</script>
-  <script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="page.userRequest">Submit Request — Smart Computer Maintenance Service</title>
+  <title data-i18n="page.userRequest">Submit Request — Smart ICT Maintenance Management System</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -91,7 +91,7 @@
       <a href="/" class="text-decoration-none">
         <div class="text-center mb-4">
           <i class="bi bi-tools fs-3"></i>
-          <div class="fw-bold small mt-1" data-i18n="auth.brand">Smart Computer Maintenance</div>
+          <div class="fw-bold small mt-1" data-i18n="auth.brand">Smart ICT Maintenance Management System</div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
@@ -119,9 +119,6 @@
           <i class="bi bi-person-circle fs-5"></i>
           <span class="small" id="sidebarUserName" class="text-white-50"></span>
         </div>
-        <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
-          <i class="bi bi-box-arrow-right me-1"></i><span data-i18n="common.logout">Logout</span>
-        </a>
       </div>
     </nav>
 
@@ -167,7 +164,8 @@
                   <div class="row g-3">
                     <div class="col-md-6">
                       <label for="requesterName" class="form-label fw-semibold">
-                        <i class="bi bi-person me-1 text-primary"></i><span data-i18n="profile.fullName">Full Name</span> <span class="text-danger">*</span>
+                        <i class="bi bi-person me-1 text-primary"></i><span data-i18n="profile.fullName">Full
+                          Name</span> <span class="text-danger">*</span>
                       </label>
                       <input type="text" class="form-control form-control-lg" id="requesterName"
                         placeholder="e.g. John Doe" required minlength="2" data-i18n-placeholder="req.ph.name" />
@@ -175,14 +173,16 @@
                     </div>
                     <div class="col-md-6">
                       <label for="requesterPhone" class="form-label fw-semibold">
-                        <i class="bi bi-telephone me-1 text-primary"></i><span data-i18n="profile.phone">Phone Number</span> <span class="text-danger">*</span>
+                        <i class="bi bi-telephone me-1 text-primary"></i><span data-i18n="profile.phone">Phone
+                          Number</span> <span class="text-danger">*</span>
                       </label>
                       <div class="input-group input-group-lg">
                         <span class="input-group-text"><i class="bi bi-telephone-fill text-muted"></i></span>
                         <input type="tel" class="form-control" id="requesterPhone" placeholder="0912 345 678 (09 or 07)"
                           required data-i18n-placeholder="req.ph.phone" />
                       </div>
-                      <div class="form-text" data-i18n="req.contactNote">We'll use this to contact you about your request.</div>
+                      <div class="form-text" data-i18n="req.contactNote">We'll use this to contact you about your
+                        request.</div>
                       <div class="invalid-feedback" data-i18n="req.err.phone">Please enter your phone number.</div>
                     </div>
                   </div>
@@ -199,32 +199,34 @@
                 </div>
                 <div class="card-body p-4">
                   <label class="form-label fw-semibold mb-3">
-                    <span data-i18n="req.deviceType.label">Select the device that has a hardware/software fault</span> <span class="text-danger">*</span>
+                    <span data-i18n="req.deviceType.label">Select the device that has a hardware/software fault</span>
+                    <span class="text-danger">*</span>
                   </label>
                   <div class="row g-3" id="deviceTypeCards"></div>
                   <div class="invalid-feedback d-block mt-2" id="deviceTypeError" style="display:none!important;"></div>
                   <script>
-    /* Centralized equipment configuration.
-       - name  = display label on the card (user-facing)
-       - value = exact value sent to the backend / stored in MongoDB
-                 (must match the Ticket.equipmentType enum)
-       - image = verified real photograph matching the device.         */
-    const equipmentTypes = [
-    { id: 'dev_computer', name: 'Desktop Computer', value: 'Desktop Computer', image: '/assets/images/desktop.jpg', alt: 'Desktop Computer' },
-    { id: 'dev_laptop', name: 'Laptop', value: 'Laptop', image: '/assets/images/laptop1.jpg', alt: 'Laptop' },
-    { id: 'dev_printer', name: 'Printer', value: 'Printer', image: '/assets/images/printer.jpg', alt: 'Printer' },
-    { id: 'dev_scanner', name: 'Scanner', value: 'Scanner', image: '/assets/images/scanner.jpg', alt: 'Scanner' },
-    { id: 'dev_monitor', name: 'Monitor', value: 'Monitor', image: '/assets/images/monitor.jpg', alt: 'Monitor' },
-    { id: 'dev_projector', name: 'Projector', value: 'Projector', image: '/assets/images/project.jpg', alt: 'Projector' },
-    { id: 'dev_ups', name: 'UPS / Power Supply', value: 'UPS / Power Supply', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80&auto=format&fit=crop', alt: 'UPS / Power Supply' },
-    { id: 'dev_peripheral', name: 'Keyboard / Mouse', value: 'Keyboard / Mouse', image: '/assets/images/mouse1.jpg', alt: 'Keyboard / Mouse' },
-    { id: 'dev_other', name: 'Other', value: 'Other', image: '/assets/images/home1.png', alt: 'Other' },
-    ];
+                    /* Centralized equipment configuration.
+                       - name  = display label on the card (user-facing)
+                       - value = exact value sent to the backend / stored in MongoDB
+                                 (must match the Ticket.equipmentType enum)
+                       - image = verified real photograph matching the device.         */
+                    const equipmentTypes = [
+                      { id: 'dev_computer', name: 'Desktop Computer', value: 'Desktop Computer', image: '/assets/images/desktop.jpg', alt: 'Desktop Computer' },
+                      { id: 'dev_laptop', name: 'Laptop', value: 'Laptop', image: '/assets/images/laptop1.jpg', alt: 'Laptop' },
+                      { id: 'dev_network', name: 'Network', value: 'Network', image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'%3E%3Cpath d='M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3-3-3-3 3zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'/%3E%3C/svg%3E", alt: 'Network' },
+                      { id: 'dev_printer', name: 'Printer', value: 'Printer', image: '/assets/images/printer.jpg', alt: 'Printer' },
+                      { id: 'dev_scanner', name: 'Scanner', value: 'Scanner', image: '/assets/images/scanner.jpg', alt: 'Scanner' },
+                      { id: 'dev_monitor', name: 'Monitor', value: 'Monitor', image: '/assets/images/monitor.jpg', alt: 'Monitor' },
+                      { id: 'dev_projector', name: 'Projector', value: 'Projector', image: '/assets/images/project.jpg', alt: 'Projector' },
+                      { id: 'dev_ups', name: 'UPS / Power Supply', value: 'UPS / Power Supply', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80&auto=format&fit=crop', alt: 'UPS / Power Supply' },
+                      { id: 'dev_peripheral', name: 'Keyboard / Mouse', value: 'Keyboard / Mouse', image: '/assets/images/mouse1.jpg', alt: 'Keyboard / Mouse' },
+                      { id: 'dev_other', name: 'Other', value: 'Other', image: '/assets/images/home1.png', alt: 'Other' },
+                    ];
 
-    ( function renderEquipmentCards ()
-    {
+                    ( function renderEquipmentCards ()
+                    {
                       const container = document.getElementById( 'deviceTypeCards' );
-    if ( !container ) return;
+                      if ( !container ) return;
                       container.innerHTML = equipmentTypes.map( ( t, i ) => `
     <div class="col-6 col-md-4">
       <input type="radio" class="btn-check device-radio" name="deviceType" id="${ t.id }" value="${ t.value }" ${ i === 0 ? ' required' : '' } />
@@ -252,50 +254,64 @@
                     <!-- Title -->
                     <div class="col-12">
                       <label for="title" class="form-label fw-semibold">
-                        <i class="bi bi-tag me-1 text-primary"></i><span data-i18n="req.title">Request Title</span> <span class="text-danger">*</span>
+                        <i class="bi bi-tag me-1 text-primary"></i><span data-i18n="req.title">Request Title</span>
+                        <span class="text-danger">*</span>
                       </label>
                       <input type="text" class="form-control form-control-lg" id="title"
-                        placeholder="e.g. Laptop screen not working" required minlength="5" data-i18n-placeholder="req.ph.title" />
-                      <div class="invalid-feedback" data-i18n="req.err.title">Please provide a clear request title (min 5 characters).</div>
+                        placeholder="e.g. Laptop screen not working" required minlength="5"
+                        data-i18n-placeholder="req.ph.title" />
+                      <div class="invalid-feedback" data-i18n="req.err.title">Please provide a clear request title (min
+                        5 characters).</div>
                     </div>
 
                     <!-- Location -->
                     <div class="col-12">
                       <label for="requestLocation" class="form-label fw-semibold">
-                        <i class="bi bi-geo-alt me-1 text-primary"></i><span data-i18n="req.location">Location</span> <span class="text-danger">*</span>
+                        <i class="bi bi-geo-alt me-1 text-primary"></i><span data-i18n="req.location">Location</span>
+                        <span class="text-danger">*</span>
                       </label>
                       <input type="text" class="form-control form-control-lg" id="requestLocation"
-                        placeholder="e.g. Block A, Room 101 / ICT Building, Lab 3" required maxlength="200" data-i18n-placeholder="req.ph.location" />
-                      <div class="invalid-feedback" data-i18n="req.err.location">Please enter the location where the maintenance is required.</div>
-                      <div class="form-text" data-i18n="req.locationHelp">Enter the building, floor, room, or office where the problem occurred.</div>
+                        placeholder="e.g. Block A, Room 101 / ICT Building, Lab 3" required maxlength="200"
+                        data-i18n-placeholder="req.ph.location" />
+                      <div class="invalid-feedback" data-i18n="req.err.location">Please enter the location where the
+                        maintenance is required.</div>
+                      <div class="form-text" data-i18n="req.locationHelp">Enter the building, floor, room, or office
+                        where the problem occurred.</div>
                     </div>
 
                     <!-- Category & Priority -->
                     <div class="col-md-6">
                       <label for="category" class="form-label fw-semibold">
-                        <i class="bi bi-tags me-1 text-primary"></i><span data-i18n="common.category">Request Category</span> <span class="text-danger">*</span>
+                        <i class="bi bi-tags me-1 text-primary"></i><span data-i18n="common.category">Request
+                          Category</span> <span class="text-danger">*</span>
                       </label>
                       <select class="form-select form-select-lg" id="category" required
                         aria-describedby="categoryFeedback">
-                        <option value="" disabled selected data-i18n="req.category.select">Select Request Category</option>
+                        <option value="" disabled selected data-i18n="req.category.select">Select Request Category
+                        </option>
                         <option value="Hardware Problem" data-i18n="req.category.hardware">Hardware Problem</option>
                         <option value="Software Problem" data-i18n="req.category.software">Software Problem</option>
-                        <option value="Internet Connectivity" data-i18n="req.category.internet">Internet Connectivity</option>
+                        <option value="Internet Connectivity" data-i18n="req.category.internet">Internet Connectivity
+                        </option>
                         <option value="Printer / Scanner" data-i18n="req.category.printer">Printer / Scanner</option>
                         <option value="Computer / Laptop" data-i18n="req.category.computer">Computer / Laptop</option>
                         <option value="Account / Password" data-i18n="req.category.account">Account / Password</option>
                         <option value="Email Problem" data-i18n="req.category.email">Email Problem</option>
-                        <option value="System / Application" data-i18n="req.category.system">System / Application</option>
+                        <option value="System / Application" data-i18n="req.category.system">System / Application
+                        </option>
                         <option value="ICT Security" data-i18n="req.category.security">ICT Security</option>
+                        <option value="Network Maintenance" data-i18n="req.category.network">Network Maintenance
+                        </option>
                         <option value="Other" data-i18n="req.category.other">Other</option>
                       </select>
-                      <div class="invalid-feedback" id="categoryFeedback" data-i18n="req.err.category">Please select a request category.</div>
+                      <div class="invalid-feedback" id="categoryFeedback" data-i18n="req.err.category">Please select a
+                        request category.</div>
                     </div>
 
                     <div class="col-md-6">
                       <label for="priority" class="form-label fw-semibold">
-                        <i class="bi bi-exclamation-triangle me-1 text-primary"></i><span data-i18n="common.priority">Priority</span> <span
-                          class="text-danger">*</span>
+                        <i class="bi bi-exclamation-triangle me-1 text-primary"></i><span
+                          data-i18n="common.priority">Priority</span> <span class="text-danger">*</span>
                       </label>
                       <select class="form-select form-select-lg" id="priority" required>
                         <option value="" data-i18n="req.priority.select">-- Select Priority --</option>
@@ -307,50 +323,132 @@
                       <div class="invalid-feedback" data-i18n="req.err.priority">Please select a priority.</div>
                       <!-- Color legend -->
                       <div class="d-flex gap-3 mt-2">
-                        <span class="small"><span style="color:#198754;font-size:1rem;">&#9679;</span> <span data-i18n="priority.low">Low</span></span>
-                        <span class="small"><span style="color:#2563eb;font-size:1rem;">&#9679;</span> <span data-i18n="priority.medium">Medium</span></span>
-                        <span class="small"><span style="color:#fd7e14;font-size:1rem;">&#9679;</span> <span data-i18n="priority.high">High</span></span>
-                        <span class="small"><span style="color:#dc3545;font-size:1rem;">&#9679;</span> <span data-i18n="priority.critical">Critical</span></span>
+                        <span class="small"><span style="color:#198754;font-size:1rem;">&#9679;</span> <span
+                            data-i18n="priority.low">Low</span></span>
+                        <span class="small"><span style="color:#2563eb;font-size:1rem;">&#9679;</span> <span
+                            data-i18n="priority.medium">Medium</span></span>
+                        <span class="small"><span style="color:#fd7e14;font-size:1rem;">&#9679;</span> <span
+                            data-i18n="priority.high">High</span></span>
+                        <span class="small"><span style="color:#dc3545;font-size:1rem;">&#9679;</span> <span
+                            data-i18n="priority.critical">Critical</span></span>
                       </div>
                     </div>
 
                     <!-- ICT Asset -->
                     <div class="col-12">
                       <label for="asset" class="form-label fw-semibold">
-                        <i class="bi bi-pc-display me-1 text-primary"></i><span data-i18n="req.assetTag">ICT Asset Tag</span>
+                        <i class="bi bi-pc-display me-1 text-primary"></i><span data-i18n="req.assetTag">ICT Asset
+                          Tag</span>
                       </label>
                       <select class="form-select" id="asset" aria-describedby="assetFeedback assetHelp">
                         <option value="" disabled selected data-i18n="req.loadingAssets">Loading ICT Assets...</option>
                       </select>
                       <div class="invalid-feedback" id="assetFeedback"></div>
-                      <div class="form-text" id="assetHelp" data-i18n="req.assetHelp">Select the asset tag if your device is registered in the
+                      <div class="form-text" id="assetHelp" data-i18n="req.assetHelp">Select the asset tag if your
+                        device is registered in the
                         system. Choose "No Asset / Not Applicable" if not applicable.</div>
                     </div>
 
                     <!-- Description -->
                     <div class="col-12">
                       <label for="description" class="form-label fw-semibold">
-                        <i class="bi bi-chat-text me-1 text-primary"></i><span data-i18n="req.problemDescription">Problem Description</span> <span
+                        <i class="bi bi-chat-text me-1 text-primary"></i><span
+                          data-i18n="req.problemDescription">Problem Description</span> <span
                           class="text-danger">*</span>
                       </label>
                       <textarea class="form-control" id="description" rows="5"
                         placeholder="Describe the problem in detail. Include:&#10;• When did it start?&#10;• What were you doing when it happened?&#10;• Any error messages you saw?"
                         required minlength="20" data-i18n-placeholder="req.ph.description"></textarea>
                       <div class="d-flex justify-content-between mt-1">
-                        <div class="form-text" data-i18n="req.descriptionHint">Be as detailed as possible to help the technician.</div>
+                        <div class="form-text" data-i18n="req.descriptionHint">Be as detailed as possible to help the
+                          technician.</div>
                         <span class="form-text" id="descCount">0 / 1000</span>
                       </div>
-                      <div class="invalid-feedback" data-i18n="req.err.description">Description must be at least 20 characters.</div>
+                      <div class="invalid-feedback" data-i18n="req.err.description">Description must be at least 20
+                        characters.</div>
                     </div>
 
                     <!-- Attachment -->
                     <div class="col-12">
                       <label for="attachment" class="form-label fw-semibold">
-                        <i class="bi bi-paperclip me-1 text-primary"></i><span data-i18n="req.attach">Attach Screenshot / Document (Optional)</span>
+                        <i class="bi bi-paperclip me-1 text-primary"></i><span data-i18n="req.attach">Attach Screenshot
+                          / Document (Optional)</span>
                       </label>
                       <input type="file" class="form-control" id="attachment"
                         accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx" />
                       <div class="form-text" data-i18n="req.attachHint">Max 5MB. Accepted: JPG, PNG, PDF, DOC.</div>
+                    </div>
+
+                    <!-- Network Maintenance Details (shown only for Network Maintenance category) -->
+                    <div class="col-12 d-none" id="networkDetailsSection">
+                      <div class="border rounded-3 bg-light-subtle p-3 mt-2">
+                        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                          <i class="bi bi-wifi text-primary fs-5"></i>
+                          <span class="fw-semibold" data-i18n="req.network.title">Network Maintenance Details</span>
+                          <span class="form-text ms-auto" data-i18n="req.network.optional">Optional — helps our network
+                            team respond faster</span>
+                        </div>
+                        <div class="row g-3">
+                          <div class="col-md-6">
+                            <label for="networkServiceType" class="form-label fw-semibold">
+                              <i class="bi bi-router me-1 text-primary"></i><span
+                                data-i18n="req.network.serviceType">Service Type</span>
+                            </label>
+                            <select class="form-select" id="networkServiceType">
+                              <option value="" data-i18n="req.network.serviceTypePlaceholder">-- Select Service Type
+                                (optional) --</option>
+                              <option value="Internet / Wi-Fi">Internet / Wi-Fi</option>
+                              <option value="LAN / Wired Network">LAN / Wired Network</option>
+                              <option value="Router / Access Point">Router / Access Point</option>
+                              <option value="Switch / Hub">Switch / Hub</option>
+                              <option value="Firewall / Security">Firewall / Security</option>
+                              <option value="Server Network">Server Network</option>
+                              <option value="Network Configuration / IP / DNS / DHCP">Network Configuration / IP / DNS /
+                                DHCP</option>
+                              <option value="Cabling / Physical Infrastructure">Cabling / Physical Infrastructure
+                              </option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </div>
+                          <div class="col-md-6">
+                            <label for="networkDevice" class="form-label fw-semibold">
+                              <i class="bi bi-hdd-network me-1 text-primary"></i><span
+                                data-i18n="req.network.device">Device / Equipment</span>
+                            </label>
+                            <input type="text" class="form-control" id="networkDevice" maxlength="100" value=""
+                              data-i18n-placeholder="req.network.devicePlaceholder" />
+                          </div>
+                          <div class="col-md-4">
+                            <label for="ipAddress" class="form-label fw-semibold">
+                              <i class="bi bi-ip me-1 text-primary"></i><span data-i18n="req.network.ip">IP
+                                Address</span>
+                            </label>
+                            <input type="text" class="form-control" id="ipAddress" maxlength="45" value=""
+                              placeholder="e.g. 192.168.1.10" data-i18n-placeholder="req.network.ipPlaceholder" />
+                          </div>
+                          <div class="col-md-4">
+                            <label for="macAddress" class="form-label fw-semibold">
+                              <i class="bi bi-hexagon me-1 text-primary"></i><span data-i18n="req.network.mac">MAC
+                                Address</span>
+                            </label>
+                            <input type="text" class="form-control" id="macAddress" maxlength="17" value=""
+                              placeholder="e.g. AA:BB:CC:DD:EE:FF" data-i18n-placeholder="req.network.macPlaceholder" />
+                          </div>
+                          <div class="col-md-4">
+                            <label for="affectedUsers" class="form-label fw-semibold">
+                              <i class="bi bi-people me-1 text-primary"></i><span
+                                data-i18n="req.network.affectedUsers">Affected Users</span>
+                            </label>
+                            <input type="number" class="form-control" id="affectedUsers" min="1" max="9999" value=""
+                              placeholder="e.g. 15" data-i18n-placeholder="req.network.usersPlaceholder" />
+                          </div>
+                          <div class="col-12">
+                            <div class="form-text" data-i18n="req.network.help">Example — to report a Wi‑Fi outage:
+                              Service Type = Internet / Wi‑Fi, Device = Access Point, Location = Block B, 2nd Floor.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                   </div>
@@ -360,7 +458,8 @@
               <!-- - Preview Summary ------------------------------ -->
               <div class="card border-0 shadow-sm mb-4 d-none" id="summaryCard">
                 <div class="card-header bg-light py-3 border-bottom">
-                  <h6 class="mb-0 fw-bold"><i class="bi bi-eye me-2 text-success"></i><span data-i18n="req.summary">Request Summary — Please Review</span>
+                  <h6 class="mb-0 fw-bold"><i class="bi bi-eye me-2 text-success"></i><span
+                      data-i18n="req.summary">Request Summary — Please Review</span>
                   </h6>
                 </div>
                 <div class="card-body p-4">
@@ -375,9 +474,11 @@
                 </button>
                 <button type="submit" class="btn btn-primary btn-lg px-5 fw-semibold flex-grow-1" id="submitBtn">
                   <span class="spinner-border spinner-border-sm me-2 d-none" id="submitSpinner"></span>
-                  <i class="bi bi-send me-1" id="submitIcon"></i><span id="submitBtnLabel" data-i18n="req.submit">Submit Request</span>
+                  <i class="bi bi-send me-1" id="submitIcon"></i><span id="submitBtnLabel" data-i18n="req.submit">Submit
+                    Request</span>
                 </button>
-                <button type="button" class="btn btn-outline-danger btn-lg" id="clearBtn" title="Clear this form" data-i18n-title="req.clearForm">
+                <button type="button" class="btn btn-outline-danger btn-lg" id="clearBtn" title="Clear this form"
+                  data-i18n-title="req.clearForm">
                   <i class="bi bi-trash"></i>
                 </button>
               </div>
@@ -394,19 +495,22 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="clearFormModalLabel"><i class="bi bi-trash me-2 text-danger"></i><span data-i18n="req.clearFormTitle">Clear
-            this form?</span></h5>
+          <h5 class="modal-title fw-bold" id="clearFormModalLabel"><i class="bi bi-trash me-2 text-danger"></i><span
+              data-i18n="req.clearFormTitle">Clear
+              this form?</span></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p class="mb-0" data-i18n="req.clearFormText">All information you entered in this form will be removed. Your request has not been submitted
+          <p class="mb-0" data-i18n="req.clearFormText">All information you entered in this form will be removed. Your
+            request has not been submitted
             yet.</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" id="clearFormCancelBtn" data-bs-dismiss="modal"><i
               class="bi bi-x-lg me-1"></i><span data-i18n="common.cancel">Cancel</span></button>
-          <button type="button" class="btn btn-danger" id="clearFormConfirmBtn"><i class="bi bi-trash me-1"></i><span data-i18n="req.clearFormConfirm">Clear
-            Form</span></button>
+          <button type="button" class="btn btn-danger" id="clearFormConfirmBtn"><i class="bi bi-trash me-1"></i><span
+              data-i18n="req.clearFormConfirm">Clear
+              Form</span></button>
         </div>
       </div>
     </div>
@@ -428,21 +532,21 @@
 
       // Priority select — color the select border based on chosen priority
       const priorityColors = { low: '#198754', medium: '#2563eb', high: '#fd7e14', critical: '#dc3545' };
-    const prioritySelect = document.getElementById( 'priority' );
-    function updatePriorityColor ()
-    {
+      const prioritySelect = document.getElementById( 'priority' );
+      function updatePriorityColor ()
+      {
         const color = priorityColors[prioritySelect.value] || '#dee2e6';
-    prioritySelect.style.borderColor = color;
-    prioritySelect.style.borderWidth = '2px';
-    prioritySelect.style.color = color;
-    prioritySelect.style.fontWeight = '600';
-    prioritySelect.style.boxShadow = prioritySelect.value ? `0 0 0 0.15rem ${ color }33` : '';
+        prioritySelect.style.borderColor = color;
+        prioritySelect.style.borderWidth = '2px';
+        prioritySelect.style.color = color;
+        prioritySelect.style.fontWeight = '600';
+        prioritySelect.style.boxShadow = prioritySelect.value ? `0 0 0 0.15rem ${ color }33` : '';
       }
-    prioritySelect?.addEventListener( 'change', updatePriorityColor );
-    updatePriorityColor(); // apply on load for default "medium"
+      prioritySelect?.addEventListener( 'change', updatePriorityColor );
+      updatePriorityColor(); // apply on load for default "medium"
     } );
   </script>
   <script src="/assets/js/theme.js"></script>
-  </body>
+</body>
 
 </html>

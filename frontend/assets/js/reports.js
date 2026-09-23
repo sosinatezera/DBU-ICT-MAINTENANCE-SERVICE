@@ -1,6 +1,6 @@
 /* ============================================================
    reports.js  —  Admin / Manager Dashboard & Reports
-    Smart Computer Maintenance Service Request and Tracking System
+    Smart ICT Maintenance Management System
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -36,6 +36,10 @@ async function initAdminDashboard() {
     animateCount('kpiCompleted',   s.completed);
     animateCount('kpiInProgress',  s.in_progress);
     animateCount('kpiTechnicians', s.total_technicians);
+    animateCount('kpiNetTotal',     s.network_total);
+    animateCount('kpiNetPending',   s.network_pending);
+    animateCount('kpiNetInProgress', s.network_in_progress);
+    animateCount('kpiNetResolved',  s.network_resolved);
 
     const total = (s.pending||0) + (s.in_progress||0) + (s.completed||0);
     animateCount('kpiTotal',       total);
@@ -47,7 +51,8 @@ async function initAdminDashboard() {
       pb.className   = `badge ${s.pending > 0 ? 'bg-danger' : 'bg-success'}`;
     }
   } catch (err) {
-    ['kpiUsers','kpiAssets','kpiPending','kpiCompleted','kpiInProgress','kpiTechnicians','kpiTotal','kpiOverdue']
+    ['kpiUsers','kpiAssets','kpiPending','kpiCompleted','kpiInProgress','kpiTechnicians','kpiTotal','kpiOverdue',
+      'kpiNetTotal','kpiNetPending','kpiNetInProgress','kpiNetResolved']
       .forEach(id => setText(id,'—'));
     const holder = document.getElementById('kpiUsers')?.closest('.row');
     if (holder) {
@@ -201,7 +206,7 @@ function renderServiceFeedbackPanel(tickets) {
    ═══════════════════════════════════════════════════════════ */
 
 // Cache of the most recently loaded report data (for CSV export)
-let _reportCache = { summary: null, byStatus: [], byCategory: [], techPerf: [], byDept: [] };
+let _reportCache = { summary: null, byStatus: [], byCategory: [], techPerf: [], byDept: [], network: null };
 let _reportFilter = { dateFrom: '', dateTo: '', type: 'all' };
 
 async function initReports() {
@@ -233,6 +238,7 @@ function applyReportTypeFilter() {
   show('sectionByCategory', type === 'all' || type === 'requests' || type === 'category');
   show('sectionTechPerf',   type === 'all' || type === 'technician');
   show('sectionByDept',     type === 'all' || type === 'requests' || type === 'department');
+  show('sectionNetwork',    type === 'all' || type === 'network');
 }
 
 async function loadReportData() {
@@ -281,6 +287,13 @@ async function loadReportData() {
     renderDeptReport(data);
     _reportCache.byDept = data;
   } catch (err) { _reportCache.byDept = []; setTableError('deptReportBody', 5, err.message); }
+
+  /* ── Network Maintenance ── */
+  try {
+    const { data } = await apiRequest(`/reports/network${qs}`);
+    renderNetworkReport(data);
+    _reportCache.network = data;
+  } catch (err) { _reportCache.network = null; renderNetworkError(err.message); }
 }
 
 /* ── Bar chart breakdown ──────────────────────────────────── */
@@ -368,6 +381,81 @@ function renderDeptReport(data) {
   }).join('');
 }
 
+/* ── Network Maintenance report ───────────────────────────── */
+const NETWORK_SERVICE_COLOURS = {
+  'Internet / Wi-Fi': '#2563eb',
+  'LAN / Wired Network': '#0ea5e9',
+  'Router / Access Point': '#7c3aed',
+  'Switch / Hub': '#f59e0b',
+  'Firewall / Security': '#dc3545',
+  'Server Network': '#198754',
+  'Network Configuration / IP / DNS / DHCP': '#64748b',
+  'Cabling / Physical Infrastructure': '#14b8a6',
+  'Other': '#adb5bd',
+};
+
+function renderNetworkReport(data) {
+  if (!data) {
+    renderNetworkError('No network maintenance data.');
+    return;
+  }
+
+  /* By service type */
+  renderBarBreakdown('netServiceBreakdown', data.byServiceType, 'serviceType', 'total',
+    s => NETWORK_SERVICE_COLOURS[s] || '#2563eb');
+
+  /* By status */
+  renderBarBreakdown('netStatusBreakdown', data.byStatus, 'status', 'total', statusColour);
+
+  /* By network device */
+  renderBarBreakdown('netDeviceBreakdown', data.byDevice, 'device', 'total');
+
+  /* By department table */
+  const deptBody = document.getElementById('netDeptBody');
+  if (deptBody) {
+    if (!data.byDepartment?.length) {
+      deptBody.innerHTML = emptyRow(3, 'No department data in the selected range.');
+    } else {
+      deptBody.innerHTML = data.byDepartment.map(d => `
+        <tr>
+          <td class="fw-semibold">${escHtml(d.department || 'Unknown')}</td>
+          <td>${d.total}</td>
+          <td class="text-success fw-semibold">${d.resolved}</td>
+        </tr>`).join('');
+    }
+  }
+
+  /* Recent network requests table */
+  const histBody = document.getElementById('netHistoryBody');
+  if (histBody) {
+    if (!data.history?.length) {
+      histBody.innerHTML = emptyRow(7, 'No network maintenance requests yet.');
+    } else {
+      histBody.innerHTML = data.history.map(h => `
+        <tr>
+          <td><strong class="text-primary">${escHtml(h.ticketId || h.id)}</strong></td>
+          <td class="text-truncate" style="max-width:220px;">${escHtml(h.title || h.problemDescription || '—')}</td>
+          <td>${escHtml(h.serviceType || '—')}</td>
+          <td>${escHtml(h.networkDevice || '—')}</td>
+          <td>${priorityBadge(h.priority)}</td>
+          <td>${statusBadge(h.status)}</td>
+          <td><small class="text-muted">${formatDate(h.created_at || h.createdAt)}</small></td>
+        </tr>`).join('');
+    }
+  }
+}
+
+function renderNetworkError(msg) {
+  ['netServiceBreakdown', 'netStatusBreakdown', 'netDeviceBreakdown'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = `<p class="text-muted small text-center py-2">${escHtml(msg || '')}</p>`;
+  });
+  const deptBody = document.getElementById('netDeptBody');
+  if (deptBody) deptBody.innerHTML = emptyRow(3, msg || 'Network report unavailable.');
+  const histBody = document.getElementById('netHistoryBody');
+  if (histBody) histBody.innerHTML = emptyRow(7, msg || 'Network report unavailable.');
+}
+
 /* ── CSV Export ───────────────────────────────────────────── */
 function exportReportCSV() {
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
@@ -420,6 +508,16 @@ function exportReportCSV() {
     });
   }
 
+  if (_reportCache.network?.byServiceType?.length) {
+    rows.push(['Network Maintenance — Requests by Service Type']);
+    rows.push(['Service Type', 'Total', 'Resolved']);
+    _reportCache.network.byServiceType.forEach(r => rows.push([r.serviceType, r.total, r.resolved]));
+    rows.push(['']);
+    rows.push(['Network Maintenance — Requests by Status']);
+    rows.push(['Status', 'Total']);
+    _reportCache.network.byStatus.forEach(r => rows.push([r.status, r.total]));
+  }
+
   if (rows.length <= 4) {
     showToast('No report data to export yet.', 'warning');
     return;
@@ -442,7 +540,8 @@ function statusColour(s) {
   return ({'submitted':'#6c757d','under_review':'#ffc107','assigned':'#6f42c1','accepted':'#0dcaf0','in_progress':'#20c997','resolved':'#198754','closed':'#343a40'})[s]||'#adb5bd';
 }
 function showSkeletons() {
-  ['kpiUsers','kpiAssets','kpiPending','kpiCompleted','kpiInProgress','kpiTechnicians','kpiTotal','kpiOverdue']
+  ['kpiUsers','kpiAssets','kpiPending','kpiCompleted','kpiInProgress','kpiTechnicians','kpiTotal','kpiOverdue',
+   'kpiNetTotal','kpiNetPending','kpiNetInProgress','kpiNetResolved']
     .forEach(id => setText(id,'…'));
 }
 function animateCount(id, target) {

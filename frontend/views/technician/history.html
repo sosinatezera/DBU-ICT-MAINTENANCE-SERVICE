@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'||l==='om'){document.documentElement.setAttribute('lang',l);}}catch(e){}})();</script>
-<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,8 +12,9 @@
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/technician.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
-<link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
+
 <body class="dashboard-body">
 
   <div class="d-flex">
@@ -24,12 +26,18 @@
         </div>
       </a>
       <ul class="nav flex-column gap-1">
-        <li><a href="dashboard.html"        class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i><span data-i18n="side.dashboard">Dashboard</span></a></li>
-        <li><a href="assigned-requests.html" class="nav-link text-white-50"><i class="bi bi-list-task me-2"></i><span data-i18n="side.assigned">Assigned Requests</span></a></li>
-        <li><a href="maintenance.html"       class="nav-link text-white-50"><i class="bi bi-tools me-2"></i><span data-i18n="side.maintenance">Maintenance Activity</span></a></li>
-        <li><a href="history.html"           class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-clock-history me-2"></i><span data-i18n="side.history">History</span></a></li>
-        <li><a href="technician-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i><span data-i18n="side.feedback">Feedback</span></a></li>
-        <li><a href="notifications.html"     class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span data-i18n="side.notifications">Notifications</span></a></li>
+        <li><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i><span
+              data-i18n="side.dashboard">Dashboard</span></a></li>
+        <li><a href="assigned-requests.html" class="nav-link text-white-50"><i class="bi bi-list-task me-2"></i><span
+              data-i18n="side.assigned">Assigned Requests</span></a></li>
+        <li><a href="maintenance.html" class="nav-link text-white-50"><i class="bi bi-tools me-2"></i><span
+              data-i18n="side.maintenance">Maintenance Activity</span></a></li>
+        <li><a href="history.html" class="nav-link text-white active bg-white bg-opacity-25 rounded"><i
+              class="bi bi-clock-history me-2"></i><span data-i18n="side.history">History</span></a></li>
+        <li><a href="technician-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i><span
+              data-i18n="side.feedback">Feedback</span></a></li>
+        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span
+              data-i18n="side.notifications">Notifications</span></a></li>
         <li><a href="profile.html" class="nav-link text-white-50" id="profileNavLink"><i
               class="bi bi-person-circle me-2"></i><span data-i18n="side.profile">My Profile</span></a></li>
       </ul>
@@ -38,14 +46,14 @@
           <i class="bi bi-person-circle fs-5"></i>
           <span class="small" id="sidebarUserName" class="text-white-50"></span>
         </div>
-        <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i><span data-i18n="side.logout">Logout</span></a>
       </div>
     </nav>
 
     <div class="flex-grow-1">
-      <header class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
+      <header
+        class="topbar bg-white border-bottom px-4 py-3 d-flex justify-content-between align-items-center shadow-sm">
         <h5 class="mb-0 fw-bold" data-i18n="hist.myTitle">My Maintenance History</h5>
-<div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2">
           <div id="notifBellContainer"></div>
           <span class="text-muted small d-none d-md-block" id="topUserName"></span>
         </div>
@@ -126,7 +134,9 @@
                   </tr>
                 </thead>
                 <tbody id="historyTableBody">
-                  <tr><td colspan="7" class="text-center text-muted py-4" data-i18n="hist.loading">Loading history...</td></tr>
+                  <tr>
+                    <td colspan="7" class="text-center text-muted py-4" data-i18n="hist.loading">Loading history...</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -144,4 +154,5 @@
   <script src="/assets/js/technicians.js?v=8"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
+
 </html>

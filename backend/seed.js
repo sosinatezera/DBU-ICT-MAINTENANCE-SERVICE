@@ -1,6 +1,6 @@
 /**
  * seed.js — Test account seed (Requester / Technician / ICT Admin)
- * Smart Computer Maintenance Service Request and Tracking System
+ * Smart ICT Maintenance Management System
  *
  * Database : ict_maintenance_db (from .env MONGO_URI / MONGO_DB_NAME)
  * Usage    :  node seed.js        (run from backend/)
@@ -54,7 +54,7 @@ async function hashMatches(plain, storedHash) {
 /* ══════════════════════════════════════════════════════════════ */
 async function seed() {
   console.log('\n╔══════════════════════════════════════════════════╗');
-  console.log('║   Smart Computer Maintenance Service — Test         ║');
+  console.log('║   Smart ICT Maintenance Management System — Test   ║');
   console.log('║   Account Seed                                     ║');
   console.log('╚══════════════════════════════════════════════════╝\n');
 

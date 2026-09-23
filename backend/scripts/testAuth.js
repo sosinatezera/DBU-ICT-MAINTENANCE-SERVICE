@@ -1,6 +1,6 @@
 /**
  * scripts/testAuth.js — End-to-end authentication verification.
- * Smart Computer Maintenance Service Request and Tracking System
+ * Smart ICT Maintenance Management System
  *
  * Checks for every seeded account:
  *   1. Database:   user exists, correct role, active status,

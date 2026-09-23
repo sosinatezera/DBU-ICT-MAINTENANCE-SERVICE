@@ -7,6 +7,14 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # AI ICT Support — server-side OpenAI integration (blueprint).
+      # OPENAI_API_KEY is REQUIRED but is a secret: add it in the Render
+      # Dashboard (service -> Environment -> Add a variable named OPENAI_API_KEY).
+      # Never commit it to the repo or expose it to the browser.
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: AI_SUPPORT_ENABLED
+        value: "true"
       - key: FRONTEND_ORIGINS
         value: https://smartcomputer-maintenance-system.netlify.app,https://smartcomputermaintenanceservice.netlify.app,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000
       - key: MONGO_URI

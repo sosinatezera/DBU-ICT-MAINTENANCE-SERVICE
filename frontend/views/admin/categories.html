@@ -50,8 +50,6 @@
               data-i18n="side.settings">Settings</span></a></li>
 
         <div class="mt-auto pt-3 border-top border-white border-opacity-25">
-          <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i
-              class="bi bi-box-arrow-right me-1"></i><span data-i18n="admin.logout">Logout</span></a>
         </div>
     </nav>
 
@@ -108,7 +106,8 @@
               </div>
               <div class="card-body">
                 <div id="categoryStats">
-                  <div class="text-center text-muted py-3" data-i18n="admin.categories.stats.loading">Loading stats...</div>
+                  <div class="text-center text-muted py-3" data-i18n="admin.categories.stats.loading">Loading stats...
+                  </div>
                 </div>
               </div>
             </div>
@@ -123,7 +122,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="categoryModalLabel" data-i18n="admin.categories.modal.addTitle">Add Category</h5>
+          <h5 class="modal-title fw-bold" id="categoryModalLabel" data-i18n="admin.categories.modal.addTitle">Add
+            Category</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -134,13 +134,16 @@
               <label for="categoryName" class="form-label fw-semibold"><span
                   data-i18n="admin.categories.modal.name">Category Name</span> <span
                   class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="categoryName" data-i18n-placeholder="admin.categories.modal.name.placeholder" placeholder="e.g. Hardware, Software, Internet"
-                required />
+              <input type="text" class="form-control" id="categoryName"
+                data-i18n-placeholder="admin.categories.modal.name.placeholder"
+                placeholder="e.g. Hardware, Software, Internet" required />
             </div>
             <div class="mb-3">
-              <label for="categoryDescription" class="form-label fw-semibold" data-i18n="admin.categories.modal.description">Description</label>
+              <label for="categoryDescription" class="form-label fw-semibold"
+                data-i18n="admin.categories.modal.description">Description</label>
               <textarea class="form-control" id="categoryDescription" rows="3"
-                data-i18n-placeholder="admin.categories.modal.description.placeholder" placeholder="Brief description of this category..."></textarea>
+                data-i18n-placeholder="admin.categories.modal.description.placeholder"
+                placeholder="Brief description of this category..."></textarea>
             </div>
           </form>
         </div>
@@ -161,12 +164,14 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="categoryViewLabel" data-i18n="admin.categories.modal.viewTitle">Category Details</h5>
+          <h5 class="modal-title fw-bold" id="categoryViewLabel" data-i18n="admin.categories.modal.viewTitle">Category
+            Details</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="categoryViewBody"></div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-i18n="admin.categories.modal.close">Close</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
+            data-i18n="admin.categories.modal.close">Close</button>
         </div>
       </div>
     </div>
@@ -192,7 +197,8 @@
           </p>
           <div class="alert alert-warning py-2 small mb-2">
             <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-            <span data-i18n="admin.categories.modal.deleteWarning">This action cannot be undone. Deleting a category does not remove its requests.</span>
+            <span data-i18n="admin.categories.modal.deleteWarning">This action cannot be undone. Deleting a category
+              does not remove its requests.</span>
           </div>
           <div id="categoryDeleteInfo"></div>
         </div>

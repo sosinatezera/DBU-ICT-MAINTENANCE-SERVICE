@@ -49,8 +49,6 @@
               data-i18n="side.settings">Settings</span></a></li>
 
         <div class="mt-auto pt-3 border-top border-white border-opacity-25">
-          <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i
-              class="bi bi-box-arrow-right me-1"></i><span data-i18n="admin.logout">Logout</span></a>
         </div>
     </nav>
 
@@ -107,6 +105,25 @@
               <div class="col-md-3 d-flex gap-2">
                 <button class="btn btn-primary flex-grow-1" id="searchBtn"><i class="bi bi-search me-1"></i><span
                     data-i18n="admin.requests.search">Search</span></button>
+              </div>
+            </div>
+            <div class="row g-2 align-items-end mt-2">
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1" for="departmentFilter"><span
+                    data-i18n="admin.requests.filter.department">Department</span></label>
+                <select class="form-select" id="departmentFilter">
+                  <option value=""><span data-i18n="admin.requests.filter.allDepartments">All Departments</span>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1" for="dateFromFilter"><span
+                    data-i18n="admin.requests.filter.from">From</span></label>
+                <input type="date" class="form-control" id="dateFromFilter" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1" for="dateToFilter"><span
+                    data-i18n="admin.requests.filter.to">To</span></label>
+                <input type="date" class="form-control" id="dateToFilter" />
               </div>
             </div>
           </div>
@@ -248,7 +265,8 @@
                 <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
                 <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
                 <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
+                    Improvement</span>
                 <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>
@@ -260,7 +278,8 @@
                 <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
                 <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
                 <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
+                    Improvement</span>
               </select>
             </div>
             <div class="col-md-6">
@@ -281,7 +300,8 @@
                 <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
                 <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
                 <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
+                    Improvement</span>
                 <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>
@@ -293,7 +313,8 @@
                 <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
                 <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
                 <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
+                    Improvement</span>
                 <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>
@@ -315,7 +336,8 @@
                 <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
                 <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
                 <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs Improvement</span>
+                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
+                    Improvement</span>
                 <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
               </select>
             </div>

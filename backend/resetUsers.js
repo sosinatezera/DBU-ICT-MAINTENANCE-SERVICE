@@ -517,7 +517,8 @@ async function runDirectMongo() {
 
 (async () => {
   console.log('\n╔══════════════════════════════════════════════════╗');
-  console.log('║   Smart Computer Maintenance Service — User Reset   ║');
+  console.log('║   Smart ICT Maintenance Management System          ║');
+  console.log('║   User Reset Script                                   ║');
   console.log('╚══════════════════════════════════════════════════╝\n');
 
   // Try direct MongoDB connection first

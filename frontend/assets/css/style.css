@@ -1,72 +1,82 @@
 /* ============================================================
    style.css — Global Design System
-   DBU ICT Maintenance Request & Tracking System
+   MAU ICT Maintenance Request & Tracking System
    Premium blue + dark navy enterprise theme
    ============================================================ */
 
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
   /* Brand */
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-deeper: #1d4ed8;
-  --primary-deep: #1e40af;
-  --primary-soft: #eff6ff;
-  --primary-subtle: #eff6ff;
-  --primary-border: #bfdbfe;
+  --primary: #155eef;
+  --primary-blue: #155eef;
+  --primary-hover: #0b4acb;
+  --primary-deeper: #0b4acb;
+  --primary-deep: #0b1f3a;
+  --primary-soft: #eef4ff;
+  --primary-subtle: #f5f8ff;
+  --primary-border: #b2ccff;
+  --accent: #f4b400;
 
   /* Semantic */
-  --secondary: #64748b;
-  --success: #16a34a;
-  --success-light: #f0fdf4;
-  --warning: #f59e0b;
-  --warning-light: #fffbeb;
-  --danger: #dc2626;
-  --danger-light: #fef2f2;
-  --info: #0ea5e9;
-  --info-light: #f0f9ff;
+  --secondary: #667085;
+  --success: #12b76a;
+  --success-light: #ecfdf3;
+  --warning: #f79009;
+  --warning-light: #fffaeb;
+  --danger: #f04438;
+  --danger-light: #fef3f2;
+  --info: #2e90fa;
+  --info-light: #eff8ff;
 
   /* Text */
-  --ink: #0f172a;
-  --dark: #111827;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --muted: #64748b;
+  --ink: #172033;
+  --dark: #172033;
+  --text-primary: #172033;
+  --text-secondary: #475467;
+  --muted: #667085;
 
   /* Background / surface */
-  --bg: #f8fafc;
-  --bg-body: #f8fafc;
+  --bg: #f5f7fa;
+  --bg-body: #f5f7fa;
   --surface: #ffffff;
-  --surface-soft: #f1f5f9;
-  --surface-secondary: #f1f5f9;
+  --surface-soft: #f8fafc;
+  --surface-secondary: #f8fafc;
 
   /* Border */
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --border-light: #f1f5f9;
+  --border: #e4e7ec;
+  --border-strong: #d0d5dd;
+  --border-light: #f2f4f7;
 
   /* Typography */
-  --font-base: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-base: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, "Liberation Mono", Menlo, monospace;
 
   /* Radius */
-  --radius-xs: .25rem;
-  --radius-sm: .45rem;
-  --radius-md: .6rem;
-  --radius-lg: .75rem;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
   --radius-pill: 999px;
 
   /* Shadows */
-  --shadow-card: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
-  --shadow-md: 0 4px 6px -1px rgba(16,24,40,.08), 0 2px 4px -2px rgba(16,24,40,.06);
-  --shadow-lg: 0 14px 28px -12px rgba(16,24,40,.18), 0 8px 16px -8px rgba(16,24,40,.12);
-  --shadow-pop: 0 20px 40px -16px rgba(16,24,40,.24);
+  --shadow-card: 0 2px 8px rgba(16,24,40,.06);
+  --shadow-md: 0 8px 24px rgba(16,24,40,.08);
+  --shadow-lg: 0 18px 40px rgba(16,24,40,.12);
+  --shadow-pop: 0 24px 48px rgba(16,24,40,.16);
 
   /* Layout */
   --transition: all .18s ease;
   --topbar-height: 64px;
   --header-height: 64px;
   --sidebar-width: 260px;
+
+  /* Enterprise aliases — additive; values mirror the palette used below */
+  --primary-dark: #0b1f3a;
+  --primary-light: #dbe8ff;
+  --background: #f5f7fa;
+  --text: #172033;
+  --shadow-sm: 0 2px 8px rgba(16,24,40,.06);
+  --shadow-tight: 0 1px 2px rgba(16,24,40,.05);
 }
 
 html { box-sizing: border-box; }
@@ -166,6 +176,36 @@ h6 { font-size: .9375rem; font-weight: 600; }   /* 15px */
 .auth-footer {
   text-align: center;
   padding-top: .5rem;
+}
+
+/* Auth forms: center the "I agree to the Terms of Service" row under the
+   fields. The checkbox keeps its Bootstrap checkbox look; only its layout
+   is centered. The inline error stays full-width below the row. */
+.auth-body .form-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: .5rem;
+  padding-left: 0;
+  margin-bottom: .25rem;
+}
+
+.auth-body .form-check .form-check-input {
+  float: none;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.auth-body .form-check .form-check-label {
+  margin: 0;
+  text-align: left;
+}
+
+.auth-body .form-check #termsError {
+  flex: 1 0 100%;
+  text-align: left;
+  margin-top: .25rem;
 }
 
 /* ── Dashboard Layout ──────────────────────────────────────── */
@@ -357,6 +397,63 @@ h6 { font-size: .9375rem; font-weight: 600; }   /* 15px */
 }
 
 .topbar .text-muted.small { color: var(--muted) !important; font-size: .85rem; }
+
+.topbar .d-flex.align-items-center.gap-3 {
+  margin-left: auto;
+  justify-content: flex-end;
+  gap: .75rem !important;
+}
+
+.dashboard-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: .5rem .9rem;
+  white-space: nowrap;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: 0 6px 16px -10px rgba(37,99,235,.9);
+}
+
+.dashboard-logout-btn i {
+  font-size: .9rem;
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding-left: .75rem !important;
+    padding-right: .75rem !important;
+  }
+
+  .topbar .d-flex.align-items-center.gap-3 {
+    gap: .5rem !important;
+    flex-wrap: nowrap;
+  }
+
+  .dashboard-logout-btn {
+    padding: .45rem .65rem;
+    min-height: 32px;
+    font-size: .8rem;
+  }
+
+  .dashboard-logout-btn span {
+    display: inline;
+  }
+
+  .topbar #topUserName {
+    display: none;
+  }
+
+  .technician-dashboard .topbar #topUserName {
+    display: inline-block !important;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
 
 /* Dropdown menus (notifications / profile) */
 .dropdown-menu {
@@ -1127,150 +1224,339 @@ body.dashboard-body > .d-flex > .flex-grow-1 > main {
   .app-footer { display: none !important; }
 }
 
-/* =========================================================
-   Public-navbar "Menu" — dedicated Quick Access control.
-   Distinct from the primary nav links (info/sections) and
-   the utility cluster (lang / theme / login / register).
-   ========================================================= */
-.menu-quick { position: relative; }
+/* ═══════════════════════════════════════════════════════════════
+   ENTERPRISE POLISH LAYER
+   Additive refinements only — no structural changes, no removals.
+   Deliberately appended AFTER the compact-density layer so these
+   surface/elevation tweaks are the final word without touching the
+   width/padding system below.
+   ═══════════════════════════════════════════════════════════════ */
 
-.menu-quick-control {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  font: inherit;
-  font-weight: 500;
-  font-size: .95rem;
-  line-height: 1.2;
-  color: var(--home-text, #0f172a);
-  background: rgba(37, 99, 235, .08);
-  border: 1px solid transparent;
-  border-radius: 10px;
-  padding: .55rem .9rem;
-  cursor: pointer;
-  transition: background-color .2s cubic-bezier(.4, 0, .2, 1),
-              color .2s cubic-bezier(.4, 0, .2, 1),
-              border-color .2s cubic-bezier(.4, 0, .2, 1),
-              box-shadow .2s cubic-bezier(.4, 0, .2, 1);
+/* Cards: 14px radius + soft resting elevation (pad system untouched) */
+.card {
+  border-radius: .875rem;
+  box-shadow: var(--shadow-card);
 }
 
-.menu-quick-control:hover {
-  color: var(--home-primary, #2563eb);
-  background: rgba(37, 99, 235, .12);
-  border-color: rgba(37, 99, 235, .25);
+/* Gentle hover lift ONLY for standalone landing content cards.
+   Dashboard KPI/metric cards are deliberately excluded — movement
+   there is distracting and the task flagged it as such. */
+body:not(.dashboard-body):not(.auth-body) .feature-card,
+body:not(.dashboard-body):not(.auth-body) .service-card,
+body:not(.dashboard-body):not(.auth-body) .contact-card,
+body:not(.dashboard-body):not(.auth-body) .about-info-card,
+body:not(.dashboard-body):not(.auth-body) .about-stat-card {
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+body:not(.dashboard-body):not(.auth-body) .feature-card:hover,
+body:not(.dashboard-body):not(.auth-body) .service-card:hover,
+body:not(.dashboard-body):not(.auth-body) .contact-card:hover,
+body:not(.dashboard-body):not(.auth-body) .about-info-card:hover,
+body:not(.dashboard-body):not(.auth-body) .about-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
 }
 
-.menu-quick-control.active {
-  color: var(--home-primary, #2563eb) !important;
-  background: rgba(37, 99, 235, .12) !important;
-  border-color: rgba(37, 99, 235, .25);
+/* Modals: soft rise-in entrance (radius already 16px via --radius-lg) */
+.modal.fade .modal-dialog {
+  transform: translateY(10px) scale(.99);
+  transition: transform .2s ease;
+}
+.modal.show .modal-dialog { transform: none; }
+
+/* Buttons: consistent 8px radius + refined primary elevation */
+.btn { border-radius: .5rem; }
+.btn-primary {
+  box-shadow: 0 1px 2px rgba(37,99,235,.2), 0 6px 14px -10px rgba(37,99,235,.45);
+}
+.btn-primary:hover {
+  box-shadow: 0 1px 2px rgba(37,99,235,.2), 0 10px 20px -10px rgba(37,99,235,.55);
 }
 
-.menu-quick-control:focus-visible {
-  outline: 2px solid var(--home-primary, #2563eb);
+/* Forms: consistent 8px radius (no height regressions vs density layer) */
+.form-control,
+.form-select { border-radius: .5rem; }
+
+/* Tables: rounded header cap consistent with the new card radius */
+.table thead th:first-child { border-top-left-radius: .5rem; }
+.table thead th:last-child  { border-top-right-radius: .5rem; }
+
+/* Status chips & alerts: hairline elevation + colored top accent */
+.badge,
+.badge-status { box-shadow: var(--shadow-tight); }
+.alert {
+  box-shadow: var(--shadow-tight);
+  border-top: 3px solid transparent;
+}
+.alert-success { border-top-color: var(--success); }
+.alert-danger  { border-top-color: var(--danger); }
+.alert-warning { border-top-color: var(--warning); }
+.alert-info    { border-top-color: var(--info); }
+.alert-primary { border-top-color: var(--primary); }
+
+/* Dropdowns: consistent elevation */
+.dropdown-menu {
+  box-shadow: var(--shadow-lg);
+  border-radius: .6rem;
+}
+
+/* Landing navbar (light theme): crisp hover/active emphasis.
+   Dark theme keeps its own stronger rules in theme.css (with !important,
+   so they win there). sidebar active state already styled in base layer. */
+/* Accessibility: keep keyboard targets clearly visible on all controls */
+.select2-container--bootstrap4 .select2-selection--single:focus,
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.form-control:focus-visible {
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
-.menu-quick-control[aria-expanded="true"] {
-  color: #ffffff;
-  background: linear-gradient(135deg, var(--home-primary, #2563eb), var(--home-primary-strong, #1d4ed8));
-  border-color: transparent;
-  box-shadow: 0 6px 16px -8px rgba(37, 99, 235, .6);
+/* Modern shared surface layer */
+body {
+  background: var(--bg-body);
+  color: var(--text);
 }
 
-.menu-quick-control i { pointer-events: none; }
-
-.menu-quick-chevron {
-  font-size: .7rem;
-  transition: transform .2s ease;
+.dashboard-body {
+  background: linear-gradient(180deg, #f8fafc 0%, var(--bg-body) 24rem);
 }
 
-.menu-quick-control[aria-expanded="true"] .menu-quick-chevron {
-  transform: rotate(180deg);
+.topbar {
+  background: rgba(255, 255, 255, .94) !important;
+  border-bottom-color: var(--border) !important;
+  box-shadow: 0 1px 0 rgba(16, 24, 40, .03), 0 8px 20px rgba(16, 24, 40, .04);
 }
 
-.menu-quick-panel {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  min-width: 260px;
-  background: var(--home-surface-3, #ffffff);
-  border: 1px solid var(--home-border, #e2e8f0);
-  border-radius: 12px;
-  box-shadow: 0 18px 40px -12px rgba(15, 23, 42, .22);
-  padding: .5rem;
-  z-index: 1200;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-8px);
-  transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+#sidebar.sidebar {
+  background: linear-gradient(180deg, #0b1f3a 0%, #071426 100%) !important;
+  border-right-color: rgba(255, 255, 255, .08);
 }
 
-.menu-quick.open .menu-quick-panel {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+#sidebar .nav-link {
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
 }
 
-.menu-quick-heading {
-  font-size: .72rem;
+#sidebar .nav-link:hover:not(.active) {
+  background: rgba(255, 255, 255, .08) !important;
+  border-color: rgba(255, 255, 255, .08);
+}
+
+#sidebar .nav-link.active {
+  background: linear-gradient(90deg, rgba(21, 94, 239, .42), rgba(21, 94, 239, .14)) !important;
+  border-color: rgba(126, 166, 255, .35);
+  box-shadow: inset 3px 0 0 var(--accent), 0 8px 18px rgba(0, 0, 0, .14);
+}
+
+.card {
+  border-radius: var(--radius-md);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.card:hover { box-shadow: var(--shadow-md) !important; }
+.card-header, .card-footer { background: var(--surface-soft); }
+
+.btn {
+  min-height: 38px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--home-text-dim, #9ca3af);
-  padding: .45rem .7rem .55rem;
+  transition: transform var(--transition), box-shadow var(--transition), background-color var(--transition), border-color var(--transition);
 }
 
-.menu-quick-link {
-  display: flex;
+.btn-primary {
+  background: var(--primary-blue, var(--primary));
+  border-color: var(--primary-blue, var(--primary));
+  box-shadow: 0 2px 5px rgba(21, 94, 239, .18);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(21, 94, 239, .18);
+}
+
+.btn-warning {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #172033;
+}
+
+.btn-warning:hover,
+.btn-warning:focus {
+  background: #d99d00;
+  border-color: #d99d00;
+  color: #172033;
+}
+
+.btn-outline-secondary,
+.btn-outline-primary,
+.btn-outline-success,
+.btn-outline-warning,
+.btn-outline-danger,
+.btn-outline-info {
+  background: var(--surface);
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+  border-color: var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(21, 94, 239, .13);
+}
+
+.table-responsive {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+}
+
+.table thead th {
+  background: #f8fafc;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  font-size: .72rem;
+  letter-spacing: .06em;
+}
+
+.table tbody td { border-bottom-color: var(--border-light); }
+.table-hover tbody tr:hover { background: var(--primary-subtle); }
+
+.badge,
+.badge-status {
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+}
+
+.status-submitted { background: #eef4ff; color: #155eef; }
+.status-under_review { background: #fff6e5; color: #b54708; }
+.status-assigned { background: #f0f4ff; color: #444ce7; }
+.status-accepted { background: #f4f3ff; color: #6938ef; }
+.status-in_progress { background: #ecfdff; color: #087f9c; }
+.status-resolved, .status-completed { background: #ecfdf3; color: #087443; }
+.status-closed { background: #f2f4f7; color: #475467; }
+
+.modal-content {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header,
+.modal-footer {
+  background: var(--surface-soft);
+  border-color: var(--border);
+}
+
+.alert {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-sm);
+}
+
+.alert-success { border-left-color: var(--success); }
+.alert-warning { border-left-color: var(--warning); }
+.alert-danger { border-left-color: var(--danger); }
+.alert-info { border-left-color: var(--info); }
+
+.auth-body {
+  background: radial-gradient(circle at 12% 12%, rgba(21, 94, 239, .09), transparent 32%),
+              linear-gradient(135deg, #f8fbff 0%, #f5f7fa 62%, #eef3fb 100%);
+}
+
+.auth-body .card {
+  border: 1px solid rgba(228, 231, 236, .9);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 45px rgba(16, 24, 40, .12);
+}
+
+.auth-body .card-body { background: rgba(255, 255, 255, .96); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* AI ICT Support widget */
+.ai-support-launcher {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 2200;
+  display: inline-flex;
   align-items: center;
-  gap: .65rem;
-  padding: .55rem .7rem;
-  border-radius: 8px;
-  color: var(--home-text, #0f172a);
-  text-decoration: none;
-  font-size: .9rem;
-  transition: background-color .15s ease, color .15s ease;
+  gap: .45rem;
+  min-height: 44px;
+  padding: .65rem .9rem;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--primary, #0b1f3a), #155eef);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(11, 31, 58, .24);
+  cursor: pointer;
+  font: 700 .84rem/1.1 var(--font-base);
+  transition: transform var(--transition), box-shadow var(--transition);
 }
 
-.menu-quick-link i {
-  width: 16px;
-  text-align: center;
-  color: var(--home-primary, #2563eb);
+.ai-support-launcher:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(11, 31, 58, .3); }
+.ai-support-launcher:focus-visible { outline: 3px solid rgba(244, 180, 0, .55); outline-offset: 3px; }
+.ai-support-sparkle { color: #f4b400; font-size: 1.1rem; }
+
+.ai-support-panel {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 5.5rem;
+  z-index: 2200;
+  display: flex;
+  flex-direction: column;
+  width: min(390px, calc(100vw - 2rem));
+  height: min(570px, calc(100vh - 7rem));
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 22px 55px rgba(16, 24, 40, .2);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px) scale(.98);
+  transform-origin: bottom right;
+  transition: opacity .18s ease, transform .18s ease;
 }
 
-.menu-quick-link:hover {
-  background: rgba(37, 99, 235, .08);
-  color: var(--home-primary, #2563eb);
-}
+.ai-support-panel.is-open { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+.ai-support-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1rem .9rem; background: linear-gradient(135deg, #0b1f3a, #155eef); color: #fff; }
+.ai-support-header strong, .ai-support-header span { display: block; }
+.ai-support-header strong { font-size: 1rem; }
+.ai-support-header span { margin-top: .2rem; color: #dbe8ff; font-size: .75rem; }
+.ai-support-close { border: 0; background: transparent; color: #fff; cursor: pointer; font-size: 1.5rem; line-height: 1; }
+.ai-support-messages { display: flex; flex: 1; flex-direction: column; gap: .65rem; overflow-y: auto; padding: 1rem; background: var(--surface-soft); }
+.ai-support-message { max-width: 86%; padding: .65rem .8rem; border-radius: 13px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .86rem; line-height: 1.45; }
+.ai-support-message.user { align-self: flex-end; border-bottom-right-radius: 4px; background: var(--primary, #155eef); color: #fff; }
+.ai-support-message.ai { align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 4px; background: var(--surface); color: var(--text); }
+.ai-support-message.thinking { color: var(--muted); font-style: italic; }
+.ai-support-message.error { border-color: #fecdca; color: #b42318; }
+.ai-support-form { padding: .75rem; border-top: 1px solid var(--border); background: var(--surface); }
+.ai-support-form textarea { display: block; width: 100%; resize: none; border: 1px solid var(--border-strong); border-radius: 10px; padding: .65rem .75rem; background: var(--surface); color: var(--text); font: inherit; }
+.ai-support-form textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(21, 94, 239, .13); }
+.ai-support-form-footer { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .55rem; }
+.ai-support-clear { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: .78rem; }
+.ai-support-send { display: inline-flex; align-items: center; gap: .45rem; min-height: 36px; border: 0; border-radius: 8px; padding: .45rem .8rem; background: var(--primary, #155eef); color: #fff; cursor: pointer; font-weight: 700; }
+.ai-support-send:disabled { cursor: wait; opacity: .6; }
 
-.menu-quick-link:focus-visible {
-  outline: 2px solid var(--home-primary, #2563eb);
-  outline-offset: -2px;
-}
-
-.menu-quick-divider {
-  height: 1px;
-  margin: .35rem .3rem;
-  background: var(--home-border, #e2e8f0);
-}
-
-@media (max-width: 991.98px) {
-  .menu-quick { width: 100%; }
-
-  .menu-quick-control {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .menu-quick-panel {
-    position: static;
-    width: 100%;
-    margin-top: .35rem;
-    box-shadow: none;
-  }
-}
-
-@media print {
-  .menu-quick { display: none !important; }
+@media (max-width: 575.98px) {
+  .ai-support-launcher { right: .75rem; bottom: .75rem; }
+  .ai-support-panel { right: .5rem; bottom: 4.8rem; width: calc(100vw - 1rem); height: min(570px, calc(100vh - 6rem)); }
 }

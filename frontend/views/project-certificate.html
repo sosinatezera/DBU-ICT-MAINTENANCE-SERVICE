@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Completion and Approval Certificate | MAU</title>
+    <style>
+        :root {
+            --navy: #202b36;
+            --blue: #52606d;
+            --gold: #d99f00;
+            --ink: #17212b;
+            --muted: #6b7785;
+            --paper: #ffffff;
+            --screen: #e9eef3;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+            background: var(--screen);
+            color: var(--ink);
+            font-family: Georgia, "Times New Roman", serif;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: flex-end;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 1rem 0;
+        }
+
+        .print-button {
+            border: 1px solid var(--navy);
+            background: var(--navy);
+            color: #fff;
+            cursor: pointer;
+            font: 600 0.8rem/1.2 Arial, sans-serif;
+            letter-spacing: 0.05em;
+            padding: 0.65rem 1rem;
+            text-transform: uppercase;
+        }
+
+        .certificate {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto 2rem;
+            padding: 13mm 14mm 12mm;
+            position: relative;
+            background: var(--paper);
+            box-shadow: 0 10px 34px rgba(16, 45, 82, 0.16);
+        }
+
+        .certificate::before {
+            content: "";
+            position: absolute;
+            inset: 7mm;
+            border: 1.3px solid var(--navy);
+            pointer-events: none;
+        }
+
+        .certificate::after {
+            content: "";
+            position: absolute;
+            inset: 8.6mm;
+            border: 0.6px solid var(--gold);
+            pointer-events: none;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .masthead {
+            border-bottom: 2px solid var(--navy);
+            padding: 1mm 9mm 4mm;
+            text-align: center;
+        }
+
+        .logo {
+            display: block;
+            width: 25mm;
+            height: 25mm;
+            margin: 0 auto 3mm;
+            object-fit: contain;
+        }
+
+        .university {
+            color: var(--navy);
+            font-size: 19pt;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            line-height: 1.15;
+            text-transform: uppercase;
+        }
+
+        .department {
+            color: var(--blue);
+            font-size: 10.5pt;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            margin-top: 2.5mm;
+            text-transform: uppercase;
+        }
+
+        .document-heading {
+            margin: 6mm 0 5mm;
+            text-align: center;
+        }
+
+        .document-heading h1 {
+            color: var(--navy);
+            font-size: 17pt;
+            letter-spacing: 0.075em;
+            line-height: 1.2;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .heading-rule {
+            background: var(--gold);
+            height: 2px;
+            margin: 3mm auto 0;
+            width: 35mm;
+        }
+
+        .body-copy {
+            font-size: 11.5pt;
+            line-height: 1.5;
+            margin: 0 8mm;
+            text-align: justify;
+        }
+
+        .body-copy strong {
+            color: var(--navy);
+        }
+
+        .project-title {
+            color: var(--navy);
+            display: block;
+            font-size: 14pt;
+            font-weight: 700;
+            letter-spacing: 0.025em;
+            line-height: 1.35;
+            margin: 3mm auto;
+            max-width: 150mm;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .info-section {
+            border-top: 1px solid #c9d3dd;
+            margin: 6mm 8mm 5mm;
+            padding-top: 4mm;
+        }
+
+        .section-label {
+            color: var(--navy);
+            font-size: 10pt;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            margin: 0 0 3mm;
+            text-transform: uppercase;
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 10mm;
+            row-gap: 3mm;
+        }
+
+        .detail {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2.5mm;
+            align-items: end;
+            font-size: 10pt;
+            min-width: 0;
+        }
+
+        .detail-label {
+            white-space: nowrap;
+        }
+
+        .line {
+            border-bottom: 1px solid #657786;
+            display: block;
+            height: 1.2em;
+            min-width: 20mm;
+        }
+
+        .approval-section {
+            border-top: 1px solid #c9d3dd;
+            margin: 5mm 8mm 0;
+            padding-top: 4mm;
+        }
+
+        .approval-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5mm 9mm;
+        }
+
+        .approval-block {
+            border: 1px solid #c9d3dd;
+            min-height: 34mm;
+            padding: 3.3mm 4mm 3mm;
+        }
+
+        .approval-block h3 {
+            border-bottom: 1.5px solid var(--gold);
+            color: var(--navy);
+            font-size: 9.3pt;
+            letter-spacing: 0.05em;
+            margin: 0 0 3mm;
+            padding-bottom: 1.8mm;
+            text-transform: uppercase;
+        }
+
+        .approval-row {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2mm;
+            align-items: end;
+            font-size: 9pt;
+            margin-top: 2.5mm;
+        }
+
+        .approval-row .line {
+            height: 1em;
+        }
+
+        .footer-note {
+            color: var(--muted);
+            font-size: 8.5pt;
+            margin: 4mm 8mm 0;
+            text-align: center;
+        }
+
+        @media (max-width: 850px) {
+            .toolbar {
+                padding: 0.75rem;
+            }
+
+            .certificate {
+                transform-origin: top center;
+                width: min(210mm, calc(100vw - 1.5rem));
+                min-height: auto;
+                margin: 0 0.75rem 1.5rem;
+                padding: 10mm 8mm;
+            }
+
+            .certificate::before {
+                inset: 4mm;
+            }
+
+            .certificate::after {
+                inset: 5.5mm;
+            }
+
+            .masthead {
+                padding-inline: 3mm;
+            }
+
+            .details,
+            .approval-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+
+            body {
+                background: #fff;
+            }
+
+            .toolbar {
+                display: none;
+            }
+
+            .certificate {
+                box-shadow: none;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toolbar">
+        <button class="print-button" type="button" onclick="window.print()">Print certificate</button>
+    </div>
+
+    <main class="certificate" aria-label="Project Completion and Approval Certificate">
+        <div class="content">
+            <header class="masthead">
+                <img class="logo" src="../assets/images/mau_logo.jpg" alt="Mekdela Amba University logo" />
+                <div class="university">Mekdela Amba University</div>
+                <div class="department">Department of Information Technology</div>
+            </header>
+
+            <section class="document-heading">
+                <h1>Project Completion and Approval Certificate</h1>
+                <div class="heading-rule" aria-hidden="true"></div>
+            </section>
+
+            <p class="body-copy">
+                This is to certify that <span class="line"
+                    style="display: inline-block; width: 72mm; vertical-align: bottom;"></span>
+                has successfully completed the project entitled:
+                <strong class="project-title">Smart ICT Maintenance Service Request &amp; Tracking System</strong>
+                The project was developed as an Information Technology project for managing ICT maintenance service
+                requests,
+                assignment, tracking, maintenance activities, and resolution processes.
+            </p>
+
+            <section class="info-section" aria-labelledby="project-information">
+                <h2 class="section-label" id="project-information">Project Information</h2>
+                <div class="details">
+                    <div class="detail"><span class="detail-label">Student Name:</span><span class="line"></span></div>
+                    <div class="detail"><span class="detail-label">Student ID:</span><span class="line"></span></div>
+                    <div class="detail"><span class="detail-label">Department:</span><span>Information Technology</span>
+                    </div>
+                    <div class="detail"><span class="detail-label">Project Advisor/Mentor:</span><span
+                            class="line"></span></div>
+                    <div class="detail"><span class="detail-label">Academic Year:</span><span>2026</span></div>
+                    <div class="detail"><span class="detail-label">Project Completion Date:</span><span
+                            class="line"></span></div>
+                </div>
+            </section>
+
+            <section class="approval-section" aria-labelledby="approval-heading">
+                <h2 class="section-label" id="approval-heading">Approval</h2>
+                <div class="approval-grid">
+                    <section class="approval-block">
+                        <h3>Part A: Student Approval</h3>
+                        <div class="approval-row"><span>Name:</span><span class="line"></span></div>
+                        <div class="approval-row"><span>Signature:</span><span class="line"></span></div>
+                        <div class="approval-row"><span>Date:</span><span class="line"></span></div>
+                    </section>
+
+                    <section class="approval-block">
+                        <h3>Part B: Project Advisor Approval</h3>
+                        <div class="approval-row"><span>Name:</span><span class="line"></span></div>
+                        <div class="approval-row"><span>Signature:</span><span class="line"></span></div>
+                        <div class="approval-row"><span>Date:</span><span class="line"></span></div>
+                    </section>
+
+                    <section class="approval-block">
+                        <h3>Part C: Department Head Approval</h3>
+                        <div class="approval-row"><span>Name:</span><span class="line"></span></div>
+                        <div class="approval-row"><span>Signature:</span><span class="line"></span></div>
+                        <div class="approval-row"><span>Date:</span><span class="line"></span></div>
+                    </section>
+
+                    <section class="approval-block">
+                        <h3>Part D: Department/University Official Approval</h3>
+                        <div class="approval-row"><span>Name:</span><span class="line"></span></div>
+                        <div class="approval-row"><span>Signature:</span><span class="line"></span></div>
+                        <div class="approval-row"><span>Date:</span><span class="line"></span></div>
+                        <div class="approval-row"><span>Official Stamp:</span><span class="line"></span></div>
+                    </section>
+                </div>
+            </section>
+
+            <p class="footer-note">This certificate confirms project completion and the approvals recorded above.</p>
+        </div>
+    </main>
+</body>
+
+</html>
