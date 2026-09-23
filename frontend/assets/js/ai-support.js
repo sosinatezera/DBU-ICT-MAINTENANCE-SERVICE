@@ -6,7 +6,7 @@
       "DOMContentLoaded",
       () => {
         const script = document.createElement("script");
-        script.src = "/assets/js/ai-support.js?v=4";
+        script.src = "/assets/js/ai-support.js?v=5";
         document.head.appendChild(script);
       },
       { once: true },
@@ -152,12 +152,12 @@
       const token = localStorage.getItem("ict_token");
       const headers = { "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
-      const response = await fetch(`${API_BASE}/ai/chat`, {
+      const response = await fetch(`${API_BASE}/ai-support`, {
         method: "POST",
         headers,
         body: JSON.stringify({
           message,
-          history: conversation.slice(0, -1),
+          conversation: conversation.slice(0, -1),
           context: { page: window.location.pathname },
         }),
         signal: controller.signal,
@@ -165,6 +165,12 @@
       const result = await response.json().catch(() => ({}));
       thinking.remove();
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Please sign in to use AI Support.");
+        }
+        if (response.status === 403) {
+          throw new Error("Your account cannot use AI Support right now.");
+        }
         if (response.status === 422 && result.message) {
           throw new Error(result.message);
         }
@@ -187,14 +193,17 @@
       addMessage(result.data.message, "ai");
     } catch (error) {
       thinking.remove();
-      if (conversation.length && conversation[conversation.length - 1].role === "user") {
+      if (
+        conversation.length &&
+        conversation[conversation.length - 1].role === "user"
+      ) {
         conversation.pop();
       }
       if (error && error.name === "AbortError") {
         console.error(
           "[AI Support] Request timed out after 30s.",
           "Endpoint:",
-          `${API_BASE}/ai/chat`,
+          `${API_BASE}/ai-support`,
         );
         addMessage(
           "AI Support is taking longer than expected. Please try again.",

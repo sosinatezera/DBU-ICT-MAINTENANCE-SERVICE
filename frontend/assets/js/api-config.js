@@ -80,7 +80,7 @@ var API_UPLOAD_BASE = apiOrigin();
    already consumes the canonical API configuration. */
 (function loadAiSupportWidget() {
   var script = document.createElement("script");
-  script.src = "/assets/js/ai-support.js?v=4";
+  script.src = "/assets/js/ai-support.js?v=5";
   script.defer = true;
   document.head.appendChild(script);
 })();

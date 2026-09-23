@@ -124,7 +124,7 @@ app.use("/api/reports", require("./routes/reports"));
 app.use("/api/maintenance", require("./routes/maintenance"));
 app.use("/api/networking", require("./routes/networking"));
 app.use("/api/inquiries", require("./routes/inquiries"));
-app.use("/api/ai", require("./routes/ai"));
+app.use("/api/ai-support", require("./routes/ai"));
 app.use("/api/settings", require("./routes/settings"));
 app.use("/api/public", require("./routes/public"));
 
