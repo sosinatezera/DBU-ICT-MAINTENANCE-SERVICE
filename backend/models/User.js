@@ -1,6 +1,6 @@
 /**
  * models/User.js
- * User schema for Smart Computer Maintenance Service Request and Tracking System
+ * User schema for Smart ICT Maintenance Management System
  *
  * Roles:
  *   - 'Requester'   → DBU staff who submit maintenance tickets

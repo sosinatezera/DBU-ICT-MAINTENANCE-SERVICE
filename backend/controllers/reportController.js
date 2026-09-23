@@ -32,6 +32,7 @@ const getDashboardStats = async (req, res, next) => {
       total_users, total_assets, total_technicians,
       submitted, under_review, in_progress, resolved, closed, total_tickets,
       avg_feedback,
+      network_total, network_pending, network_in_progress, network_resolved,
     ] = await Promise.all([
       User.countDocuments({ status: 'active' }),
       ICTAsset.countDocuments(),
@@ -45,6 +46,18 @@ const getDashboardStats = async (req, res, next) => {
       Feedback.aggregate([
         { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
       ]),
+      Ticket.countDocuments({ ...ticketMatch, category: 'Network Maintenance' }),
+      Ticket.countDocuments({
+        ...ticketMatch,
+        category: 'Network Maintenance',
+        status: { $in: ['submitted', 'under_review'] },
+      }),
+      Ticket.countDocuments({ ...ticketMatch, category: 'Network Maintenance', status: 'in_progress' }),
+      Ticket.countDocuments({
+        ...ticketMatch,
+        category: 'Network Maintenance',
+        status: { $in: ['resolved', 'closed'] },
+      }),
     ]);
 
     const pending = (submitted || 0) + (under_review || 0);
@@ -66,6 +79,10 @@ const getDashboardStats = async (req, res, next) => {
         total_tickets,
         avg_rating:  avg_feedback[0]?.avg  ? Math.round(avg_feedback[0].avg * 10) / 10 : 0,
         total_feedback: avg_feedback[0]?.count || 0,
+        network_total:       network_total || 0,
+        network_pending:     network_pending || 0,
+        network_in_progress: network_in_progress || 0,
+        network_resolved:    network_resolved || 0,
       },
     });
   } catch (err) { next(err); }
@@ -219,6 +236,74 @@ const getRequestsByCategory = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const NETWORK_CATEGORY = 'Network Maintenance';
+
+/* GET /api/reports/network — network maintenance analytics (ICT Admin) */
+const getNetworkReports = async (req, res, next) => {
+  try {
+    const dateMatch = buildDateMatch(req);
+    const baseMatch = { category: NETWORK_CATEGORY, ...(dateMatch || {}) };
+
+    const [byServiceType, byStatus, byDepartment, byDevice, history] = await Promise.all([
+      Ticket.aggregate([
+        { $match: baseMatch },
+        { $group: {
+          _id:   { $ifNull: ['$serviceType', 'Unspecified'] },
+          total: { $sum: 1 },
+          resolved: { $sum: { $cond: [{ $in: ['$status', ['resolved', 'closed']] }, 1, 0] } },
+        }},
+        { $project: { _id: 0, serviceType: '$_id', total: 1, resolved: 1 } },
+        { $sort: { total: -1 } },
+      ]),
+      Ticket.aggregate([
+        { $match: baseMatch },
+        { $group: { _id: '$status', total: { $sum: 1 } } },
+        { $project: { _id: 0, status: '$_id', total: 1 } },
+        { $sort: { total: -1 } },
+      ]),
+      Ticket.aggregate([
+        { $match: baseMatch },
+        { $lookup: { from: 'users', localField: 'requester', foreignField: '_id', as: 'u' } },
+        { $unwind: '$u' },
+        { $match: { 'u.department': { $ne: null } } },
+        { $group: {
+          _id:       '$u.department',
+          total:     { $sum: 1 },
+          resolved:  { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } },
+        }},
+        { $project: { _id: 0, department: '$_id', total: 1, resolved: 1 } },
+        { $sort: { total: -1 } },
+      ]),
+      Ticket.aggregate([
+        { $match: baseMatch },
+        { $group: {
+          _id:   { $ifNull: ['$networkDevice', 'Unspecified'] },
+          total: { $sum: 1 },
+        }},
+        { $project: { _id: 0, device: '$_id', total: 1 } },
+        { $sort: { total: -1 } },
+      ]),
+      Ticket.find(baseMatch)
+        .populate('requester', 'fullName department')
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .select('ticketId title serviceType networkDevice status priority createdAt requester')
+        .lean(),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        byServiceType,
+        byStatus,
+        byDepartment,
+        byDevice,
+        history,
+      },
+    });
+  } catch (err) { next(err); }
+};
+
 module.exports = {
   getDashboardStats,
   getRequestsByStatus,
@@ -227,4 +312,5 @@ module.exports = {
   getRequestsByDepartment,
   getRequestsByCategory,
   getRecentFeedback,
+  getNetworkReports,
 };

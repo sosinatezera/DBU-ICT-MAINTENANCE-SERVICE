@@ -1,6 +1,6 @@
 /**
  * services/mailer.js
- * Outbound email service for the Smart Computer Maintenance Service.
+ * Outbound email service for the Smart ICT Maintenance Management System.
  *
  * Uses the project's existing Nodemailer dependency and the SMTP_* settings
  * centralised in config/env.js. Email is OPTIONAL in this project: as long as
@@ -212,18 +212,18 @@ async function sendPasswordResetEmail({ to, resetUrl }) {
   }
 
   const text =
-    'You requested a password reset for your Smart Computer Maintenance Service account.\n\n' +
+    'You requested a password reset for your Smart ICT Maintenance Management System account.\n\n' +
     'Click the link below to reset your password. This link is valid for 30 minutes and can only be used once.\n\n' +
     `${resetUrl}\n\n` +
     'If you did not request this, you can safely ignore this email — your password will not change.\n\n' +
-    'Smart Computer Maintenance Service';
+    'Smart ICT Maintenance Management System';
 
   const html =
-    '<p>You requested a password reset for your <strong>Smart Computer Maintenance Service</strong> account.</p>' +
+    '<p>You requested a password reset for your <strong>Smart ICT Maintenance Management System</strong> account.</p>' +
     '<p>Click the button below to reset your password. This link is valid for <strong>30 minutes</strong> and can only be used once.</p>' +
     `<p><a href="${resetUrl}" style="display:inline-block;padding:10px 22px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Reset Password</a></p>` +
     '<p style="color:#666;">If you did not request this, you can safely ignore this email — your password will not change.</p>' +
-    '<p style="color:#888;font-size:.8rem;">Smart Computer Maintenance Service</p>';
+    '<p style="color:#888;font-size:.8rem;">Smart ICT Maintenance Management System</p>';
 
   return sendEmail({ to, subject: 'Reset your password', text, html });
 }

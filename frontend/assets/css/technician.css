@@ -1,6 +1,6 @@
 /* ============================================================
    technician.css — Technician Panel Styles
-   DBU ICT Maintenance Request & Tracking System
+   MAU ICT Maintenance Request & Tracking System
    ============================================================ */
 
 /* ── Technician Sidebar ────────────────────────────────────── */
@@ -146,4 +146,27 @@
 /* ── Technician Profile Avatar ─────────────────────────────── */
 #sidebar .rounded-circle.bg-warning {
   box-shadow: 0 2px 8px rgba(0,0,0,.28);
+}
+
+/* Technician work surfaces use the same quiet elevation as admin views. */
+.task-card,
+.assigned-card,
+.perf-card,
+.activity-card {
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.task-card:hover,
+.assigned-card:hover,
+.perf-card:hover {
+  border-color: var(--primary-border);
+  box-shadow: var(--shadow-md) !important;
+}
+
+.request-detail-label { color: var(--muted); }
+.request-detail-value { color: var(--text); }
+
+#sidebar.sidebar {
+  background: linear-gradient(180deg, #0b1f3a 0%, #071426 100%) !important;
 }

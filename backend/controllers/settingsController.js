@@ -2,19 +2,45 @@
  * controllers/settingsController.js
  * System-wide settings — read & update (admin only)
  */
-const Settings = require('../models/Settings');
-const { validateEnum, validateLength, validateBoolean, validateRequired, sanitizeString, VALID_LANGUAGES, VALID_DATE_FORMATS, VALID_TIMEZONES } = require('../middleware/validation');
+const Settings = require("../models/Settings");
+const {
+  validateEnum,
+  validateLength,
+  validateBoolean,
+  validateRequired,
+  sanitizeString,
+  VALID_LANGUAGES,
+  VALID_DATE_FORMATS,
+  VALID_TIMEZONES,
+} = require("../middleware/validation");
 
 const GENERAL_FIELDS = [
-  'systemName', 'organizationName', 'systemDescription',
-  'defaultLanguage', 'timezone', 'dateFormat',
+  "systemName",
+  "organizationName",
+  "systemDescription",
+  "defaultLanguage",
+  "timezone",
+  "dateFormat",
 ];
 
-const VALID_PRIORITIES = ['low', 'medium', 'high', 'critical'];
+const VALID_PRIORITIES = ["low", "medium", "high", "critical"];
 
 const NOTIF_FIELDS = [
-  'notifNewRequest', 'notifAssignment', 'notifStatusChange',
-  'notifCompletion', 'notifSystemSecurity', 'emailNotifications',
+  "notifNewRequest",
+  "notifAssignment",
+  "notifStatusChange",
+  "notifCompletion",
+  "notifSystemSecurity",
+  "emailNotifications",
+];
+
+const HOME_HERO_IMAGE_IDS = [
+  "hero-1",
+  "hero-2",
+  "hero-3",
+  "hero-4",
+  "hero-5",
+  "hero-6",
 ];
 
 /* ── GET /api/settings — retrieve all settings ─────────── */
@@ -34,61 +60,108 @@ const updateGeneral = async (req, res, next) => {
 
     /* Validate */
     if (req.body.systemName !== undefined) {
-      const nameErr = validateRequired(req.body.systemName, 'System name');
-      if (nameErr) return res.status(422).json({ success: false, message: nameErr });
-      const lenErr = validateLength(sanitizeString(req.body.systemName), 'System name', { min: 2, max: 100 });
-      if (lenErr) return res.status(400).json({ success: false, message: lenErr });
+      const nameErr = validateRequired(req.body.systemName, "System name");
+      if (nameErr)
+        return res.status(422).json({ success: false, message: nameErr });
+      const lenErr = validateLength(
+        sanitizeString(req.body.systemName),
+        "System name",
+        { min: 2, max: 100 },
+      );
+      if (lenErr)
+        return res.status(400).json({ success: false, message: lenErr });
     }
 
     if (req.body.organizationName !== undefined) {
-      const orgErr = validateRequired(req.body.organizationName, 'Organization name');
-      if (orgErr) return res.status(422).json({ success: false, message: orgErr });
-      const lenErr = validateLength(sanitizeString(req.body.organizationName), 'Organization name', { min: 2, max: 100 });
-      if (lenErr) return res.status(400).json({ success: false, message: lenErr });
+      const orgErr = validateRequired(
+        req.body.organizationName,
+        "Organization name",
+      );
+      if (orgErr)
+        return res.status(422).json({ success: false, message: orgErr });
+      const lenErr = validateLength(
+        sanitizeString(req.body.organizationName),
+        "Organization name",
+        { min: 2, max: 100 },
+      );
+      if (lenErr)
+        return res.status(400).json({ success: false, message: lenErr });
     }
 
     if (req.body.defaultLanguage !== undefined) {
-      const langErr = validateEnum(req.body.defaultLanguage, VALID_LANGUAGES, 'language');
-      if (langErr) return res.status(400).json({ success: false, message: langErr });
+      const langErr = validateEnum(
+        req.body.defaultLanguage,
+        VALID_LANGUAGES,
+        "language",
+      );
+      if (langErr)
+        return res.status(400).json({ success: false, message: langErr });
     }
 
     if (req.body.timezone !== undefined) {
-      const tzErr = validateEnum(req.body.timezone, VALID_TIMEZONES, 'time zone');
-      if (tzErr) return res.status(400).json({ success: false, message: tzErr });
+      const tzErr = validateEnum(
+        req.body.timezone,
+        VALID_TIMEZONES,
+        "time zone",
+      );
+      if (tzErr)
+        return res.status(400).json({ success: false, message: tzErr });
     }
 
     if (req.body.dateFormat !== undefined) {
-      const fmtErr = validateEnum(req.body.dateFormat, VALID_DATE_FORMATS, 'date format');
-      if (fmtErr) return res.status(400).json({ success: false, message: fmtErr });
+      const fmtErr = validateEnum(
+        req.body.dateFormat,
+        VALID_DATE_FORMATS,
+        "date format",
+      );
+      if (fmtErr)
+        return res.status(400).json({ success: false, message: fmtErr });
     }
 
     /* Quick / operational settings */
-    if (req.body.publicRegistration !== undefined) settings.publicRegistration = !!req.body.publicRegistration;
-    if (req.body.techAutoNotify !== undefined)     settings.techAutoNotify     = !!req.body.techAutoNotify;
+    if (req.body.publicRegistration !== undefined)
+      settings.publicRegistration = !!req.body.publicRegistration;
+    if (req.body.techAutoNotify !== undefined)
+      settings.techAutoNotify = !!req.body.techAutoNotify;
 
     if (req.body.slaResponseHours !== undefined) {
       const sla = Number(req.body.slaResponseHours);
       if (!Number.isFinite(sla) || sla < 1 || sla > 720) {
-        return res.status(400).json({ success: false, message: 'SLA response time must be between 1 and 720 hours.' });
+        return res.status(400).json({
+          success: false,
+          message: "SLA response time must be between 1 and 720 hours.",
+        });
       }
       settings.slaResponseHours = sla;
     }
 
     if (req.body.defaultPriority !== undefined) {
-      const priErr = validateEnum(req.body.defaultPriority, VALID_PRIORITIES, 'default priority');
-      if (priErr) return res.status(400).json({ success: false, message: priErr });
+      const priErr = validateEnum(
+        req.body.defaultPriority,
+        VALID_PRIORITIES,
+        "default priority",
+      );
+      if (priErr)
+        return res.status(400).json({ success: false, message: priErr });
       settings.defaultPriority = req.body.defaultPriority;
     }
 
     GENERAL_FIELDS.forEach((f) => {
       if (req.body[f] !== undefined) {
-        settings[f] = typeof req.body[f] === 'string' ? sanitizeString(req.body[f]) : req.body[f];
+        settings[f] =
+          typeof req.body[f] === "string"
+            ? sanitizeString(req.body[f])
+            : req.body[f];
       }
     });
 
     settings.updatedBy = req.user.id;
     await settings.save();
-    res.json({ success: true, message: 'General settings updated.', data: settings });
+    res.json({
+      success: true,
+      message: "General settings updated.",
+      data: settings,
+    });
   } catch (err) {
     next(err);
   }
@@ -103,10 +176,67 @@ const updateNotifications = async (req, res, next) => {
     });
     settings.updatedBy = req.user.id;
     await settings.save();
-    res.json({ success: true, message: 'Notification settings updated.', data: settings });
+    res.json({
+      success: true,
+      message: "Notification settings updated.",
+      data: settings,
+    });
   } catch (err) {
     next(err);
   }
 };
 
-module.exports = { getSettings, updateGeneral, updateNotifications };
+/* ── PUT /api/settings/home-layout — save Home image order ─ */
+const updateHomeLayout = async (req, res, next) => {
+  try {
+    const { heroOrder, logoOffset = { x: 0, y: 0 } } = req.body || {};
+    const isValidOrder =
+      Array.isArray(heroOrder) &&
+      heroOrder.length === HOME_HERO_IMAGE_IDS.length &&
+      new Set(heroOrder).size === HOME_HERO_IMAGE_IDS.length &&
+      heroOrder.every((id) => HOME_HERO_IMAGE_IDS.includes(id));
+
+    if (!isValidOrder) {
+      return res
+        .status(422)
+        .json({ success: false, message: "Home image order is invalid." });
+    }
+
+    const logoX = Number(logoOffset.x);
+    const logoY = Number(logoOffset.y);
+    if (
+      !Number.isFinite(logoX) ||
+      !Number.isFinite(logoY) ||
+      logoX < -14 ||
+      logoX > 14 ||
+      logoY < -14 ||
+      logoY > 14
+    ) {
+      return res
+        .status(422)
+        .json({ success: false, message: "Home logo position is invalid." });
+    }
+
+    const settings = await Settings.getInstance();
+    settings.homeImageLayout = {
+      heroOrder,
+      logoOffset: { x: logoX, y: logoY },
+    };
+    settings.updatedBy = req.user.id;
+    await settings.save();
+    res.json({
+      success: true,
+      message: "Home image layout saved.",
+      data: settings.homeImageLayout,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  getSettings,
+  updateGeneral,
+  updateNotifications,
+  updateHomeLayout,
+};

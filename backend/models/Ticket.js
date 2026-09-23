@@ -1,6 +1,6 @@
 /**
  * models/Ticket.js
- * Maintenance ticket schema for Smart Computer Maintenance Service Request and Tracking System
+ * Maintenance ticket schema for Smart ICT Maintenance Management System
  *
  * ticketId: Auto-generated unique tracking code (e.g., TK-1001, TK-1002)
  * status lifecycle: submitted -> under_review -> assigned -> accepted -> in_progress -> resolved -> closed
@@ -49,6 +49,7 @@ const ticketSchema = new mongoose.Schema(
       enum: [
         'Desktop Computer',
         'Laptop',
+        'Network',
         'Printer',
         'Scanner',
         'Monitor',
@@ -80,6 +81,33 @@ const ticketSchema = new mongoose.Schema(
       default: null,
     },
     officeBlock: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    /* ── Network Maintenance specific fields (optional; used only when
+       category === 'Network Maintenance') ───────────────────────────── */
+    serviceType: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    networkDevice: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    ipAddress: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    macAddress: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    affectedUsers: {
       type: String,
       trim: true,
       default: null,

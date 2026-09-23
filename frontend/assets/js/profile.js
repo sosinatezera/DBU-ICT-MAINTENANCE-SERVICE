@@ -1,7 +1,7 @@
 /* ============================================================
    profile.js — Professional Profile feature for the Requester and
    Technician dashboards.
-   DBU ICT Maintenance Request & Tracking System
+   MAU ICT Maintenance Management System
 
    Role-aware: reads the authenticated role from Auth.getUser() and
    renders ONLY that role's fields (never mixing requester and

@@ -1,6 +1,6 @@
 /**
  * frontend/server.js
- * Static HTTP server — Smart Computer Maintenance Service Request and Tracking System
+ * Static HTTP server — Smart ICT Maintenance Management System
  *
  * New folder structure:
  *   views/          → HTML pages  (was pages/)
@@ -109,7 +109,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log('');
   console.log('  ╔══════════════════════════════════════════════════════╗');
-  console.log('  ║   Smart Computer Maintenance Service                  ║');
+  console.log('  ║   Smart ICT Maintenance Management System            ║');
   console.log('  ║   Frontend Server Running                            ║');
   console.log('  ╠══════════════════════════════════════════════════════╣');
   console.log(`  ║   Local:  http://localhost:${PORT}                       ║`);

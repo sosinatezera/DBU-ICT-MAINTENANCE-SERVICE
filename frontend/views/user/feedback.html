@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'||l==='om'){document.documentElement.setAttribute('lang',l);}}catch(e){}})();</script>
-<script>(function(){try{if(localStorage.getItem('theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="page.userFeedback">Feedback — Smart Computer Maintenance Service</title>
+  <title data-i18n="page.userFeedback">Feedback — Smart ICT Maintenance Management System</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
-<link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
+
 <body class="dashboard-body">
 
   <div class="d-flex">
@@ -19,16 +21,22 @@
       <a href="/" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-tools fs-3"></i>
-          <div class="small fw-bold mt-1" data-i18n="pf.brandMain">Smart Computer Maintenance</div>
+          <div class="small fw-bold mt-1" data-i18n="pf.brandMain">Smart ICT Maintenance Management System</div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
-        <li><a href="dashboard.html"     class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i><span data-i18n="side.dashboard">Dashboard</span></a></li>
-        <li><a href="request.html"       class="nav-link text-white-50"><i class="bi bi-plus-circle me-2"></i><span data-i18n="side.new">New Request</span></a></li>
-        <li><a href="tracking.html"      class="nav-link text-white-50"><i class="bi bi-search me-2"></i><span data-i18n="side.track">Track Request</span></a></li>
-        <li><a href="history.html"       class="nav-link text-white-50"><i class="bi bi-clock-history me-2"></i><span data-i18n="side.history">History</span></a></li>
-        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span data-i18n="side.notifications">Notifications</span></a></li>
-        <li><a href="feedback.html"       class="nav-link text-white active bg-white bg-opacity-25 rounded"><i class="bi bi-star me-2"></i><span data-i18n="side.feedback">Feedback</span></a></li>
+        <li><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i><span
+              data-i18n="side.dashboard">Dashboard</span></a></li>
+        <li><a href="request.html" class="nav-link text-white-50"><i class="bi bi-plus-circle me-2"></i><span
+              data-i18n="side.new">New Request</span></a></li>
+        <li><a href="tracking.html" class="nav-link text-white-50"><i class="bi bi-search me-2"></i><span
+              data-i18n="side.track">Track Request</span></a></li>
+        <li><a href="history.html" class="nav-link text-white-50"><i class="bi bi-clock-history me-2"></i><span
+              data-i18n="side.history">History</span></a></li>
+        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span
+              data-i18n="side.notifications">Notifications</span></a></li>
+        <li><a href="feedback.html" class="nav-link text-white active bg-white bg-opacity-25 rounded"><i
+              class="bi bi-star me-2"></i><span data-i18n="side.feedback">Feedback</span></a></li>
         <li><a href="profile.html" class="nav-link text-white-50" id="profileNavLink"><i
               class="bi bi-person-circle me-2"></i><span data-i18n="side.profile">My Profile</span></a></li>
       </ul>
@@ -37,14 +45,12 @@
           <i class="bi bi-person-circle fs-5"></i>
           <span class="small" id="sidebarUserName" class="text-white-50"></span>
         </div>
-        <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
-          <i class="bi bi-box-arrow-right me-1"></i><span data-i18n="common.logout">Logout</span>
-        </a>
       </div>
     </nav>
 
     <div class="flex-grow-1">
-      <header class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
+      <header
+        class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
         <h5 class="mb-0 fw-bold" data-i18n="fb.title">Submit Feedback</h5>
         <div class="d-flex align-items-center gap-3">
         </div>
@@ -57,7 +63,8 @@
             <!-- Pending Feedback Requests -->
             <div class="card border-0 shadow-sm mb-4">
               <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-list-check text-primary me-2"></i><span data-i18n="fb.awaiting">Requests Awaiting Feedback</span></h6>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-list-check text-primary me-2"></i><span
+                    data-i18n="fb.awaiting">Requests Awaiting Feedback</span></h6>
               </div>
               <div class="card-body p-0">
                 <div id="pendingFeedbackList">
@@ -69,7 +76,8 @@
             <!-- Feedback Already Submitted (read-only) -->
             <div class="card border-0 shadow-sm mb-4 d-none" id="feedbackSubmittedCard">
               <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-check-circle-fill text-success me-2"></i><span data-i18n="fb.submitted">Feedback Submitted</span></h6>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-check-circle-fill text-success me-2"></i><span
+                    data-i18n="fb.submitted">Feedback Submitted</span></h6>
               </div>
               <div class="card-body p-4" id="feedbackSubmittedBody"></div>
             </div>
@@ -77,7 +85,8 @@
             <!-- Feedback Form -->
             <div class="card border-0 shadow-sm" id="feedbackFormCard" style="display:none!important;">
               <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-star text-warning me-2"></i><span data-i18n="fb.rateExperience">Rate Your Service Experience</span></h6>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-star text-warning me-2"></i><span
+                    data-i18n="fb.rateExperience">Rate Your Service Experience</span></h6>
               </div>
               <div class="card-body p-4">
                 <div id="feedbackAlert" class="alert d-none" role="alert"></div>
@@ -92,83 +101,115 @@
 
                   <!-- Star Rating -->
                   <div class="mb-3">
-                    <label class="form-label fw-semibold"><span data-i18n="fb.overallRating">Overall Service Rating</span> <span class="text-danger">*</span></label>
+                    <label class="form-label fw-semibold"><span data-i18n="fb.overallRating">Overall Service
+                        Rating</span> <span class="text-danger">*</span></label>
                     <div class="star-rating d-flex gap-2 fs-2" id="starRating" role="group" aria-label="Rating">
-                      <i class="bi bi-star text-warning star" data-value="1" style="cursor:pointer;" tabindex="0" role="radio" aria-label="1 star"></i>
-                      <i class="bi bi-star text-warning star" data-value="2" style="cursor:pointer;" tabindex="0" role="radio" aria-label="2 stars"></i>
-                      <i class="bi bi-star text-warning star" data-value="3" style="cursor:pointer;" tabindex="0" role="radio" aria-label="3 stars"></i>
-                      <i class="bi bi-star text-warning star" data-value="4" style="cursor:pointer;" tabindex="0" role="radio" aria-label="4 stars"></i>
-                      <i class="bi bi-star text-warning star" data-value="5" style="cursor:pointer;" tabindex="0" role="radio" aria-label="5 stars"></i>
+                      <i class="bi bi-star text-warning star" data-value="1" style="cursor:pointer;" tabindex="0"
+                        role="radio" aria-label="1 star"></i>
+                      <i class="bi bi-star text-warning star" data-value="2" style="cursor:pointer;" tabindex="0"
+                        role="radio" aria-label="2 stars"></i>
+                      <i class="bi bi-star text-warning star" data-value="3" style="cursor:pointer;" tabindex="0"
+                        role="radio" aria-label="3 stars"></i>
+                      <i class="bi bi-star text-warning star" data-value="4" style="cursor:pointer;" tabindex="0"
+                        role="radio" aria-label="4 stars"></i>
+                      <i class="bi bi-star text-warning star" data-value="5" style="cursor:pointer;" tabindex="0"
+                        role="radio" aria-label="5 stars"></i>
                     </div>
                     <input type="hidden" id="ratingValue" name="overallRating" value="" required />
-                    <div class="form-text" id="ratingLabel" aria-live="polite" data-i18n="fb.clickStar">Click a star to rate</div>
+                    <div class="form-text" id="ratingLabel" aria-live="polite" data-i18n="fb.clickStar">Click a star to
+                      rate</div>
                   </div>
 
                   <div class="row g-3">
                     <div class="col-md-6">
-                      <label class="form-label fw-semibold small"><span data-i18n="fb.serviceQuality">Service Quality</span> <span class="text-danger">*</span></label>
+                      <label class="form-label fw-semibold small"><span data-i18n="fb.serviceQuality">Service
+                          Quality</span> <span class="text-danger">*</span></label>
                       <select class="form-select" id="fbServiceQuality">
                         <option value="" data-i18n="fb.select">-- Select --</option>
-                        <option data-i18n="fb.opt.excellent">Excellent</option><option data-i18n="fb.opt.veryGood">Very Good</option><option data-i18n="fb.opt.good">Good</option>
-                        <option data-i18n="fb.opt.fair">Fair</option><option data-i18n="fb.opt.poor">Poor</option>
+                        <option data-i18n="fb.opt.excellent">Excellent</option>
+                        <option data-i18n="fb.opt.veryGood">Very Good</option>
+                        <option data-i18n="fb.opt.good">Good</option>
+                        <option data-i18n="fb.opt.fair">Fair</option>
+                        <option data-i18n="fb.opt.poor">Poor</option>
                       </select>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label fw-semibold small"><span data-i18n="fb.professionalism">Technician Professionalism</span> <span class="text-danger">*</span></label>
+                      <label class="form-label fw-semibold small"><span data-i18n="fb.professionalism">Technician
+                          Professionalism</span> <span class="text-danger">*</span></label>
                       <select class="form-select" id="fbProfessionalism">
                         <option value="" data-i18n="fb.select">-- Select --</option>
-                        <option data-i18n="fb.opt.excellent">Excellent</option><option data-i18n="fb.opt.veryGood">Very Good</option><option data-i18n="fb.opt.good">Good</option>
-                        <option data-i18n="fb.opt.fair">Fair</option><option data-i18n="fb.opt.poor">Poor</option>
+                        <option data-i18n="fb.opt.excellent">Excellent</option>
+                        <option data-i18n="fb.opt.veryGood">Very Good</option>
+                        <option data-i18n="fb.opt.good">Good</option>
+                        <option data-i18n="fb.opt.fair">Fair</option>
+                        <option data-i18n="fb.opt.poor">Poor</option>
                       </select>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label fw-semibold small"><span data-i18n="fb.responseTime">Response Time</span> <span class="text-danger">*</span></label>
+                      <label class="form-label fw-semibold small"><span data-i18n="fb.responseTime">Response Time</span>
+                        <span class="text-danger">*</span></label>
                       <select class="form-select" id="fbResponseTime">
                         <option value="" data-i18n="fb.select">-- Select --</option>
-                        <option data-i18n="fb.opt.fast">Fast</option><option data-i18n="fb.opt.normal">Normal</option><option data-i18n="fb.opt.slow">Slow</option>
+                        <option data-i18n="fb.opt.fast">Fast</option>
+                        <option data-i18n="fb.opt.normal">Normal</option>
+                        <option data-i18n="fb.opt.slow">Slow</option>
                       </select>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label fw-semibold small"><span data-i18n="fb.communication">Communication</span> <span class="text-danger">*</span></label>
+                      <label class="form-label fw-semibold small"><span
+                          data-i18n="fb.communication">Communication</span> <span class="text-danger">*</span></label>
                       <select class="form-select" id="fbCommunication">
                         <option value="" data-i18n="fb.select">-- Select --</option>
-                        <option data-i18n="fb.opt.excellent">Excellent</option><option data-i18n="fb.opt.veryGood">Very Good</option><option data-i18n="fb.opt.good">Good</option>
-                        <option data-i18n="fb.opt.fair">Fair</option><option data-i18n="fb.opt.poor">Poor</option>
+                        <option data-i18n="fb.opt.excellent">Excellent</option>
+                        <option data-i18n="fb.opt.veryGood">Very Good</option>
+                        <option data-i18n="fb.opt.good">Good</option>
+                        <option data-i18n="fb.opt.fair">Fair</option>
+                        <option data-i18n="fb.opt.poor">Poor</option>
                       </select>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label fw-semibold small"><span data-i18n="fb.problemResolution">Problem Resolution</span> <span class="text-danger">*</span></label>
+                      <label class="form-label fw-semibold small"><span data-i18n="fb.problemResolution">Problem
+                          Resolution</span> <span class="text-danger">*</span></label>
                       <select class="form-select" id="fbProblemResolution">
                         <option value="" data-i18n="fb.select">-- Select --</option>
-                        <option data-i18n="fb.opt.complete">Completely Resolved</option><option data-i18n="fb.opt.partial">Partially Resolved</option><option data-i18n="fb.opt.notResolved">Not Resolved</option>
+                        <option data-i18n="fb.opt.complete">Completely Resolved</option>
+                        <option data-i18n="fb.opt.partial">Partially Resolved</option>
+                        <option data-i18n="fb.opt.notResolved">Not Resolved</option>
                       </select>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label fw-semibold small"><span data-i18n="fb.satisfaction">Satisfaction Level</span> <span class="text-danger">*</span></label>
+                      <label class="form-label fw-semibold small"><span data-i18n="fb.satisfaction">Satisfaction
+                          Level</span> <span class="text-danger">*</span></label>
                       <select class="form-select" id="fbSatisfaction">
                         <option value="" data-i18n="fb.select">-- Select --</option>
-                        <option data-i18n="fb.opt.verySatisfied">Very Satisfied</option><option data-i18n="fb.opt.satisfied">Satisfied</option><option data-i18n="fb.opt.neutral">Neutral</option>
-                        <option data-i18n="fb.opt.dissatisfied">Dissatisfied</option><option data-i18n="fb.opt.veryDissatisfied">Very Dissatisfied</option>
+                        <option data-i18n="fb.opt.verySatisfied">Very Satisfied</option>
+                        <option data-i18n="fb.opt.satisfied">Satisfied</option>
+                        <option data-i18n="fb.opt.neutral">Neutral</option>
+                        <option data-i18n="fb.opt.dissatisfied">Dissatisfied</option>
+                        <option data-i18n="fb.opt.veryDissatisfied">Very Dissatisfied</option>
                       </select>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label fw-semibold small"><span data-i18n="fb.recommend">Would Recommend Service</span> <span class="text-danger">*</span></label>
+                      <label class="form-label fw-semibold small"><span data-i18n="fb.recommend">Would Recommend
+                          Service</span> <span class="text-danger">*</span></label>
                       <select class="form-select" id="fbWouldRecommend">
                         <option value="" data-i18n="fb.select">-- Select --</option>
-                        <option data-i18n="fb.opt.yes">Yes</option><option data-i18n="fb.opt.no">No</option>
+                        <option data-i18n="fb.opt.yes">Yes</option>
+                        <option data-i18n="fb.opt.no">No</option>
                       </select>
                     </div>
                   </div>
 
                   <div class="mb-3 mt-3">
                     <label for="comment" class="form-label fw-semibold" data-i18n="fb.comment">Requester Comment</label>
-                    <textarea class="form-control" id="comment" rows="3"
-                              data-i18n-placeholder="fb.ph.comment" placeholder="Tell us about your experience with the maintenance service..."></textarea>
+                    <textarea class="form-control" id="comment" rows="3" data-i18n-placeholder="fb.ph.comment"
+                      placeholder="Tell us about your experience with the maintenance service..."></textarea>
                   </div>
                   <div class="mb-4">
-                    <label for="suggestions" class="form-label fw-semibold" data-i18n="fb.suggestions">Suggestions for Improvement</label>
-                    <textarea class="form-control" id="suggestions" rows="2"
-                              data-i18n-placeholder="fb.ph.suggestions" placeholder="How can we improve our service?"></textarea>
+                    <label for="suggestions" class="form-label fw-semibold" data-i18n="fb.suggestions">Suggestions for
+                      Improvement</label>
+                    <textarea class="form-control" id="suggestions" rows="2" data-i18n-placeholder="fb.ph.suggestions"
+                      placeholder="How can we improve our service?"></textarea>
                   </div>
 
                   <button type="submit" class="btn btn-primary px-4" id="feedbackSubmitBtn">
@@ -192,4 +233,5 @@
   <script src="/assets/js/requests.js?v=8"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
+
 </html>

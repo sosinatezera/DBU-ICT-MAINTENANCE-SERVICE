@@ -50,8 +50,6 @@
               class="bi bi-gear me-2"></i><span data-i18n="side.settings">Settings</span></a></li>
 
         <div class="mt-auto pt-3 border-top border-white border-opacity-25">
-          <a href="#" class="nav-link text-white-50 small" id="logoutBtn"><i
-              class="bi bi-box-arrow-right me-1"></i><span data-i18n="admin.logout">Logout</span></a>
         </div>
     </nav>
 
@@ -108,7 +106,7 @@
                 <h6 class="mb-0 fw-bold"><i class="bi bi-gear me-2 text-primary"></i><span
                     data-i18n="admin.settings.general.title">General Configuration</span></h6>
                 <small class="text-muted"><span data-i18n="admin.settings.general.desc">Configure system-wide settings
-                    for the Smart Computer Maintenance Service.</span></small>
+                    for the Smart ICT Maintenance Management System.</span></small>
               </div>
               <div class="card-body p-4">
                 <form id="generalSettingsForm">
@@ -123,7 +121,8 @@
                         <label for="settingSystemName" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.general.systemName">System Name</span></label>
                         <input type="text" class="form-control" id="settingSystemName"
-                          data-i18n-placeholder="set.placeholder.systemName" placeholder="Smart Computer Maintenance Service Request and Tracking System" />
+                          data-i18n-placeholder="set.placeholder.systemName"
+                          placeholder="Smart ICT Maintenance Management System" />
                         <div class="form-text"><span data-i18n="admin.settings.general.systemName.hint">Displayed in the
                             browser title and header.</span></div>
                       </div>
@@ -131,7 +130,8 @@
                         <label for="settingOrgName" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.general.orgName">Organization Name</span></label>
                         <input type="text" class="form-control" id="settingOrgName"
-                          data-i18n-placeholder="set.placeholder.universityName" placeholder="Debre Berhan University" />
+                          data-i18n-placeholder="set.placeholder.universityName"
+                          placeholder="Mekdela Amba University" />
                         <div class="form-text"><span data-i18n="admin.settings.general.orgName.hint">Name of your
                             institution or organization.</span></div>
                       </div>
@@ -139,7 +139,8 @@
                         <label for="settingSystemDesc" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.general.systemDesc">System Description</span></label>
                         <textarea class="form-control" id="settingSystemDesc" rows="2"
-                          data-i18n-placeholder="set.placeholder.systemDescription" placeholder="Brief description of the system..."></textarea>
+                          data-i18n-placeholder="set.placeholder.systemDescription"
+                          placeholder="Brief description of the system..."></textarea>
                         <div class="form-text"><span data-i18n="admin.settings.general.systemDesc.hint">Optional
                             description shown on the public landing page.</span></div>
                       </div>
@@ -160,14 +161,15 @@
                             data-i18n="admin.settings.general.language">Default Language</span></label>
                         <select class="form-select" id="settingLanguage">
                           <option value="en"><span data-i18n="admin.settings.language.english">English</span>
-<option value="am"><span data-i18n="admin.settings.language.amharic">Amharic</span>
+                          <option value="am"><span data-i18n="admin.settings.language.amharic">Amharic</span>
                         </select>
                       </div>
                       <div class="col-md-4">
                         <label for="settingTimezone" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.general.timezone">Time Zone</span></label>
                         <select class="form-select" id="settingTimezone">
-                          <option value="Africa/Addis_Ababa" data-i18n="set.tz.eat">Ethiopian Time (EAT) — Africa/Addis_Ababa (UTC+03:00)</option>
+                          <option value="Africa/Addis_Ababa" data-i18n="set.tz.eat">Ethiopian Time (EAT) —
+                            Africa/Addis_Ababa (UTC+03:00)</option>
                           <option value="Africa/Nairobi" data-i18n="set.tz.nairobi">Nairobi</option>
                           <option value="UTC" data-i18n="set.tz.utc">UTC</option>
                         </select>
@@ -313,7 +315,8 @@
                     <div class="alert alert-info small mt-3 mb-0">
                       <i class="bi bi-info-circle me-1"></i>
                       <strong><span data-i18n="admin.settings.notif.emailNote">Note</span>:</strong> <span
-                        data-i18n="admin.settings.notif.emailNoteDesc">Email notifications are available when SMTP is configured. Enable Email Notifications to send email alerts for supported system events.</span>
+                        data-i18n="admin.settings.notif.emailNoteDesc">Email notifications are available when SMTP is
+                        configured. Enable Email Notifications to send email alerts for supported system events.</span>
                     </div>
                   </div>
 
@@ -513,7 +516,8 @@
                         <label for="profileDept" class="form-label fw-semibold"><span
                             data-i18n="admin.settings.profile.department">Department</span></label>
                         <input type="text" class="form-control" id="profileDept"
-                          data-i18n-placeholder="set.profile.deptPlaceholder" placeholder="e.g. System Administration" />
+                          data-i18n-placeholder="set.profile.deptPlaceholder"
+                          placeholder="e.g. System Administration" />
                       </div>
                     </div>
                   </div>
@@ -533,9 +537,11 @@
                             image, 1.5 MB max. Stored privately in your browser.</span></div>
                       </div>
                       <div class="col-md-5">
-                        <label for="profileImageUrl" class="form-label fw-semibold" data-i18n="set.profile.imageUrlLabel">Image URL (optional)</label>
+                        <label for="profileImageUrl" class="form-label fw-semibold"
+                          data-i18n="set.profile.imageUrlLabel">Image URL (optional)</label>
                         <input type="url" class="form-control" id="profileImageUrl"
-                          data-i18n-placeholder="set.profile.imageUrlPlaceholder" placeholder="https://example.com/photo.jpg" />
+                          data-i18n-placeholder="set.profile.imageUrlPlaceholder"
+                          placeholder="https://example.com/photo.jpg" />
                         <div class="form-text"><span data-i18n="admin.settings.profile.imageUrl.hint">Used only when no
                             photo is uploaded.</span></div>
                       </div>

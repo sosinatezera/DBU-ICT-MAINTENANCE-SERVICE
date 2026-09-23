@@ -1,6 +1,6 @@
 /* ============================================================
    notifications.js — Bell Dropdown + Full Notification Page
-    Smart Computer Maintenance Service Request and Tracking System
+    Smart ICT Maintenance Management System
    ============================================================ */
 
 /* ── Auto-init on DOMContentLoaded ─────────────────────────── */

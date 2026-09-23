@@ -1,5 +1,5 @@
 /**
- * seed.js — Full database seed for Smart Computer Maintenance Service
+ * seed.js — Full database seed for Smart ICT Maintenance Management System
  * Database: ict_maintenance_db
  *
  * Usage:  node scripts/seed.js
@@ -46,7 +46,7 @@ async function seed() {
   const dbName = process.env.MONGO_DB_NAME || 'ict_maintenance_db';
 
   console.log('\n╔══════════════════════════════════════════════════╗');
-  console.log('║   Smart Computer Maintenance Service — Database    ║');
+  console.log('║   Smart ICT Maintenance Management System          ║');
   console.log('║   Seed Script                                      ║');
   console.log('╚══════════════════════════════════════════════════╝\n');
   console.log(`  DB  : ${uri}/${dbName}`);

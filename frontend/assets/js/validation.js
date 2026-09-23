@@ -1,6 +1,6 @@
 /* ============================================================
    validation.js — Shared Frontend Validation Utilities
-    Smart Computer Maintenance Service Request and Tracking System
+    Smart ICT Maintenance Management System
    
    Mirrors backend/middleware/validation.js rules.
    Provides inline field validation, error display, and

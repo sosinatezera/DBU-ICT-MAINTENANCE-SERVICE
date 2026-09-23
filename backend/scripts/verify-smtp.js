@@ -1,6 +1,6 @@
 /**
  * scripts/verify-smtp.js — Gmail SMTP / Nodemailer verification tool.
- * Smart Computer Maintenance Service Request and Tracking System
+ * Smart ICT Maintenance Management System
  *
  * Checks (in order):
  *   1. Whether SMTP is even configured (SMTP_HOST/SMTP_USER/SMTP_PASS).
@@ -64,7 +64,7 @@ async function main() {
     } else {
       const send = await sendEmail({
         to,
-        subject: 'SMTP test — Smart Computer Maintenance Service',
+        subject: 'SMTP test — Smart ICT Maintenance Management System',
         text: 'This is a test email from scripts/verify-smtp.js.\n\nIf you received it, Gmail SMTP is working correctly.',
         html: '<p>This is a test email from <strong>scripts/verify-smtp.js</strong>.</p><p>If you received it, Gmail SMTP is working correctly.</p>',
       });

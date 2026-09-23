@@ -1,0 +1,134 @@
+/* Home page image layout editor. Hidden until an authenticated ICT Admin enables it. */
+.home-layout-toolbar {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 12px;
+  background: #0b1f3a;
+  box-shadow: 0 14px 32px rgba(7, 20, 38, .28);
+}
+
+.home-layout-toolbar button {
+  min-height: 38px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: .45rem .8rem;
+  cursor: pointer;
+  font: 600 .82rem/1.2 Inter, system-ui, sans-serif;
+  transition: transform .18s ease, background-color .18s ease, border-color .18s ease;
+}
+
+.home-layout-toolbar button:hover { transform: translateY(-1px); }
+.home-layout-edit-button { background: #155eef; color: #fff; }
+.home-layout-save-button { background: #f4b400; color: #172033; }
+.home-layout-cancel-button { background: transparent; border-color: rgba(255, 255, 255, .35) !important; color: #fff; }
+.home-layout-toolbar [hidden] { display: none !important; }
+
+.home-layout-status {
+  color: #dbe8ff;
+  font: 500 .78rem/1.2 Inter, system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+.home-layout-toast {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 5.8rem;
+  z-index: 2100;
+  max-width: min(360px, calc(100vw - 2rem));
+  padding: .8rem 1rem;
+  border-left: 4px solid #12b76a;
+  border-radius: 10px;
+  background: #fff;
+  color: #172033;
+  box-shadow: 0 12px 28px rgba(16, 24, 40, .16);
+  font: 600 .86rem/1.35 Inter, system-ui, sans-serif;
+}
+
+.home-layout-editing .hero-slide-track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100% !important;
+  gap: 12px;
+  padding: 16px;
+  transform: none !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+.home-layout-editing .hero-slider {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: auto;
+  min-height: 410px;
+}
+.home-layout-editing .hero-slide {
+  width: auto;
+  min-height: 170px;
+  height: 170px;
+  border: 2px solid rgba(255, 255, 255, .35);
+  border-radius: 12px;
+  cursor: grab;
+  opacity: .92;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: opacity .18s ease, outline-color .18s ease, transform .18s ease;
+  touch-action: none;
+  pointer-events: auto !important;
+}
+
+.home-layout-editing .hero-slide:hover,
+.home-layout-editing .hero-slide:focus-visible {
+  opacity: 1;
+  outline-color: #f4b400;
+}
+
+.home-layout-editing .hero-slide.is-dragging {
+  cursor: grabbing;
+  opacity: .4;
+  pointer-events: none !important;
+  transform: scale(.98);
+}
+
+.home-layout-editing .home-layout-clone { display: none; }
+
+.home-layout-placeholder {
+  min-height: 170px;
+  border: 2px dashed #f4b400;
+  border-radius: 12px;
+  background: rgba(244, 180, 0, .14);
+}
+
+.home-layout-editing .hero-section > .container { opacity: .18; pointer-events: none; }
+.home-layout-editing .hero-overlay { opacity: .2; pointer-events: none; }
+.home-layout-editing .navbar-brand img[data-home-image-id] {
+  outline: 2px solid #f4b400;
+  outline-offset: 3px;
+  cursor: grab;
+}
+
+@media (max-width: 767.98px) {
+  .home-layout-toolbar {
+    right: .75rem;
+    bottom: .75rem;
+    left: .75rem;
+    justify-content: flex-end;
+  }
+  .home-layout-status { margin-right: auto; }
+  .home-layout-editing .hero-slide-track { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px; }
+  .home-layout-editing .hero-slide,
+  .home-layout-placeholder { min-height: 120px; height: 120px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-layout-toolbar button,
+  .home-layout-editing .hero-slide { transition: none; }
+}

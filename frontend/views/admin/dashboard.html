@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
-<script>(function(){try{var l=localStorage.getItem('ict_lang');if(l==='am'||l==='en'||l==='om'){ document.documentElement.setAttribute( 'lang', l );}}catch(e){ }})();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="page.adminDashboard">Admin Dashboard — Smart Computer Maintenance Service</title>
+  <title data-i18n="page.adminDashboard">Admin Dashboard — Smart ICT Maintenance Management System</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
@@ -45,9 +45,6 @@
         <li><a href="reports.html" class="nav-link text-white-50"><i class="bi bi-bar-chart-line me-2"></i><span
               data-i18n="side.reports">Reports</span></a>
         </li>
-        <li><a href="../networking.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i><span
-              data-i18n="side.networking">Networking</span></a>
-        </li>
         <li><a href="admin-feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-dots me-2"></i><span
               data-i18n="side.feedback">Feedback</span></a></li>
         <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span
@@ -64,8 +61,6 @@
             </span>
             <span class="small" id="sidebarUserName">Administrator</span>
           </div>
-          <a href="#" class="nav-link text-white-50 small" id="logoutBtn">
-            <i class="bi bi-box-arrow-right me-1"></i><span data-i18n="admin.logout">Logout</span></a>
         </div>
     </nav>
 
@@ -178,6 +173,55 @@
                 <div>
                   <h4 class="fw-bold mb-0" id="kpiTotal">0</h4>
                   <small class="text-muted"><span data-i18n="admin.kpi.totalRequests">Total Requests</span></small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Network Maintenance KPIs -->
+          <div class="row g-3 mb-2">
+            <div class="col-12">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-wifi text-primary me-1"></i>
+                <h6 class="mb-0 fw-bold"><span data-i18n="admin.kpi.network.title">Network Maintenance</span></h6>
+              </div>
+            </div>
+            <div class="col-6 col-xl-3">
+              <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+                <div class="bg-primary bg-opacity-10 p-3 rounded"><i class="bi bi-wifi fs-3 text-primary"></i></div>
+                <div>
+                  <h4 class="fw-bold mb-0" id="kpiNetTotal">0</h4>
+                  <small class="text-muted"><span data-i18n="admin.kpi.network.total">Network Requests</span></small>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-xl-3">
+              <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+                <div class="bg-warning bg-opacity-10 p-3 rounded"><i
+                    class="bi bi-hourglass-split fs-3 text-warning"></i></div>
+                <div>
+                  <h4 class="fw-bold mb-0" id="kpiNetPending">0</h4>
+                  <small class="text-muted"><span data-i18n="admin.kpi.network.pending">Pending</span></small>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-xl-3">
+              <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+                <div class="bg-secondary bg-opacity-10 p-3 rounded"><i
+                    class="bi bi-gear-wide-connected fs-3 text-secondary"></i></div>
+                <div>
+                  <h4 class="fw-bold mb-0" id="kpiNetInProgress">0</h4>
+                  <small class="text-muted"><span data-i18n="admin.kpi.network.inProgress">In Progress</span></small>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-xl-3">
+              <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+                <div class="bg-success bg-opacity-10 p-3 rounded"><i class="bi bi-check-circle fs-3 text-success"></i>
+                </div>
+                <div>
+                  <h4 class="fw-bold mb-0" id="kpiNetResolved">0</h4>
+                  <small class="text-muted"><span data-i18n="admin.kpi.network.resolved">Completed</span></small>
                 </div>
               </div>
             </div>
@@ -388,7 +432,8 @@
 
                   <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
                     <div>
-                      <div class="small fw-semibold"><span data-i18n="page.settings.emailNotifications">Email Notifications</span></div>
+                      <div class="small fw-semibold"><span data-i18n="page.settings.emailNotifications">Email
+                          Notifications</span></div>
                       <div class="text-muted" style="font-size:.75rem;"><span
                           data-i18n="admin.settings.notifyOnStatusChanges">Notify on status changes</span></div>
                     </div>
@@ -440,7 +485,8 @@
           <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
               <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-shield-lock text-danger me-2"></i><span data-i18n="adash.securityNotifications">Security & Notifications</span>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-shield-lock text-danger me-2"></i><span
+                    data-i18n="adash.securityNotifications">Security & Notifications</span>
                 </h6>
                 <a href="settings.html" class="btn btn-outline-secondary btn-sm">
                   <i class="bi bi-arrow-right me-1"></i><span data-i18n="admin.settings.fullSettings">Full
@@ -517,30 +563,30 @@
   <script>
     /* -- Dashboard Settings Widget Logic -- */
     document.addEventListener( 'DOMContentLoaded', async () =>
-  {
+    {
 
       // Load profile info into settings widget
       try
-  {
+      {
         const { user } = await apiRequest( '/auth/me' );
 
-  // Avatar (photo > image URL > default ADMIN image > initial)
-  const avatar = document.getElementById( 'profileAvatar' );
-  if ( avatar ) applyProfileAvatar( user, avatar );
+        // Avatar (photo > image URL > default ADMIN image > initial)
+        const avatar = document.getElementById( 'profileAvatar' );
+        if ( avatar ) applyProfileAvatar( user, avatar );
 
         // Profile fields
         const setText = ( id, val ) => { const e = document.getElementById( id ); if ( e ) e.textContent = val || '—'; };
-  setText( 'profileFullName', user.fullName );
-  setText( 'profileEmailDisplay', user.email );
-  setText( 'profilePhoneDisplay', user.phone || '—' );
-  setText( 'profileDeptDisplay', user.department || '—' );
+        setText( 'profileFullName', user.fullName );
+        setText( 'profileEmailDisplay', user.email );
+        setText( 'profilePhoneDisplay', user.phone || '—' );
+        setText( 'profileDeptDisplay', user.department || '—' );
 
-  // Role badge
-  const roleEl = document.getElementById( 'profileRoleBadge' );
-  if ( roleEl )
-  {
+        // Role badge
+        const roleEl = document.getElementById( 'profileRoleBadge' );
+        if ( roleEl )
+        {
           const roleC = { 'ICT Admin': 'danger', Technician: 'warning', Requester: 'primary' };
-  roleEl.innerHTML = `<span class="badge bg-${ roleC[user.role] || 'secondary' } text-capitalize">${ user.role }</span>`;
+          roleEl.innerHTML = `<span class="badge bg-${ roleC[user.role] || 'secondary' } text-capitalize">${ user.role }</span>`;
         }
 
       } catch ( _ ) { }
@@ -548,102 +594,102 @@
       // -- Inline Password Change (verifies the current password via the
       //    self-service endpoint, matching the Settings page) --
       document.getElementById( 'dashChangePwdBtn' )?.addEventListener( 'click', async () =>
-  {
+      {
         const currentPwd = document.getElementById( 'dashCurrentPwd' ).value;
-  const newPwd = document.getElementById( 'dashNewPwd' ).value;
-  const confirmPwd = document.getElementById( 'dashConfirmPwd' ).value;
-  const alert = document.getElementById( 'pwdChangeAlert' );
+        const newPwd = document.getElementById( 'dashNewPwd' ).value;
+        const confirmPwd = document.getElementById( 'dashConfirmPwd' ).value;
+        const alert = document.getElementById( 'pwdChangeAlert' );
 
         const showPwdMsg = ( msg, type ) =>
-  {
-    alert.className = `alert alert-${ type } py-2 small`;
-  alert.textContent = msg;
-  alert.classList.remove( 'd-none' );
+        {
+          alert.className = `alert alert-${ type } py-2 small`;
+          alert.textContent = msg;
+          alert.classList.remove( 'd-none' );
           setTimeout( () => alert.classList.add( 'd-none' ), 4000 );
         };
 
-  if ( !currentPwd ) { showPwdMsg( 'Please enter your current password.', 'warning' ); return; }
-  if ( !newPwd ) { showPwdMsg( 'Please enter a new password.', 'warning' ); return; }
-  if ( newPwd.length < 8 ) { showPwdMsg( 'Password must be at least 8 characters.', 'warning' ); return; }
-  if ( newPwd !== confirmPwd ) { showPwdMsg( 'Passwords do not match.', 'danger' ); return; }
+        if ( !currentPwd ) { showPwdMsg( 'Please enter your current password.', 'warning' ); return; }
+        if ( !newPwd ) { showPwdMsg( 'Please enter a new password.', 'warning' ); return; }
+        if ( newPwd.length < 8 ) { showPwdMsg( 'Password must be at least 8 characters.', 'warning' ); return; }
+        if ( newPwd !== confirmPwd ) { showPwdMsg( 'Passwords do not match.', 'danger' ); return; }
 
-  const btn = document.getElementById( 'dashChangePwdBtn' );
-  const spinner = document.getElementById( 'dashPwdSpinner' );
-  btn.disabled = true;
-  spinner.classList.remove( 'd-none' );
+        const btn = document.getElementById( 'dashChangePwdBtn' );
+        const spinner = document.getElementById( 'dashPwdSpinner' );
+        btn.disabled = true;
+        spinner.classList.remove( 'd-none' );
 
-  try
-  {
-    await apiRequest( '/users/change-password', {
-      method: 'PUT',
-      body: { currentPassword: currentPwd, newPassword: newPwd },
-    } );
-  showPwdMsg( 'Password updated successfully.', 'success' );
-  document.getElementById( 'dashCurrentPwd' ).value = '';
-  document.getElementById( 'dashNewPwd' ).value = '';
-  document.getElementById( 'dashConfirmPwd' ).value = '';
+        try
+        {
+          await apiRequest( '/users/change-password', {
+            method: 'PUT',
+            body: { currentPassword: currentPwd, newPassword: newPwd },
+          } );
+          showPwdMsg( 'Password updated successfully.', 'success' );
+          document.getElementById( 'dashCurrentPwd' ).value = '';
+          document.getElementById( 'dashNewPwd' ).value = '';
+          document.getElementById( 'dashConfirmPwd' ).value = '';
         } catch ( err )
-  {
-    showPwdMsg( err.message, 'danger' );
+        {
+          showPwdMsg( err.message, 'danger' );
         } finally
-  {
-    btn.disabled = false;
-  spinner.classList.add( 'd-none' );
+        {
+          btn.disabled = false;
+          spinner.classList.add( 'd-none' );
         }
       } );
 
-  // -- Load current settings from the backend --
-  async function loadQuickSettings ()
-  {
+      // -- Load current settings from the backend --
+      async function loadQuickSettings ()
+      {
         try
-  {
+        {
           const { data } = await apiRequest( '/settings' );
-  if ( data )
-  {
-    document.getElementById( 'quickRegToggle' ).checked = !!data.publicRegistration;
-  document.getElementById( 'quickEmailToggle' ).checked = !!data.emailNotifications;
-  document.getElementById( 'quickTechNotif' ).checked = !!data.techAutoNotify;
-  document.getElementById( 'quickSLA' ).value = data.slaResponseHours ?? 24;
-  document.getElementById( 'quickPriority' ).value = data.defaultPriority || 'medium';
+          if ( data )
+          {
+            document.getElementById( 'quickRegToggle' ).checked = !!data.publicRegistration;
+            document.getElementById( 'quickEmailToggle' ).checked = !!data.emailNotifications;
+            document.getElementById( 'quickTechNotif' ).checked = !!data.techAutoNotify;
+            document.getElementById( 'quickSLA' ).value = data.slaResponseHours ?? 24;
+            document.getElementById( 'quickPriority' ).value = data.defaultPriority || 'medium';
           }
         } catch ( _ ) { /* leave defaults in place */ }
       }
-  loadQuickSettings();
+      loadQuickSettings();
 
       // -- Save Quick Settings to the backend (real save, no fake success) --
       document.getElementById( 'saveQuickSettingsBtn' )?.addEventListener( 'click', async () =>
-  {
+      {
         const btn = document.getElementById( 'saveQuickSettingsBtn' );
-  const original = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
-  try
-  {
-    // General / quick settings
-    await apiRequest( '/settings/general', {
-      method: 'PUT',
-      body: {
-        publicRegistration: document.getElementById( 'quickRegToggle' ).checked,
-        techAutoNotify: document.getElementById( 'quickTechNotif' ).checked,
-        slaResponseHours: document.getElementById( 'quickSLA' ).value,
-        defaultPriority: document.getElementById( 'quickPriority' ).value,
-      },
-    } );
-  // Email notifications live under /settings/notifications
-  await apiRequest( '/settings/notifications', {
-    method: 'PUT',
-  body: {
-    emailNotifications: document.getElementById( 'quickEmailToggle' ).checked,
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+        try
+        {
+          // General / quick settings
+          await apiRequest( '/settings/general', {
+            method: 'PUT',
+            body: {
+              publicRegistration: document.getElementById( 'quickRegToggle' ).checked,
+              techAutoNotify: document.getElementById( 'quickTechNotif' ).checked,
+              slaResponseHours: document.getElementById( 'quickSLA' ).value,
+              defaultPriority: document.getElementById( 'quickPriority' ).value,
             },
           } );
-  showToast( 'Settings saved successfully!', 'success' );
+          // Email notifications live under /settings/notifications
+          await apiRequest( '/settings/notifications', {
+            method: 'PUT',
+            body: {
+              emailNotifications: document.getElementById( 'quickEmailToggle' ).checked,
+            },
+          } );
+          showToast( 'Settings saved successfully!', 'success' );
         } catch ( err )
-  {
-    showToast( err.message || 'Could not save settings.', 'danger' );
+        {
+          showToast( err.message || 'Could not save settings.', 'danger' );
         } finally
-  {
-    btn.disabled = false;
-  btn.innerHTML = original;
+        {
+          btn.disabled = false;
+          btn.innerHTML = original;
         }
       } );
 
@@ -652,72 +698,76 @@
   <script src="/assets/js/lang.js?v=9"></script>
   <script src="/assets/js/theme.js"></script>
   <script>
-      // -- Sidebar Navigation Toggle --
-      document.addEventListener('DOMContentLoaded', () => {
-        const sidebarLinks = document.querySelectorAll('#sidebar .nav-link');
-  const settingsSection = document.getElementById('settingsSection');
-  const mainContent = document.getElementById('dashboardMain');
-
-  // Initialize: show the dashboard, hide settings
-  function showDashboard() {
-    // Dashboard becomes active
-    sidebarLinks.forEach( l =>
+    // -- Sidebar Navigation Toggle --
+    document.addEventListener( 'DOMContentLoaded', () =>
     {
-      if ( l.getAttribute( 'href' ) === 'dashboard.html' )
+      const sidebarLinks = document.querySelectorAll( '#sidebar .nav-link' );
+      const settingsSection = document.getElementById( 'settingsSection' );
+      const mainContent = document.getElementById( 'dashboardMain' );
+
+      // Initialize: show the dashboard, hide settings
+      function showDashboard ()
       {
-        l.classList.add( 'active', 'bg-white', 'bg-opacity-25' );
-        l.classList.remove( 'text-white-50' );
-      } else
-      {
-        l.classList.remove( 'active', 'bg-white', 'bg-opacity-25' );
-        l.classList.add( 'text-white-50' );
+        // Dashboard becomes active
+        sidebarLinks.forEach( l =>
+        {
+          if ( l.getAttribute( 'href' ) === 'dashboard.html' )
+          {
+            l.classList.add( 'active', 'bg-white', 'bg-opacity-25' );
+            l.classList.remove( 'text-white-50' );
+          } else
+          {
+            l.classList.remove( 'active', 'bg-white', 'bg-opacity-25' );
+            l.classList.add( 'text-white-50' );
+          }
+        } );
+        if ( settingsSection ) settingsSection.classList.add( 'd-none' );
+        if ( mainContent ) mainContent.classList.remove( 'd-none' );
       }
-    } );
-  if (settingsSection) settingsSection.classList.add('d-none');
-  if (mainContent) mainContent.classList.remove('d-none');
-        }
 
-  function showSettings() {
-    // Settings becomes active
-    sidebarLinks.forEach( l =>
-    {
-      if ( l.getAttribute( 'href' ) === 'settings.html' )
+      function showSettings ()
       {
-        l.classList.add( 'active', 'bg-white', 'bg-opacity-25' );
-        l.classList.remove( 'text-white-50' );
-      } else
-      {
-        l.classList.remove( 'active', 'bg-white', 'bg-opacity-25' );
-        l.classList.add( 'text-white-50' );
+        // Settings becomes active
+        sidebarLinks.forEach( l =>
+        {
+          if ( l.getAttribute( 'href' ) === 'settings.html' )
+          {
+            l.classList.add( 'active', 'bg-white', 'bg-opacity-25' );
+            l.classList.remove( 'text-white-50' );
+          } else
+          {
+            l.classList.remove( 'active', 'bg-white', 'bg-opacity-25' );
+            l.classList.add( 'text-white-50' );
+          }
+        } );
+        if ( settingsSection ) settingsSection.classList.remove( 'd-none' );
+        if ( mainContent ) mainContent.classList.add( 'd-none' );
       }
-    } );
-  if (settingsSection) settingsSection.classList.remove('d-none');
-  if (mainContent) mainContent.classList.add('d-none');
-        }
 
-        // Handle sidebar navigation clicks
-        sidebarLinks.forEach(link => {
-    link.addEventListener( 'click', ( e ) =>
-    {
-      // Get the target view from href attribute
-      const href = link.getAttribute( 'href' );
-
-      if ( href === 'settings.html' )
+      // Handle sidebar navigation clicks
+      sidebarLinks.forEach( link =>
       {
-        e.preventDefault();
-        showSettings();
-      } else if ( href === 'dashboard.html' )
-      {
-        e.preventDefault();
-        showDashboard();
-      }
-      // For other links (users, technicians, etc.), let them navigate normally
-    } );
-        });
+        link.addEventListener( 'click', ( e ) =>
+        {
+          // Get the target view from href attribute
+          const href = link.getAttribute( 'href' );
 
-  // Initialize - show dashboard by default
-  showDashboard();
-      });
+          if ( href === 'settings.html' )
+          {
+            e.preventDefault();
+            showSettings();
+          } else if ( href === 'dashboard.html' )
+          {
+            e.preventDefault();
+            showDashboard();
+          }
+          // For other links (users, technicians, etc.), let them navigate normally
+        } );
+      } );
+
+      // Initialize - show dashboard by default
+      showDashboard();
+    } );
   </script>
 </body>
 

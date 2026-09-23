@@ -1,6 +1,6 @@
 /* ============================================================
    settings.js — Admin Settings Page Logic
-    Smart Computer Maintenance Service Request and Tracking System
+    Smart ICT Maintenance Management System
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', async () => {

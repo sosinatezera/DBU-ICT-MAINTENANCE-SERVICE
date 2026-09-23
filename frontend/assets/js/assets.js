@@ -1,6 +1,6 @@
 /* ============================================================
    assets.js  —  ICT Asset Management (Admin/Manager)
-    Smart Computer Maintenance Service Request and Tracking System
+    Smart ICT Maintenance Management System
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', async () => {

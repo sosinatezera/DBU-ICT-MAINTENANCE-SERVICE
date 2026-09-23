@@ -1,6 +1,6 @@
 /* ============================================================
    api-config.js — Single canonical API base for ALL frontend pages
-   Smart Computer Maintenance Service Request and Tracking System
+   Smart ICT Maintenance Management System
 
    This file ONLY defines the API origin/base and related helpers.
    It intentionally contains NO auth guards, no page initialization,
@@ -22,17 +22,22 @@
    current hostname is NOT localhost and NOT in PRODUCTION_API_MAP.
    This prevents hosting platforms (Netlify, Vercel, etc.) from
    accidentally falling back to same-origin /api which doesn't exist. */
-var __KNOWN_BACKEND_URL = 'https://dbu-ict-maintenance-service.onrender.com/api';
+var __KNOWN_BACKEND_URL =
+  "https://dbu-ict-maintenance-service.onrender.com/api";
 
 /* Production URL mapping: Netlify frontend -> Render backend */
 var PRODUCTION_API_MAP = {
-  'smartcomputer-maintenance-system.netlify.app': __KNOWN_BACKEND_URL,
-  'smartcomputermaintenanceservice.netlify.app':  __KNOWN_BACKEND_URL,
+  "smartcomputer-maintenance-system.netlify.app": __KNOWN_BACKEND_URL,
+  "smartcomputermaintenanceservice.netlify.app": __KNOWN_BACKEND_URL,
 };
 
 var API_BASE = (function () {
   /* 1. Explicit deploy-time override (see comments above). */
-  if (typeof window !== 'undefined' && typeof window.__API_BASE__ === 'string' && window.__API_BASE__) {
+  if (
+    typeof window !== "undefined" &&
+    typeof window.__API_BASE__ === "string" &&
+    window.__API_BASE__
+  ) {
     return window.__API_BASE__;
   }
 
@@ -45,9 +50,9 @@ var API_BASE = (function () {
   }
 
   /* 3. Local development: static server on :3000, backend API on :5000. */
-  var isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+  var isLocal = hostname === "localhost" || hostname === "127.0.0.1";
   if (isLocal) {
-    return 'http://localhost:5000/api';
+    return "http://localhost:5000/api";
   }
 
   /* 4. Unknown non-local hostname (new Netlify/Vercel subdomain, custom
@@ -56,8 +61,9 @@ var API_BASE = (function () {
      so developers can add the new hostname to PRODUCTION_API_MAP. */
   console.warn(
     '[api-config] Hostname "' + hostname + '" is not in PRODUCTION_API_MAP.',
-    'Falling back to known backend:', __KNOWN_BACKEND_URL,
-    '— Add this hostname to PRODUCTION_API_MAP to silence this warning.'
+    "Falling back to known backend:",
+    __KNOWN_BACKEND_URL,
+    "— Add this hostname to PRODUCTION_API_MAP to silence this warning.",
   );
   return __KNOWN_BACKEND_URL;
 })();
@@ -65,7 +71,16 @@ var API_BASE = (function () {
 /* Origin root (e.g. "https://dbu-ict-maintenance-service.onrender.com") —
    used to build attachment/upload URLs served from the backend /uploads route. */
 function apiOrigin() {
-  return API_BASE.replace(/\/api\/?$/, '');
+  return API_BASE.replace(/\/api\/?$/, "");
 }
 
 var API_UPLOAD_BASE = apiOrigin();
+
+/* Load the shared advisory AI support widget on every application page that
+   already consumes the canonical API configuration. */
+(function loadAiSupportWidget() {
+  var script = document.createElement("script");
+  script.src = "/assets/js/ai-support.js?v=4";
+  script.defer = true;
+  document.head.appendChild(script);
+})();

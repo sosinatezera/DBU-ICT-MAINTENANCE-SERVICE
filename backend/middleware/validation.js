@@ -1,7 +1,7 @@
 /**
  * middleware/validation.js
  * Shared validation utilities for all controllers
- * Smart Computer Maintenance Service Request and Tracking System
+ * Smart ICT Maintenance Management System
  */
 
 const mongoose = require('mongoose');
@@ -23,7 +23,7 @@ const VALID_ROLES       = ['Requester', 'Technician', 'ICT Admin'];
 const VALID_STATUSES    = ['active', 'inactive'];
 const VALID_PRIORITIES  = ['low', 'medium', 'high', 'critical'];
 const VALID_TICKET_STATUSES = ['submitted', 'under_review', 'assigned', 'accepted', 'in_progress', 'resolved', 'closed'];
-const VALID_EQUIPMENT   = ['Desktop Computer', 'Laptop', 'Printer', 'Scanner', 'Monitor', 'Projector', 'UPS / Power Supply', 'Keyboard / Mouse', 'Other'];
+const VALID_EQUIPMENT   = ['Desktop Computer', 'Laptop', 'Network', 'Printer', 'Scanner', 'Monitor', 'Projector', 'UPS / Power Supply', 'Keyboard / Mouse', 'Other'];
 const VALID_MAINT_STATUS = ['accepted', 'in_progress', 'resolved'];
 const VALID_ASSET_STATUSES = ['active', 'under_maintenance', 'decommissioned'];
 const VALID_ASSIGN_STATUSES = ['assigned', 'accepted', 'in_progress', 'completed', 'reassigned'];
@@ -38,6 +38,7 @@ const VALID_REQUEST_CATEGORIES = [
   'Email Problem',
   'System / Application',
   'ICT Security',
+  'Network Maintenance',
   'Other'
 ];
 const VALID_GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
