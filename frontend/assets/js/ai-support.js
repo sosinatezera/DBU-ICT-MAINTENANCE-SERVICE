@@ -132,7 +132,7 @@
   });
 
   const FALLBACK_ERROR_MESSAGE =
-    "AI Support is temporarily unavailable. Please try again later or create a maintenance request.";
+    "AI Support is temporarily unavailable right now. Please try again later or submit an ICT maintenance request.";
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -165,11 +165,19 @@
       const result = await response.json().catch(() => ({}));
       thinking.remove();
       if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(
+            "AI Support is not available on the current backend deployment. Please try again later.",
+          );
+        }
         if (response.status === 401) {
           throw new Error("Please sign in to use AI Support.");
         }
         if (response.status === 403) {
           throw new Error("Your account cannot use AI Support right now.");
+        }
+        if (response.status === 503 && result.message) {
+          throw new Error(result.message);
         }
         if (response.status === 422 && result.message) {
           throw new Error(result.message);
