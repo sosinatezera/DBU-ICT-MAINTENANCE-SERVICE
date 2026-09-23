@@ -12,7 +12,7 @@ services:
       # Dashboard (service -> Environment -> Add a variable named OPENAI_API_KEY).
       # Never commit it to the repo or expose it to the browser.
       - key: OPENAI_MODEL
-        value: gpt-4o-mini
+        value: gpt-5.6-luna
       - key: AI_SUPPORT_ENABLED
         value: "true"
       - key: FRONTEND_ORIGINS

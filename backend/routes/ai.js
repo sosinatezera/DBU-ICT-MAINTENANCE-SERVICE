@@ -1,15 +1,17 @@
 const express = require("express");
 const OpenAI = require("openai");
-const { optionalAuthenticate } = require("../middleware/auth");
+const { authenticate } = require("../middleware/auth");
 const { rateLimit } = require("../middleware/rateLimiter");
 
 const router = express.Router();
 const MAX_MESSAGE_LENGTH = 4000;
 const MAX_HISTORY_ITEMS = 12;
-const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const model = process.env.OPENAI_MODEL || "gpt-5.6-luna";
 const aiRateLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 
-const SYSTEM_PROMPT = `You are a helpful general-purpose AI assistant for the Smart ICT Maintenance Management System.
+const SYSTEM_PROMPT = `You are the AI Support Assistant for the Smart ICT Maintenance Management System at Mekdela Amba University (MAU).
+
+Identify yourself as the AI Support Assistant when introducing yourself. You are a helpful general-purpose assistant, not a scripted troubleshooting bot.
 
 You can answer general questions, explain concepts, help write messages, summarize information, provide troubleshooting guidance, and support ICT-related tasks. You are especially helpful with computers, printers, networks, software, hardware, maintenance issues, and system usage, but you are not limited to ICT topics.
 
@@ -28,7 +30,7 @@ Guidelines:
 
 You are advisory only and cannot create, modify, assign, close, or resolve service requests directly.`;
 
-router.post("/chat", aiRateLimit, optionalAuthenticate, async (req, res) => {
+router.post("/", aiRateLimit, authenticate, async (req, res) => {
   const message =
     typeof req.body?.message === "string" ? req.body.message.trim() : "";
   if (!message)
@@ -42,8 +44,8 @@ router.post("/chat", aiRateLimit, optionalAuthenticate, async (req, res) => {
     });
   }
 
-  const history = Array.isArray(req.body?.history)
-    ? req.body.history
+  const history = Array.isArray(req.body?.conversation)
+    ? req.body.conversation
         .filter(
           (item) =>
             item &&
@@ -115,7 +117,6 @@ User context: ${JSON.stringify(context)}
 Always answer the user's LATEST question above the conversation history. If the latest question refers to an earlier topic, address that topic but respond to the current question — never repeat an earlier answer.`,
       input: inputItems,
       max_output_tokens: 700,
-      temperature: 0.7,
     });
     const answer = response.output_text?.trim();
     if (!answer) throw new Error("Empty AI response");

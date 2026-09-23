@@ -36,6 +36,6 @@ module.exports = {
 
   // AI support (server-side only; never expose OPENAI_API_KEY to the frontend)
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || "",
-  OPENAI_MODEL: process.env.OPENAI_MODEL || "gpt-4o-mini",
+  OPENAI_MODEL: process.env.OPENAI_MODEL || "gpt-5.6-luna",
   AI_SUPPORT_ENABLED: process.env.AI_SUPPORT_ENABLED || "true",
 };
