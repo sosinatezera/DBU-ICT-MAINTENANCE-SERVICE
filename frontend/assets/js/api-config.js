@@ -49,10 +49,29 @@ var API_BASE = (function () {
     return PRODUCTION_API_MAP[hostname];
   }
 
-  /* 3. Local development: static server on :3000, backend API on :5000. */
-  var isLocal = hostname === "localhost" || hostname === "127.0.0.1";
+  /* 3. Local development: static server on :3000, backend API on :5000.
+     A file:// page reports an EMPTY hostname, so it must be matched on the
+     protocol instead — otherwise it falls through to the production backend
+     below and every request fails as a network error (file:// sends
+     `Origin: null`, which the backend CORS policy cannot allow). */
+  var isFile = protocol === "file:";
+  var isLocal = isFile || !hostname || hostname === "localhost" || hostname === "127.0.0.1";
   if (isLocal) {
-    return "http://localhost:5000/api";
+    if (isFile) {
+      console.warn(
+        "[api-config] This page was opened directly from the filesystem " +
+          "(file://). That sends `Origin: null`, which the backend CORS policy " +
+          "does not allow, so every API call fails as a network error.\n" +
+          "Fix: serve the frontend — `cd frontend && node server.js` — then open " +
+          "http://localhost:3000/",
+      );
+    }
+    /* Mirror the page's own host onto the API so a page reached via
+       127.0.0.1:3000 also calls 127.0.0.1:5000 instead of a different
+       hostname. Both are in the backend CORS allow-list, but keeping the host
+       identical removes the whole class of "works on localhost, fails on
+       127.0.0.1" mismatches (IPv6 ::1 vs IPv4 127.0.0.1 resolution). */
+    return "http://" + (hostname || "localhost") + ":5000/api";
   }
 
   /* 4. Unknown non-local hostname (new Netlify/Vercel subdomain, custom
@@ -76,11 +95,48 @@ function apiOrigin() {
 
 var API_UPLOAD_BASE = apiOrigin();
 
+/* Warm the connection to the API origin as soon as the page loads so the
+   FIRST AI question starts immediately — the browser resolves DNS and opens
+   the TCP/TLS socket early, instead of paying the handshake round-trips at
+   submit time. Harmless helpers: modern browsers act on "preconnect",
+   older ones still benefit from the "dns-prefetch" fallback. */
+(function warmApiConnection() {
+  if (typeof document === "undefined") return;
+  var origin = apiOrigin();
+  if (!origin) return;
+  ["preconnect", "dns-prefetch"].forEach(function (kind) {
+    var link = document.createElement("link");
+    link.rel = kind;
+    link.href = origin;
+    document.head.appendChild(link);
+  });
+})();
+
 /* Load the shared advisory AI support widget on every application page that
-   already consumes the canonical API configuration. */
+   already consumes the canonical API configuration.
+
+   Loaded during browser idle time rather than immediately. This file is
+   present on the public landing page and on login/register, where the widget
+   is not needed for the first interaction — fetching and executing ~330 lines
+   of widget JS during the initial parse competes with the page's own CSS and
+   hero content for bandwidth and main-thread time. Deferring to idle keeps the
+   first paint fast while still making the widget available essentially
+   immediately on every page. `requestIdleCallback` is used when available,
+   with a short timeout so the widget still appears promptly. */
 (function loadAiSupportWidget() {
-  var script = document.createElement("script");
-  script.src = "/assets/js/ai-support.js?v=5";
-  script.defer = true;
-  document.head.appendChild(script);
+  if (window.__aiSupportLoaded) return;
+  if (document.querySelector('script[src*="ai-support.js"]')) return;
+  function inject() {
+    if (window.__aiSupportLoaded) return;
+    window.__aiSupportLoaded = true;
+    var script = document.createElement("script");
+    script.src = "/assets/js/ai-support.js?v=26";
+    script.defer = true;
+    document.head.appendChild(script);
+  }
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(inject, { timeout: 2000 });
+  } else {
+    window.setTimeout(inject, 200);
+  }
 })();

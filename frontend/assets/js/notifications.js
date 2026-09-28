@@ -3,27 +3,161 @@
     Smart ICT Maintenance Management System
    ============================================================ */
 
+// ============================================================
+// SAFETY NET: Ensure notification visual helpers exist globally
+// even if a parsing error occurs later in this file.
+// This prevents "getTypeIcon is not defined" errors due to
+// caching, network errors, or syntax errors later in the file.
+// ============================================================
+(function () {
+  const FALLBACK_VISUALS = {
+    success: { icon: "bi-check-circle", colour: "#16A34A" },
+    warning: { icon: "bi-exclamation-triangle", colour: "#D97706" },
+    danger: { icon: "bi-exclamation-octagon", colour: "#DC2626" },
+    info: { icon: "bi-info-circle", colour: "#2563EB" },
+  };
+
+  function getVisual(type) {
+    const v =
+      (window.NOTIFICATION_VISUALS && window.NOTIFICATION_VISUALS[type]) ||
+      (window.NOTIFICATION_TYPE_FALLBACKS &&
+        window.NOTIFICATION_TYPE_FALLBACKS[type]) ||
+      FALLBACK_VISUALS[type] ||
+      FALLBACK_VISUALS.info;
+    return v;
+  }
+
+  window.getNotificationVisual =
+    window.getNotificationVisual ||
+    function (type) {
+      return getVisual(type);
+    };
+  window.getTypeIcon =
+    window.getTypeIcon ||
+    function (type) {
+      return getVisual(type).icon;
+    };
+  window.getTypeColour =
+    window.getTypeColour ||
+    function (type) {
+      return getVisual(type).colour;
+    };
+  window.getTypeColourSoft =
+    window.getTypeColourSoft ||
+    function (type) {
+      return (
+        {
+          success: "#DCFCE7",
+          warning: "#FEF3C7",
+          danger: "#FEE2E2",
+          info: "#EFF6FF",
+        }[type] || "#EFF6FF"
+      );
+    };
+})();
+
+// ============================================================
+// NOTIFICATION VISUAL HELPERS — defined early for global access
+// ============================================================
+const NOTIFICATION_VISUALS = {
+  request_submitted: { icon: "bi-inbox", colour: "#2563EB" },
+  request_received: { icon: "bi-inbox", colour: "#2563EB" },
+  new_service_request: { icon: "bi-inbox", colour: "#2563EB" },
+  new_request_assigned: { icon: "bi-person-check", colour: "#2563EB" },
+  technician_assigned: { icon: "bi-person-check", colour: "#2563EB" },
+  request_accepted: { icon: "bi-check2-circle", colour: "#16A34A" },
+  request_in_progress: { icon: "bi-hourglass-split", colour: "#D97706" },
+  request_updated: { icon: "bi-arrow-repeat", colour: "#2563EB" },
+  request_status_changed: { icon: "bi-arrow-repeat", colour: "#2563EB" },
+  request_completed: { icon: "bi-check2-all", colour: "#16A34A" },
+  request_completed_admin: { icon: "bi-check2-all", colour: "#16A34A" },
+  request_resolved: { icon: "bi-check2-circle", colour: "#16A34A" },
+  request_reopened: { icon: "bi-arrow-counterclockwise", colour: "#D97706" },
+  request_reassigned: { icon: "bi-arrow-left-right", colour: "#D97706" },
+  request_reassigned_admin: { icon: "bi-arrow-left-right", colour: "#D97706" },
+  new_comment: { icon: "bi-chat-left-text", colour: "#2563EB" },
+  feedback_available: { icon: "bi-star", colour: "#D97706" },
+  priority_changed: { icon: "bi-flag", colour: "#D97706" },
+  high_priority_request: { icon: "bi-exclamation-triangle", colour: "#EA580C" },
+  critical_request: { icon: "bi-exclamation-octagon", colour: "#DC2626" },
+  request_escalated: { icon: "bi-arrow-up-circle", colour: "#EA580C" },
+  request_escalated_admin: { icon: "bi-arrow-up-circle", colour: "#EA580C" },
+  request_cancelled: { icon: "bi-x-circle", colour: "#DC2626" },
+  technician_activity: { icon: "bi-tools", colour: "#2563EB" },
+  system_notification: { icon: "bi-info-circle", colour: "#64748B" },
+};
+
+const NOTIFICATION_TYPE_FALLBACKS = {
+  success: { icon: "bi-check-circle", colour: "#16A34A" },
+  warning: { icon: "bi-exclamation-triangle", colour: "#D97706" },
+  danger: { icon: "bi-exclamation-octagon", colour: "#DC2626" },
+  info: { icon: "bi-info-circle", colour: "#2563EB" },
+};
+
+function getNotificationVisual(type) {
+  return (
+    NOTIFICATION_VISUALS[type] ||
+    NOTIFICATION_TYPE_FALLBACKS[type] ||
+    NOTIFICATION_TYPE_FALLBACKS.info
+  );
+}
+
+function getTypeIcon(type) {
+  return getNotificationVisual(type).icon;
+}
+
+function getTypeColour(type) {
+  return getNotificationVisual(type).colour;
+}
+
+function getTypeColourSoft(type) {
+  return (
+    {
+      success: "#DCFCE7",
+      warning: "#FEF3C7",
+      danger: "#FEE2E2",
+      info: "#EFF6FF",
+    }[type] || "#EFF6FF"
+  );
+}
+
+/* ============================================================
+   MAIN NOTIFICATION LOGIC
+   ============================================================ */
+
 /* ── Auto-init on DOMContentLoaded ─────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await Auth.load();
   if (!requireAuth()) return;
 
-  // Always start the live bell (works on every page that includes this file)
-  initNotificationBell();
-
-  // Full-page view (admin/notifications.html or technician/notifications.html)
+  // Full-page view (admin/notifications.html or technician/notifications.html or user/notifications.html)
   const p = window.location.pathname;
-  if (p.includes('notifications.html')) {
+  const isNotificationsPage = p.includes("notifications.html");
+  initNotificationBell(false);
+  if (isNotificationsPage) {
     initNotificationsPage();
   }
 });
 
+/* Restore timers only when the notification list is already loaded for display. */
+function restoreExpirationTimers(notifications = []) {
+  const expired = getExpiredNotifications();
+  for (const notification of notifications) {
+    if (
+      notification.is_read &&
+      !expired.has(notification.id) &&
+      !_expirationTimers.has(notification.id)
+    ) {
+      startExpirationTimer(notification.id);
+    }
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════
    BELL — live badge + dropdown (injected into #notifBellContainer)
    ═══════════════════════════════════════════════════════════ */
-let _pollTimer = null;
-
-function initNotificationBell() {
-  const container = document.getElementById('notifBellContainer');
+function initNotificationBell(refreshCount = true) {
+  const container = document.getElementById("notifBellContainer");
   if (!container) return;
 
   // Inject the bell button + dropdown
@@ -40,11 +174,16 @@ function initNotificationBell() {
       </button>
       <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0"
            id="notifDropdown"
-           style="width:360px;max-height:480px;border-radius:12px;overflow:hidden;">
+           style="width:380px;max-height:480px;border-radius:12px;overflow:hidden;">
         <!-- Header -->
         <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom bg-white">
           <span class="fw-bold small">Notifications</span>
           <div class="d-flex gap-2 align-items-center">
+            <label class="d-flex align-items-center gap-1 text-muted mb-0" title="Notification sound">
+              <i class="bi bi-volume-up" style="font-size:.75rem;"></i>
+              <input class="form-check-input mt-0" type="checkbox" id="notifSoundToggle"
+                     aria-label="Notification sound" />
+            </label>
             <span id="notifUnreadLabel" class="badge bg-danger rounded-pill" style="display:none;">0</span>
             <button class="btn btn-link btn-sm text-muted p-0 text-decoration-none"
                     onclick="markAllReadBell(event)" title="Mark all as read">
@@ -64,46 +203,64 @@ function initNotificationBell() {
       </div>
     </div>`;
 
-  // Load count immediately
-  refreshBellBadge();
+  const soundToggle = document.getElementById("notifSoundToggle");
+  if (soundToggle && window.NotificationSound) {
+    soundToggle.checked = window.NotificationSound.isEnabled();
+    soundToggle.addEventListener("change", (event) => {
+      event.stopPropagation();
+      window.NotificationSound.setEnabled(soundToggle.checked);
+    });
+  }
 
-  // Poll every 30 seconds
-  if (_pollTimer) clearInterval(_pollTimer);
-  _pollTimer = setInterval(refreshBellBadge, 30000);
+  if (refreshCount) refreshBellBadge();
+}
+
+function renderBellUnreadCount(unread) {
+  const count = Number(unread) || 0;
+  const badge = document.getElementById("notifBadge");
+  const label = document.getElementById("notifUnreadLabel");
+  if (badge) {
+    badge.textContent = count > 9 ? "9+" : count;
+    badge.style.display = count > 0 ? "" : "none";
+  }
+  if (label) {
+    label.textContent = count;
+    label.style.display = count > 0 ? "" : "none";
+  }
+  updateSidebarBadge(count);
+  return count;
 }
 
 async function refreshBellBadge() {
   try {
-    const { unread } = await apiRequest('/notifications/unread-count');
-    const badge = document.getElementById('notifBadge');
-    const label = document.getElementById('notifUnreadLabel');
-    if (badge) {
-      badge.textContent = unread > 9 ? '9+' : unread;
-      badge.style.display = unread > 0 ? '' : 'none';
-    }
-    if (label) {
-      label.textContent = unread;
-      label.style.display = unread > 0 ? '' : 'none';
-    }
-    return Number(unread) || 0;
-  } catch (_) { return 0; }
+    const { unread } = await apiRequest("/notifications/unread-count");
+    return renderBellUnreadCount(unread);
+  } catch (_) {
+    return 0;
+  }
+}
+
+function updateSidebarBadge(unread) {
+  const sidebarBadge = document.getElementById("sidebarNotifBadge");
+  if (sidebarBadge) {
+    sidebarBadge.textContent = unread > 9 ? "9+" : unread;
+    sidebarBadge.style.display = unread > 0 ? "" : "none";
+  }
 }
 
 async function loadBellDropdown() {
-  const list = document.getElementById('notifDropList');
+  const list = document.getElementById("notifDropList");
   if (!list) return;
 
   list.innerHTML = `<div class="text-center text-muted py-4 small">
     <div class="spinner-border spinner-border-sm me-1" role="status"></div>Loading…</div>`;
 
   try {
-    const { data, unread } = await apiRequest('/notifications');
+    const { data, unread } = await apiRequest("/notifications");
+    restoreExpirationTimers(data);
 
     // Update badge
-    const badge = document.getElementById('notifBadge');
-    const label = document.getElementById('notifUnreadLabel');
-    if (badge) { badge.textContent = unread > 9 ? '9+' : unread; badge.style.display = unread > 0 ? '' : 'none'; }
-    if (label) { label.textContent = unread; label.style.display = unread > 0 ? '' : 'none'; }
+    renderBellUnreadCount(unread);
 
     if (!data || !data.length) {
       list.innerHTML = `
@@ -114,32 +271,42 @@ async function loadBellDropdown() {
       return;
     }
 
-    list.innerHTML = data.slice(0, 10).map(n => `
-      <div class="d-flex gap-2 px-3 py-2 border-bottom notif-drop-item ${n.is_read ? '' : 'bg-light'}"
+    list.innerHTML = data
+      .slice(0, 10)
+      .map(
+        (n) => `
+      <div class="notif-drop-item p-3 border-bottom ${n.is_read ? "" : "unread"}"
            id="bell-notif-${n.id}"
            data-id="${n.id}"
-           data-ticket="${n.ticket_id || ''}"
+           data-ticket="${n.ticket_id || ""}"
            role="button" tabindex="0"
            aria-label="${escHtml(n.title)}"
            style="cursor:pointer;transition:background .15s;"
            onclick="openNotif(this)"
            onkeydown="notifBellKeydown(event, this)">
-        <div class="flex-shrink-0 mt-1">
-          <span class="rounded-circle d-inline-flex align-items-center justify-content-center"
-                style="width:32px;height:32px;background:${typeColourSoft(n.type)};">
-            <i class="bi ${typeIcon(n.type)}" style="color:${typeColour(n.type)};font-size:.85rem;"></i>
-          </span>
+        <div class="d-flex gap-2">
+          <div class="flex-shrink-0 mt-1">
+            <span class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                  style="width:36px;height:36px;background:${getTypeColourSoft(n.type)};">
+                  <i class="bi ${getTypeIcon(n.notificationType || n.type)}" style="color:${getTypeColour(n.notificationType || n.type)};font-size:.9rem;"></i>
+            </span>
+          </div>
+          <div class="flex-grow-1 min-w-0">
+            <div class="small fw-semibold text-truncate ${n.is_read ? "text-muted" : ""}">${escHtml(n.title)}</div>
+            <div class="text-muted text-truncate" style="font-size:.75rem;">${escHtml(n.message)}</div>
+            <div class="text-muted" style="font-size:.7rem;">${timeAgo(n.created_at)}</div>
+          </div>
+          ${
+            !n.is_read
+              ? `<div class="flex-shrink-0 d-flex align-items-center">
+                 <span class="notif-dot" style="width:8px;height:8px;border-radius:50%;background:${getTypeColour(n.notificationType || n.type)};display:inline-block;flex-shrink:0;"></span>
+               </div>`
+              : ""
+          }
         </div>
-        <div class="flex-grow-1 min-w-0">
-          <div class="small fw-semibold text-truncate ${n.is_read ? 'text-muted' : ''}">${escHtml(n.title)}</div>
-          <div class="text-muted text-truncate" style="font-size:.75rem;">${escHtml(n.message)}</div>
-          <div class="text-muted" style="font-size:.7rem;">${timeAgo(n.created_at)}</div>
-        </div>
-        ${!n.is_read
-          ? `<div class="flex-shrink-0 d-flex align-items-center">
-               <span class="notif-dot" style="width:8px;height:8px;border-radius:50%;background:${typeColour(n.type)};display:inline-block;flex-shrink:0;"></span>
-             </div>` : ''}
-      </div>`).join('');
+      </div>`,
+      )
+      .join("");
 
     if (data.length > 10) {
       list.innerHTML += `<div class="text-center py-2 border-top">
@@ -147,37 +314,50 @@ async function loadBellDropdown() {
           View all ${data.length} notifications →
         </a></div>`;
     }
-
   } catch (err) {
     list.innerHTML = `<div class="text-center text-danger py-3 small">${escHtml(err.message)}</div>`;
   }
 }
 
 async function markReadBell(id, el) {
-  if (!el.classList.contains('bg-light')) return; // already read
+  if (el.classList.contains("unread") === false) return; // already read
   try {
-    await apiRequest(`/notifications/${id}/read`, { method: 'PATCH' });
-    el.classList.remove('bg-light');
-    el.querySelector('.notif-dot')?.remove();
+    await apiRequest(`/notifications/${id}/read`, { method: "PATCH" });
+    el.classList.remove("unread");
+    el.classList.add("read");
+    el.querySelector(".notif-dot")?.remove();
     refreshBellBadge();
   } catch (_) {}
 }
 
 /* Click a bell item → mark read + take the user to the ticket details */
 async function openNotif(el) {
-  const id     = el.getAttribute('data-id')     || '';
-  const ticket = el.getAttribute('data-ticket') || '';
+  const id = el.getAttribute("data-id") || "";
+  const ticket = el.getAttribute("data-ticket") || "";
+  /* Stop notification sound when opened */
+  if (
+    window.NotificationSound &&
+    typeof window.NotificationSound.stopSound === "function"
+  ) {
+    window.NotificationSound.stopSound();
+  }
   await markReadBell(id, el);
+  startExpirationTimer(id);
   openNotificationTicket(ticket);
 }
 
 async function markAllReadBell(e) {
   e.stopPropagation();
   try {
-    await apiRequest('/notifications/read-all', { method: 'PATCH' });
-    showToast('All notifications marked as read.', 'success');
+    await apiRequest("/notifications/read-all", { method: "PATCH" });
+    showToast("All notifications marked as read.", "success");
+    /* Cancel all expiration timers since all are now read */
+    _expirationTimers.forEach((timerId) => clearTimeout(timerId));
+    _expirationTimers.clear();
     loadBellDropdown();
-  } catch (err) { showToast(err.message, 'danger'); }
+  } catch (err) {
+    showToast(err.message, "danger");
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -186,65 +366,76 @@ async function markAllReadBell(e) {
 async function initNotificationsPage() {
   await loadNotificationsPage();
 
-  document.getElementById('markAllReadBtn')?.addEventListener('click', async () => {
-    try {
-      await apiRequest('/notifications/read-all', { method: 'PATCH' });
-      showToast('All notifications marked as read.', 'success');
-      await loadNotificationsPage();
-    } catch (err) { showToast(err.message, 'danger'); }
-  });
+  document
+    .getElementById("markAllReadBtn")
+    ?.addEventListener("click", async () => {
+      try {
+        await apiRequest("/notifications/read-all", { method: "PATCH" });
+        showToast("All notifications marked as read.", "success");
+        /* Cancel all expiration timers since all are now read */
+        _expirationTimers.forEach((timerId) => clearTimeout(timerId));
+        _expirationTimers.clear();
+        await loadNotificationsPage();
+      } catch (err) {
+        showToast(err.message, "danger");
+      }
+    });
 
-  document.getElementById('filterUnread')?.addEventListener('change', loadNotificationsPage);
+  document
+    .getElementById("filterUnread")
+    ?.addEventListener("change", loadNotificationsPage);
 }
 
 async function loadNotificationsPage() {
-  const container = document.getElementById('notificationsList');
+  const container = document.getElementById("notificationsList");
   if (!container) return;
 
   container.innerHTML = `<div class="text-center py-5">
     <div class="spinner-border text-primary" role="status"></div></div>`;
 
   try {
-    const { data, unread } = await apiRequest('/notifications');
-    const filterEl = document.getElementById('filterUnread');
-    const filtered = filterEl?.checked ? data.filter(n => !n.is_read) : data;
+    const { data, unread } = await apiRequest("/notifications");
+    restoreExpirationTimers(data);
+    const filterEl = document.getElementById("filterUnread");
+    const filtered = filterEl?.checked ? data.filter((n) => !n.is_read) : data;
 
     // Update counts
-    const countEl = document.getElementById('unreadCount');
-    if (countEl) countEl.textContent = unread > 0 ? `${unread} unread` : 'All read';
+    const countEl = document.getElementById("unreadCount");
+    if (countEl)
+      countEl.textContent = unread > 0 ? `${unread} unread` : "All read";
 
-    // Update bell badge on this page too
-    refreshBellBadge();
+    renderBellUnreadCount(unread);
 
     if (!filtered || !filtered.length) {
       container.innerHTML = `
         <div class="text-center py-5">
           <i class="bi bi-bell-slash fs-1 text-muted d-block mb-3"></i>
-          <h6 class="text-muted">${filterEl?.checked ? 'No unread notifications.' : 'No notifications yet.'}</h6>
+          <h6 class="text-muted">${filterEl?.checked ? "No unread notifications." : "No notifications yet."}</h6>
         </div>`;
       return;
     }
 
-    container.innerHTML = filtered.map(n => `
-      <div class="card border-0 shadow-sm mb-2 ${n.is_read ? '' : 'border-start border-3'}"
+    container.innerHTML = filtered
+      .map(
+        (n) => `
+      <div class="notif-card ${n.is_read ? "read" : "unread"}"
            id="notif-${n.id}"
-           data-ticket="${n.ticket_id || ''}"
+           data-ticket="${n.ticket_id || ""}"
            role="button" tabindex="0"
            aria-label="Open ${escHtml(n.title)}"
-           style="border-left:4px solid ${typeColour(n.type)}!important;cursor:pointer;"
            onclick="markReadPage('${n.id}', this)"
            onkeydown="notifCardKeydown(event, '${n.id}', this)">
-        <div class="card-body py-2 px-3">
+        <div class="notif-card-body">
           <div class="d-flex align-items-start gap-3">
             <div class="flex-shrink-0 mt-1">
-              <span style="width:38px;height:38px;border-radius:50%;background:${typeColourSoft(n.type)};
+              <span style="width:40px;height:40px;border-radius:50%;background:${getTypeColourSoft(n.type)};
                            display:inline-flex;align-items:center;justify-content:center;">
-                <i class="bi ${typeIcon(n.type)}" style="color:${typeColour(n.type)};font-size:1rem;"></i>
+                <i class="bi ${getTypeIcon(n.notificationType || n.type)}" style="color:${getTypeColour(n.notificationType || n.type)};font-size:1.1rem;"></i>
               </span>
             </div>
             <div class="flex-grow-1 min-w-0">
               <div class="d-flex justify-content-between align-items-start gap-2">
-                <h6 class="mb-1 fw-semibold ${n.is_read ? 'text-muted' : ''}" style="font-size:.875rem;">
+                <h6 class="mb-1 fw-semibold ${n.is_read ? "text-muted" : ""}" style="font-size:.9rem;">
                   ${escHtml(n.title)}
                 </h6>
                 <div class="d-flex align-items-center gap-2 flex-shrink-0">
@@ -256,35 +447,49 @@ async function loadNotificationsPage() {
                   </button>
                 </div>
               </div>
-              <p class="mb-0 text-muted" style="font-size:.8rem;line-height:1.4;">${escHtml(n.message)}</p>
+              <p class="mb-0 text-muted" style="font-size:.825rem;line-height:1.4;">${escHtml(n.message)}</p>
             </div>
-            ${!n.is_read
-              ? `<div class="flex-shrink-0 mt-2">
-                   <span class="notif-dot" style="width:8px;height:8px;border-radius:50%;background:${typeColour(n.type)};display:inline-block;"></span>
+            ${
+              !n.is_read
+                ? `<div class="flex-shrink-0 mt-2">
+                   <span class="notif-dot" style="width:10px;height:10px;border-radius:50%;background:${getTypeColour(n.notificationType || n.type)};display:inline-block;"></span>
                  </div>`
-              : ''}
+                : ""
+            }
           </div>
         </div>
-      </div>`).join('');
-
+      </div>`,
+      )
+      .join("");
   } catch (err) {
     container.innerHTML = `<div class="alert alert-danger m-3">${escHtml(err.message)}</div>`;
   }
 }
 
 async function markReadPage(id, element) {
-  const ticket = element.getAttribute('data-ticket') || '';
-  if (element.querySelector('.notif-dot')) {
+  const ticket = element.getAttribute("data-ticket") || "";
+  if (element.classList.contains("unread")) {
     try {
-      await apiRequest(`/notifications/${id}/read`, { method: 'PATCH' });
-      element.style.borderLeftColor = '#adb5bd';
-      element.querySelectorAll('.notif-dot').forEach(s => s.remove());
-      element.querySelector('h6')?.classList.add('text-muted');
+      await apiRequest(`/notifications/${id}/read`, { method: "PATCH" });
+      element.classList.remove("unread");
+      element.classList.add("read");
+      element.querySelectorAll(".notif-dot").forEach((s) => s.remove());
+      element.querySelector("h6")?.classList.add("text-muted");
       const unread = await refreshBellBadge();
-      const countEl = document.getElementById('unreadCount');
-      if (countEl) countEl.textContent = unread > 0 ? `${unread} unread` : 'All read';
+      const countEl = document.getElementById("unreadCount");
+      if (countEl)
+        countEl.textContent = unread > 0 ? `${unread} unread` : "All read";
     } catch (_) {}
   }
+
+  /* Stop notification sound when opened */
+  if (
+    window.NotificationSound &&
+    typeof window.NotificationSound.stopSound === "function"
+  ) {
+    window.NotificationSound.stopSound();
+  }
+  startExpirationTimer(id);
 
   /* Open the related ticket using this role's existing detail interface */
   openNotificationTicket(ticket);
@@ -293,10 +498,16 @@ async function markReadPage(id, element) {
 async function deleteNotif(id, e) {
   e.stopPropagation();
   try {
-    await apiRequest(`/notifications/${id}`, { method: 'DELETE' });
+    await apiRequest(`/notifications/${id}`, { method: "DELETE" });
     document.getElementById(`notif-${id}`)?.remove();
+    document.getElementById(`bell-notif-${id}`)?.remove();
+    /* Clean up expiration tracking */
+    cancelExpirationTimer(id);
+    removeExpiredNotification(id);
     refreshBellBadge();
-  } catch (err) { showToast(err.message, 'danger'); }
+  } catch (err) {
+    showToast(err.message, "danger");
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -306,81 +517,434 @@ async function deleteNotif(id, e) {
    opens the ticket). Tickets without a valid related id are
    left alone (legacy notifications never pretend to open). ═══ */
 function openNotificationTicket(ticketId) {
-  const raw = String(ticketId || '').trim();
+  const raw = String(ticketId || "").trim();
   if (!raw || !/^[0-9a-f]{24}$/i.test(raw)) {
-    console.warn('Notification has no valid related ticket id; skipping navigation.', raw);
+    console.warn(
+      "Notification has no valid related ticket id; skipping navigation.",
+      raw,
+    );
     /* Stale or malformed notification (ticket deleted, legacy seed, or no ticket
        reference). Never guess an id — surface a clear message instead so the user
        is not left wondering why nothing happened. */
-    if (typeof showToast === 'function') {
-      showToast('Ticket details are no longer available or you are no longer assigned to this ticket.', 'warning');
+    if (typeof showToast === "function") {
+      showToast(
+        "Ticket details are no longer available or you are no longer assigned to this ticket.",
+        "warning",
+      );
     }
     return;
   }
 
   const path = window.location.pathname;
-  const sessionUser = (typeof Auth !== 'undefined' && Auth.getUser && Auth.getUser()) || null;
+  const sessionUser =
+    (typeof Auth !== "undefined" && Auth.getUser && Auth.getUser()) || null;
   /* Normalize so a stale/non-canonical role in the session never falls through
      to the wrong role branch (which would silently do nothing or open the wrong
      modal). Roles in main.js are canonical: Requester / Technician / ICT Admin. */
-  const role = normalizeRole(sessionUser?.role) || '';
+  const role = normalizeRole(sessionUser?.role) || "";
 
   /* Technician — use the view-ticket modal when present on this page. */
-  if (role === 'Technician') {
-    if (document.getElementById('viewTicketBody') && typeof openViewDetails === 'function') {
+  if (role === "Technician") {
+    if (
+      document.getElementById("viewTicketBody") &&
+      typeof openViewDetails === "function"
+    ) {
       openViewDetails(raw);
-    } else if (document.getElementById('requestDetailBody') && typeof openDetailModal === 'function') {
+    } else if (
+      document.getElementById("requestDetailBody") &&
+      typeof openDetailModal === "function"
+    ) {
       openDetailModal(raw);
     } else {
-      window.location.href = 'assigned-requests.html?id=' + encodeURIComponent(raw);
+      window.location.href =
+        "assigned-requests.html?id=" + encodeURIComponent(raw);
     }
     return;
   }
 
   /* ICT Admin — use the request info / assign modal when present. */
-  if (role === 'ICT Admin') {
-    if (document.getElementById('requestInfoSection') && typeof openAdminRequestModal === 'function') {
+  if (role === "ICT Admin") {
+    if (
+      document.getElementById("requestInfoSection") &&
+      typeof openAdminRequestModal === "function"
+    ) {
       openAdminRequestModal(raw);
-    } else if (document.getElementById('requestDetailBody') && typeof openDetailModal === 'function') {
+    } else if (
+      document.getElementById("requestDetailBody") &&
+      typeof openDetailModal === "function"
+    ) {
       openDetailModal(raw);
     } else {
-      window.location.href = 'requests.html?id=' + encodeURIComponent(raw);
+      window.location.href = "requests.html?id=" + encodeURIComponent(raw);
     }
     return;
   }
 
   /* Requester / any other authenticated user */
-  if (document.getElementById('requestDetailBody') && typeof openDetailModal === 'function') {
+  if (
+    document.getElementById("requestDetailBody") &&
+    typeof openDetailModal === "function"
+  ) {
     openDetailModal(raw);
-  } else if (path.includes('/user/')) {
-    window.location.href = 'tracking.html?id=' + encodeURIComponent(raw);
-  } else if (typeof openDetailModal === 'function') {
+  } else if (path.includes("/user/")) {
+    window.location.href = "tracking.html?id=" + encodeURIComponent(raw);
+  } else if (typeof openDetailModal === "function") {
     openDetailModal(raw);
   }
 }
 
 /* Keyboard activation for notification cards (Enter / Space). */
 function notifCardKeydown(e, id, el) {
-  if (e.key === 'Enter' || e.key === ' ') {
+  if (e.key === "Enter" || e.key === " ") {
     e.preventDefault();
     markReadPage(id, el);
   }
 }
 function notifBellKeydown(e, el) {
-  if (e.key === 'Enter' || e.key === ' ') {
+  if (e.key === "Enter" || e.key === " ") {
     e.preventDefault();
     openNotif(el);
   }
 }
 
-/* ── Helpers ──────────────────────────────────────────────── */
-function typeIcon(type) {
-  return { success: 'bi-check-circle-fill', warning: 'bi-exclamation-triangle-fill',
-           danger:  'bi-x-circle-fill',     info:    'bi-bell-fill' }[type] || 'bi-bell-fill';
+/* ════════════════════════════════════════════════════════════
+   NOTIFICATION EXPIRATION SYSTEM
+   ═══════════════════════════════════════════════════════════
+   - After a notification is marked READ, start a 60-second timer
+   - After 60 seconds, hide the notification from active list
+   - Expired notifications stay in database (not deleted)
+   - Unread notifications NEVER expire
+   ════════════════════════════════════════════════════════════ */
+
+const EXPIRATION_DELAY_MS = 60000; // 60 seconds
+const EXPIRED_NOTIFICATIONS_KEY = "ict_expired_notifications";
+
+let _expirationTimers = new Map(); // notificationId -> timerId
+
+function getExpiredNotificationsKey() {
+  const user = Auth.getUser();
+  return `${EXPIRED_NOTIFICATIONS_KEY}:${String(user?.id || user?._id || user?.email || "anonymous")}`;
 }
-function typeColour(type) {
-  return { success: '#198754', warning: '#fd7e14', danger: '#dc3545', info: '#2563eb' }[type] || '#2563eb';
+
+function getExpiredNotifications() {
+  try {
+    const stored = localStorage.getItem(getExpiredNotificationsKey());
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch (_) {
+    return new Set();
+  }
 }
-function typeColourSoft(type) {
-  return { success: '#d1e7dd', warning: '#fff3cd', danger: '#f8d7da', info: '#cfe2ff' }[type] || '#cfe2ff';
+
+function addExpiredNotification(notificationId) {
+  const expired = getExpiredNotifications();
+  expired.add(notificationId);
+  try {
+    localStorage.setItem(
+      getExpiredNotificationsKey(),
+      JSON.stringify(Array.from(expired)),
+    );
+  } catch (_) {}
 }
+
+function isNotificationExpired(notificationId) {
+  return getExpiredNotifications().has(notificationId);
+}
+
+function removeExpiredNotification(notificationId) {
+  const expired = getExpiredNotifications();
+  expired.delete(notificationId);
+  try {
+    localStorage.setItem(
+      getExpiredNotificationsKey(),
+      JSON.stringify(Array.from(expired)),
+    );
+  } catch (_) {}
+}
+
+function clearAllExpiredNotifications() {
+  try {
+    localStorage.removeItem(getExpiredNotificationsKey());
+  } catch (_) {}
+}
+
+/* Start 60-second expiration timer for a notification that was just marked read */
+function startExpirationTimer(notificationId) {
+  /* Clear any existing timer for this notification */
+  if (_expirationTimers.has(notificationId)) {
+    clearTimeout(_expirationTimers.get(notificationId));
+  }
+
+  const timerId = setTimeout(() => {
+    addExpiredNotification(notificationId);
+    _expirationTimers.delete(notificationId);
+
+    /* Refresh UI to hide expired notification */
+    if (typeof loadBellDropdown === "function") {
+      const dropdown = document.getElementById("notifDropdown");
+      if (dropdown && dropdown.classList.contains("show")) {
+        loadBellDropdown();
+      }
+    }
+    if (
+      typeof loadNotificationsPage === "function" &&
+      window.location.pathname.includes("notifications.html")
+    ) {
+      loadNotificationsPage();
+    }
+  }, EXPIRATION_DELAY_MS);
+
+  _expirationTimers.set(notificationId, timerId);
+}
+
+/* Cancel expiration timer if notification becomes unread again (e.g., manual unread) */
+function cancelExpirationTimer(notificationId) {
+  if (_expirationTimers.has(notificationId)) {
+    clearTimeout(_expirationTimers.get(notificationId));
+    _expirationTimers.delete(notificationId);
+    removeExpiredNotification(notificationId);
+  }
+}
+
+/* Check if a notification should be shown in active list */
+function isNotificationActive(notification) {
+  /* Never hide unread notifications */
+  if (!notification.is_read) return true;
+  /* Hide expired notifications */
+  return !isNotificationExpired(notification.id);
+}
+
+/* Filter notifications to show only active ones in dropdown/page */
+function filterActiveNotifications(notifications) {
+  return notifications.filter(isNotificationActive);
+}
+
+/* ── Modified Bell Dropdown Loader ─────────────────────────── */
+/* The original loadBellDropdown is kept but we add filtering */
+const _originalLoadBellDropdown = loadBellDropdown;
+loadBellDropdown = async function () {
+  const list = document.getElementById("notifDropList");
+  if (!list) return;
+
+  list.innerHTML = `<div class="text-center text-muted py-4 small">
+    <div class="spinner-border spinner-border-sm me-1" role="status"></div>Loading…</div>`;
+
+  try {
+    const { data, unread } = await apiRequest("/notifications");
+
+    // Update badge
+    const badge = document.getElementById("notifBadge");
+    const label = document.getElementById("notifUnreadLabel");
+    if (badge) {
+      badge.textContent = unread > 9 ? "9+" : unread;
+      badge.style.display = unread > 0 ? "" : "none";
+    }
+    if (label) {
+      label.textContent = unread;
+      label.style.display = unread > 0 ? "" : "none";
+    }
+    updateSidebarBadge(unread);
+
+    const activeData = filterActiveNotifications(data);
+
+    if (!activeData || !activeData.length) {
+      list.innerHTML = `
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-bell-slash fs-2 d-block mb-2 opacity-50"></i>
+          <small>No active notifications.</small>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = activeData
+      .slice(0, 10)
+      .map(
+        (n) => `
+      <div class="notif-drop-item p-3 border-bottom ${n.is_read ? "" : "unread"}"
+           id="bell-notif-${n.id}"
+           data-id="${n.id}"
+           data-ticket="${n.ticket_id || ""}"
+           role="button" tabindex="0"
+           aria-label="${escHtml(n.title)}"
+           style="cursor:pointer;transition:background .15s;"
+           onclick="openNotif(this)"
+           onkeydown="notifBellKeydown(event, this)">
+        <div class="d-flex gap-2">
+          <div class="flex-shrink-0 mt-1">
+            <span class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                  style="width:36px;height:36px;background:${getTypeColourSoft(n.type)};">
+                  <i class="bi ${getTypeIcon(n.notificationType || n.type)}" style="color:${getTypeColour(n.notificationType || n.type)};font-size:.9rem;"></i>
+            </span>
+          </div>
+          <div class="flex-grow-1 min-w-0">
+            <div class="small fw-semibold text-truncate ${n.is_read ? "text-muted" : ""}">${escHtml(n.title)}</div>
+            <div class="text-muted text-truncate" style="font-size:.75rem;">${escHtml(n.message)}</div>
+            <div class="text-muted" style="font-size:.7rem;">${timeAgo(n.created_at)}</div>
+          </div>
+          ${
+            !n.is_read
+              ? `<div class="flex-shrink-0 d-flex align-items-center">
+                 <span class="notif-dot" style="width:8px;height:8px;border-radius:50%;background:${getTypeColour(n.notificationType || n.type)};display:inline-block;flex-shrink:0;"></span>
+               </div>`
+              : ""
+          }
+        </div>
+      </div>`,
+      )
+      .join("");
+
+    if (data.length > 10) {
+      list.innerHTML += `<div class="text-center py-2 border-top">
+        <a href="notifications.html" class="small text-primary text-decoration-none">
+          View all ${data.length} notifications →
+        </a></div>`;
+    }
+  } catch (err) {
+    list.innerHTML = `<div class="text-center text-danger py-3 small">${escHtml(err.message)}</div>`;
+  }
+};
+
+/* ── Modified Full Page Loader ─────────────────────────────── */
+const _originalLoadNotificationsPage = loadNotificationsPage;
+loadNotificationsPage = async function () {
+  const container = document.getElementById("notificationsList");
+  if (!container) return;
+
+  container.innerHTML = `<div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div></div>`;
+
+  try {
+    const { data, unread } = await apiRequest("/notifications");
+    const filterEl = document.getElementById("filterUnread");
+    const allData = filterEl?.checked ? data.filter((n) => !n.is_read) : data;
+    const filtered = filterActiveNotifications(allData);
+
+    // Update counts
+    const countEl = document.getElementById("unreadCount");
+    if (countEl)
+      countEl.textContent = unread > 0 ? `${unread} unread` : "All read";
+
+    // Update bell badge on this page too
+    refreshBellBadge();
+
+    if (!filtered || !filtered.length) {
+      container.innerHTML = `
+        <div class="text-center py-5">
+          <i class="bi bi-bell-slash fs-1 text-muted d-block mb-3"></i>
+          <h6 class="text-muted">${filterEl?.checked ? "No unread notifications." : "No active notifications."}</h6>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = filtered
+      .map(
+        (n) => `
+      <div class="notif-card ${n.is_read ? "read" : "unread"}"
+           id="notif-${n.id}"
+           data-ticket="${n.ticket_id || ""}"
+           role="button" tabindex="0"
+           aria-label="Open ${escHtml(n.title)}"
+           onclick="markReadPage('${n.id}', this)"
+           onkeydown="notifCardKeydown(event, '${n.id}', this)">
+        <div class="notif-card-body">
+          <div class="d-flex align-items-start gap-3">
+            <div class="flex-shrink-0 mt-1">
+              <span style="width:40px;height:40px;border-radius:50%;background:${getTypeColourSoft(n.type)};
+                           display:inline-flex;align-items:center;justify-content:center;">
+                <i class="bi ${getTypeIcon(n.notificationType || n.type)}" style="color:${getTypeColour(n.notificationType || n.type)};font-size:1.1rem;"></i>
+              </span>
+            </div>
+            <div class="flex-grow-1 min-w-0">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <h6 class="mb-1 fw-semibold ${n.is_read ? "text-muted" : ""}" style="font-size:.9rem;">
+                  ${escHtml(n.title)}
+                </h6>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                  <small class="text-muted">${timeAgo(n.created_at)}</small>
+                  <button class="btn btn-sm p-0 text-muted" style="line-height:1;"
+                          onclick="deleteNotif('${n.id}', event)"
+                          title="Delete">
+                    <i class="bi bi-x-lg" style="font-size:.75rem;"></i>
+                  </button>
+                </div>
+              </div>
+              <p class="mb-0 text-muted" style="font-size:.825rem;line-height:1.4;">${escHtml(n.message)}</p>
+            </div>
+            ${
+              !n.is_read
+                ? `<div class="flex-shrink-0 mt-2">
+                   <span class="notif-dot" style="width:10px;height:10px;border-radius:50%;background:${getTypeColour(n.notificationType || n.type)};display:inline-block;"></span>
+                 </div>`
+                : ""
+            }
+          </div>
+        </div>
+      </div>`,
+      )
+      .join("");
+  } catch (err) {
+    container.innerHTML = `<div class="alert alert-danger m-3">${escHtml(err.message)}</div>`;
+  }
+};
+
+/* ── Modified markReadBell to cancel expiration if manually marked read again ─────── */
+const _originalMarkReadBell = markReadBell;
+markReadBell = async function (id, el) {
+  if (el.classList.contains("unread") === false) return; // already read
+  try {
+    await apiRequest(`/notifications/${id}/read`, { method: "PATCH" });
+    el.classList.remove("unread");
+    el.classList.add("read");
+    el.querySelector(".notif-dot")?.remove();
+    refreshBellBadge();
+    /* Cancel any expiration timer since user manually marked read */
+    cancelExpirationTimer(id);
+  } catch (_) {}
+};
+
+/* ── Modified markReadPage to cancel expiration if manually marked read again ─────── */
+const _originalMarkReadPage = markReadPage;
+markReadPage = async function (id, element) {
+  const ticket = element.getAttribute("data-ticket") || "";
+  if (element.classList.contains("unread")) {
+    try {
+      await apiRequest(`/notifications/${id}/read`, { method: "PATCH" });
+      element.classList.remove("unread");
+      element.classList.add("read");
+      element.querySelectorAll(".notif-dot").forEach((s) => s.remove());
+      element.querySelector("h6")?.classList.add("text-muted");
+      const unread = await refreshBellBadge();
+      const countEl = document.getElementById("unreadCount");
+      if (countEl)
+        countEl.textContent = unread > 0 ? `${unread} unread` : "All read";
+    } catch (_) {}
+  }
+
+  /* Stop notification sound when opened */
+  if (
+    window.NotificationSound &&
+    typeof window.NotificationSound.stopSound === "function"
+  ) {
+    window.NotificationSound.stopSound();
+  }
+  startExpirationTimer(id);
+
+  /* Open the related ticket using this role's existing detail interface */
+  openNotificationTicket(ticket);
+};
+
+/* ── Modified deleteNotif to clean up expiration tracking ─────── */
+const _originalDeleteNotif = deleteNotif;
+deleteNotif = async function (id, e) {
+  e.stopPropagation();
+  try {
+    await apiRequest(`/notifications/${id}`, { method: "DELETE" });
+    document.getElementById(`notif-${id}`)?.remove();
+    document.getElementById(`bell-notif-${id}`)?.remove();
+    /* Clean up expiration tracking */
+    cancelExpirationTimer(id);
+    removeExpiredNotification(id);
+    refreshBellBadge();
+  } catch (err) {
+    showToast(err.message, "danger");
+  }
+};

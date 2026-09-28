@@ -5,7 +5,10 @@
 const Feedback = require('../models/Feedback');
 const Ticket   = require('../models/Ticket');
 const User     = require('../models/User');
+const Notification = require('../models/Notification');
+const { broadcastNotification } = require('../services/notificationService');
 const { validateObjectId, validateRequired, validateInteger, validateLength } = require('../middleware/validation');
+const { displayTicketId } = require('../utils/ticketId');
 
 /* Escape a string for safe use inside a RegExp (user-supplied filters). */
 const escapeRegExp = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -71,6 +74,10 @@ const getAllFeedback = async (req, res, next) => {
       })
       .sort({ createdAt: -1 })
       .lean();
+
+    feedback.forEach(fb => {
+      if (fb.request && fb.request.ticketId) fb.request.ticketId = displayTicketId(fb.request.ticketId);
+    });
 
     /* KPIs are computed by the backend from the same filtered dataset —
        never hard-coded in the frontend. */
@@ -170,6 +177,36 @@ const submitFeedback = async (req, res, next) => {
       feedbackRating:   Number(rating),
       feedbackComments: comment || null,
     });
+
+    const displayId = displayTicketId(ticket.ticketId);
+    const requesterName = req.user.fullName || 'A requester';
+
+    /* Notify assigned technician */
+    if (ticket.assignedTechnician) {
+      const techNotif = await Notification.create({
+        user:    ticket.assignedTechnician,
+        ticket:  ticket._id,
+        title:   `Feedback Available`,
+        message: `${requesterName} rated your work on ticket #${displayId} with ${rating} star${rating > 1 ? 's' : ''}.`,
+        type:    rating >= 4 ? 'success' : rating >= 3 ? 'info' : 'warning',
+        notificationType: 'feedback_available',
+      });
+      broadcastNotification(techNotif);
+    }
+
+    /* Notify ICT Admins */
+    const admins = await User.find({ role: 'ICT Admin', status: 'active' }).select('_id').lean();
+    await Promise.all(admins.map(async admin => {
+      const adminNotif = await Notification.create({
+        user:    admin._id,
+        ticket:  ticket._id,
+        title:   `Feedback Received: ${displayId}`,
+        message: `${requesterName} submitted feedback (${rating} star${rating > 1 ? 's' : ''}) for ticket "${displayId}".`,
+        type:    'info',
+        notificationType: 'technician_activity',
+      });
+      broadcastNotification(adminNotif);
+    }));
 
     res.status(201).json({ success: true, message: 'Feedback submitted. Thank you!' });
   } catch (err) { next(err); }

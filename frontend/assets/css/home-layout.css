@@ -20,19 +20,19 @@
   border-radius: 8px;
   padding: .45rem .8rem;
   cursor: pointer;
-  font: 600 .82rem/1.2 Inter, system-ui, sans-serif;
+  font: 600 .82rem/1.2 "Segoe UI", system-ui, sans-serif;
   transition: transform .18s ease, background-color .18s ease, border-color .18s ease;
 }
 
 .home-layout-toolbar button:hover { transform: translateY(-1px); }
-.home-layout-edit-button { background: #155eef; color: #fff; }
-.home-layout-save-button { background: #f4b400; color: #172033; }
+.home-layout-edit-button { background: var(--primary); color: #1F2937; }
+.home-layout-save-button { background: var(--accent); color: #1F2937; }
 .home-layout-cancel-button { background: transparent; border-color: rgba(255, 255, 255, .35) !important; color: #fff; }
 .home-layout-toolbar [hidden] { display: none !important; }
 
 .home-layout-status {
   color: #dbe8ff;
-  font: 500 .78rem/1.2 Inter, system-ui, sans-serif;
+  font: 500 .78rem/1.2 "Segoe UI", system-ui, sans-serif;
   white-space: nowrap;
 }
 
@@ -43,12 +43,12 @@
   z-index: 2100;
   max-width: min(360px, calc(100vw - 2rem));
   padding: .8rem 1rem;
-  border-left: 4px solid #12b76a;
+  border-left: 4px solid #2563EB;
   border-radius: 10px;
   background: #fff;
   color: #172033;
   box-shadow: 0 12px 28px rgba(16, 24, 40, .16);
-  font: 600 .86rem/1.35 Inter, system-ui, sans-serif;
+  font: 600 .86rem/1.35 "Segoe UI", system-ui, sans-serif;
 }
 
 .home-layout-editing .hero-slide-track {
@@ -88,7 +88,7 @@
 .home-layout-editing .hero-slide:hover,
 .home-layout-editing .hero-slide:focus-visible {
   opacity: 1;
-  outline-color: #f4b400;
+  outline-color: #2563EB;
 }
 
 .home-layout-editing .hero-slide.is-dragging {
@@ -102,15 +102,15 @@
 
 .home-layout-placeholder {
   min-height: 170px;
-  border: 2px dashed #f4b400;
+  border: 2px dashed #2563EB;
   border-radius: 12px;
-  background: rgba(244, 180, 0, .14);
+  background: rgba(59, 130, 246, .14);
 }
 
 .home-layout-editing .hero-section > .container { opacity: .18; pointer-events: none; }
 .home-layout-editing .hero-overlay { opacity: .2; pointer-events: none; }
 .home-layout-editing .navbar-brand img[data-home-image-id] {
-  outline: 2px solid #f4b400;
+  outline: 2px solid #2563EB;
   outline-offset: 3px;
   cursor: grab;
 }
@@ -131,4 +131,206 @@
 @media (prefers-reduced-motion: reduce) {
   .home-layout-toolbar button,
   .home-layout-editing .hero-slide { transition: none; }
+}
+
+/* ============================================================
+   Visitor hero reorder tool (home1.png .. home8.png, client-side).
+   A fixed bottom-left control that lets ANY visitor reorder the
+   hero slides on the current device. Order is saved to localStorage
+   and restored by hero-reorder.js before the carousel initialises.
+   ============================================================ */
+.hero-reorder-toggle {
+  position: fixed;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 2105;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem .9rem;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 999px;
+  background: #0b1f3a;
+  color: #eaf2ff;
+  box-shadow: 0 14px 32px rgba(7, 20, 38, .35);
+  cursor: pointer;
+  font: 600 .83rem/1 "Segoe UI", system-ui, sans-serif;
+  transition: transform .18s ease, background-color .18s ease;
+}
+
+.hero-reorder-toggle:hover { transform: translateY(-1px); }
+.hero-reorder-toggle[hidden] { display: none !important; }
+.hero-reorder-toggle:focus-visible {
+  outline: 2px solid #2563EB;
+  outline-offset: 2px;
+}
+
+.hero-reorder-panel {
+  position: fixed;
+  left: 1.25rem;
+  bottom: 5rem;
+  z-index: 2105;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  max-width: min(420px, calc(100vw - 2.5rem));
+  padding: .55rem .6rem;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 12px;
+  background: #0b1f3a;
+  box-shadow: 0 14px 32px rgba(7, 20, 38, .28);
+}
+
+.hero-reorder-panel[hidden] { display: none !important; }
+
+.hero-reorder-panel button {
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: .4rem .7rem;
+  cursor: pointer;
+  font: 600 .78rem/1.2 "Segoe UI", system-ui, sans-serif;
+  transition: transform .18s ease, background-color .18s ease;
+}
+
+.hero-reorder-panel button:hover { transform: translateY(-1px); }
+.hero-reorder-reset { background: transparent; border-color: rgba(255, 255, 255, .35) !important; color: #fff; }
+.hero-reorder-done { background: #0891b2; color: #fff; }
+
+.hero-reorder-status {
+  color: #dbe8ff;
+  font: 500 .78rem/1.3 "Segoe UI", system-ui, sans-serif;
+}
+
+/* Edit mode: turn the slide track into a draggable tile grid. */
+.hero-reorder-editing .hero-section {
+  flex-direction: column;
+  overflow: visible;
+}
+
+.hero-reorder-editing .hero-slider {
+  position: relative;
+  inset: auto;
+  z-index: 2;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+}
+
+.hero-reorder-editing .hero-slide-track {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100% !important;
+  height: auto;
+  gap: 12px;
+  padding: 16px;
+  transform: none !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+.hero-reorder-editing .hero-slide {
+  position: relative;
+  width: auto;
+  height: 170px;
+  border: 2px solid rgba(255, 255, 255, .35);
+  border-radius: 12px;
+  cursor: grab;
+  opacity: .95;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: opacity .18s ease, outline-color .18s ease, transform .18s ease;
+  touch-action: none;
+  pointer-events: auto !important;
+}
+
+.hero-reorder-editing .hero-slide:hover,
+.hero-reorder-editing .hero-slide:focus-visible {
+  opacity: 1;
+  outline-color: #2563EB;
+}
+
+.hero-reorder-editing .hero-slide.is-dragging {
+  cursor: grabbing;
+  opacity: .4;
+  transform: scale(.98);
+}
+
+.hero-reorder-editing .hero-slide[data-hero-clone="true"] { display: none; }
+
+.hero-reorder-placeholder {
+  border: 2px dashed #f4b400;
+  border-radius: 12px;
+  background: rgba(244, 180, 0, .14);
+}
+
+.hero-reorder-editing .hero-section > .container { opacity: .18; pointer-events: none; }
+.hero-reorder-editing .hero-overlay { opacity: .2; pointer-events: none; }
+.hero-reorder-editing .hero-dots { display: none; }
+
+/* Per-slide controls (visible without hover, keyboard friendly). */
+.hero-reorder-controls {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: rgba(2, 6, 23, .55);
+  backdrop-filter: blur(3px);
+}
+
+.hero-reorder-index {
+  margin-right: auto;
+  color: #fff;
+  font: 700 .72rem/1 "Segoe UI", system-ui, sans-serif;
+}
+
+.hero-reorder-btn {
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+  cursor: pointer;
+  font-size: .72rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color .15s ease;
+}
+
+.hero-reorder-btn:hover:not(:disabled) { background: rgba(255, 255, 255, .32); }
+.hero-reorder-btn:disabled { opacity: .35; cursor: default; }
+.hero-reorder-btn:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; }
+
+@media (max-width: 767.98px) {
+  .hero-reorder-toggle {
+    left: .75rem;
+    bottom: .75rem;
+  }
+  .hero-reorder-panel {
+    left: .75rem;
+    bottom: 4.5rem;
+    flex-wrap: wrap;
+  }
+  .hero-reorder-editing .hero-slide-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+  }
+  .hero-reorder-editing .hero-slide,
+  .hero-reorder-placeholder { height: 120px; min-height: 120px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-reorder-toggle,
+  .hero-reorder-panel button,
+  .hero-reorder-editing .hero-slide { transition: none; }
 }

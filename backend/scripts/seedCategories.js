@@ -20,6 +20,38 @@ const CATEGORIES = [
     name: 'Network Maintenance',
     description: 'Network equipment and connectivity maintenance — Wi-Fi and LAN issues, routers, switches, access points, IP/DNS/DHCP problems, and cabling.',
   },
+  {
+    name: 'Networking',
+    description: 'Networking-focused service requests — network cables, switches, routers, access points, firewalls, patch panels, network racks, and modems.',
+  },
+  {
+    name: 'Router',
+    description: 'Router-related maintenance requests — configuration, firmware, connectivity, and hardware issues.',
+  },
+  {
+    name: 'Switch',
+    description: 'Switch-related maintenance requests — port issues, VLAN configuration, POE problems, and hardware failures.',
+  },
+  {
+    name: 'Hub',
+    description: 'Network hub maintenance requests — connectivity, port failures, and replacement.',
+  },
+  {
+    name: 'Modem',
+    description: 'Modem-related maintenance requests — ISP connectivity, configuration, and hardware issues.',
+  },
+  {
+    name: 'Access Point',
+    description: 'Wireless access point maintenance — Wi-Fi coverage, authentication, roaming, and hardware issues.',
+  },
+  {
+    name: 'Firewall',
+    description: 'Firewall maintenance — rule management, intrusion detection, VPN configuration, and firmware updates.',
+  },
+  {
+    name: 'Network Cable',
+    description: 'Network cabling maintenance — patch cables, fiber runs, termination, testing, and cable management.',
+  },
 ];
 
 const log = (msg) => console.log(`  ✔  ${msg}`);

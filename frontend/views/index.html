@@ -10,26 +10,25 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
-  <link rel="stylesheet" href="/assets/css/style.css?v=12" />
+  <link rel="stylesheet" href="/assets/css/style.css?v=13" />
   <link rel="stylesheet" href="/assets/css/responsive.css?v=3" />
-  <link rel="stylesheet" href="/assets/css/home-layout.css?v=1" />
-  <script src="/assets/js/api-config.js"></script>
+  <script src="/assets/js/api-config.js?v=2"></script>
   <style>
     :root {
       --nav-height: 68px;
 
       /* ── Home Page — clean white/light SaaS theme ── */
-      --home-bg: #ffffff;
+      --home-bg: #f8fafc;
       /* page background        */
-      --home-surface: #f8fafc;
+      --home-surface: #ffffff;
       /* sections / surface     */
-      --home-surface-2: #f5f7fa;
+      --home-surface-2: #f8fafc;
       /* raised surface         */
       --home-surface-3: #ffffff;
       /* card surface           */
-      --home-surface-hover: #eef2f7;
+      --home-surface-hover: #EFF6FF;
       /* card hover             */
-      --home-text: #0f172a;
+      --home-text: #1f2937;
       /* main headings          */
       --home-text-soft: #475569;
       /* body text              */
@@ -37,12 +36,9 @@
       /* secondary text         */
       --home-text-dim: #9ca3af;
       /* tertiary / meta text   */
-      --home-primary: #2563eb;
-      /* brand blue — PRESERVE  */
-      --home-primary-strong: #1d4ed8;
-      /* hover / active blue    */
-      --home-accent: #0891b2;
-      /* cyan highlight         */
+      --home-primary: #3B82F6;
+      --home-primary-strong: #1E40AF;
+      --home-accent: #60A5FA;
       --home-border: #e2e8f0;
       /* card / hairline border */
       --home-border-strong: #cbd5e1;
@@ -61,6 +57,7 @@
     html {
       scroll-behavior: smooth;
       overflow-x: hidden;
+      margin: 0;
     }
 
     body {
@@ -68,97 +65,37 @@
       color: var(--home-text);
       background-color: var(--home-bg);
       overflow-x: hidden;
+      margin: 0;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) {
+      padding-top: 0 !important;
     }
 
     .main-navbar {
-      position: sticky;
-      top: 0;
-      z-index: 1050;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 1200 !important;
       min-height: var(--nav-height);
+      width: 100% !important;
       background: rgba(255, 255, 255, .96);
       border-bottom: 1px solid var(--home-border);
       box-shadow: 0 6px 24px -12px rgba(15, 23, 42, .18);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
+      overflow: visible !important;
+    }
+
+    .main-navbar .container {
+      min-height: var(--nav-height);
+      display: flex;
+      align-items: center;
     }
 
     .main-navbar .navbar-collapse {
       align-items: center;
-    }
-
-    .menu-quick {
-      position: relative;
-    }
-
-    .menu-quick-control {
-      display: inline-flex;
-      align-items: center;
-      gap: .45rem;
-      padding: .55rem .8rem;
-      border: 1px solid transparent;
-      border-radius: 9px;
-      background: rgba(242, 183, 5, .1);
-      color: var(--home-text);
-      font: 500 .9375rem/1.2 'Segoe UI', system-ui, sans-serif;
-      cursor: pointer;
-    }
-
-    .menu-quick-control:hover,
-    .menu-quick-control[aria-expanded="true"] {
-      background: rgba(242, 183, 5, .2);
-      border-color: rgba(183, 121, 0, .3);
-    }
-
-    .menu-quick-control i {
-      pointer-events: none;
-    }
-
-    .menu-quick-chevron {
-      font-size: .7rem;
-      transition: transform .2s ease;
-    }
-
-    .menu-quick-control[aria-expanded="true"] .menu-quick-chevron {
-      transform: rotate(180deg);
-    }
-
-    .menu-quick-panel {
-      position: absolute;
-      top: calc(100% + .5rem);
-      left: 0;
-      z-index: 1060;
-      min-width: 240px;
-      padding: .45rem;
-      border: 1px solid var(--home-border);
-      border-radius: 11px;
-      background: #fff;
-      box-shadow: 0 16px 34px rgba(24, 33, 43, .16);
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(-6px);
-      transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
-    }
-
-    .menu-quick.open .menu-quick-panel {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
-    }
-
-    .menu-quick-link {
-      display: flex;
-      align-items: center;
-      gap: .6rem;
-      padding: .55rem .65rem;
-      border-radius: 8px;
-      color: var(--home-text);
-      text-decoration: none;
-      font-size: .86rem;
-    }
-
-    .menu-quick-link:hover {
-      background: rgba(242, 183, 5, .12);
-      color: #925f00;
     }
 
     .main-navbar .navbar-toggler {
@@ -166,7 +103,7 @@
     }
 
     .main-navbar .navbar-toggler:focus {
-      box-shadow: 0 0 0 3px rgba(242, 183, 5, .22);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, .22);
     }
 
     .main-navbar .navbar-toggler-icon {
@@ -185,42 +122,31 @@
         box-shadow: 0 14px 28px -16px rgba(15, 23, 42, .28);
       }
 
-      .menu-quick {
-        width: 100%;
-      }
-
-      .menu-quick-control {
-        width: 100%;
-        justify-content: center;
-      }
-
-      .menu-quick-panel {
-        position: static;
-        width: 100%;
-        margin-top: .35rem;
-        box-shadow: none;
-      }
     }
 
     .navbar-brand {
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      padding: 0;
+      padding: 10px 16px 10px 10px;
       min-width: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.15));
+      border: 2px solid rgba(59, 130, 246, 0.9);
+      border-radius: 16px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
     }
 
     .navbar-brand-icon {
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       background: linear-gradient(135deg, var(--home-primary) 0%, var(--home-primary-strong) 100%);
-      border-radius: 11px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       overflow: hidden;
-      box-shadow: 0 4px 12px -4px rgba(37, 99, 235, .55);
+      box-shadow: 0 4px 12px -4px rgba(30, 64, 175, .55);
     }
 
     .navbar-brand-icon svg {
@@ -245,16 +171,21 @@
       white-space: nowrap;
     }
 
+    .navbar-brand .brand-text-main,
+    .navbar-brand .brand-text-sub {
+      color: #0f172a;
+    }
+
     /* ── Navigation links: evenly spaced, vertically centred ── */
     .nav-link-item {
-      color: var(--home-text-muted) !important;
+      color: #1f2937 !important;
       font-weight: 500;
-      font-size: .9375rem;
-      padding: .5rem .72rem !important;
-      border-radius: 9px;
+      font-size: .95rem;
+      padding: .75rem .9rem !important;
+      border-radius: 10px;
       transition: color .22s cubic-bezier(.4, 0, .2, 1), background-color .22s cubic-bezier(.4, 0, .2, 1);
       position: relative;
-      margin: 0 .28rem;
+      margin: 0 .2rem;
       white-space: nowrap;
       line-height: 1.2;
       text-align: center;
@@ -263,29 +194,29 @@
     .nav-link-item::after {
       content: '';
       position: absolute;
-      bottom: 3px;
+      bottom: 4px;
       left: 50%;
       width: 0;
       height: 3px;
       background: linear-gradient(90deg, var(--home-primary), var(--home-accent));
-      border-radius: 3px;
+      border-radius: 999px;
       transition: width .3s cubic-bezier(.4, 0, .2, 1);
       transform: translateX(-50%);
     }
 
     .nav-link-item:hover {
-      color: var(--home-primary) !important;
-      background: rgba(37, 99, 235, .075);
+      color: #1E3A8A !important;
+      background: rgba(59, 130, 246, .12);
     }
 
     .nav-link-item:hover::after,
     .nav-link-item.active::after {
-      width: 72%;
+      width: 70%;
     }
 
     .nav-link-item.active {
-      color: var(--home-primary) !important;
-      background: rgba(37, 99, 235, .12);
+      color: #1E3A8A !important;
+      background: rgba(59, 130, 246, .18);
       font-weight: 600;
     }
 
@@ -296,47 +227,51 @@
 
     /* ── Login: elegant outlined button ── */
     .btn-nav-login {
-      border: 1.5px solid var(--home-primary);
-      color: var(--home-primary) !important;
-      background: transparent;
-      border-radius: 9px;
-      padding: .4rem 1.1rem !important;
-      font-size: .8125rem;
-      font-weight: 600;
-      transition: background-color .22s cubic-bezier(.4, 0, .2, 1),
-        color .22s cubic-bezier(.4, 0, .2, 1), border-color .22s cubic-bezier(.4, 0, .2, 1),
-        box-shadow .22s cubic-bezier(.4, 0, .2, 1);
+      border: 1.5px solid #BFDBFE;
+      color: #1E3A8A !important;
+      background: #fff;
+      border-radius: 10px;
+      padding: .6rem 1.3rem !important;
+      font-size: .95rem;
+      font-weight: 700;
+      transition: background-color .18s ease,
+        color .18s ease, border-color .18s ease,
+        box-shadow .18s ease;
       margin-left: .35rem;
-      min-height: 38px;
+      min-height: 42px;
       white-space: nowrap;
     }
 
     .btn-nav-login:hover {
-      background: rgba(37, 99, 235, .08);
-      border-color: var(--home-primary-strong);
-      color: var(--home-primary-strong) !important;
-      box-shadow: 0 4px 14px -8px rgba(37, 99, 235, .5);
+      background: #EFF6FF;
+      border-color: #3B82F6;
+      color: #1E3A8A !important;
+      box-shadow: 0 4px 14px -8px rgba(30, 64, 175, .55);
     }
 
     /* ── Register: primary blue button ── */
     .btn-nav-register {
-      background: linear-gradient(135deg, var(--home-primary) 0%, var(--home-primary-strong) 100%);
-      color: #fff !important;
+      background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+      color: #1F2937 !important;
       border: none;
-      border-radius: 9px;
-      padding: .4rem 1.25rem !important;
-      font-size: .8125rem;
-      font-weight: 600;
-      box-shadow: 0 4px 14px -8px rgba(37, 99, 235, .6);
-      transition: transform .22s cubic-bezier(.4, 0, .2, 1),
-        box-shadow .22s cubic-bezier(.4, 0, .2, 1);
+      border-radius: 10px;
+      padding: .6rem 1.4rem !important;
+      font-size: .95rem;
+      font-weight: 700;
+      box-shadow: 0 8px 18px -10px rgba(30, 64, 175, .7);
+      transition: transform .18s ease,
+        box-shadow .18s ease, background .18s ease;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: center;
       flex-wrap: nowrap;
-      margin-inline: auto;
-      margin-left: auto;
-      margin-right: auto;
+      min-height: 42px;
+      margin-left: .25rem;
+    }
+
+    .btn-nav-register:hover {
+      background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+      box-shadow: 0 10px 22px -12px rgba(30, 64, 175, .75);
     }
 
     .main-navbar .navbar-nav .nav-link {
@@ -398,7 +333,7 @@
       }
 
       .nav-link-item.active {
-        background: rgba(37, 99, 235, .12);
+        background: rgba(59, 130, 246, .2);
       }
 
       .navbar-nav .nav-link {
@@ -435,10 +370,10 @@
       overflow: hidden;
     }
 
-    /* Hero slides — professional sliding carousel (home1 → home6).
+    /* Hero slides — professional sliding carousel (home1 → home8).
        The track holds every slide in a row; the JS advances the track with a
        transform: translateX() so images physically slide right → left in a
-       continuous loop (home6 slides back to home1 via a clone of slide 1). */
+       continuous loop (home8 slides back to home1 via a clone of slide 1). */
     .hero-slider {
       position: absolute;
       inset: 0;
@@ -492,6 +427,14 @@
       background-image: url('/assets/images/home6.png');
     }
 
+    .hero-slide-7 {
+      background-image: url('/assets/images/home7.png');
+    }
+
+    .hero-slide-8 {
+      background-image: url('/assets/images/home8.png');
+    }
+
     /* Subtle overlay between the photos and the copy so text stays readable */
     .hero-overlay {
       position: absolute;
@@ -532,8 +475,8 @@
     }
 
     .hero-dots button.is-active {
-      background: #22d3ee;
-      border-color: #22d3ee;
+      background: #3B82F6;
+      border-color: #3B82F6;
       transform: scale(1.25);
     }
 
@@ -591,8 +534,8 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(6, 182, 212, .18);
-      border: 1px solid rgba(6, 182, 212, .4);
+      background: rgba(59, 130, 246, .20);
+      border: 1px solid rgba(59, 130, 246, .45);
       color: #ffffff;
       border-radius: 50px;
       padding: .4rem .8rem;
@@ -605,7 +548,18 @@
 
     .hero-badge i {
       font-size: 1rem;
-      color: #22d3ee;
+      color: #60A5FA;
+    }
+
+    .hero-badge-logo {
+      width: 1.55rem;
+      height: 1.55rem;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, .72);
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .22);
+      flex: 0 0 auto;
     }
 
     .hero-title {
@@ -628,7 +582,7 @@
     }
 
     .hero-title span:last-child {
-      color: #60a5fa;
+      color: #60A5FA;
       font-weight: 700;
     }
 
@@ -659,7 +613,7 @@
     /* Hero media panel (appears on lg screens only) */
     .hero-section .col-lg-6>div[style*="border-radius:20px"] {
       border: 1px solid rgba(255, 255, 255, .15);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, .3), 0 0 0 1px rgba(37, 99, 235, .25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .3), 0 0 0 1px rgba(59, 130, 246, .25);
     }
 
     /* Hero CTA buttons */
@@ -675,12 +629,12 @@
 
     .hero-cta .btn-request {
       background: linear-gradient(135deg, var(--home-primary) 0%, var(--home-primary-strong) 100%);
-      color: #fff !important;
+      color: #1F2937 !important;
     }
 
     .hero-cta .btn-request:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 22px rgba(37, 99, 235, .45);
+      box-shadow: 0 8px 22px rgba(30, 64, 175, .4);
     }
 
     .hero-cta .btn-track {
@@ -776,9 +730,9 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      color: var(--home-accent);
-      background: rgba(6, 182, 212, .12);
-      border: 1px solid rgba(6, 182, 212, .25);
+      color: #1E3A8A;
+      background: rgba(59, 130, 246, .16);
+      border: 1px solid rgba(59, 130, 246, .35);
       padding: .3rem .9rem;
       border-radius: 50px;
       margin-bottom: .75rem;
@@ -805,7 +759,7 @@
     .feature-card:hover {
       border-color: var(--home-primary-strong);
       background: var(--home-surface-hover);
-      box-shadow: var(--home-shadow-hover), 0 0 0 1px rgba(37, 99, 235, .2);
+      box-shadow: var(--home-shadow-hover), 0 0 0 1px rgba(59, 130, 246, .35);
       transform: translateY(-4px);
     }
 
@@ -856,7 +810,7 @@
     .workflow-step:hover {
       border-color: var(--home-primary-strong);
       transform: translateX(6px);
-      box-shadow: var(--home-shadow-hover), 0 0 0 1px rgba(37, 99, 235, .18);
+      box-shadow: var(--home-shadow-hover), 0 0 0 1px rgba(59, 130, 246, .35);
     }
 
     .step-num {
@@ -875,7 +829,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      color: var(--home-primary);
+      color: #A16207;
       font-size: 1.2rem;
       margin: .25rem 0;
     }
@@ -940,7 +894,7 @@
 
     .contact-card:hover {
       border-color: var(--home-primary-strong);
-      box-shadow: 0 14px 34px -14px rgba(37, 99, 235, .35), var(--home-shadow-hover);
+      box-shadow: 0 14px 34px -14px rgba(30, 64, 175, .35), var(--home-shadow-hover);
       transform: translateY(-4px);
     }
 
@@ -980,16 +934,16 @@
       gap: .35rem;
       font-size: .9375rem;
       font-weight: 600;
-      color: var(--home-primary);
-      background: rgba(37, 99, 235, .08);
-      border: 1px solid rgba(37, 99, 235, .18);
+      color: #1E3A8A;
+      background: rgba(59, 130, 246, .16);
+      border: 1px solid rgba(59, 130, 246, .4);
       border-radius: 999px;
       padding: .3rem .75rem;
       transition: var(--home-transition);
     }
 
     .contact-pill:hover {
-      color: #ffffff;
+      color: #1F2937;
       background: var(--home-primary);
       border-color: var(--home-primary);
       transform: translateY(-1px);
@@ -1014,7 +968,7 @@
       width: 160px;
       height: 160px;
       border-radius: 50%;
-      background: radial-gradient(circle at center, rgba(37, 99, 235, .08), transparent 70%);
+      background: radial-gradient(circle at center, rgba(59, 130, 246, .10), transparent 70%);
       pointer-events: none;
     }
 
@@ -1028,8 +982,8 @@
 
     .contact-form-card .form-control:focus,
     .contact-form-card .form-select:focus {
-      border-color: var(--home-primary);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, .12);
+      border-color: #A16207;
+      box-shadow: 0 0 0 4px rgba(30, 64, 175, .16);
     }
 
     .contact-form-card .form-label {
@@ -1055,64 +1009,164 @@
     }
 
     /* ── About Us — attractive info cards ── */
+    #about {
+      background: linear-gradient(180deg, #EFF6FF 0%, #ffffff 76%) !important;
+    }
+
+    #about .section-title {
+      margin-bottom: .75rem;
+    }
+
+    #about .about-info-card {
+      min-height: 170px;
+      padding: 1.5rem !important;
+      border: 1px solid #BFDBFE !important;
+      border-left: 4px solid #3B82F6 !important;
+      border-radius: 16px !important;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 8px 24px rgba(30, 64, 175, .07) !important;
+    }
+
     .about-info-card {
-      transition: var(--home-transition);
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
     }
 
     .about-info-card:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--home-shadow-hover), 0 0 0 1px rgba(226, 232, 240, .6);
+      transform: translateY(-2px);
+      border-color: #3B82F6 !important;
+      box-shadow: 0 14px 30px rgba(30, 64, 175, .14) !important;
     }
 
     .about-icon-chip {
-      width: 46px;
-      height: 46px;
-      border-radius: 12px;
+      width: 52px;
+      height: 52px;
+      border-radius: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      color: #fff;
-      font-size: 1.1rem;
-      box-shadow: 0 4px 10px -4px rgba(15, 23, 42, .35);
+      color: #1F2937;
+      font-size: 1.15rem;
+      background: linear-gradient(145deg, #60A5FA, #3B82F6) !important;
+      box-shadow: 0 7px 15px -7px rgba(30, 64, 175, .6);
+    }
+
+    #about .about-info-card h5 {
+      margin-top: .1rem;
+      color: var(--home-text) !important;
+      font-size: 1.12rem;
+      letter-spacing: 0;
+    }
+
+    #about .about-info-card p {
+      color: var(--home-text-muted) !important;
+      font-size: .96rem !important;
+      line-height: 1.75 !important;
     }
 
     .about-value {
       display: flex;
       align-items: center;
       gap: .6rem;
-      padding: .5rem .75rem;
-      border-radius: 10px;
-      background: var(--home-surface-2);
-      border: 1px solid var(--home-border);
+      padding: .65rem .75rem;
+      border-radius: 11px;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
       height: 100%;
-      transition: var(--home-transition);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
     }
 
     .about-value:hover {
-      border-color: var(--home-primary);
-      background: var(--home-surface-hover);
-      transform: translateX(3px);
+      border-color: #3B82F6;
+      background: #EFF6FF;
+      transform: translateY(-1px);
+    }
+
+    #about .about-value i {
+      color: #1E3A8A !important;
+    }
+
+    #about .about-value span {
+      color: var(--home-text-soft);
+      line-height: 1.35;
+    }
+
+    #about .col-lg-6>.card:last-child {
+      padding: 1.4rem !important;
+      border: 1px solid #BFDBFE !important;
+      border-radius: 16px !important;
+      background: #fff;
+      box-shadow: 0 8px 24px rgba(30, 64, 175, .07) !important;
     }
 
     .about-stat-card {
-      transition: var(--home-transition);
+      min-height: 208px;
+      padding: 1.35rem !important;
+      border: 1px solid #BFDBFE !important;
+      border-radius: 16px !important;
+      background: #fff;
+      box-shadow: 0 8px 24px rgba(30, 64, 175, .07) !important;
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
     }
 
     .about-stat-card:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--home-shadow-hover);
+      transform: translateY(-2px);
+      border-color: #3B82F6 !important;
+      box-shadow: 0 14px 30px rgba(30, 64, 175, .14) !important;
     }
 
     .about-stat-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 11px;
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.05rem;
-      margin-bottom: .65rem;
+      font-size: 1.1rem;
+      margin: 0 auto .85rem;
+      background: #EFF6FF !important;
+      color: #1E3A8A;
+    }
+
+    #about .about-stat-icon i {
+      color: #1E3A8A !important;
+    }
+
+    #about .about-stat-card .fw-bold {
+      color: #1E3A8A !important;
+      font-size: 2.15rem !important;
+      line-height: 1.1;
+    }
+
+    #about .about-stat-card .text-muted {
+      color: var(--home-text-muted) !important;
+      font-size: .9rem !important;
+    }
+
+    @media (max-width: 575.98px) {
+      #about .row.g-4 {
+        --bs-gutter-y: 1.15rem;
+      }
+
+      #about .about-info-card {
+        min-height: 0;
+        padding: 1.2rem !important;
+      }
+
+      #about .about-icon-chip {
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+      }
+
+      #about .about-stat-card {
+        min-height: 170px;
+        padding: 1rem !important;
+      }
+
+      #about .about-value {
+        padding: .6rem;
+      }
     }
 
     .about-tech {
@@ -1150,9 +1204,9 @@
       height: 44px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--home-primary) 0%, var(--home-primary-strong) 100%);
-      color: #fff;
+      color: #1F2937;
       border: none;
-      box-shadow: 0 10px 24px rgba(37, 99, 235, .5);
+      box-shadow: 0 10px 24px rgba(30, 64, 175, .5);
       display: none;
       align-items: center;
       justify-content: center;
@@ -1164,7 +1218,7 @@
 
     #scrollTopBtn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 14px 30px rgba(37, 99, 235, .6);
+      box-shadow: 0 14px 30px rgba(30, 64, 175, .6);
     }
 
     #scrollTopBtn.visible {
@@ -1209,16 +1263,16 @@
 
     body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item:hover i,
     body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active i {
-      color: var(--home-primary) !important;
+      color: #1E3A8A !important;
     }
 
     body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item:hover,
     body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active {
-      background: rgba(37, 99, 235, .075);
+      background: rgba(59, 130, 246, .14);
     }
 
     body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active {
-      background: rgba(37, 99, 235, .12);
+      background: rgba(59, 130, 246, .2);
     }
 
     body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active::after {
@@ -1226,13 +1280,13 @@
     }
 
     body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-login {
-      color: var(--home-primary) !important;
-      border-color: var(--home-primary) !important;
+      color: #1E3A8A !important;
+      border-color: #3B82F6 !important;
     }
 
     body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-register,
     body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-register i {
-      color: #fff !important;
+      color: #1F2937 !important;
     }
 
     body:not(.dashboard-body):not(.auth-body) .main-navbar {
@@ -1270,14 +1324,26 @@
     body:not(.dashboard-body):not(.auth-body) .hero-section {
       background:
         radial-gradient(ellipse 80% 60% at 50% 40%, transparent 40%, rgba(2, 6, 23, 0.85) 100%),
-        radial-gradient(ellipse 60% 50% at 50% 45%, rgba(6, 182, 212, 0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 50% 45%, rgba(96, 165, 250, 0.06) 0%, transparent 70%),
         linear-gradient(180deg, rgba(2, 6, 23, 0.72) 0%, rgba(2, 6, 23, 0.45) 45%, rgba(2, 6, 23, 0.55) 70%, rgba(2, 6, 23, 0.85) 100%);
       background-blend-mode: overlay, screen, multiply !important;
     }
 
+    /* Keep the public page content and footer as one continuous layout. */
+    body:not(.dashboard-body):not(.auth-body) {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: #f5f7fa;
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer {
+      margin-top: auto;
+    }
+
     html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .hero-section::before,
     body:not(.dashboard-body):not(.auth-body) .hero-section::before {
-      background: radial-gradient(ellipse 90% 60% at 50% 15%, rgba(37, 99, 235, 0.04) 0%, transparent 60%) !important;
+      background: radial-gradient(ellipse 90% 60% at 50% 15%, rgba(59, 130, 246, 0.05) 0%, transparent 60%) !important;
     }
 
     html[data-theme="dark"] body:not(.dashboard-body):not(.auth-body) .hero-section::after,
@@ -1303,7 +1369,7 @@
     }
 
     body:not(.dashboard-body):not(.auth-body) .hero-section .hero-title span:last-child {
-      color: #60a5fa !important;
+      color: #60A5FA !important;
       text-shadow: 0 2px 4px rgba(0, 0, 0, .45) !important;
     }
 
@@ -1369,9 +1435,9 @@
 
     /* ── Headings / labels / card text ── */
     body:not(.dashboard-body):not(.auth-body) .section-label {
-      color: var(--home-accent) !important;
-      background: rgba(6, 182, 212, .12) !important;
-      border-color: rgba(6, 182, 212, .25) !important;
+      color: #1E3A8A !important;
+      background: rgba(59, 130, 246, .16) !important;
+      border-color: rgba(59, 130, 246, .35) !important;
     }
 
     body:not(.dashboard-body):not(.auth-body) .section-title,
@@ -1401,7 +1467,7 @@
     }
 
     body:not(.dashboard-body):not(.auth-body) .workflow-connector {
-      color: var(--home-primary) !important;
+      color: #A16207 !important;
     }
 
     /* ── Blue text links / outline buttons → soft white ──
@@ -1474,13 +1540,6 @@
       letter-spacing: -.2px !important;
     }
 
-    /* System status rows — light text (green dot keeps inline color) */
-    body:not(.dashboard-body):not(.auth-body) footer #footerBackendLabel,
-    body:not(.dashboard-body):not(.auth-body) footer #footerBackendStatus {
-      color: #cbd5e1 !important;
-      font-size: .9375rem !important;
-    }
-
     /* Divider — subtle dark gray */
     body:not(.dashboard-body):not(.auth-body) footer hr,
     body:not(.dashboard-body):not(.auth-body) footer hr[style*="border-color"] {
@@ -1505,14 +1564,14 @@
     }
 
     body:not(.dashboard-body):not(.auth-body) footer .footer-social-btn:hover {
-      color: #ffffff;
-      border-color: #2563eb;
-      background: #2563eb;
-      box-shadow: 0 6px 16px -6px rgba(37, 99, 235, .55);
+      color: #1F2937;
+      border-color: #3B82F6;
+      background: #3B82F6;
+      box-shadow: 0 6px 16px -6px rgba(30, 64, 175, .6);
     }
 
     body:not(.dashboard-body):not(.auth-body) footer .footer-social-btn:focus-visible {
-      outline: 2px solid #2563eb;
+      outline: 2px solid #3B82F6;
       outline-offset: 2px;
     }
 
@@ -1528,8 +1587,8 @@
       position: fixed;
       inset: 0;
       background-image:
-        radial-gradient(circle at 1px 1px, rgba(6, 182, 212, 0.025) 1px, transparent 0),
-        radial-gradient(circle at 1px 1px, rgba(37, 99, 235, 0.015) 1px, transparent 0);
+        radial-gradient(circle at 1px 1px, rgba(59, 130, 246, 0.03) 1px, transparent 0),
+        radial-gradient(circle at 1px 1px, rgba(59, 130, 246, 0.02) 1px, transparent 0);
       background-size: 60px 60px, 40px 40px;
       background-position: 0 0, 30px 30px;
       pointer-events: none;
@@ -1544,30 +1603,6 @@
     /* ── Cohesive section backgrounds with subtle depth ── */
     body:not(.dashboard-body):not(.auth-body) section:not(.hero-section) {
       background-color: var(--home-bg);
-    }
-
-    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(2) {
-      background-color: #020617;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(3) {
-      background-color: #0B1220;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(4) {
-      background-color: #0F172A;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(5) {
-      background-color: #020617;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(6) {
-      background-color: #0B1220;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) section:nth-of-type(7) {
-      background-color: #0F172A;
     }
 
     /* Stats bar - subtle separator */
@@ -1612,17 +1647,17 @@
       }
     }
 
-    /* ===== Professional blue-black footer ===== */
-    body:not(.dashboard-body):not(.auth-body) footer.main-footer {
-      background: radial-gradient(1200px 500px at 50% 0%, #16233f 0%, #0d1428 55%, #080f1e 100%) !important;
+    /* ===== Professional deep-blue footer ===== */
+    body:not(.dashboard-body):not(.auth-body) footer.site-footer {
+      background: radial-gradient(1200px 500px at 50% 0%, #172554 0%, #111827 55%, #0f172a 100%) !important;
       color: #9fb0ca !important;
     }
 
-    .main-footer .container {
+    .site-footer .container {
       position: relative;
     }
 
-    .main-footer .main-footer-accent {
+    .site-footer .main-footer-accent {
       position: absolute;
       top: 0;
       left: 50%;
@@ -1630,32 +1665,32 @@
       width: 120px;
       height: 3px;
       border-radius: 3px;
-      background: linear-gradient(90deg, #2563eb, #22d3ee);
+      background: linear-gradient(90deg, #3B82F6, #BFDBFE);
     }
 
-    .main-footer .footer-brand-icon {
+    .site-footer .footer-brand-icon {
       width: 42px;
       height: 42px;
       border-radius: 10px;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      background: linear-gradient(135deg, #3B82F6, #1E40AF);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 6px 18px -6px rgba(37, 99, 235, .6);
+      box-shadow: 0 6px 18px -6px rgba(30, 64, 175, .45);
     }
 
-    .main-footer .footer-brand-icon i {
-      color: #ffffff;
+    .site-footer .footer-brand-icon i {
+      color: #1F2937;
       font-size: 1rem;
     }
 
-    .main-footer .footer-brand-title {
+    .site-footer .footer-brand-title {
       color: #ffffff;
       font-size: 1.1rem;
       letter-spacing: .2px;
     }
 
-    .main-footer .footer-about {
+    .site-footer .footer-about {
       color: #9fb0ca !important;
       font-size: .9rem;
       line-height: 1.8;
@@ -1663,7 +1698,7 @@
       margin-inline: auto;
     }
 
-    .main-footer .footer-col-title {
+    .site-footer .footer-col-title {
       color: #ffffff;
       font-size: .8rem;
       font-weight: 700;
@@ -1672,65 +1707,49 @@
       margin-bottom: 1rem;
     }
 
-    .main-footer .footer-link {
+    .site-footer .footer-link {
       color: #9fb0ca !important;
       font-size: .875rem;
       transition: color .2s, transform .2s;
       display: inline-block;
     }
 
-    .main-footer .footer-link:hover {
-      color: #22d3ee !important;
+    .site-footer .footer-link:hover {
+      color: #60A5FA !important;
       transform: translateX(3px);
     }
 
-    .main-footer .footer-status i {
-      margin-right: 4px;
-    }
-
-    .main-footer .main-footer-divider {
+    .site-footer .site-footer-divider {
       border: 0;
       border-top: 1px solid rgba(148, 163, 184, .18);
       margin: 2.5rem 0 1.5rem;
       width: 100%;
     }
 
-    .main-footer .footer-bottom {
+    .site-footer .site-footer-bottom {
       color: #7c8ca3 !important;
       font-size: .8rem;
     }
 
-    .main-footer .footer-bottom-links .footer-link {
+    .site-footer .site-footer-bottom-links .footer-link {
       color: #9fb0ca !important;
     }
 
-    .main-footer .footer-bottom-links .footer-link:hover {
-      color: #22d3ee !important;
+    .site-footer .site-footer-bottom-links .footer-link:hover {
+      color: #60A5FA !important;
     }
 
     /* ════════════════════════════════════════════════════════════
-       FOOTER REDESIGN — premium dark, near-black w/ dark-teal tone
+       FOOTER REDESIGN — premium dark, near-black w/ dark-amber tone
        Scoped with a high-specificity prefix + !important so it wins
        over the generic black-footer rules above AND theme.css (which
        loads after this inline stylesheet). Dark in BOTH site themes. */
-    @keyframes siteStatusPulse {
-
-      0%,
-      100% {
-        opacity: 1;
-      }
-
-      50% {
-        opacity: .4;
-      }
-    }
-
     body:not(.dashboard-body):not(.auth-body) .site-footer {
       position: relative;
       padding: 4.5rem 0 2.5rem;
-      background: radial-gradient(60% 110% at 50% -20%, rgba(20, 184, 166, .12), transparent 62%), #0a0f12 !important;
+      background: radial-gradient(60% 110% at 50% -20%, rgba(59, 130, 246, .12), transparent 62%), #0a0f12 !important;
       color: #a7b4c2 !important;
-      border-top: 1px solid rgba(45, 212, 191, .16) !important;
+      border-top: 1px solid rgba(96, 165, 250, .16) !important;
       overflow: hidden;
       text-align: center;
     }
@@ -1741,8 +1760,8 @@
       inset: 0;
       pointer-events: none;
       background:
-        radial-gradient(42rem 16rem at 50% -4rem, rgba(45, 212, 191, .10), transparent 70%),
-        radial-gradient(30rem 12rem at 90% 110%, rgba(20, 184, 166, .06), transparent 70%);
+        radial-gradient(42rem 16rem at 50% -4rem, rgba(96, 165, 250, .10), transparent 70%),
+        radial-gradient(30rem 12rem at 90% 110%, rgba(59, 130, 246, .06), transparent 70%);
     }
 
     body:not(.dashboard-body):not(.auth-body) .site-footer-inner {
@@ -1766,12 +1785,12 @@
       width: 52px;
       height: 52px;
       border-radius: 14px;
-      background: linear-gradient(160deg, rgba(45, 212, 191, .16), rgba(20, 184, 166, .05));
-      border: 1px solid rgba(45, 212, 191, .28);
-      color: #5eead4;
+      background: linear-gradient(160deg, rgba(96, 165, 250, .16), rgba(59, 130, 246, .05));
+      border: 1px solid rgba(96, 165, 250, .28);
+      color: var(--accent);
       font-size: 1.35rem;
       margin-bottom: 1.1rem;
-      box-shadow: 0 0 28px rgba(45, 212, 191, .18), inset 0 0 14px rgba(45, 212, 191, .10);
+      box-shadow: 0 0 28px rgba(96, 165, 250, .18), inset 0 0 14px rgba(96, 165, 250, .10);
     }
 
     body:not(.dashboard-body):not(.auth-body) .site-brand-title {
@@ -1793,7 +1812,7 @@
     /* ── Columns ── */
     body:not(.dashboard-body):not(.auth-body) .site-footer-columns {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 2rem 3rem;
       max-width: 1140px;
       margin: 0 auto 3.25rem;
@@ -1808,7 +1827,7 @@
       text-transform: uppercase !important;
       margin: 0 0 1.1rem !important;
       padding-bottom: .65rem;
-      border-bottom: 1px solid rgba(45, 212, 191, .18);
+      border-bottom: 1px solid rgba(96, 165, 250, .18);
       display: flex;
       align-items: center;
       gap: .5rem;
@@ -1818,7 +1837,7 @@
       content: "";
       flex: 1;
       height: 1px;
-      background: linear-gradient(90deg, rgba(45, 212, 191, .28), transparent);
+      background: linear-gradient(90deg, rgba(96, 165, 250, .28), transparent);
     }
 
     body:not(.dashboard-body):not(.auth-body) .site-footer-links {
@@ -1838,7 +1857,7 @@
     }
 
     body:not(.dashboard-body):not(.auth-body) .site-footer-links .footer-link:hover {
-      color: #5eead4 !important;
+      color: var(--accent) !important;
     }
 
     /* ── Contact details column ── */
@@ -1860,7 +1879,7 @@
     }
 
     body:not(.dashboard-body):not(.auth-body) .site-footer-contact .contact-detail i {
-      color: #5eead4;
+      color: var(--accent);
       font-size: .8rem;
       line-height: 1.6;
       margin-top: .24rem;
@@ -1874,32 +1893,7 @@
     }
 
     body:not(.dashboard-body):not(.auth-body) .site-footer-contact .contact-detail .footer-link:hover {
-      color: #5eead4 !important;
-    }
-
-    /* ── System status rows ── */
-    body:not(.dashboard-body):not(.auth-body) .site-footer-status {
-      display: flex;
-      flex-direction: column;
-      gap: .8rem;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .site-footer-status-row {
-      display: flex;
-      align-items: center;
-      gap: .4rem;
-      font-size: .9375rem;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .site-footer-status-row .status-value,
-    body:not(.dashboard-body):not(.auth-body) .site-footer-status-row .status-value span {
-      color: #cbd5e1 !important;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .site-footer-status-row i.fa-circle {
-      color: #4ade80 !important;
-      text-shadow: 0 0 8px rgba(74, 222, 128, .85);
-      animation: siteStatusPulse 2.4s ease-in-out infinite;
+      color: var(--accent) !important;
     }
 
     /* ── Social ── */
@@ -1918,7 +1912,7 @@
       align-items: center;
       justify-content: center;
       color: #a7b4c2;
-      background: rgba(45, 212, 191, .05);
+      background: rgba(96, 165, 250, .05);
       border: 1px solid rgba(255, 255, 255, .10);
       font-size: 1rem;
       text-decoration: none;
@@ -1926,21 +1920,21 @@
     }
 
     body:not(.dashboard-body):not(.auth-body) .site-footer .footer-social-btn:hover {
-      color: #5eead4;
-      border-color: rgba(45, 212, 191, .55);
-      box-shadow: 0 0 18px rgba(45, 212, 191, .22);
+      color: var(--accent);
+      border-color: rgba(96, 165, 250, .55);
+      box-shadow: 0 0 18px rgba(96, 165, 250, .22);
       transform: translateY(-2px);
     }
 
     body:not(.dashboard-body):not(.auth-body) .site-footer .footer-social-btn:focus-visible {
-      outline: 2px solid #14b8a6;
+      outline: 2px solid var(--primary);
       outline-offset: 2px;
     }
 
     /* ── Divider + bottom ── */
     body:not(.dashboard-body):not(.auth-body) .site-footer-divider {
       border: 0;
-      border-top: 1px solid rgba(45, 212, 191, .18) !important;
+      border-top: 1px solid rgba(96, 165, 250, .18) !important;
       margin: 0 auto 2rem;
       max-width: 34rem;
       opacity: 1;
@@ -1969,7 +1963,7 @@
     }
 
     body:not(.dashboard-body):not(.auth-body) .site-footer-bottom-links .footer-link:hover {
-      color: #5eead4 !important;
+      color: var(--accent) !important;
     }
 
     body:not(.dashboard-body):not(.auth-body) .site-footer-copyright {
@@ -2007,30 +2001,22 @@
         align-items: center;
       }
 
-      body:not(.dashboard-body):not(.auth-body) .site-footer-status {
-        align-items: center;
-      }
-
-      body:not(.dashboard-body):not(.auth-body) .site-footer-status-row {
-        justify-content: center;
-      }
-
       body:not(.dashboard-body):not(.auth-body) .site-footer-contact {
         align-items: center;
       }
     }
 
-    /* ===== Scroll-to-top: glowing cyan ===== */
+    /* ===== Scroll-to-top: glowing blue ===== */
     #scrollTopBtn {
-      background: linear-gradient(135deg, #22d3ee 0%, #0d9488 100%);
-      box-shadow: 0 0 20px rgba(34, 211, 238, .45), 0 6px 18px rgba(13, 148, 136, .35);
-      border: 1px solid rgba(125, 211, 252, .35);
+      background: linear-gradient(135deg, #60A5FA 0%, #1E40AF 100%);
+      box-shadow: 0 0 20px rgba(59, 130, 246, .45), 0 6px 18px rgba(30, 64, 175, .4);
+      border: 1px solid rgba(253, 230, 138, .5);
     }
 
     #scrollTopBtn:hover {
-      background: linear-gradient(135deg, #22d3ee 0%, #14b8a6 100%);
-      box-shadow: 0 0 28px rgba(34, 211, 238, .6), 0 8px 22px rgba(13, 148, 136, .45);
-      border-color: rgba(125, 211, 252, .55);
+      background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+      box-shadow: 0 0 28px rgba(59, 130, 246, .6), 0 8px 22px rgba(30, 64, 175, .5);
+      border-color: rgba(253, 230, 138, .7);
     }
 
     /* ===== Reduced motion ====== */
@@ -2060,9 +2046,9 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="/assets/css/theme.css?v=4" />
-  <script src="/assets/js/api-config.js"></script>
-  <script src="/assets/js/lang.js?v=11"></script>
+  <link rel="stylesheet" href="/assets/css/theme.css?v=6" />
+  <script src="/assets/js/api-config.js?v=2"></script>
+  <script src="/assets/js/lang.js?v=13"></script>
 </head>
 
 <body>
@@ -2073,7 +2059,7 @@
       <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none" href="#home">
         <span class="navbar-brand-icon">
           <img src="/assets/images/mau_logo.jpg" alt="Mekdela Amba University" data-home-image-id="mau-logo"
-            style="width:100%;height:100%;object-fit:contain;display:block;" />
+            style="width:100%;height:100%;object-fit:contain;display:block;" loading="lazy" decoding="async" />
         </span>
         <div>
           <div class="brand-text-main"><span data-i18n="home.brandMain">Smart ICT Maintenance</span></div>
@@ -2116,16 +2102,20 @@
     <div class="hero-slider" id="heroSlider">
       <div class="hero-slide-track" id="heroTrack">
         <div class="hero-slide hero-slide-1" role="img" aria-label="Hero image 1" data-home-image-id="hero-1"
-          draggable="false"></div>
+          data-home-image-file="home1.png" draggable="false"></div>
         <div class="hero-slide hero-slide-2" role="img" aria-label="Hero image 2" data-home-image-id="hero-2"
-          draggable="false"></div>
+          data-home-image-file="home2.png" draggable="false"></div>
         <div class="hero-slide hero-slide-3" role="img" aria-label="Hero image 3" data-home-image-id="hero-3"
-          draggable="false"></div>
+          data-home-image-file="home3.png" draggable="false"></div>
         <div class="hero-slide hero-slide-4" role="img" aria-label="Hero image 4" data-home-image-id="hero-4"
-          draggable="false"></div>
+          data-home-image-file="home4.png" draggable="false"></div>
         <div class="hero-slide hero-slide-5" role="img" aria-label="Hero image 5" data-home-image-id="hero-5"
-          draggable="false"></div>
+          data-home-image-file="home5.png" draggable="false"></div>
         <div class="hero-slide hero-slide-6" role="img" aria-label="Hero image 6" data-home-image-id="hero-6"
+          data-home-image-file="home6.png" draggable="false"></div>
+        <div class="hero-slide hero-slide-7" role="img" aria-label="Hero image 7" data-home-image-file="home7.png"
+          draggable="false"></div>
+        <div class="hero-slide hero-slide-8" role="img" aria-label="Hero image 8" data-home-image-file="home8.png"
           draggable="false"></div>
       </div>
     </div>
@@ -2134,7 +2124,8 @@
       <div class="row align-items-center g-5">
         <div class="col-lg-6">
           <div class="hero-badge">
-            <i class="fa-solid fa-shield-halved"></i>
+            <img class="hero-badge-logo" src="/assets/images/mau_logo.jpg" alt="Mekdela Amba University emblem"
+              loading="lazy" decoding="async">
             <span data-i18n="hero.badge">MAU ICT Platform</span>
           </div>
           <h1 class="hero-title text-white mb-4">
@@ -2159,27 +2150,28 @@
           </div>
           <div class="d-flex gap-4 mt-4 pt-2">
             <div>
-              <div class="fw-bold fs-5">3</div>
-              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="hero.roles">User Roles</span>
+              <div class="fw-bold fs-5" id="heroActiveUsers">--</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="stats.users">Active
+                  Users</span>
               </div>
             </div>
             <div style="width:1px;background:rgba(255,255,255,.2);"></div>
             <div>
-              <div class="fw-bold fs-5">7</div>
-              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="hero.stages">Status
-                  Stages</span></div>
+              <div class="fw-bold fs-5" id="heroTotalRequests">--</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="stats.requests">Requests
+                  Logged</span></div>
             </div>
             <div style="width:1px;background:rgba(255,255,255,.2);"></div>
             <div>
-              <div class="fw-bold fs-5">24/7</div>
-              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="home.stat3.label">System
-                  Access</span></div>
+              <div class="fw-bold fs-5" id="heroTotalAssets">--</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="stats.devices">Devices
+                  Tracked</span></div>
             </div>
             <div style="width:1px;background:rgba(255,255,255,.2);"></div>
             <div>
-              <div class="fw-bold fs-5">Real-time</div>
-              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span
-                  data-i18n="hero.monitoring">Tracking</span></div>
+              <div class="fw-bold fs-5" id="heroTotalTechnicians">--</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="stats.techs">Active
+                  Technicians</span></div>
             </div>
           </div>
         </div>
@@ -2240,10 +2232,10 @@
         <div class="col-md-4">
           <div class="metric-card">
             <div
-              style="width:60px;height:60px;background:#e8f0fe;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;">
-              <i class="fa-solid fa-user-gear fa-lg" style="color:#2563eb;"></i>
+              style="width:60px;height:60px;background:#EFF6FF;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+              <i class="fa-solid fa-user-gear fa-lg" style="color:#1E3A8A;"></i>
             </div>
-            <h3 class="fw-bold mb-1" style="color:#2563eb;">12+</h3>
+            <h3 class="fw-bold mb-1" style="color:#A16207;">12+</h3>
             <div class="text-muted small fw-semibold"><span data-i18n="metrics.techs">Active Technicians</span></div>
             <p class="text-muted small mt-2 mb-0"><span data-i18n="metrics.techs.desc">Skilled ICT professionals
                 dedicated to hardware repair and software
@@ -2280,8 +2272,8 @@
       <div class="row g-4">
         <div class="col-md-4">
           <div class="feature-card text-center">
-            <div class="feature-icon mx-auto" style="background:#e8f0fe;">
-              <i class="fa-solid fa-desktop" style="color:#2563eb;"></i>
+            <div class="feature-icon mx-auto" style="background:#EFF6FF;">
+              <i class="fa-solid fa-desktop" style="color:#1E3A8A;"></i>
             </div>
             <h5 class="fw-bold mb-2"><span data-i18n="quick.hw">Hardware Maintenance</span></h5>
             <p class="text-muted small mb-3"><span data-i18n="quick.hw.desc">PC and laptop repair, component
@@ -2338,8 +2330,8 @@
       <div class="row g-4">
         <div class="col-md-6 col-lg-4">
           <div class="feature-card">
-            <div class="feature-icon" style="background:#e8f0fe;">
-              <i class="fa-solid fa-file-lines" style="color:#2563eb;"></i>
+            <div class="feature-icon" style="background:#EFF6FF;">
+              <i class="fa-solid fa-file-lines" style="color:#1E3A8A;"></i>
             </div>
             <h5 class="fw-bold mb-2"><span data-i18n="feat1.title">Online Request Submission</span></h5>
             <p class="text-muted small mb-0"><span data-i18n="feat1.desc">Submit maintenance requests with device serial
@@ -2419,7 +2411,7 @@
       <div class="row justify-content-center">
         <div class="col-lg-7">
           <div class="workflow-step mb-1">
-            <div class="step-num" style="background:#e8f0fe;color:#2563eb;">1</div>
+            <div class="step-num" style="background:#EFF6FF;color:#1E3A8A;">1</div>
             <div>
               <div class="fw-semibold"><span data-i18n="wf.step1">Submit Request</span></div>
               <div class="text-muted small"><span data-i18n="wf.step1.desc">The user fills in a detailed form including
@@ -2431,14 +2423,15 @@
           <div class="workflow-connector"><i class="fa-solid fa-arrow-down"></i></div>
 
           <div class="workflow-step mb-1">
-            <div class="step-num" style="background:#e8eaf6;color:#5c6bc0;">2</div>
+            <div class="step-num" style="background:#EFF6FF;color:#1E3A8A;">2</div>
             <div>
               <div class="fw-semibold"><span data-i18n="wf.step2">Ticket Generation</span></div>
               <div class="text-muted small"><span data-i18n="wf.step2.desc">The system automatically generates a unique
                   tracking code and creates a
                   maintenance ticket in the queue.</span></div>
             </div>
-            <span class="badge ms-auto" style="background:#5c6bc0;"><span data-i18n="wf.badge2">Generated</span></span>
+            <span class="badge ms-auto" style="background:#3B82F6;color:#1F2937;"><span
+                data-i18n="wf.badge2">Generated</span></span>
           </div>
           <div class="workflow-connector"><i class="fa-solid fa-arrow-down"></i></div>
 
@@ -2494,9 +2487,9 @@
       </div>
       <div class="row g-4">
         <div class="col-md-6">
-          <div class="service-card" style="border-top:4px solid #2563eb;">
-            <div class="service-icon" style="background:#e8f0fe;">
-              <i class="fa-solid fa-wrench" style="color:#2563eb;"></i>
+          <div class="service-card" style="border-top:4px solid #3B82F6;">
+            <div class="service-icon" style="background:#EFF6FF;">
+              <i class="fa-solid fa-wrench" style="color:#1E3A8A;"></i>
             </div>
             <h5 class="fw-bold mb-2"><span data-i18n="svc1.title">Hardware Repair &amp; Maintenance</span></h5>
             <p class="text-muted mb-3" style="font-size:.9rem;line-height:1.7;">
@@ -2657,8 +2650,8 @@
           <div class="row g-3">
             <div class="col-12">
               <div class="contact-card d-flex align-items-start gap-3">
-                <div class="contact-icon" style="background:linear-gradient(135deg,#e8f0fe,#dbe7fe);">
-                  <i class="fa-solid fa-location-dot" style="color:#2563eb;"></i>
+                <div class="contact-icon" style="background:linear-gradient(135deg,#EFF6FF,#BFDBFE);">
+                  <i class="fa-solid fa-location-dot" style="color:#1E3A8A;"></i>
                 </div>
                 <div>
                   <h6 class="fw-bold mb-1"><span data-i18n="contact.loc">ICT Helpdesk Location</span></h6>
@@ -2710,7 +2703,7 @@
         <div class="col-lg-7">
           <div class="contact-form-card">
             <h5 class="fw-bold mb-1 text-center mb-2"><i class="fa-solid fa-paper-plane me-2"
-                style="color:var(--home-primary);"></i><span data-i18n="contact.form.title">Send a
+                style="color:#A16207;"></i><span data-i18n="contact.form.title">Send a
                 Message</span></h5>
             <p class="text-muted small mb-4 text-center"><span data-i18n="contact.form.subtitle">Send us a message and
                 our team
@@ -2755,7 +2748,7 @@
                       Please try again.</span>
                   </div>
                   <button type="submit" id="contactSubmitBtn" class="btn fw-semibold px-4 py-2"
-                    style="border-radius:10px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;box-shadow:0 8px 20px -8px rgba(37,99,235,.6);transition:transform .2s,box-shadow .2s;">
+                    style="border-radius:10px;background:linear-gradient(135deg,#3B82F6,#1E40AF);color:#1F2937;border:none;box-shadow:0 8px 20px -8px rgba(30, 64, 175,.6);transition:transform .2s,box-shadow .2s;">
                     <i class="fa-solid fa-paper-plane me-2"></i><span data-i18n="contact.form.submit">Send
                       Message</span>
                   </button>
@@ -2783,10 +2776,9 @@
 
         <!-- Left column: Mission / Vision / Overview / Core Values -->
         <div class="col-lg-6">
-          <div class="card border-0 shadow-sm mb-4 p-4 about-info-card"
-            style="border-left:4px solid #2563eb!important;border-radius:14px;">
+          <div class="card border-0 shadow-sm mb-4 p-4 about-info-card" style="border-radius:14px;">
             <div class="d-flex gap-3 align-items-start">
-              <div class="about-icon-chip" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);">
+              <div class="about-icon-chip" style="background:linear-gradient(135deg,#60A5FA,#3B82F6);">
                 <i class="fa-solid fa-bullseye"></i>
               </div>
               <div>
@@ -2798,10 +2790,9 @@
               </div>
             </div>
           </div>
-          <div class="card border-0 shadow-sm mb-4 p-4 about-info-card"
-            style="border-left:4px solid #16a34a!important;border-radius:14px;">
+          <div class="card border-0 shadow-sm mb-4 p-4 about-info-card" style="border-radius:14px;">
             <div class="d-flex gap-3 align-items-start">
-              <div class="about-icon-chip" style="background:linear-gradient(135deg,#16a34a,#15803d);">
+              <div class="about-icon-chip" style="background:linear-gradient(135deg,#60A5FA,#3B82F6);">
                 <i class="fa-solid fa-eye"></i>
               </div>
               <div>
@@ -2813,10 +2804,9 @@
               </div>
             </div>
           </div>
-          <div class="card border-0 shadow-sm mb-4 p-4 about-info-card"
-            style="border-left:4px solid #f59e0b!important;border-radius:14px;">
+          <div class="card border-0 shadow-sm mb-4 p-4 about-info-card" style="border-radius:14px;">
             <div class="d-flex gap-3 align-items-start">
-              <div class="about-icon-chip" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+              <div class="about-icon-chip" style="background:linear-gradient(135deg,#60A5FA,#3B82F6);">
                 <i class="fa-solid fa-circle-info"></i>
               </div>
               <div>
@@ -2832,12 +2822,12 @@
                 style="color:#f59e0b;"></i>Core Values</h5>
             <div class="row g-2">
               <div class="col-6">
-                <div class="about-value"><i class="fa-solid fa-check-circle" style="color:#2563eb;"></i><span
+                <div class="about-value"><i class="fa-solid fa-check-circle" style="color:#1E3A8A;"></i><span
                     class="small fw-semibold">Accountability</span>
                 </div>
               </div>
               <div class="col-6">
-                <div class="about-value"><i class="fa-solid fa-check-circle" style="color:#16a34a;"></i><span
+                <div class="about-value"><i class="fa-solid fa-check-circle" style="color:#1E3A8A;"></i><span
                     class="small fw-semibold">Transparency</span>
                 </div>
               </div>
@@ -2869,33 +2859,33 @@
           <div class="row g-3 mb-4">
             <div class="col-6">
               <div class="card border-0 shadow-sm text-center p-4 about-stat-card">
-                <div class="about-stat-icon" style="background:#e8f0fe;"><i class="fa-solid fa-users"
-                    style="color:#2563eb;"></i></div>
-                <div class="fw-bold mb-1" style="font-size:2rem;color:#2563eb;" id="aboutStatUsers">--</div>
+                <div class="about-stat-icon" style="background:#EFF6FF;"><i class="fa-solid fa-users"
+                    style="color:#1E3A8A;"></i></div>
+                <div class="fw-bold mb-1" style="font-size:2rem;color:#A16207;" id="aboutStatUsers">--</div>
                 <div class="text-muted small">Registered Users</div>
               </div>
             </div>
             <div class="col-6">
               <div class="card border-0 shadow-sm text-center p-4 about-stat-card">
-                <div class="about-stat-icon" style="background:#dcfce7;"><i class="fa-solid fa-user-gear"
-                    style="color:#16a34a;"></i></div>
-                <div class="fw-bold mb-1" style="font-size:2rem;color:#16a34a;" id="aboutStatTechs">--</div>
+                <div class="about-stat-icon" style="background:#EFF6FF;"><i class="fa-solid fa-user-gear"
+                    style="color:#1E3A8A;"></i></div>
+                <div class="fw-bold mb-1" style="font-size:2rem;color:#A16207;" id="aboutStatTechs">--</div>
                 <div class="text-muted small">Active Technicians</div>
               </div>
             </div>
             <div class="col-6">
               <div class="card border-0 shadow-sm text-center p-4 about-stat-card">
-                <div class="about-stat-icon" style="background:#fef3c7;"><i class="fa-solid fa-screwdriver-wrench"
-                    style="color:#f59e0b;"></i></div>
-                <div class="fw-bold mb-1" style="font-size:2rem;color:#f59e0b;" id="aboutStatRequests">--</div>
+                <div class="about-stat-icon" style="background:#EFF6FF;"><i class="fa-solid fa-screwdriver-wrench"
+                    style="color:#1E3A8A;"></i></div>
+                <div class="fw-bold mb-1" style="font-size:2rem;color:#A16207;" id="aboutStatRequests">--</div>
                 <div class="text-muted small">Maintenance Requests</div>
               </div>
             </div>
             <div class="col-6">
               <div class="card border-0 shadow-sm text-center p-4 about-stat-card">
-                <div class="about-stat-icon" style="background:#fee2e2;"><i class="fa-solid fa-circle-check"
-                    style="color:#dc2626;"></i></div>
-                <div class="fw-bold mb-1" style="font-size:2rem;color:#dc2626;" id="aboutStatResolved">--</div>
+                <div class="about-stat-icon" style="background:#EFF6FF;"><i class="fa-solid fa-circle-check"
+                    style="color:#1E3A8A;"></i></div>
+                <div class="fw-bold mb-1" style="font-size:2rem;color:#A16207;" id="aboutStatResolved">--</div>
                 <div class="text-muted small">Completed Requests</div>
               </div>
             </div>
@@ -2941,24 +2931,8 @@
             <li><a href="/views/login.html" class="footer-link"><span data-i18n="footer.admin">Admin Panel</span></a>
             </li>
             <li><a href="/views/login.html" class="footer-link"><span data-i18n="footer.tech">Technician</span></a></li>
+            <li><a href="/views/project-certificate.html" class="footer-link">Project Certificate</a></li>
           </ul>
-        </div>
-        <div class="site-footer-col">
-          <h3 class="site-footer-col-title"><span data-i18n="footer.system">System</span></h3>
-          <div class="site-footer-status">
-            <div class="site-footer-status-row">
-              <span class="status-value" id="footerBackendLabel">
-                <i class="fa-solid fa-circle" style="font-size:.4rem;margin-right:4px;"></i><span
-                  data-i18n="footer.backend">Backend: Online</span>
-              </span>
-            </div>
-            <div class="site-footer-status-row">
-              <span class="status-value" id="footerBackendStatus">
-                <i class="fa-solid fa-circle" style="font-size:.4rem;margin-right:4px;"></i><span
-                  data-i18n="footer.api">API: Running</span>
-              </span>
-            </div>
-          </div>
         </div>
         <div class="site-footer-col">
           <h3 class="site-footer-col-title">Contact</h3>
@@ -3063,6 +3037,9 @@
           el.classList.toggle( 'd-none', !VIEWS[name].includes( el.id ) );
         } );
 
+        /* The footer belongs to the public shell, not to an individual view. */
+        document.getElementById( 'site-footer' )?.classList.remove( 'd-none' );
+
         document.querySelectorAll( '.nav-link-item' ).forEach( link => link.classList.remove( 'active' ) );
         const activeLink = document.querySelector( `.nav-link-item[href="#${ name }"]` );
         if ( activeLink ) activeLink.classList.add( 'active' );
@@ -3103,7 +3080,7 @@
       window.scrollTo( { top: 0, behavior: 'smooth' } );
     } );
 
-    /* ===== Hero sliding carousel (home1 → home6, ~4s per slide) ===== */
+    /* ===== Hero sliding carousel (home1 → home8, ~4s per slide) ===== */
     ( function initHeroSlideshow ()
     {
       const track = document.getElementById( 'heroTrack' );
@@ -3111,8 +3088,8 @@
       if ( !track || !track.children.length ) return;
 
       const slides = Array.prototype.slice.call( track.children );
-      const COUNT = slides.length;           /* 6 original slides */
-      const CLONE_INDEX = COUNT;             /* cloned slide 1 sits at index 6 */
+      const COUNT = slides.length;           /* 8 original slides */
+      const CLONE_INDEX = COUNT;             /* cloned slide 1 sits at index 8 */
       const reduceMotion = window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
       const INTERVAL = 4000;                 /* pause between slides */
       const DURATION = 1000;                 /* must match .hero-slide-track transition */
@@ -3133,9 +3110,10 @@
         img.src = url;
       } );
 
-      /* --- Clone slide 1 at the end for a seamless home6 → home1 loop --- */
+      /* --- Clone slide 1 at the end for a seamless home8 → home1 loop --- */
       const clone = slides[0].cloneNode( true );
       clone.setAttribute( 'aria-hidden', 'true' );
+      clone.dataset.heroClone = 'true';
       track.appendChild( clone );
 
       /* --- Build pagination dots (one per slide) --- */
@@ -3188,7 +3166,7 @@
         }
       }
 
-      /* --- Advance one step; loop wraps home6 → home1 through the clone --- */
+      /* --- Advance one step; loop wraps home8 → home1 through the clone --- */
       function advance ()
       {
         if ( reduceMotion || animating ) return;
@@ -3220,6 +3198,7 @@
 
       function restartTimer ()
       {
+        if ( document.body.classList.contains( 'hero-reorder-editing' ) ) return;
         if ( timer ) clearInterval( timer );
         if ( !reduceMotion )
         {
@@ -3256,6 +3235,31 @@
       /* Make sure the hero always paints from slide 1 on first paint */
       slideTo( 0 );
       restartTimer();
+
+      /* Reorder tool API: pause, resume, reset, and refresh the loop clone
+         after slides have been reordered client-side. */
+      window.HeroCarousel = {
+        pause: pauseTimer,
+        resume: restartTimer,
+        reset ()
+        {
+          pauseTimer();
+          snapBack();
+          slideTo( 0 );
+          restartTimer();
+        },
+        refreshClone ()
+        {
+          const stale = track.querySelector( '[data-hero-clone="true"]' );
+          if ( stale ) stale.remove();
+          const first = track.children[0];
+          if ( !first ) return;
+          const next = first.cloneNode( true );
+          next.dataset.heroClone = 'true';
+          next.setAttribute( 'aria-hidden', 'true' );
+          track.appendChild( next );
+        },
+      };
     } )();
 
     /* ===== Live stats from public API =====
@@ -3263,11 +3267,9 @@
 
     async function loadStats ()
     {
-      const statusLabel = document.getElementById( 'footerBackendLabel' );
-      const statusApi = document.getElementById( 'footerBackendStatus' );
       const setOffline = () =>
       {
-        ['countUsers', 'countResolved', 'countAssets', 'countTechs'].forEach( id =>
+        ['countUsers', 'countResolved', 'countAssets', 'countTechs', 'heroActiveUsers', 'heroTotalRequests', 'heroTotalAssets', 'heroTotalTechnicians'].forEach( id =>
         {
           const el = document.getElementById( id );
           if ( el ) el.textContent = '--';
@@ -3277,8 +3279,6 @@
           const el = document.getElementById( id );
           if ( el ) el.textContent = '--';
         } );
-        if ( statusLabel ) statusLabel.innerHTML = '<i class="fa-solid fa-circle" style="font-size:.4rem;color:#fbbf24;margin-right:4px;"></i>Backend: Unavailable';
-        if ( statusApi ) statusApi.innerHTML = '<i class="fa-solid fa-circle" style="font-size:.4rem;color:#fbbf24;margin-right:4px;"></i>API: Offline';
       };
 
       try
@@ -3292,12 +3292,14 @@
         animCount( 'countResolved', data.resolved );
         animCount( 'countAssets', data.total_assets );
         animCount( 'countTechs', data.total_technicians );
+        animCount( 'heroActiveUsers', data.total_users );
+        animCount( 'heroTotalRequests', data.total_tickets );
+        animCount( 'heroTotalAssets', data.total_assets );
+        animCount( 'heroTotalTechnicians', data.total_technicians );
         animCount( 'aboutStatUsers', data.total_users );
         animCount( 'aboutStatTechs', data.total_technicians );
         animCount( 'aboutStatRequests', data.total_tickets );
         animCount( 'aboutStatResolved', data.resolved );
-        if ( statusLabel ) statusLabel.innerHTML = '<i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i>Backend: Online';
-        if ( statusApi ) statusApi.innerHTML = '<i class="fa-solid fa-circle" style="font-size:.4rem;color:#4ade80;margin-right:4px;"></i>API: Online';
       } catch ( _ ) { setOffline(); }
     }
 
@@ -3320,19 +3322,21 @@
     /* ===== Contact Form (public — no login required) ===== */
 
     /* Pre-fill name/email when a logged-in user visits the page */
-    ( function initContactForm ()
+    ( async function initContactForm ()
     {
-      const userStr = localStorage.getItem( 'ict_user' );
-      let user = null;
-      try { user = userStr ? JSON.parse( userStr ) : null; } catch ( _ ) { }
-
-      if ( user )
+      try
       {
-        const nameEl = document.getElementById( 'contactName' );
-        const emailEl = document.getElementById( 'contactEmail' );
-        if ( nameEl && user.fullName ) nameEl.value = user.fullName;
-        if ( emailEl && user.email ) emailEl.value = user.email;
-      }
+        const res = await fetch( API_BASE + '/auth/me', { credentials: 'include' } );
+        const data = res.ok ? await res.json() : null;
+        const user = data?.user;
+        if ( user )
+        {
+          const nameEl = document.getElementById( 'contactName' );
+          const emailEl = document.getElementById( 'contactEmail' );
+          if ( nameEl && user.fullName ) nameEl.value = user.fullName;
+          if ( emailEl && user.email ) emailEl.value = user.email;
+        }
+      } catch ( _ ) { }
     } )();
 
     attachRealTimeValidation( 'contactForm', [
@@ -3342,16 +3346,36 @@
       { fieldId: 'contactMessage', checks: [v => Validators.required( v, 'Message' ), v => Validators.length( v, 'Message', 5, 2000 )] },
     ] );
 
+    /* Guards against a duplicate submission. Disabling the button alone is not
+       enough: the form can also be re-submitted with the Enter key while the
+       request is in flight, which would post the same message twice. */
+    let contactSubmitting = false;
+
     document.getElementById( 'contactForm' ).addEventListener( 'submit', async function ( e )
     {
       e.preventDefault();
+      if ( contactSubmitting ) return;
       const btn = document.getElementById( 'contactSubmitBtn' );
       const successEl = document.getElementById( 'contactSuccess' );
       const successMsgEl = document.getElementById( 'contactSuccessMsg' );
       const errorEl = document.getElementById( 'contactError' );
       const errorMsgEl = document.getElementById( 'contactErrorMsg' );
 
+      /* Both message elements carry data-i18n, so lang.js rewrites their text
+         from the translation table on every language change (and on initLang).
+         That silently discards the state-specific wording set below: the visitor
+         would be shown the generic "couldn't send your message" string instead of
+         the "received, but notification failed" wording that must never invite a
+         resubmission of an already-stored message. Detach the attribute before
+         writing dynamic text so the wording survives. */
+      const setMessage = ( el, text ) =>
+      {
+        el.removeAttribute( 'data-i18n' );
+        el.textContent = text;
+      };
+
       successEl.style.display = 'none';
+      successEl.className = 'alert alert-success';
       errorEl.style.display = 'none';
 
       /* Validate fields */
@@ -3383,6 +3407,11 @@
 
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>' + ( window.t ? t( 'contact.form.sending' ) : 'Sending...' );
+      contactSubmitting = true;
+      let succeeded = false;
+      /* Tracks whether the email ACTUALLY went out, so neither the alert nor
+         the button label can claim a delivery that never happened. */
+      let emailNotified = true;
 
       try
       {
@@ -3391,38 +3420,105 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify( payload ),
         } );
-        const data = await res.json();
-        if ( res.ok && data.success )
+        /* The API always answers JSON, but a proxy, a gateway or a cold start
+           can return HTML or an empty body. Read the body as text first, so such
+           a response is reported as the real failure it is instead of throwing
+           inside res.json() and being mislabelled as a network error. */
+        const rawText = await res.text();
+        let data = null;
+        try { data = rawText ? JSON.parse( rawText ) : null; }
+        catch ( _ )
         {
-          successMsgEl.textContent = window.t ? t( 'contact.form.sent' ) : 'Your message has been sent successfully. Our team will respond within 24 working hours.';
+          console.error( '[contact] non-JSON response', res.status, res.statusText, rawText.slice( 0, 300 ) );
+        }
+
+        if ( res.ok && data && data.success )
+        {
+          succeeded = true;
+          /* `notified:false` means the message WAS stored and the helpdesk can
+             read it in the admin dashboard, but no notification email left the
+             server. That is a warning, never a green success — showing it as
+             "sent" would be exactly the false confirmation this flow must not
+             give. The backend message states the real outcome either way. */
+          const notified = data.notified !== false;
+          emailNotified = notified;
+          successEl.className = notified ? 'alert alert-success' : 'alert alert-warning';
+          setMessage( successMsgEl, data.message || 'Your message has been received successfully.' );
           successEl.style.display = 'block';
           document.getElementById( 'contactForm' ).reset();
           clearAllFieldValidations( 'contactForm' );
           /* Re-fill name/email after reset */
-          const userStr = localStorage.getItem( 'ict_user' );
           let user = null;
-          try { user = userStr ? JSON.parse( userStr ) : null; } catch ( _ ) { }
+          try
+          {
+            const me = await fetch( API_BASE + '/auth/me', { credentials: 'include' } );
+            user = me.ok ? ( await me.json() ).user : null;
+          } catch ( _ ) { }
           const nameEl = document.getElementById( 'contactName' );
           const emailEl = document.getElementById( 'contactEmail' );
           if ( user && nameEl && user.fullName ) nameEl.value = user.fullName;
           if ( user && emailEl && user.email ) emailEl.value = user.email;
-        } else
+        }
+        else
         {
-          errorMsgEl.textContent = data.message || ( window.t ? t( 'contact.form.error' ) : 'Submission failed. Please try again.' );
+          /* The real technical cause goes to the developer console, as one inline
+             string (not a collapsed object) so it is readable without expanding
+             anything in DevTools. Nothing technical is rendered into the page. */
+          console.error(
+            '[contact] submit failed',
+            res.status + ' ' + res.statusText + ' | ' + ( data
+              ? JSON.stringify( { reason: data.reason, message: data.message } )
+              : 'non-JSON body: ' + rawText.slice( 0, 200 ) ),
+          );
+
+          /* Prefer the backend's own wording, because it is the only side that
+             knows whether the record was actually stored. This endpoint no
+             longer answers 503 for a stored message — it reports the real
+             outcome as 201 with notified:false — so a 503 reaching here means
+             the request never completed and the record's fate is unknown, which
+             is the only case that legitimately offers a retry. */
+          setMessage( errorMsgEl,
+            data && typeof data.message === 'string' && data.message
+              ? data.message
+              : "We couldn't send your message right now. Please try again later." );
           errorEl.style.display = 'block';
         }
       } catch ( err )
       {
-        errorMsgEl.textContent = window.t ? t( 'contact.form.neterror' ) : 'Cannot connect to the server. Please check your connection and try again.';
+        /* Transport-level failure (offline, DNS, CORS, connection reset). */
+        console.error( '[contact] transport failure', err );
+
+        setMessage( errorMsgEl, "We couldn't send your message right now. Please try again later." );
         errorEl.style.display = 'block';
-      } finally
+      }
+      finally
       {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>' + ( window.t ? t( 'contact.form.submit' ) : 'Send Message' );
+        contactSubmitting = false;
+
+        const resetBtn = () =>
+        {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>' + ( window.t ? t( 'contact.form.submit' ) : 'Send Message' );
+        };
+
+        if ( succeeded )
+        {
+          /* Confirm on the button itself, then hand it back so the visitor can
+             send another message. The label states the real outcome: a stored
+             message whose notification failed must never read as "sent". */
+          btn.disabled = true;
+          btn.innerHTML = emailNotified
+            ? '<i class="fa-solid fa-circle-check me-2"></i>Message Sent Successfully'
+            : '<i class="fa-solid fa-triangle-exclamation me-2"></i>Message Received';
+          setTimeout( resetBtn, 5000 );
+        }
+        else
+        {
+          resetBtn();
+        }
       }
     } );
   </script>
-  <script src="/assets/js/home-layout.js?v=1"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

@@ -451,7 +451,7 @@ async function seed() {
     const notificationsData = [
       // Admin notifications
       { user: adminUser._id, title: 'New HIGH Priority Ticket',    message: 'A laptop screen flickering ticket was submitted by Aisha Malik (Finance). Priority: HIGH.',         type: 'warning' },
-      { user: adminUser._id, title: 'Ticket Resolved',            message: 'Ticket TK-0001 "Laptop screen flickering" has been marked as Resolved.',                        type: 'success' },
+      { user: adminUser._id, title: 'Ticket Resolved',            message: 'Ticket MAU-0001 "Laptop screen flickering" has been marked as Resolved.',                        type: 'success' },
       { user: adminUser._id, title: 'New MEDIUM Ticket',          message: 'A desktop slowdown ticket was submitted by David Brown (HR). Priority: MEDIUM.',                 type: 'info'    },
       { user: adminUser._id, title: 'Ticket Not Fixed',           message: 'Ticket for laptop battery replacement was marked Not Fixed — replacement part unavailable.',      type: 'danger'  },
       // Technician notifications

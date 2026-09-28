@@ -8,22 +8,22 @@
  *   - 'ICT Admin'   → Directorate manager with full system access
  * */
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      required: [true, 'Full name is required.'],
+      required: [true, "Full name is required."],
       trim: true,
     },
     email: {
       type: String,
-      required: [true, 'Email is required.'],
+      required: [true, "Email is required."],
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address.'],
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address."],
     },
     phone: {
       type: String,
@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+      enum: ["Male", "Female", "Other", "Prefer not to say"],
       default: null,
     },
     department: {
@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Password is required.'],
+      required: [true, "Password is required."],
       minlength: 8,
       /* Stored as a bcrypt hash. select:false keeps the hash out of every default
          query; code that needs it must re-add it with .select('+password'). */
@@ -50,29 +50,57 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['Requester', 'Technician', 'ICT Admin'],
-      default: 'Requester',
+      enum: ["Requester", "Technician", "ICT Admin"],
+      default: "Requester",
     },
     status: {
       type: String,
-      enum: ['active', 'inactive'],
-      default: 'active',
+      enum: ["active", "inactive"],
+      default: "active",
     },
     lastLogin: {
       type: Date,
       default: null,
     },
-    /* Password reset (forgot password)
-       resetPasswordToken stores a HASH of the raw reset token (never the raw
-       value) so a DB leak cannot be used to reset accounts. Only one active
-       token per user is kept at a time.
-    */
-    resetPasswordToken: {
+    /* Password reset verification state. Raw codes and reset-session tokens
+       are never persisted; only their SHA-256 hashes are stored. */
+    resetPasswordCodeHash: {
       type: String,
       default: null,
       select: false,
     },
-    resetPasswordExpires: {
+    resetPasswordCodeExpires: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+    resetPasswordCodeAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    resetPasswordDeliveryMethod: {
+      type: String,
+      enum: ["email", "sms", null],
+      default: null,
+      select: false,
+    },
+    resetPasswordRequestId: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    resetPasswordCodeSentAt: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+    resetPasswordVerifiedHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    resetPasswordVerifiedExpires: {
       type: Date,
       default: null,
       select: false,
@@ -81,11 +109,35 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    notificationPreferences: {
+      inAppNotifications: { type: Boolean, default: true },
+      emailNotifications: { type: Boolean, default: true },
+      maintenanceAlerts: { type: Boolean, default: true },
+    },
+    /* Per-user display preferences. These are stored server-side so a user's
+       language and theme follow their account across devices/browsers; the
+       client still mirrors them into localStorage for instant application
+       before the first API response arrives (see theme.js / lang.js). */
+    preferences: {
+      language: {
+        type: String,
+        enum: ["en", "am"],
+        default: "en",
+      },
+      theme: {
+        type: String,
+        enum: ["light", "dark"],
+        default: "light",
+      },
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 /* Hot path: admin user list filtered by role + status. */
 userSchema.index({ role: 1, status: 1 });
+userSchema.index({ role: 1, status: 1, createdAt: -1 });
+userSchema.index({ fullName: 1 });
+userSchema.index({ department: 1, createdAt: -1 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

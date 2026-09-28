@@ -231,6 +231,25 @@
       "lang.en": "English",
       "lang.am": "Amharic",
       "lang.om": "Afaan Oromoo",
+      "ai.title": "✨ AI Assistant",
+      "ai.status": "Ready to help",
+      "ai.intro": "Ask me anything!",
+      "ai.intro.desc":
+        "ICT, general knowledge, math, writing, programming, science, or how-to questions.",
+      "ai.placeholder": "Ask anything...",
+      "ai.send": "Send",
+      "ai.clear": "Clear",
+      "ai.hint": "Enter to send",
+      "ai.suggestions": "Suggested questions",
+      "ai.welcome":
+        "Hi! I am your AI Assistant. Ask me anything - ICT, programming, education, science, mathematics, writing, troubleshooting, or general knowledge.",
+      "ai.suggestion.slow":
+        "My computer is running very slowly. What should I check?",
+      "ai.suggestion.wifi": "My Wi-Fi is connected but there is no internet.",
+      "ai.suggestion.printer": "How do I fix a printer that is not printing?",
+      "ai.suggestion.sky": "Explain why the sky is blue.",
+      "ai.suggestion.email":
+        "Write a short email asking my teacher for an extension.",
 
       /* ── Auth pages (login/register) ── */
       "auth.login.title": "Sign In",
@@ -243,6 +262,10 @@
       "auth.register.creating": "Creating account...",
       "auth.register.subtitle2":
         "Register to access the Smart ICT Maintenance Management System",
+      "auth.register.fullName": "Full Name",
+      "auth.register.fullName.placeholder": "Enter your full name",
+      "auth.register.email": "Email Address",
+      "auth.register.email.placeholder": "e.g. example@gmail.com",
       "auth.register.pwd_confirm": "Confirm Password",
       "auth.register.otherdept": "Other Department Name",
       "auth.register.selectdept": "Select Department",
@@ -274,11 +297,12 @@
       "forgot.title": "Forgot Password?",
       "forgot.subtitle":
         "Enter your registered email address and we'll help you reset your password.",
-      "forgot.emailHint": "We'll send a secure reset link to this address.",
-      "forgot.send": "Send Reset Link",
+      "forgot.emailHint":
+        "Enter the email address associated with your account and we'll send you a secure verification code.",
+      "forgot.send": "Send Code",
       "forgot.sending": "Sending...",
       "forgot.sent":
-        "If an account exists for this email, a password reset link has been sent.",
+        "If an account exists for this email, a verification code has been sent.",
       "forgot.backLogin": "Back to Login",
       "forgot.confirmPassword": "Confirm New Password",
       "forgot.reset": "Reset Password",
@@ -291,7 +315,7 @@
       "reset.hint": "At least 8 characters with both letters and numbers.",
       "reset.mismatch": "Passwords do not match.",
       "reset.missingToken":
-        "This password reset link is invalid or incomplete. Please request a new reset link.",
+        "This verification session is invalid or incomplete. Please request a new verification code.",
       "reset.success": "Your password has been reset. You can now sign in.",
       "reset.strength.none": "Enter a password",
       "reset.strength.tooshort": "Too short",
@@ -370,6 +394,12 @@
       "profile.success": "Profile photo updated successfully.",
       "profile.invalidImage": "Invalid image type. Use JPG, PNG, or WEBP.",
       "profile.tooLarge": "Image size must be less than 5 MB.",
+
+      /* ── Shared page / action labels ── */
+      "page.settings": "Settings",
+      "page.notifications": "Notifications",
+      "common.cancel": "Cancel",
+      "common.saving": "Saving…",
 
       /* ── Admin dashboard pages ── */
       "admin.logout": "Logout",
@@ -1208,6 +1238,12 @@
       "fb.opt.veryDissatisfied": "Very Dissatisfied",
       "fb.opt.yes": "Yes",
       "fb.opt.no": "No",
+      "fb.emptyTitle": "No feedback requests yet",
+      "fb.emptyText":
+        "When a completed service request is available, it will appear here for your review.",
+      "fb.giveFeedback": "Give Feedback →",
+      "fb.errorTitle": "Unable to load feedback requests",
+      "fb.errorText": "The requests could not be loaded. Please try again.",
       "page.userNotifications":
         "Notifications — Smart ICT Maintenance Management System",
       "page.techNotifications":
@@ -1480,9 +1516,45 @@
         "Cannot deactivate this technician: they still have active assigned requests.",
       "tj.techDeactivated": "Technician deactivated.",
       "tj.couldNotDeleteTech": "Could not delete technician.",
+
+      /* ── Personal settings page (Requester / Technician) ── */
+      "settings.inapp": "In-app notifications",
+      "settings.inappDesc": "Service and account updates in the application.",
+      "settings.notifDesc":
+        "Choose whether to receive updates in your notification center.",
+      "settings.emailTitle": "Email Preferences",
+      "settings.emailDesc":
+        "Manage service-related email notifications for your account.",
+      "settings.emailHint":
+        "Receive relevant account and service updates by email.",
+      "settings.maintenanceTitle": "Maintenance Alerts",
+      "settings.maintenanceDesc":
+        "Control assignment and maintenance activity alerts.",
+      "settings.maintenanceLabel": "Maintenance alerts",
+      "settings.maintenanceHint":
+        "Receive alerts for assigned requests and work updates.",
+      "settings.appearanceTitle": "Appearance",
+      "settings.appearanceDesc": "Set the theme for your application.",
+      "settings.themeLabel": "Theme",
+      "settings.themeLight": "Light",
+      "settings.themeDark": "Dark",
+      "settings.availabilityDesc":
+        "Set whether you can receive and work on assignments.",
+      "settings.availabilityStatus": "Technician status",
+      "settings.statusOffline": "Offline",
+      "settings.signOutDevice": "Sign out on this device",
+      "settings.unsaved": "Unsaved changes",
+      "settings.neverLoggedIn": "Never logged in",
+      "settings.emailNoEdit": "Contact ICT Admin to change your email address.",
+      "settings.securityTitle": "Security",
     },
 
     am: {
+      /* ── Shared page / action labels ── */
+      "page.settings": "ቅንብሮች",
+      "page.notifications": "አስታወቂያዎች",
+      "common.cancel": "ተወው",
+      "common.saving": "በማስቀመጥ ላይ…",
       /* ── Public landing (index.html) ── */
       "nav.home": "መነሻ",
       "nav.features": "ባህሪዎች",
@@ -1684,6 +1756,23 @@
       "lang.en": "እንግሊዝኛ",
       "lang.am": "አማርኛ",
       "lang.om": "ኦሮምኛ",
+      "ai.title": "✨ AI Assistant",
+      "ai.status": "ለመርዳት ዝግጁ ነኝ",
+      "ai.intro": "ማንኛውንም ጥያቄ ይጠይቁ!",
+      "ai.intro.desc":
+        "ስለ አይሲቲ፣ አጠቃላይ እውቀት፣ ሂሳብ፣ ጽሑፍ፣ ፕሮግራሚንግ፣ ሳይንስ ወይም አሰራር ይጠይቁ።",
+      "ai.placeholder": "ማንኛውንም ነገር ይጠይቁ...",
+      "ai.send": "ላክ",
+      "ai.clear": "አጽዳ",
+      "ai.hint": "ለመላክ Enter ይጫኑ",
+      "ai.suggestions": "የተጠቆሙ ጥያቄዎች",
+      "ai.welcome":
+        "ሰላም! እኔ የAI Assistant ረዳትዎ ነኝ። ስለ አይሲቲ፣ ፕሮግራሚንግ፣ ትምህርት፣ ሳይንስ፣ ሂሳብ፣ ጽሑፍ ወይም አሰራር ማንኛውንም ጥያቄ ይጠይቁ።",
+      "ai.suggestion.slow": "ኮምፒዩተሬ በጣም ቀርፋፋ ሆኗል። ምን ልመርምር?",
+      "ai.suggestion.wifi": "ዋይ-ፋይ ተገናኝቷል ግን ኢንተርኔት የለም።",
+      "ai.suggestion.printer": "የማያትም አታሚን እንዴት ማስተካከል እችላለሁ?",
+      "ai.suggestion.sky": "ሰማዩ ለምን ሰማያዊ እንደሆነ ያብራሩ።",
+      "ai.suggestion.email": "አስተማሪዬን ተጨማሪ ጊዜ የሚጠይቅ አጭር ኢሜይል ይጻፉ።",
 
       /* ── Auth pages (login/register) ── */
       "auth.login.title": "ግባ",
@@ -1695,6 +1784,10 @@
       "auth.register.btn": "መዝገብ",
       "auth.register.creating": "መለያ በመፍጠር ላይ...",
       "auth.register.subtitle2": "የስማርት አይሲቲ ጥገና አስተዳደር ሥርዓትን ለመጠቀም ይመዝገቡ",
+      "auth.register.fullName": "ሙሉ ስም",
+      "auth.register.fullName.placeholder": "ሙሉ ስምዎን ያስገቡ",
+      "auth.register.email": "የኢሜይል አድራሻ",
+      "auth.register.email.placeholder": "ምሳሌ፦ example@gmail.com",
       "auth.register.pwd_confirm": "የይለፍ ቃል ያረጋግጡ",
       "auth.register.otherdept": "የሌላ ክፍል ስም",
       "auth.register.selectdept": "ክፍል ይምረጡ",
@@ -2327,7 +2420,11 @@
       "common.loading": "በመጫን ላይ...",
       "common.save": "አስቀምጥ",
       "common.saving": "በማስቀመጥ ላይ...",
-      "common.cancel": "ሰርዝ",
+      /* Must stay "ተወው" (Cancel). This key is already defined earlier in the
+         am table, and a duplicate object key silently wins by last-one-wins —
+         so a different value here would override every Cancel button in the
+         app with the wrong word. */
+      "common.cancel": "ተወው",
       "common.close": "ዝጋ",
       "common.confirm": "አረጋግጥ",
       "common.submit": "አቅርብ",
@@ -2611,6 +2708,11 @@
       "fb.opt.veryDissatisfied": "በጣም እርካታ የለኝም",
       "fb.opt.yes": "አዎ",
       "fb.opt.no": "አይ",
+      "fb.emptyTitle": "የሚጠብቁ አስተያየት የለም",
+      "fb.emptyText": "በተጠናቀቀ የአገልግሎት ጥያቄ ተደርጎ ይሰጣል፣ እዚህ ለግምገማ ይታያል።",
+      "fb.giveFeedback": "አስተያየት ይስጡ →",
+      "fb.errorTitle": "የአስተያየት ጥያቄዎችን መጫን አልተቻለም",
+      "fb.errorText": "ጥያቄዎች ሊጫኑ አልተቻለም። እባክዎ እንደገና ይሞክሩ።",
       "page.userNotifications": "ማሳወቂያዎች — ስማርት አይሲቲ ጥገና አስተዳደር ሥርዓት",
       "page.techNotifications": "ማሳወቂያዎች — ስማርት አይሲቲ ጥገና አስተዳደር ሥርዓት",
       "notif.unreadOnly": "ያልተነበቡ ብቻ",
@@ -2660,6 +2762,31 @@
       "page.forgot": "የይለፍ ቃል ተረሳ — ስማርት አይሲቲ ጥገና አስተዳደር ሥርዓት",
       "page.reset": "የይለፍ ቃል ማስተካከያ — ስማርት አይሲቲ ጥገና አስተዳደር ሥርዓት",
       "page.register": "ይመዝገቡ — ስማርት አይሲቲ ጥገና አስተዳደር ሥርዓት",
+
+      /* ── Personal settings page (Requester / Technician) ── */
+      "settings.inapp": "በመተግበሪያ ውስጥ ማሳወቂያዎች",
+      "settings.inappDesc": "በመተግበሪያ ውስጥ የአገልግሎት እና የሂሳብ ማሻሻያዎች።",
+      "settings.notifDesc": "በማሳወቂያ ማዕከልዎ ውስጥ ማሻሻያ ማግኘት እንደምፈልጎታለዎት ይምረጡ።",
+      "settings.emailTitle": "የኢሜይል ምርጫዎች",
+      "settings.emailDesc": "ለሂሳብዎ የተያያዙ የአገልግሎት ኢሜይል ማሳወቂያዎችን ያስተዳድሩ።",
+      "settings.emailHint": "በኢሜይል የሂሳብና አገልግሎት አስፈላጊ ማሻሻያዎችን ይቀበሉ።",
+      "settings.maintenanceTitle": "የጥገና ማሳወቂያዎች",
+      "settings.maintenanceDesc": "የምደባ እና የጥገና እንቅስቃሴ ማሳወቂያዎችን ያስተዳድሩ።",
+      "settings.maintenanceLabel": "የጥገና ማሳወቂያዎች",
+      "settings.maintenanceHint": "ለተመደቡ ጥያቄዎችና ለሥራ ማሻሻያዎች ማሳወቂያዎችን ይቀበሉ።",
+      "settings.appearanceTitle": "ገጽታ",
+      "settings.appearanceDesc": "የመተግበሪያዎን ገጽታ ያዋቁ።",
+      "settings.themeLabel": "ገጽታ",
+      "settings.themeLight": "ብርሃን",
+      "settings.themeDark": "ጨለማ",
+      "settings.availabilityDesc": "ምደባዎችን መቀበልና ላይ መሥራት እንደምችሉ ያዋቁ።",
+      "settings.availabilityStatus": "የቴክኒሽኒስ ሁኔታ",
+      "settings.statusOffline": "ከመስመር ውጭ",
+      "settings.signOutDevice": "በዚህ መሣሪያ ውስጥ ይውጣ",
+      "settings.unsaved": "ያልተቀመጡ ለውጦች",
+      "settings.neverLoggedIn": "አላውጥ አልገባም",
+      "settings.emailNoEdit": "የኢሜይል አድራሻዎን ለመቀየር የአይሲቲ አስተዳዳሪን ያግኙ።",
+      "settings.securityTitle": "ደህንነት",
     },
 
     om: {
@@ -3830,6 +3957,13 @@
       "fb.opt.veryDissatisfied": "Baay’een Hin Qanani’in",
       "fb.opt.yes": "Eeyyee",
       "fb.opt.no": "Lakki",
+      "fb.emptyTitle": "Gaaffii yaada deebii hin jiru",
+      "fb.emptyText":
+        "Gaaffii suphaa dhiyaate yoo argaman, halkan yaada deebii eeguu danda’a.",
+      "fb.giveFeedback": "Yaada Deebii Kennaa →",
+      "fb.errorTitle": "Gaaffii yaada deebii fe’uu hin dandeenye",
+      "fb.errorText":
+        "Gaaffiin fe’uuf hin dandeenye. Maaloo yaalli deebi’ii yaali.",
       "page.userNotifications":
         "Beeksisa — Sistimii Bulchiinsa Suphaa TIK Smaart",
       "page.techNotifications":
@@ -3891,14 +4025,17 @@
   };
 
   var FALLBACK_LANG = "en";
+  var activeLang = null;
 
   function getLang() {
+    if (activeLang === "en" || activeLang === "am") return activeLang;
     var v = localStorage.getItem(LANG_STORAGE_KEY);
     return v === "en" || v === "am" ? v : FALLBACK_LANG;
   }
 
   function setLang(lang, save) {
     if (lang !== "en" && lang !== "am") lang = FALLBACK_LANG;
+    activeLang = lang;
     if (save !== false) localStorage.setItem(LANG_STORAGE_KEY, lang);
     document.documentElement.setAttribute("lang", lang);
     applyLanguage(document);
@@ -3952,11 +4089,25 @@
   function syncSelector(lang) {
     var sel = document.querySelector("#langSwitch");
     if (!sel) return;
-    if (sel.tagName === "SELECT") {
-      sel.value = lang;
-    } else {
-      sel.setAttribute("data-value", lang);
+    sel.setAttribute("data-value", lang);
+    var trigger = sel.querySelector(".lang-select-trigger");
+    var label = sel.querySelector(".lang-select-current");
+    var selected = sel.querySelector(
+      '.lang-select-option[data-lang="' + lang + '"]',
+    );
+    if (trigger && label && selected) {
+      label.textContent = selected.getAttribute("data-label");
+      trigger.setAttribute(
+        "aria-label",
+        "Language: " + selected.getAttribute("data-label"),
+      );
     }
+    sel.querySelectorAll(".lang-select-option").forEach(function (option) {
+      option.setAttribute(
+        "aria-selected",
+        option === selected ? "true" : "false",
+      );
+    });
   }
 
   function buildSwitch() {
@@ -3967,31 +4118,110 @@
 
     var options = [
       ["en", DICT[FALLBACK_LANG]["lang.en"]],
-      ["am", DICT.am["lang.am"]],
+      ["am", "አማርኛ"],
     ];
 
-    var sel = document.createElement("select");
-    sel.className = "form-select form-select-sm lang-select";
-    sel.setAttribute("aria-label", "Language");
+    var sel = document.createElement("div");
+    sel.className = "lang-select";
+    var trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "lang-select-trigger";
+    trigger.setAttribute("aria-haspopup", "listbox");
+    trigger.setAttribute("aria-expanded", "false");
+    var current = document.createElement("span");
+    current.className = "lang-select-current";
+    var chevron = document.createElement("i");
+    chevron.className = "bi bi-chevron-down";
+    chevron.setAttribute("aria-hidden", "true");
+    trigger.appendChild(current);
+    trigger.appendChild(chevron);
+    var menu = document.createElement("div");
+    menu.id = "langOptions";
+    menu.className = "lang-select-menu";
+    menu.setAttribute("role", "listbox");
+    menu.hidden = true;
+    trigger.setAttribute("aria-controls", menu.id);
     options.forEach(function (o) {
-      var op = document.createElement("option");
-      op.value = o[0];
-      op.textContent = o[1];
-      sel.appendChild(op);
+      var option = document.createElement("button");
+      option.type = "button";
+      option.className = "lang-select-option";
+      option.setAttribute("role", "option");
+      option.setAttribute("data-lang", o[0]);
+      option.setAttribute("data-label", o[1]);
+      option.setAttribute("aria-selected", o[0] === lang ? "true" : "false");
+      option.textContent = o[1];
+      option.addEventListener("click", function () {
+        setLang(o[0]);
+        closeMenu();
+      });
+      menu.appendChild(option);
     });
-    sel.value = lang;
-    sel.addEventListener("change", function () {
-      setLang(sel.value);
+    function closeMenu() {
+      menu.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+      sel.classList.remove("is-open");
+    }
+    function openMenu(focusLast) {
+      menu.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+      sel.classList.add("is-open");
+      var selectedOption = menu.querySelector('[aria-selected="true"]');
+      var options = Array.from(menu.querySelectorAll(".lang-select-option"));
+      (selectedOption || options[focusLast ? options.length - 1 : 0]).focus();
+    }
+    trigger.addEventListener("click", function () {
+      if (menu.hidden) openMenu(false);
+      else closeMenu();
     });
+    trigger.addEventListener("keydown", function (event) {
+      if (
+        event.key === "ArrowDown" ||
+        event.key === "Enter" ||
+        event.key === " "
+      ) {
+        event.preventDefault();
+        openMenu(false);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        openMenu(true);
+      } else if (event.key === "Escape") closeMenu();
+    });
+    menu
+      .querySelectorAll(".lang-select-option")
+      .forEach(function (option, index, allOptions) {
+        option.addEventListener("keydown", function (event) {
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            allOptions[(index + 1) % allOptions.length].focus();
+          } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            allOptions[
+              (index - 1 + allOptions.length) % allOptions.length
+            ].focus();
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            closeMenu();
+            trigger.focus();
+          }
+        });
+      });
+    document.addEventListener("click", function (event) {
+      if (!sel.contains(event.target)) {
+        closeMenu();
+      }
+    });
+    sel.appendChild(trigger);
+    sel.appendChild(menu);
     wrapper.appendChild(sel);
+    current.textContent = options.filter(function (option) {
+      return option[0] === lang;
+    })[0][1];
+    trigger.setAttribute("aria-label", "Language: " + current.textContent);
     return wrapper;
   }
 
   function injectLangSwitch() {
     if (document.querySelector("#langSwitch")) return;
-
-    /* No language switcher on login/register pages. */
-    if (document.body && document.body.classList.contains("auth-body")) return;
 
     var target = document.querySelector(".lang-switch-container");
     if (target) {
@@ -4013,7 +4243,7 @@
 
     /* Auth pages: attach to the form header/card if present */
     var authCard = document.querySelector(".auth-body .card, .auth-card");
-    if (authCard) {
+    if (authCard && !window.__hideLangSwitch) {
       var s2 = buildSwitch();
       var cardBody = authCard.querySelector(".card-body");
       (cardBody || authCard).appendChild(s2);

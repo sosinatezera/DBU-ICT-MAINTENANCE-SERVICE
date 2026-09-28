@@ -9,6 +9,8 @@ const Technician = require('../models/Technician');
 const Assignment = require('../models/Assignment');
 const Feedback   = require('../models/Feedback');
 const Category   = require('../models/Category');
+const Settings   = require('../models/Settings');
+const { displayTicketId } = require('../utils/ticketId');
 
 /* Build a $match filter on createdAt from ?dateFrom=&dateTo= */
 const buildDateMatch = (req) => {
@@ -28,11 +30,23 @@ const getDashboardStats = async (req, res, next) => {
     const dateMatch   = buildDateMatch(req);
     const ticketMatch = dateMatch || {};
 
+    /* Overdue = still-open tickets older than the admin's SLA window
+       (slResponseHours from the Settings singleton, default 24h). The date
+       filter, when present, narrows the range to what the user selected. */
+    const settings = await Settings.getInstance();
+    const slaHours = Number(settings?.slaResponseHours) || 24;
+    const overdueThreshold = new Date(Date.now() - slaHours * 3600 * 1000);
+    const overdueCreated = { ...(ticketMatch.createdAt || {}) };
+    if (!overdueCreated.$lte || overdueCreated.$lte > overdueThreshold) {
+      overdueCreated.$lte = overdueThreshold;
+    }
+
     const [
       total_users, total_assets, total_technicians,
       submitted, under_review, in_progress, resolved, closed, total_tickets,
       avg_feedback,
       network_total, network_pending, network_in_progress, network_resolved,
+      overdue, avg_resolution,
     ] = await Promise.all([
       User.countDocuments({ status: 'active' }),
       ICTAsset.countDocuments(),
@@ -58,10 +72,29 @@ const getDashboardStats = async (req, res, next) => {
         category: 'Network Maintenance',
         status: { $in: ['resolved', 'closed'] },
       }),
+      Ticket.countDocuments({
+        ...ticketMatch,
+        status: { $nin: ['resolved', 'closed'] },
+        createdAt: overdueCreated,
+      }),
+      Ticket.aggregate([
+        { $match: { ...ticketMatch, status: { $in: ['resolved', 'closed'] } } },
+        {
+          $project: {
+            created:   '$createdAt',
+            completed: { $ifNull: ['$technicianFeedback.completionDate', '$updatedAt'] },
+          },
+        },
+        { $match: { created: { $ne: null }, completed: { $ne: null } } },
+        { $group: { _id: null, avgMs: { $avg: { $subtract: ['$completed', '$created'] } } } },
+      ]),
     ]);
 
     const pending = (submitted || 0) + (under_review || 0);
     const completed = (resolved || 0) + (closed || 0);
+    const avgResolutionHours = avg_resolution[0]?.avgMs != null
+      ? Math.round(((avg_resolution[0].avgMs / 3600000) + Number.EPSILON) * 10) / 10
+      : null;
 
     res.json({
       success: true,
@@ -77,6 +110,8 @@ const getDashboardStats = async (req, res, next) => {
         closed,
         completed,
         total_tickets,
+        overdue: overdue || 0,
+        avg_resolution_hours: avgResolutionHours,
         avg_rating:  avg_feedback[0]?.avg  ? Math.round(avg_feedback[0].avg * 10) / 10 : 0,
         total_feedback: avg_feedback[0]?.count || 0,
         network_total:       network_total || 0,
@@ -124,10 +159,11 @@ const getTechnicianPerformance = async (req, res, next) => {
     const dateMatch   = buildDateMatch(req);
     const assignments = await Assignment.find()
       .populate({ path: 'technician', populate: { path: 'user', select: 'fullName' } })
-      .populate('ticket', 'status createdAt')
+      .populate('ticket', 'status createdAt updatedAt technicianFeedback.completionDate')
       .lean();
 
-    const map = {};
+    const map = {};              // technician name → aggregate row
+    const resolvedTicketIds = []; // tickets marked resolved/closed (for rating lookup)
     for (const a of assignments) {
       if (dateMatch && a.ticket?.createdAt) {
         const t = new Date(a.ticket.createdAt).getTime();
@@ -135,12 +171,52 @@ const getTechnicianPerformance = async (req, res, next) => {
         if (dateMatch.createdAt.$lte && t > dateMatch.createdAt.$lte.getTime()) continue;
       }
       const name = a.technician?.user?.fullName || 'Unknown';
-      if (!map[name]) map[name] = { name, assigned: 0, resolved: 0 };
+      if (!map[name]) map[name] = { name, assigned: 0, resolved: 0, resolveHours: [], resolvedTicketIds: [] };
       map[name].assigned++;
-      if (['resolved', 'closed'].includes(a.ticket?.status)) map[name].resolved++;
+      if (['resolved', 'closed'].includes(a.ticket?.status)) {
+        map[name].resolved++;
+        const created   = a.ticket.createdAt;
+        const completed = a.ticket.technicianFeedback?.completionDate || a.ticket.updatedAt;
+        if (created && completed) {
+          const hours = (new Date(completed).getTime() - new Date(created).getTime()) / 3600000;
+          if (Number.isFinite(hours) && hours >= 0) map[name].resolveHours.push(hours);
+        }
+        if (a.ticket._id) resolvedTicketIds.push(String(a.ticket._id));
+      }
     }
 
-    res.json({ success: true, data: Object.values(map).sort((a, b) => b.resolved - a.resolved) });
+    /* Real average service-satisfaction rating per technician — pulled from the
+       Feedback records attached to the tickets they resolved. */
+    const ratingsByRequest = {};
+    if (resolvedTicketIds.length) {
+      const feedbackRows = await Feedback.find({ request: { $in: resolvedTicketIds } })
+        .select('request rating')
+        .lean();
+      for (const f of feedbackRows) {
+        if (typeof f.rating === 'number') ratingsByRequest[String(f.request)] = f.rating;
+      }
+    }
+
+    const data = Object.values(map).map((row) => {
+      const selfRatings = row.resolvedTicketIds
+        .map((id) => ratingsByRequest[id])
+        .filter((r) => typeof r === 'number');
+      const avgRating = selfRatings.length
+        ? Math.round((selfRatings.reduce((sum, r) => sum + r, 0) / selfRatings.length) * 10) / 10
+        : null;
+      const avgResolvedHours = row.resolveHours.length
+        ? Math.round((row.resolveHours.reduce((sum, h) => sum + h, 0) / row.resolveHours.length) * 10) / 10
+        : null;
+      return {
+        name: row.name,
+        assigned: row.assigned,
+        resolved: row.resolved,
+        avgRating,
+        avgResolvedHours,
+      };
+    }).sort((a, b) => b.resolved - a.resolved);
+
+    res.json({ success: true, data });
   } catch (err) { next(err); }
 };
 
@@ -176,6 +252,9 @@ const getRecentFeedback = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();
+    feedback.forEach(fb => {
+      if (fb.request && fb.request.ticketId) fb.request.ticketId = displayTicketId(fb.request.ticketId);
+    });
     res.json({ success: true, data: feedback });
   } catch (err) { next(err); }
 };
@@ -290,6 +369,8 @@ const getNetworkReports = async (req, res, next) => {
         .select('ticketId title serviceType networkDevice status priority createdAt requester')
         .lean(),
     ]);
+
+    history.forEach(h => { if (h.ticketId) h.ticketId = displayTicketId(h.ticketId); });
 
     res.json({
       success: true,

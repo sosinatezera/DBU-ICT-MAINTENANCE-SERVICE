@@ -65,7 +65,7 @@
       <div class="mt-auto pt-3 border-top border-white border-opacity-25">
         <div class="d-flex align-items-center gap-2 mb-2">
           <span class="profile-avatar profile-avatar-sm" data-avatar aria-label="Profile">
-            <img class="profile-avatar-image" alt="Profile" hidden />
+            <img class="profile-avatar-image" alt="Profile" hidden loading="lazy" decoding="async" />
             <span class="profile-avatar-initials" id="sidebarAvatarInitials">U</span>
           </span>
           <span class="small" id="sidebarUserName">User</span>
@@ -83,7 +83,7 @@
         <div class="d-flex align-items-center gap-3">
           <div id="notifBellContainer"></div>
           <span class="profile-avatar profile-avatar-sm" data-avatar aria-label="Profile">
-            <img class="profile-avatar-image" alt="Profile" hidden />
+            <img class="profile-avatar-image" alt="Profile" hidden loading="lazy" decoding="async" />
             <span class="profile-avatar-initials" id="topAvatarInitials">U</span>
           </span>
           <span class="text-muted small" id="topUserName">Welcome, User</span>
@@ -106,7 +106,7 @@
             <div class="card-body p-4">
               <div class="d-flex align-items-center gap-4">
                 <div class="profile-avatar profile-avatar-lg" id="profileAvatar" data-avatar aria-label="Profile">
-                  <img class="profile-avatar-image" alt="Profile Photo" hidden />
+                  <img class="profile-avatar-image" alt="Profile Photo" hidden loading="lazy" decoding="async" />
                   <span class="profile-avatar-initials" id="avatarInitials">U</span>
                 </div>
                 <div class="flex-grow-1">
@@ -286,7 +286,7 @@
                   <div class="d-flex align-items-center gap-3 mb-3">
                     <div class="profile-avatar profile-avatar-lg" id="profilePhotoAvatar" data-avatar
                       aria-label="Profile photo">
-                      <img class="profile-avatar-image" alt="Profile Photo" hidden />
+                      <img class="profile-avatar-image" alt="Profile Photo" hidden loading="lazy" decoding="async" />
                       <span class="profile-avatar-initials">U</span>
                     </div>
                     <div class="flex-grow-1 min-w-0">
@@ -367,22 +367,126 @@
   <!-- Bootstrap JS (must be before inline script) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Shared utilities (must be before inline script that uses them) -->
-  <script src="/assets/js/api-config.js"></script>
-  <script src="/assets/js/main.js?v=8"></script>
+  <script src="/assets/js/api-config.js?v=2"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/assets/js/main.js?v=13"></script>
   <script src="/assets/js/notifications.js?v=7"></script>
   <script src="/assets/js/theme.js"></script>
-  <script src="/assets/js/lang.js?v=9"></script>
+  <script src="/assets/js/lang.js?v=13"></script>
 
   <script>
     document.addEventListener( 'DOMContentLoaded', async () =>
     {
-      if ( typeof requireAuth === 'function' && !requireAuth() ) return;
-
       const t = ( key ) => ( window.t ? window.t( key ) : key );
       let _originalValues = {};
       let _isEditing = false;
       let _saving = false;
       let photoUser = null;
+
+      /* ── Loading-state control ─────────────────────────────────────
+         The spinner must ALWAYS come to rest — on success and on every
+         failure path — so a failed request can never leave the page stuck
+         on "Loading profile...". */
+      const _loadingEl = document.getElementById( 'profileLoading' );
+      const _contentEl = document.getElementById( 'profileContent' );
+      const _loadingTemplate = _loadingEl ? _loadingEl.innerHTML : '';
+      let _profileLoadStarted = false;   // guards duplicate /auth/me calls
+
+      const _esc = ( value ) =>
+      {
+        if ( typeof escHtml === 'function' ) return escHtml( value );
+        return String( value == null ? '' : value ).replace( /[&<>"']/g, ( ch ) => (
+          { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+        ) );
+      };
+
+      function showProfileLoading ()
+      {
+        if ( _contentEl ) _contentEl.style.display = 'none';
+        if ( !_loadingEl ) return;
+        /* Restore the original spinner markup (an earlier failure may have
+           replaced it with the error alert) and re-apply translations. */
+        _loadingEl.innerHTML = _loadingTemplate;
+        _loadingEl.classList.remove( 'd-none' );
+        if ( typeof applyLanguage === 'function' ) applyLanguage( document );
+      }
+
+      function stopProfileLoading ()
+      {
+        if ( _loadingEl ) _loadingEl.classList.add( 'd-none' );
+      }
+
+      function showProfileContent ()
+      {
+        stopProfileLoading();
+        if ( _contentEl ) _contentEl.style.display = '';
+      }
+
+      /* Professional failure state: spinner stopped, real message, and a
+         working Retry. Retry re-runs the loader in place (no page reload), so
+         exactly one new /auth/me request is issued per click. */
+      function showProfileLoadError ( message )
+      {
+        stopProfileLoading();
+        if ( _contentEl ) _contentEl.style.display = 'none';
+        if ( !_loadingEl ) return;
+        _loadingEl.classList.remove( 'd-none' );
+        _loadingEl.innerHTML =
+          '<div class="alert alert-danger d-flex align-items-center gap-2 mb-0">' +
+          '<i class="bi bi-exclamation-triangle-fill"></i>' +
+          '<span>' + _esc( message || 'Failed to load profile. Please try again.' ) + '</span>' +
+          '<button type="button" class="btn btn-sm btn-outline-danger ms-auto" id="profileRetryBtn">' +
+          '<i class="bi bi-arrow-clockwise me-1"></i>Retry</button>' +
+          '</div>';
+        const retry = document.getElementById( 'profileRetryBtn' );
+        if ( retry ) retry.addEventListener( 'click', () =>
+        {
+          _profileLoadStarted = false;   // allow exactly one fresh attempt
+          loadProfileData();
+        } );
+      }
+
+      /* Status-aware, human-readable message for every failure path. */
+      function profileErrorMessage ( err )
+      {
+        const status = err && err.status;
+        if ( status === 401 ) return 'Your session has expired. Please sign in again to view your profile.';
+        if ( status === 403 ) return 'Your account does not have permission to view this profile. Please contact your administrator.';
+        if ( err && err.network ) return 'Cannot reach the server. Please check your connection and try again.';
+        return ( err && err.message ) || 'Failed to load profile. Please try again.';
+      }
+
+      /* ── Authentication ────────────────────────────────────────────
+         The session is a cookie that apiRequest() sends automatically via
+         credentials: "include" — no token is built or hardcoded here.
+         requireAuth() deliberately declines to redirect when the server
+         could not be reached and simply returns null; that must NOT strand
+         the page on the spinner, so we let the real request decide. A
+         genuine 401 is redirected to the login page by apiRequest() itself. */
+      if ( typeof Auth === 'undefined' )
+      {
+        showProfileLoadError( 'Authentication could not be initialised. Please refresh the page and try again.' );
+        return;
+      }
+      try { await Auth.load(); } catch ( _ ) { }
+      if ( typeof requireAuth === 'function' ) requireAuth();
+
+      /* Load the profile first: it is the page's primary purpose, so it must
+         not be blocked by the optional wiring bound below. Every helper it
+         uses is a hoisted function declaration. */
+      await loadProfileData();
+
+      function setProfileValue ( id, value )
+      {
+        const el = document.getElementById( id );
+        if ( el ) el.value = value || '';
+      }
+
+      function setProfileText ( id, value )
+      {
+        const el = document.getElementById( id );
+        if ( el ) el.textContent = value || '';
+      }
 
       /* ── Initialize password toggles ── */
       document.querySelectorAll( '.password-toggle' ).forEach( btn =>
@@ -398,13 +502,27 @@
         } );
       } );
 
-      /* ── Load profile data ── */
+      /* ── Load profile data ──────────────────────────────────────────
+         Fetches the currently logged-in user's real data from /auth/me and
+         always leaves the spinner in a settled state. */
       async function loadProfileData ()
       {
+        if ( _profileLoadStarted ) return;     // never issue a duplicate request
+        _profileLoadStarted = true;
+        showProfileLoading();
         try
         {
-          const { user } = await apiRequest( '/auth/me' );
-          if ( !user ) return;
+          const res = await apiRequest( '/auth/me' );
+          const user = ( res && res.user ) || ( res && res.data && res.data.user ) || null;
+
+          /* Empty / incomplete response: settle the spinner and explain,
+             instead of returning silently and hanging on "Loading...". */
+          if ( !user )
+          {
+            _profileLoadStarted = false;
+            showProfileLoadError( 'Your profile could not be loaded because the server returned an empty response.' );
+            return;
+          }
           photoUser = user;
 
           _originalValues = {
@@ -414,43 +532,46 @@
             gender: user.gender || '',
           };
 
-          document.getElementById( 'fullName' ).value = user.fullName || '';
-          document.getElementById( 'email' ).value = user.email || '';
-          document.getElementById( 'phone' ).value = user.phone || '';
-          document.getElementById( 'department' ).value = user.department || '';
-          document.getElementById( 'gender' ).value = user.gender || '';
+          setProfileValue( 'fullName', user.fullName );
+          setProfileValue( 'email', user.email );
+          setProfileValue( 'phone', user.phone );
+          setProfileValue( 'department', user.department );
+          setProfileValue( 'gender', user.gender );
 
           const fullName = user.fullName || 'User';
-          document.getElementById( 'profileFullName' ).textContent = fullName;
-          document.getElementById( 'profileEmail' ).textContent = user.email || '';
-          document.getElementById( 'profilePhotoName' ).textContent = fullName;
-          document.getElementById( 'profilePhotoEmail' ).textContent = user.email || '';
-          document.getElementById( 'avatarInitials' ).textContent = fullName.charAt( 0 ).toUpperCase();
+          setProfileText( 'profileFullName', fullName );
+          setProfileText( 'profileEmail', user.email );
+          setProfileText( 'profilePhotoName', fullName );
+          setProfileText( 'profilePhotoEmail', user.email );
+          setProfileText( 'avatarInitials', fullName.charAt( 0 ).toUpperCase() );
 
           const role = user.role || 'Requester';
           const roleMap = { 'Requester': 'primary', 'Technician': 'warning', 'ICT Admin': 'danger' };
-          document.getElementById( 'profileRole' ).textContent = role;
-          document.getElementById( 'profileRole' ).className = 'badge bg-' + ( roleMap[role] || 'secondary' );
-          document.getElementById( 'accountRole' ).innerHTML = '<span class="badge bg-' + ( roleMap[role] || 'secondary' ) + '">' + escHtml( role ) + '</span>';
+          setProfileText( 'profileRole', role );
+          const profileRole = document.getElementById( 'profileRole' );
+          if ( profileRole ) profileRole.className = 'badge bg-' + ( roleMap[role] || 'secondary' );
+          const accountRole = document.getElementById( 'accountRole' );
+          if ( accountRole ) accountRole.innerHTML = '<span class="badge bg-' + ( roleMap[role] || 'secondary' ) + '">' + escHtml( role ) + '</span>';
 
           const status = user.status || 'active';
-          document.getElementById( 'accountStatus' ).innerHTML = status === 'active'
+          const accountStatus = document.getElementById( 'accountStatus' );
+          if ( accountStatus ) accountStatus.innerHTML = status === 'active'
             ? '<span class="badge bg-success">Active</span>'
             : '<span class="badge bg-secondary">Inactive</span>';
 
           if ( user.createdAt )
           {
-            document.getElementById( 'memberSince' ).textContent = formatDate( user.createdAt );
+            setProfileText( 'memberSince', formatDate( user.createdAt ) );
           }
           if ( user.lastLogin )
           {
-            document.getElementById( 'lastLogin' ).textContent = formatDate( user.lastLogin );
+            setProfileText( 'lastLogin', formatDate( user.lastLogin ) );
           }
 
-          document.getElementById( 'sidebarUserName' ).textContent = fullName;
-          document.getElementById( 'topUserName' ).textContent = 'Welcome, ' + fullName;
-          document.getElementById( 'sidebarAvatarInitials' ).textContent = fullName.charAt( 0 ).toUpperCase();
-          document.getElementById( 'topAvatarInitials' ).textContent = fullName.charAt( 0 ).toUpperCase();
+          setProfileText( 'sidebarUserName', fullName );
+          setProfileText( 'topUserName', 'Welcome, ' + fullName );
+          setProfileText( 'sidebarAvatarInitials', fullName.charAt( 0 ).toUpperCase() );
+          setProfileText( 'topAvatarInitials', fullName.charAt( 0 ).toUpperCase() );
 
           applyProfileAvatar( user, document.getElementById( 'profileAvatar' ) );
           applyProfileAvatar( user, document.querySelector( '[data-avatar]' ) );
@@ -469,20 +590,19 @@
           }
 
           syncRemoveButton();
-          document.getElementById( 'profileLoading' ).style.display = 'none';
-          document.getElementById( 'profileContent' ).style.display = '';
+          showProfileContent();               // spinner always stops on success
         } catch ( err )
         {
           console.error( 'Failed to load profile:', err );
-          document.getElementById( 'profileLoading' ).innerHTML =
-            '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-1"></i>' +
-            escHtml( err.message || 'Failed to load profile.' ) +
-            ' <button class="btn btn-sm btn-outline-danger ms-2" onclick="location.reload()">Retry</button></div>';
+          _profileLoadStarted = false;        // allow exactly one Retry attempt
+          stopProfileLoading();               // spinner ALWAYS stops on failure
+          if ( err && err.redirected ) return;   // apiRequest is redirecting to login
+          showProfileLoadError( profileErrorMessage( err ) );
         }
       }
 
       /* ── Edit Profile toggle ── */
-      document.getElementById( 'editProfileBtn' ).addEventListener( 'click', () =>
+      document.getElementById( 'editProfileBtn' )?.addEventListener( 'click', () =>
       {
         if ( _isEditing )
         {
@@ -545,7 +665,7 @@
       }
 
       /* ── Save Profile ── */
-      document.getElementById( 'profileForm' ).addEventListener( 'submit', async ( e ) =>
+      document.getElementById( 'profileForm' )?.addEventListener( 'submit', async ( e ) =>
       {
         e.preventDefault();
         if ( _saving ) return;
@@ -604,7 +724,7 @@
       } );
 
       /* ── Cancel Edit ── */
-      document.getElementById( 'cancelEditBtn' ).addEventListener( 'click', () =>
+      document.getElementById( 'cancelEditBtn' )?.addEventListener( 'click', () =>
       {
         document.getElementById( 'fullName' ).value = _originalValues.fullName;
         document.getElementById( 'phone' ).value = _originalValues.phone;
@@ -614,7 +734,7 @@
       } );
 
       /* ── Change Password ── */
-      document.getElementById( 'passwordForm' ).addEventListener( 'submit', async ( e ) =>
+      document.getElementById( 'passwordForm' )?.addEventListener( 'submit', async ( e ) =>
       {
         e.preventDefault();
         if ( _saving ) return;
@@ -661,23 +781,28 @@
       } );
 
       /* ── Delete Account ── */
-      const deleteModal = new bootstrap.Modal( document.getElementById( 'deleteAccountModal' ) );
+      /* Tolerate a missing modal element or a blocked Bootstrap bundle: the
+         account must still delete, just without the confirmation dialog. */
+      const _deleteModalEl = document.getElementById( 'deleteAccountModal' );
+      const deleteModal = ( window.bootstrap && _deleteModalEl )
+        ? new window.bootstrap.Modal( _deleteModalEl )
+        : null;
       const deleteInput = document.getElementById( 'deleteConfirmInput' );
       const confirmDeleteBtn = document.getElementById( 'confirmDeleteBtn' );
 
-      document.getElementById( 'deleteAccountBtn' ).addEventListener( 'click', () =>
+      document.getElementById( 'deleteAccountBtn' )?.addEventListener( 'click', () =>
       {
-        deleteInput.value = '';
-        confirmDeleteBtn.disabled = true;
-        deleteModal.show();
+        if ( deleteInput ) deleteInput.value = '';
+        if ( confirmDeleteBtn ) confirmDeleteBtn.disabled = true;
+        if ( deleteModal ) deleteModal.show();
       } );
 
-      deleteInput.addEventListener( 'input', () =>
+      deleteInput?.addEventListener( 'input', () =>
       {
-        confirmDeleteBtn.disabled = deleteInput.value !== 'DELETE';
+        if ( confirmDeleteBtn ) confirmDeleteBtn.disabled = deleteInput.value !== 'DELETE';
       } );
 
-      confirmDeleteBtn.addEventListener( 'click', async () =>
+      confirmDeleteBtn?.addEventListener( 'click', async () =>
       {
         if ( deleteInput.value !== 'DELETE' ) return;
         confirmDeleteBtn.disabled = true;
@@ -685,13 +810,13 @@
         try
         {
           await apiRequest( '/users/profile', { method: 'DELETE' } );
-          deleteModal.hide();
+          if ( deleteModal ) deleteModal.hide();
           showToast( 'Account deleted successfully.', 'success' );
           Auth.clear();
           setTimeout( () => { window.location.href = '/views/login.html'; }, 1500 );
         } catch ( err )
         {
-          deleteModal.hide();
+          if ( deleteModal ) deleteModal.hide();
           showToast( err.message || 'Failed to delete account.', 'danger' );
         } finally
         {
@@ -806,8 +931,9 @@
         showToast( 'Custom photo removed. Default REQUESTER image restored.', 'info' );
       } );
 
-      /* ── Load on init ── */
-      await loadProfileData();
+      /* Profile data is loaded at the top of this handler (see the call to
+         loadProfileData() above) so that the optional wiring below can never
+         delay or prevent it. */
     } );
   </script>
 </body>

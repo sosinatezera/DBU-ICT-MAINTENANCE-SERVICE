@@ -24,7 +24,15 @@ async function resolveSrvToDirect(srvUri) {
     }
 
     const params = new URLSearchParams(parsed.searchParams);
+    /* A hand-built mongodb:// URI does NOT inherit the defaults that the
+       mongodb+srv:// form implies. Atlas mandates retryable writes, and
+       retryWrites defaults to FALSE on a non-SRV URI, which makes Atlas
+       reject the connection. Restore it explicitly. */
+    if (!params.has("retryWrites")) params.set("retryWrites", "true");
+    /* Atlas always requires TLS. The SRV form implies it, so the rebuilt URI
+       must state it. TLS is never disabled here. */
     if (!params.has("tls")) params.set("tls", "true");
+    if (!params.has("appName")) params.set("appName", "ict-maintenance-service");
     const qs = params.toString();
     if (qs) directUri += `?${qs}`;
 
@@ -32,6 +40,30 @@ async function resolveSrvToDirect(srvUri) {
   } catch {
     return null;
   }
+}
+
+/* ── Safe diagnostics ──────────────────────────────────────────
+   MongoDB driver messages can embed the host list and, in some failure
+   modes, fragments of the URI. These helpers report ONLY the hostname
+   the client dialled, the database name, the error name and the error
+   code. The password, the full MONGO_URI and every secret are never
+   rendered into a log line. */
+function safeHost(uri) {
+  try {
+    const probe = uri.replace(/^mongodb\+srv:\/\//, "https://").replace(/^mongodb:\/\//, "https://");
+    return new URL(probe).hostname;
+  } catch {
+    return "unknown-host";
+  }
+}
+
+function describeMongoError(err) {
+  const name = (err && err.name) || "Error";
+  const code = (err && (err.codeName || err.code)) ?? "n/a";
+  let message = (err && err.message) || "unknown error";
+  /* Defence in depth: strip any embedded user:pass before logging. */
+  message = String(message).replace(/\/\/[^@/\s]*@/g, "//***:***@");
+  return { name, code, message };
 }
 
 const connectDB = async () => {
@@ -46,9 +78,32 @@ const connectDB = async () => {
 
     const isAtlas = uri.startsWith("mongodb+srv://");
 
+    console.log(
+      `[MongoDB] Connecting → host: ${safeHost(uri)} | db: ${dbName} | atlas: ${isAtlas}`,
+    );
+
+    /* Connection-pool tuning. Without an explicit pool the driver uses
+       maxPoolSize=100 and, critically, maxIdleTimeMS=0 — which means idle
+       sockets are NEVER closed. On a single small cloud instance (Render) that
+       holds open Atlas connections between bursts of traffic for no benefit,
+       and each socket still costs server-side resources. Bounding the pool to
+       what one instance can actually use, and reaping idle sockets, both cuts
+       cold-start connection churn and memory. */
     const options = {
       serverSelectionTimeoutMS: 15000,
       heartbeatFrequencyMS: 10000,
+      connectTimeoutMS: 20000,
+      socketTimeoutMS: 45000,
+      /* Sized for a single app instance, not a cluster. Raise maxPoolSize only
+         if the same process genuinely needs more concurrent operations. */
+      maxPoolSize: Number(process.env.MONGO_MAX_POOL_SIZE || 10),
+      minPoolSize: Number(process.env.MONGO_MIN_POOL_SIZE || 2),
+      /* Close sockets idle for >60s instead of holding them forever. */
+      maxIdleTimeMS: Number(process.env.MONGO_MAX_IDLE_MS || 60000),
+      /* Never let a request queue behind a saturated pool indefinitely — fail
+         fast with a 503-style error the global handler already understands,
+         rather than appearing to hang. */
+      waitQueueTimeoutMS: Number(process.env.MONGO_WAIT_QUEUE_MS || 10000),
     };
 
     if (dbName && !uri.includes(`/${dbName}`)) {
@@ -61,7 +116,9 @@ const connectDB = async () => {
     } catch (err) {
       if (
         isAtlas &&
-        /querySrv|ENOTFOUND|getaddrinfo|EAI_AGAIN/i.test(err.message)
+        /querySrv|ENOTFOUND|getaddrinfo|EAI_AGAIN|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE|MongoNetwork|MongoServerSelection|MongoTopology/i.test(
+          err.message,
+        )
       ) {
         console.warn(
           "[MongoDB] SRV lookup failed — retrying with manually resolved hosts...",
@@ -84,11 +141,18 @@ const connectDB = async () => {
     mongoose.connection.on("disconnected", () =>
       console.warn("[MongoDB] Disconnected."),
     );
-    mongoose.connection.on("error", (err) =>
-      console.error("[MongoDB] Error:", err.message),
-    );
+    mongoose.connection.on("error", (err) => {
+      const info = describeMongoError(err);
+      console.error(`[MongoDB] Runtime error | ${info.name} | code: ${info.code} | ${info.message}`);
+    });
   } catch (err) {
-    console.error(`[MongoDB] Connection failed: ${err.message}`);
+    const info = describeMongoError(err);
+    console.error(
+      `[MongoDB] Connection FAILED — host: ${safeHost(
+        (process.env.MONGO_URI || "").trim(),
+      )} | db: ${process.env.MONGO_DB_NAME || "ict_maintenance_db"} | ` +
+        `${info.name} | code: ${info.code} | ${info.message}`,
+    );
     process.exit(1);
   }
 };

@@ -12,27 +12,226 @@
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <style>
-    /* Photo-enabled device selection cards (Desktop / Laptop / Printer) */
-    .device-radio:checked+.device-pick {
-      border-color: #2563eb !important;
-      box-shadow: 0 0 0 2px rgba(37, 99, 235, .35);
+    /* ── Design Tokens for Request Page ───────────────────────── */
+    :root {
+      --navy-900: #0B2A4A;
+      --navy-800: #123F6D;
+      --navy-700: #1A548A;
+      --blue-600: #1E40AF;
+      --blue-500: #3B82F6;
+      --blue-100: #E8F0FE;
+      --blue-50: #F4F7FB;
+      --bg-page: #F4F7FB;
+      --bg-card: #FFFFFF;
+      --border-color: #D9E2EC;
+      --border-focus: #3B82F6;
+      --text-primary: #102A43;
+      --text-secondary: #52667A;
+      --text-muted: #718096;
+      --success: #16A34A;
+      --warning: #F59E0B;
+      --danger: #DC3545;
+      --shadow-card: 0 4px 18px rgba(15, 42, 67, 0.08);
+      --shadow-card-hover: 0 8px 28px rgba(15, 42, 67, 0.12);
+      --shadow-focus: 0 0 0 3px rgba(30, 64, 175, 0.12);
+      --radius-card: 16px;
+      --radius-input: 10px;
+      --radius-pill: 999px;
+      --transition-base: all 0.18s ease;
     }
 
+    /* ── Page Background ──────────────────────────────────────── */
+    .request-page-bg {
+      background: linear-gradient(180deg, #F7FAFC 0%, #EEF4FA 100%);
+      min-height: 100vh;
+    }
+
+    /* ── Institutional identity (above the page heading) ───────────
+       Sits between the sidebar/nav and the topbar, so the three
+       institutional lines always read above "Submit Maintenance Request".
+       This is the page's original navy institutional band; it is white-on-navy
+       text, so it needs no dark-theme variant. */
+    .university-header {
+      background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 100%);
+      border-radius: 0 0 20px 20px;
+      padding: 18px 0 20px;
+      box-shadow: 0 4px 18px rgba(11, 42, 74, 0.18);
+    }
+
+    .university-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.75);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1.3;
+    }
+
+    .system-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.3;
+      margin-top: 4px;
+    }
+
+    .system-subtitle {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 2px;
+    }
+
+    /* ── Section Cards ────────────────────────────────────────── */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-card);
+      transition: box-shadow var(--transition-base);
+      overflow: hidden;
+    }
+
+    .section-card:hover {
+      box-shadow: var(--shadow-card-hover);
+    }
+
+    .section-header {
+      background: #F7FAFC;
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+    }
+
+    .section-header-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--blue-600);
+      color: #1F2937;
+      font-weight: 700;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3);
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.2px;
+      margin: 0;
+    }
+
+    .section-body {
+      padding: 24px;
+    }
+
+    /* ── Form Controls ────────────────────────────────────────── */
+    .form-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.4rem;
+    }
+
+    .form-label .text-danger {
+      font-weight: 500;
+      font-size: 0.9em;
+    }
+
+    .form-control,
+    .form-select {
+      border-radius: var(--radius-input);
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      background-color: #FFFFFF;
+      border: 1px solid var(--border-color);
+      padding: 0.62rem 0.85rem;
+      min-height: 48px;
+      transition: var(--transition-base);
+    }
+
+    .form-control:hover,
+    .form-select:hover {
+      border-color: #B8C5D6;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--border-focus);
+      box-shadow: var(--shadow-focus);
+      outline: none;
+    }
+
+    .form-control-lg,
+    .form-select-lg {
+      font-size: 0.95rem;
+      padding: 0.7rem 1rem;
+      min-height: 52px;
+      border-radius: 12px;
+    }
+
+    .form-text {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+
+    .input-group-text {
+      background: #F7FAFC;
+      border-color: var(--border-color);
+      color: var(--text-muted);
+      border-radius: var(--radius-input);
+    }
+
+    /* ── Device Type Cards ───────────────────────────────────── */
     .device-pick {
       position: relative;
       display: block;
       width: 100%;
-      border: 2px solid #e2e8f0;
+      border: 2px solid var(--border-color);
       border-radius: 14px;
       overflow: hidden;
       cursor: pointer;
-      background: #fff;
-      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+      background: #FFFFFF;
+      transition: border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
     }
 
     .device-pick:hover {
-      border-color: #94a3b8;
+      border-color: var(--blue-500);
       transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.12);
+    }
+
+    .device-radio:checked+.device-pick {
+      border-color: var(--blue-600) !important;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15), 0 6px 20px rgba(30, 64, 175, 0.12) !important;
+    }
+
+    .device-radio:checked+.device-pick::after {
+      content: "";
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 22px;
+      height: 22px;
+      background: var(--blue-600);
+      border-radius: 50%;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231F2937'%3E%3Cpath d='M21 7l-7 7-3.5-3.5 1.4-1.4 2.1 2.1 5.6-5.6L21 7z'/%3E%3C/svg%3E");
+      background-size: 14px 14px;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 2;
     }
 
     .device-pick img {
@@ -40,17 +239,17 @@
       height: 150px;
       object-fit: cover;
       display: block;
-      background: #eef2f7;
+      background: #EEF2F7;
     }
 
     .device-pick-name {
       display: block;
       text-align: center;
-      padding: 10px 8px;
+      padding: 12px 10px;
       font-weight: 600;
-      font-size: .9rem;
-      color: #1f2937;
-      background: #fff;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      background: #FFFFFF;
     }
 
     @media (max-width: 575.98px) {
@@ -59,6 +258,145 @@
       }
     }
 
+    /* ── Priority Badges ─────────────────────────────────────── */
+    .priority-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .priority-low {
+      background: #F0FDF4;
+      color: #16A34A;
+    }
+
+    .priority-medium {
+      background: #EFF6FF;
+      color: #146EF5;
+    }
+
+    .priority-high {
+      background: #FFF7ED;
+      color: #F59E0B;
+    }
+
+    .priority-critical {
+      background: #FEF2F2;
+      color: #DC3545;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────────── */
+    .btn-primary {
+      background: var(--blue-600);
+      border-color: var(--blue-600);
+      border-radius: var(--radius-input);
+      font-weight: 600;
+      padding: 0.7rem 1.5rem;
+      min-height: 50px;
+      font-size: 0.95rem;
+      box-shadow: 0 2px 8px rgba(30, 64, 175, 0.25);
+      transition: var(--transition-base);
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background: #A16207;
+      border-color: #A16207;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.35);
+    }
+
+    .btn-outline-secondary {
+      border-radius: var(--radius-input);
+      font-weight: 600;
+      padding: 0.7rem 1.25rem;
+      min-height: 50px;
+      font-size: 0.95rem;
+      border-width: 1.5px;
+    }
+
+    .btn-outline-danger {
+      border-radius: var(--radius-input);
+      font-weight: 600;
+      padding: 0.7rem 1.25rem;
+      min-height: 50px;
+      font-size: 0.95rem;
+      border-width: 1.5px;
+    }
+
+    .btn-lg {
+      min-height: 50px;
+    }
+
+    /* ── Submit Button Group ─────────────────────────────────── */
+    .submit-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .submit-group .btn {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    /* ── Page Title ──────────────────────────────────────────── */
+    .page-title-row {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    /* ── Description Field ───────────────────────────────────── */
+    #description {
+      min-height: 130px;
+      border-radius: var(--radius-input);
+    }
+
+    /* ── Alert ───────────────────────────────────────────────── */
+    .alert {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 2px 12px rgba(16, 42, 67, 0.08);
+    }
+
+    /* ── Card Enhancements ───────────────────────────────────── */
+    .card {
+      border-radius: var(--radius-card);
+      border-color: var(--border-color);
+    }
+
+    .card-header {
+      background: transparent;
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    .card-footer {
+      background: transparent;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* ── Shadow override for cards ───────────────────────────── */
+    .shadow-sm {
+      box-shadow: var(--shadow-card) !important;
+    }
+
+    /* ── Support Banner ──────────────────────────────────────── */
     .support-banner {
       border-radius: 16px;
       overflow: hidden;
@@ -77,11 +415,58 @@
         height: 150px;
       }
     }
+
+    /* ── Responsive adjustments ──────────────────────────────── */
+    @media (max-width: 575.98px) {
+      .device-pick img {
+        height: 110px;
+      }
+
+      .university-header {
+        padding: 14px 0 16px;
+      }
+
+      .university-name {
+        font-size: 0.8rem;
+        letter-spacing: 0.04em;
+      }
+
+      .system-title {
+        font-size: 1.05rem;
+      }
+
+      .system-subtitle {
+        font-size: 0.75rem;
+      }
+
+      .section-body {
+        padding: 18px;
+      }
+
+      .section-header {
+        padding: 14px 18px;
+      }
+
+      .submit-group .btn {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .page-title-row {
+        font-size: 1.4rem;
+      }
+    }
+
+    @media (max-width: 767.98px) {
+      .support-banner img {
+        height: 150px;
+      }
+    }
   </style>
   <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
 
-<body class="dashboard-body">
+<body class="dashboard-body request-page-bg">
 
   <div class="d-flex">
 
@@ -124,14 +509,31 @@
 
     <!-- Main -->
     <div class="flex-grow-1">
+      <!-- Institutional identity — ABOVE the "Submit Maintenance Request" heading.
+           Appears exactly once on this page, directly under the sidebar. -->
+      <div class="university-header">
+        <div class="px-3 px-md-4">
+          <div class="row justify-content-center">
+            <div class="col-lg-10">
+              <div class="university-name" data-i18n="req.university"><i class="bi bi-building me-2"></i>Mekdela Amba
+                University</div>
+              <div class="system-title" data-i18n="req.systemTitle">Smart ICT Maintenance Management System</div>
+              <div class="system-subtitle" data-i18n="req.systemSubtitle">Professional ICT Service Management
+                Platform</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <header
         class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
         <div class="d-flex align-items-center gap-3">
           <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle"><i
               class="bi bi-list"></i></button>
           <div>
-            <h5 class="mb-0 fw-bold" data-i18n="req.submitTitle">Submit Maintenance Request</h5>
-            <div class="text-muted small" data-i18n="req.formHint">Fill in the form below to report an ICT issue</div>
+            <h5 class="mb-0 fw-bold page-title-row" data-i18n="req.submitTitle">Submit Maintenance Request</h5>
+            <div class="text-muted small page-subtitle" data-i18n="req.formHint">Fill in the form below to report an ICT
+              issue</div>
           </div>
         </div>
         <div class="d-flex align-items-center gap-3">
@@ -139,32 +541,28 @@
       </header>
 
       <main class="p-3 p-md-4">
-        <!-- Support banner -->
-        <div class="support-banner mb-4">
-          <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1400&q=80&auto=format&fit=crop"
-            alt="ICT support technician assisting with a computer" decoding="async" />
-        </div>
         <div class="row justify-content-center">
           <div class="col-lg-9 col-xl-8">
 
             <!-- Alert -->
-            <div id="requestAlert" class="alert d-none mb-3" role="alert"></div>
+            <div id="requestAlert" class="alert d-none mb-4" role="alert"></div>
 
             <form id="requestForm" novalidate enctype="multipart/form-data">
 
               <!-- - Section 1: Requester Info ------------------- -->
-              <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 border-bottom">
-                  <h6 class="mb-0 fw-bold">
-                    <span class="badge bg-primary rounded-circle me-2">1</span>
-                    <span data-i18n="req.yourInfo">Your Information</span>
-                  </h6>
+              <div class="section-card mb-4">
+                <div class="section-header">
+                  <div class="section-header-content">
+                    <span class="step-number">1</span>
+                    <h6 class="section-title" data-i18n="req.yourInfo">Your Information</h6>
+                  </div>
                 </div>
-                <div class="card-body p-4">
+                <div class="section-body">
                   <div class="row g-3">
                     <div class="col-md-6">
                       <label for="requesterName" class="form-label fw-semibold">
-                        <i class="bi bi-person me-1 text-primary"></i><span data-i18n="profile.fullName">Full
+                        <i class="bi bi-person me-1" style="color: var(--blue-600);"></i><span
+                          data-i18n="profile.fullName">Full
                           Name</span> <span class="text-danger">*</span>
                       </label>
                       <input type="text" class="form-control form-control-lg" id="requesterName"
@@ -173,7 +571,8 @@
                     </div>
                     <div class="col-md-6">
                       <label for="requesterPhone" class="form-label fw-semibold">
-                        <i class="bi bi-telephone me-1 text-primary"></i><span data-i18n="profile.phone">Phone
+                        <i class="bi bi-telephone me-1" style="color: var(--blue-600);"></i><span
+                          data-i18n="profile.phone">Phone
                           Number</span> <span class="text-danger">*</span>
                       </label>
                       <div class="input-group input-group-lg">
@@ -190,14 +589,14 @@
               </div>
 
               <!-- - Section 2: Device Type ---------------------- -->
-              <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 border-bottom">
-                  <h6 class="mb-0 fw-bold">
-                    <span class="badge bg-primary rounded-circle me-2">2</span>
-                    <span data-i18n="req.deviceType">Device Type</span>
-                  </h6>
+              <div class="section-card mb-4">
+                <div class="section-header">
+                  <div class="section-header-content">
+                    <span class="step-number">2</span>
+                    <h6 class="section-title" data-i18n="req.deviceType">Device Type</h6>
+                  </div>
                 </div>
-                <div class="card-body p-4">
+                <div class="section-body">
                   <label class="form-label fw-semibold mb-3">
                     <span data-i18n="req.deviceType.label">Select the device that has a hardware/software fault</span>
                     <span class="text-danger">*</span>
@@ -213,7 +612,7 @@
                     const equipmentTypes = [
                       { id: 'dev_computer', name: 'Desktop Computer', value: 'Desktop Computer', image: '/assets/images/desktop.jpg', alt: 'Desktop Computer' },
                       { id: 'dev_laptop', name: 'Laptop', value: 'Laptop', image: '/assets/images/laptop1.jpg', alt: 'Laptop' },
-                      { id: 'dev_network', name: 'Network', value: 'Network', image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'%3E%3Cpath d='M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3-3-3-3 3zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'/%3E%3C/svg%3E", alt: 'Network' },
+                      { id: 'dev_network', name: 'Network', value: 'Network', image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ca8a04'%3E%3Cpath d='M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3-3-3-3 3zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'/%3E%3C/svg%3E", alt: 'Network' },
                       { id: 'dev_printer', name: 'Printer', value: 'Printer', image: '/assets/images/printer.jpg', alt: 'Printer' },
                       { id: 'dev_scanner', name: 'Scanner', value: 'Scanner', image: '/assets/images/scanner.jpg', alt: 'Scanner' },
                       { id: 'dev_monitor', name: 'Monitor', value: 'Monitor', image: '/assets/images/monitor.jpg', alt: 'Monitor' },
@@ -241,20 +640,21 @@
               </div>
 
               <!-- - Section 3: Request Details ------------------ -->
-              <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 border-bottom">
-                  <h6 class="mb-0 fw-bold">
-                    <span class="badge bg-primary rounded-circle me-2">3</span>
-                    <span data-i18n="req.details">Request Details</span>
-                  </h6>
+              <div class="section-card mb-4">
+                <div class="section-header">
+                  <div class="section-header-content">
+                    <span class="step-number">3</span>
+                    <h6 class="section-title" data-i18n="req.details">Request Details</h6>
+                  </div>
                 </div>
-                <div class="card-body p-4">
+                <div class="section-body">
                   <div class="row g-3">
 
                     <!-- Title -->
                     <div class="col-12">
                       <label for="title" class="form-label fw-semibold">
-                        <i class="bi bi-tag me-1 text-primary"></i><span data-i18n="req.title">Request Title</span>
+                        <i class="bi bi-tag me-1" style="color: var(--blue-600);"></i><span
+                          data-i18n="req.title">Request Title</span>
                         <span class="text-danger">*</span>
                       </label>
                       <input type="text" class="form-control form-control-lg" id="title"
@@ -267,7 +667,8 @@
                     <!-- Location -->
                     <div class="col-12">
                       <label for="requestLocation" class="form-label fw-semibold">
-                        <i class="bi bi-geo-alt me-1 text-primary"></i><span data-i18n="req.location">Location</span>
+                        <i class="bi bi-geo-alt me-1" style="color: var(--blue-600);"></i><span
+                          data-i18n="req.location">Location</span>
                         <span class="text-danger">*</span>
                       </label>
                       <input type="text" class="form-control form-control-lg" id="requestLocation"
@@ -279,10 +680,11 @@
                         where the problem occurred.</div>
                     </div>
 
-                    <!-- Category & Priority -->
-                    <div class="col-md-6">
+                    <!-- Category -->
+                    <div class="col-12">
                       <label for="category" class="form-label fw-semibold">
-                        <i class="bi bi-tags me-1 text-primary"></i><span data-i18n="common.category">Request
+                        <i class="bi bi-tags me-1" style="color: var(--blue-600);"></i><span
+                          data-i18n="common.category">Request
                           Category</span> <span class="text-danger">*</span>
                       </label>
                       <select class="form-select form-select-lg" id="category" required
@@ -302,42 +704,27 @@
                         <option value="ICT Security" data-i18n="req.category.security">ICT Security</option>
                         <option value="Network Maintenance" data-i18n="req.category.network">Network Maintenance
                         </option>
+                        <option value="Networking" data-i18n="req.category.networking">Networking</option>
+                        <optgroup label="Network Equipment">
+                          <option value="Router" data-i18n="req.category.router">Router</option>
+                          <option value="Switch" data-i18n="req.category.switch">Switch</option>
+                          <option value="Hub" data-i18n="req.category.hub">Hub</option>
+                          <option value="Modem" data-i18n="req.category.modem">Modem</option>
+                          <option value="Access Point" data-i18n="req.category.accessPoint">Access Point</option>
+                          <option value="Firewall" data-i18n="req.category.firewall">Firewall</option>
+                          <option value="Network Cable" data-i18n="req.category.networkCable">Network Cable</option>
+                        </optgroup>
                         <option value="Other" data-i18n="req.category.other">Other</option>
                       </select>
                       <div class="invalid-feedback" id="categoryFeedback" data-i18n="req.err.category">Please select a
                         request category.</div>
                     </div>
 
-                    <div class="col-md-6">
-                      <label for="priority" class="form-label fw-semibold">
-                        <i class="bi bi-exclamation-triangle me-1 text-primary"></i><span
-                          data-i18n="common.priority">Priority</span> <span class="text-danger">*</span>
-                      </label>
-                      <select class="form-select form-select-lg" id="priority" required>
-                        <option value="" data-i18n="req.priority.select">-- Select Priority --</option>
-                        <option value="low" data-i18n="req.priority.low">&#9679; Low — Not urgent</option>
-                        <option value="medium" selected data-i18n="req.priority.medium">&#9679; Medium — Normal</option>
-                        <option value="high" data-i18n="req.priority.high">&#9679; High — Urgent</option>
-                        <option value="critical" data-i18n="req.priority.critical">&#9679; Critical — Stop work</option>
-                      </select>
-                      <div class="invalid-feedback" data-i18n="req.err.priority">Please select a priority.</div>
-                      <!-- Color legend -->
-                      <div class="d-flex gap-3 mt-2">
-                        <span class="small"><span style="color:#198754;font-size:1rem;">&#9679;</span> <span
-                            data-i18n="priority.low">Low</span></span>
-                        <span class="small"><span style="color:#2563eb;font-size:1rem;">&#9679;</span> <span
-                            data-i18n="priority.medium">Medium</span></span>
-                        <span class="small"><span style="color:#fd7e14;font-size:1rem;">&#9679;</span> <span
-                            data-i18n="priority.high">High</span></span>
-                        <span class="small"><span style="color:#dc3545;font-size:1rem;">&#9679;</span> <span
-                            data-i18n="priority.critical">Critical</span></span>
-                      </div>
-                    </div>
-
                     <!-- ICT Asset -->
                     <div class="col-12">
                       <label for="asset" class="form-label fw-semibold">
-                        <i class="bi bi-pc-display me-1 text-primary"></i><span data-i18n="req.assetTag">ICT Asset
+                        <i class="bi bi-pc-display me-1" style="color: var(--blue-600);"></i><span
+                          data-i18n="req.assetTag">ICT Asset
                           Tag</span>
                       </label>
                       <select class="form-select" id="asset" aria-describedby="assetFeedback assetHelp">
@@ -352,7 +739,7 @@
                     <!-- Description -->
                     <div class="col-12">
                       <label for="description" class="form-label fw-semibold">
-                        <i class="bi bi-chat-text me-1 text-primary"></i><span
+                        <i class="bi bi-chat-text me-1" style="color: var(--blue-600);"></i><span
                           data-i18n="req.problemDescription">Problem Description</span> <span
                           class="text-danger">*</span>
                       </label>
@@ -371,7 +758,8 @@
                     <!-- Attachment -->
                     <div class="col-12">
                       <label for="attachment" class="form-label fw-semibold">
-                        <i class="bi bi-paperclip me-1 text-primary"></i><span data-i18n="req.attach">Attach Screenshot
+                        <i class="bi bi-paperclip me-1" style="color: var(--blue-600);"></i><span
+                          data-i18n="req.attach">Attach Screenshot
                           / Document (Optional)</span>
                       </label>
                       <input type="file" class="form-control" id="attachment"
@@ -456,19 +844,28 @@
               </div>
 
               <!-- - Preview Summary ------------------------------ -->
-              <div class="card border-0 shadow-sm mb-4 d-none" id="summaryCard">
-                <div class="card-header bg-light py-3 border-bottom">
-                  <h6 class="mb-0 fw-bold"><i class="bi bi-eye me-2 text-success"></i><span
-                      data-i18n="req.summary">Request Summary — Please Review</span>
-                  </h6>
+              <div class="section-card mb-4 d-none" id="summaryCard">
+                <div class="section-header">
+                  <div class="section-header-content">
+                    <i class="bi bi-eye me-2" style="color: var(--success);"></i>
+                    <h6 class="section-title" data-i18n="req.summary">Request Summary — Please Review</h6>
+                  </div>
                 </div>
-                <div class="card-body p-4">
+                <div class="section-body">
                   <div class="row g-3" id="summaryContent"></div>
+                  <div class="d-flex justify-content-end gap-2 border-top mt-4 pt-3">
+                    <button type="button" class="btn btn-outline-secondary" id="closePreviewBtn">
+                      <i class="bi bi-x-lg me-1"></i>Close Preview
+                    </button>
+                    <button type="button" class="btn btn-primary" id="editPreviewBtn">
+                      <i class="bi bi-pencil me-1"></i>Edit Request
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <!-- - Submit Buttons ------------------------------- -->
-              <div class="d-flex gap-3">
+              <div class="submit-group mb-4">
                 <button type="button" class="btn btn-outline-secondary btn-lg px-4" id="previewBtn">
                   <i class="bi bi-eye me-1"></i><span data-i18n="req.preview">Preview</span>
                 </button>
@@ -501,9 +898,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p class="mb-0" data-i18n="req.clearFormText">All information you entered in this form will be removed. Your
-            request has not been submitted
-            yet.</p>
+          <p class="mb-0">Are you sure you want to clear this request?<br />All entered information will be lost.</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" id="clearFormCancelBtn" data-bs-dismiss="modal"><i
@@ -517,35 +912,12 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/validation.js?v=6"></script>
-  <script src="/assets/js/api-config.js"></script>
-  <script src="/assets/js/lang.js?v=9"></script>
-  <script src="/assets/js/main.js?v=7"></script>
-  <script src="/assets/js/requests.js?v=8"></script>
-  <script>
-    /* -- Request form extras not covered by requests.js::initSubmitRequest:
-       priority border color. (Everything else — requester prefill, description
-       counter, device-type highlight, Preview, Submit, Clear — is bound inside
-       initSubmitRequest to avoid duplicate listeners.) */
-    document.addEventListener( 'DOMContentLoaded', () =>
-    {
-
-      // Priority select — color the select border based on chosen priority
-      const priorityColors = { low: '#198754', medium: '#2563eb', high: '#fd7e14', critical: '#dc3545' };
-      const prioritySelect = document.getElementById( 'priority' );
-      function updatePriorityColor ()
-      {
-        const color = priorityColors[prioritySelect.value] || '#dee2e6';
-        prioritySelect.style.borderColor = color;
-        prioritySelect.style.borderWidth = '2px';
-        prioritySelect.style.color = color;
-        prioritySelect.style.fontWeight = '600';
-        prioritySelect.style.boxShadow = prioritySelect.value ? `0 0 0 0.15rem ${ color }33` : '';
-      }
-      prioritySelect?.addEventListener( 'change', updatePriorityColor );
-      updatePriorityColor(); // apply on load for default "medium"
-    } );
-  </script>
+  <script src="/assets/js/api-config.js?v=2"></script>
+  <script src="/assets/js/lang.js?v=13"></script>
+  <script src="/assets/js/main.js?v=13"></script>
+  <script src="/assets/js/requests.js?v=9"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

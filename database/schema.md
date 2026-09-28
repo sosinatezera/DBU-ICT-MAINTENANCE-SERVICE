@@ -16,10 +16,16 @@
 | `tickets`             | Ticket              | Maintenance tickets (core model)     |
 | `assignments`         | Assignment          | Technician-to-ticket assignments     |
 | `maintenancerecords`  | MaintenanceRecord   | Work logs per ticket                 |
-| `feedbacks`           | Feedback            | User ratings after resolution        |
-| `notifications`       | Notification        | In-app notifications per user        |
-| `inquiries`           | Inquiry             | Public contact/support inquiries     |
-| `counters`            | Counter             | Auto-increment counters              |
+| `feedbacks`           | Feedback            | User ratings after resolution                 |
+| `notifications`       | Notification        | In-app notifications per user                 |
+| `inquiries`           | Inquiry             | Public contact/support inquiries              |
+| `counters`            | Counter             | Auto-increment counters                       |
+| `settings`            | Settings            | System-wide settings (singleton)              |
+| `aifeedbacks`         | AIFeedback          | Master AI feedback (helpful / not_helpful…)   |
+| `aiconversations`     | AIConversation      | Persisted Master AI chat transcripts          |
+| `conversations`       | Conversation        | Direct user-to-user networking chats          |
+| `messages`            | Message             | Messages inside networking conversations      |
+| `auditlogs`           | AuditLog            | Security audit trail (mutating actions)       |
 
 ---
 
@@ -31,6 +37,9 @@
 | `fullName`   | String   | yes      | Full name                                          |
 | `email`      | String   | yes      | Unique, lowercase                                  |
 | `phone`      | String   | no       |                                                    |
+| `resetPasswordDeliveryMethod` | String | no | `email` or `sms`; selected OTP delivery channel |
+| `resetPasswordRequestId` | String | no | Unique ID for the current reset request |
+| `resetPasswordCodeSentAt` | Date | no | Timestamp for the current OTP delivery |
 | `department` | String   | no       | e.g. Finance, Human Resources                      |
 | `password`   | String   | yes      | bcrypt hashed (12 rounds)                          |
 | `role`       | String   | yes      | `Requester` \| `Technician` \| `ICT Admin` (default: Requester) |
@@ -79,12 +88,20 @@
 | `category`       | String   | no       | Laptop, Printer, Desktop, Monitor                  |
 | `department`     | String   | no       |                                                    |
 | `location`       | String   | no       | Room/building                                      |
+| `serial_number`  | String   | no       | Manufacturer serial number                         |
+| `manufacturer`   | String   | no       | e.g. Dell, HP, Lenovo                              |
+| `model`          | String   | no       | e.g. Latitude 5520, EliteDesk 800                   |
+| `condition`      | String   | no       | `new` \| `good` \| `fair` \| `poor` (default: good) |
 | `status`         | String   | yes      | `active` \| `under_maintenance` \| `decommissioned`|
 | `purchase_date`  | Date     | no       |                                                    |
 | `warranty_expiry`| Date     | no       |                                                    |
 | `description`    | String   | no       |                                                    |
 | `createdAt`      | Date     | auto     |                                                    |
 | `updatedAt`      | Date     | auto     |                                                    |
+
+**Notes:**
+- `GET /api/assets?q=<term>` searches asset name, tag, serial number, model,
+  manufacturer, department, location and category (literal, case-insensitive).
 
 ---
 
@@ -93,7 +110,7 @@
 | Field               | Type     | Required | Notes                                                             |
 |---------------------|----------|----------|-------------------------------------------------------------------|
 | `_id`               | ObjectId | auto     |                                                                   |
-| `ticketId`          | String   | yes      | Auto-generated: TK-0001, TK-0002, etc.                            |
+| `ticketId`          | String   | yes      | Auto-generated: MAU-0001, MAU-0002, etc.                            |
 | `requester`         | ObjectId | yes      | ref → users._id                                                   |
 | `department`        | String   | no       | Copied from user at creation                                      |
 | `phone`             | String   | no       |                                                                   |
@@ -206,6 +223,43 @@ submitted → under_review → assigned → accepted → in_progress → resolve
 |-------|--------|----------|---------------------------------|
 | `_id` | String | yes      | Counter name (e.g. "ticketId") |
 | `seq` | Number | yes      | Current sequence value          |
+
+---
+
+## 12. aiconversations
+
+Persisted Master AI chat transcripts (one document per authenticated
+conversation; anonymous visitor chats are not persisted).
+
+| Field            | Type     | Required | Notes                                          |
+|------------------|----------|----------|------------------------------------------------|
+| `_id`            | ObjectId | auto     |                                                |
+| `conversationId` | String   | yes      | Unique (UUID)                                  |
+| `user`           | ObjectId | no       | ref → users._id (owner; null only if anonymous)|
+| `messages`       | Array    | yes      | `{ role: user\|assistant, content }` (max 12)  |
+| `lastActivityAt` | Date     | auto     | Latest message timestamp                       |
+| `createdAt`      | Date     | auto     |                                                |
+| `updatedAt`      | Date     | auto     |                                                |
+
+---
+
+## 13. auditlogs
+
+Immutable security audit trail; written (fire-and-forget) for every mutating
+request on management endpoints. Read via `GET /api/audit` (ICT Admin only).
+
+| Field        | Type     | Required | Notes                                    |
+|--------------|----------|----------|------------------------------------------|
+| `_id`        | ObjectId | auto     |                                          |
+| `user`       | ObjectId | no       | ref → users._id (actor; null if unauthenticated) |
+| `action`     | String   | yes      | e.g. `POST /api/tickets`                 |
+| `entity`     | String   | no       | e.g. `user`, `ticket`, `asset`           |
+| `entityId`   | String   | no       | Affected record id when available         |
+| `details`    | String   | no       | Optional context                          |
+| `ip`         | String   | no       | Client IP                                 |
+| `userAgent`  | String   | no       | Client user agent                         |
+| `success`    | Boolean  | yes      | true when the request returned 2xx        |
+| `createdAt`  | Date     | auto     |                                           |
 
 ---
 

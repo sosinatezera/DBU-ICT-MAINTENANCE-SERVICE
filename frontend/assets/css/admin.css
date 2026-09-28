@@ -6,7 +6,7 @@
    ============================================================ */
 
 /* ── Admin Design Tokens ─────────────────────────────────────
-   A small, focused palette derived from the existing blue/navy
+  A small, focused palette derived from the existing blue
    enterprise theme. Keeps the current identity while tightening
    spacing, radius and elevation. */
 :root {
@@ -16,7 +16,7 @@
   --admin-border-soft:#eef2f6;
   --admin-surface:    #ffffff;
   --admin-bg-soft:    #f7f9fc;
-  --admin-ring:       rgba(37, 99, 235, .18);
+--admin-ring: rgba(59, 130, 246, .18);
   --admin-shadow-card: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
   --admin-shadow-hover: 0 8px 20px -6px rgba(16,24,40,.14), 0 2px 6px -2px rgba(16,24,40,.08);
   --admin-ease:       all .18s ease;
@@ -54,11 +54,11 @@ body.dashboard-body {
 #sidebar .nav-link i.bi { transition: color .18s ease; }
 
 #sidebar .nav-link.active {
-  background: linear-gradient(90deg, rgba(37,99,235,.34), rgba(37,99,235,.06)) !important;
+  background: linear-gradient(90deg, rgba(30,64,170,.34), rgba(30,64,170,.06)) !important;
   color: #fff !important;
   font-weight: 600;
-  border: 1px solid rgba(59,130,246,.4);
-  box-shadow: inset 3px 0 0 0 #3b82f6, 0 6px 16px -10px rgba(37,99,235,.9);
+  border: 1px solid rgba(96,165,250,.35);
+  box-shadow: inset 3px 0 0 0 var(--primary), 0 6px 16px -10px rgba(30,64,170,.9);
 }
 
 #sidebar .nav-link:focus-visible {
@@ -66,7 +66,7 @@ body.dashboard-body {
   box-shadow: 0 0 0 2px rgba(96,165,250,.55);
 }
 
-#sidebar .sidebar-brand i { color: #60a5fa; }
+#sidebar .sidebar-brand i { color: var(--primary-border); }
 
 #sidebar .sidebar-brand div {
   letter-spacing: .5px;
@@ -224,7 +224,7 @@ body.dashboard-body {
   min-height: 30px;
 }
 
-.btn-action:hover { box-shadow: 0 3px 8px -3px rgba(37,99,235,.4); transform: translateY(-1px); }
+.btn-action:hover { box-shadow: 0 3px 8px -3px rgba(30,64,170,.4); transform: translateY(-1px); }
 .btn-action:active { transform: translateY(0); }
 .btn-action:focus-visible { box-shadow: 0 0 0 3px var(--admin-ring); outline: none; }
 
@@ -243,38 +243,38 @@ body.dashboard-body {
   outline: none;
 }
 
-/* ── ICT Asset Table — Blue Accents ──────────────────────────
-   Edit stays a blue outline action; Delete keeps its red
-   destructive state. Asset tags render in brand blue. */
+/* ── ICT Asset Table — Brand Accents ─────────────────────────
+   Edit stays a primary outline action; Delete keeps its red
+   destructive state. Asset tags render in the brand hue. */
 .dashboard-body .table .btn-outline-primary {
-  --bs-btn-color: #2563eb;
-  --bs-btn-border-color: #93c5fd;
-  --bs-btn-hover-bg: #eff6ff;
-  --bs-btn-hover-border-color: #2563eb;
-  --bs-btn-hover-color: #1d4ed8;
-  --bs-btn-active-bg: #dbeafe;
-  --bs-btn-active-border-color: #2563eb;
-  --bs-btn-active-color: #1d4ed8;
-  color: #2563eb;
-  border: 1px solid #93c5fd;
+  --bs-btn-color: var(--primary-deeper);
+  --bs-btn-border-color: var(--primary-border);
+  --bs-btn-hover-bg: var(--primary-subtle);
+  --bs-btn-hover-border-color: var(--primary);
+  --bs-btn-hover-color: var(--primary-deep);
+  --bs-btn-active-bg: var(--primary-soft);
+  --bs-btn-active-border-color: var(--primary);
+  --bs-btn-active-color: var(--primary-deep);
+  color: var(--primary-deeper);
+  border: 1px solid var(--primary-border);
   background-color: #fff;
 }
 .dashboard-body .table .btn-outline-primary:hover {
-  background-color: #eff6ff;
+  background-color: var(--primary-subtle);
 }
 .dashboard-body .table .btn-outline-primary:active,
 .dashboard-body .table .btn-outline-primary.active {
-  background-color: #dbeafe !important;
-  border-color: #2563eb !important;
-  color: #1d4ed8 !important;
+  background-color: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-deep) !important;
 }
 .dashboard-body .table .btn-outline-primary:focus-visible {
-  box-shadow: 0 0 0 3px rgba(37,99,235,.25);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175,.25);
 }
 
-/* Asset tag — brand blue accent */
+/* Asset tag — brand accent */
 .dashboard-body .table code.text-primary {
-  color: #2563eb !important;
+  color: var(--primary-deep) !important;
   font-weight: 600;
 }
 
@@ -290,51 +290,51 @@ body.dashboard-body {
 .btn:focus-visible { box-shadow: 0 0 0 .25rem var(--admin-ring); outline: none; }
 .btn:disabled, .btn.disabled { opacity: .55; cursor: not-allowed; }
 
-/* ── Brand Blue — Primary Buttons ────────────────────────────
-   Re-skinned to the enterprise blue palette (#2563EB → #1D4ED8).
+/* ── Blue — Primary Buttons ───────────────────────────────
+   Re-skinned to a professional blue-and-white palette.
    Applies to Add Asset, Search, Save Asset and other primary
-   actions so the whole dashboard shares one brand accent. */
+   actions so the whole dashboard shares one consistent accent. */
 .btn-primary {
-  --bs-btn-bg: #2563eb;
-  --bs-btn-border-color: #2563eb;
-  --bs-btn-hover-bg: #1d4ed8;
-  --bs-btn-hover-border-color: #1d4ed8;
-  --bs-btn-active-bg: #1e40af;
-  --bs-btn-active-border-color: #1e40af;
-  --bs-btn-disabled-bg: #2563eb;
-  --bs-btn-disabled-border-color: #2563eb;
-  color: #fff !important;
-  background-color: #2563eb;
-  border-color: #2563eb;
-  box-shadow: 0 1px 2px rgba(37,99,235,.18), 0 2px 6px -2px rgba(37,99,235,.3);
+  --bs-btn-bg: var(--primary);
+  --bs-btn-border-color: var(--primary);
+  --bs-btn-hover-bg: var(--primary-hover);
+  --bs-btn-hover-border-color: var(--primary-hover);
+  --bs-btn-active-bg: var(--primary-deeper);
+  --bs-btn-active-border-color: var(--primary-deeper);
+  --bs-btn-disabled-bg: var(--primary-soft);
+  --bs-btn-disabled-border-color: var(--primary-soft);
+  color: #1F2937 !important;
+  background-color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 1px 2px rgba(30,64,170,.18), 0 2px 6px -2px rgba(30,64,170,.3);
 }
 .btn-primary:hover {
-  color: #fff !important;
-  background-color: #1d4ed8;
-  border-color: #1d4ed8;
-  box-shadow: 0 6px 14px -8px rgba(37,99,235,.6);
+  color: #1F2937 !important;
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  box-shadow: 0 6px 14px -8px rgba(30,64,170,.6);
   transform: translateY(-1px);
 }
 .btn-primary:focus-visible,
 .btn-primary:focus {
-  background-color: #2563eb;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 .25rem rgba(37,99,235,.28);
+  background-color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 .25rem rgba(30,64,170,.22);
 }
 .btn-primary:active,
 .btn-primary.active,
 .btn-primary:active:focus {
-  background-color: #1e40af !important;
-  border-color: #1e40af !important;
-  color: #fff !important;
+  background-color: var(--primary-deeper) !important;
+  border-color: var(--primary-deeper) !important;
+  color: #1F2937 !important;
   box-shadow: inset 0 2px 4px rgba(0,0,0,.12);
   transform: scale(.98);
 }
 .btn-primary:disabled,
 .btn-primary.disabled {
-  background-color: #93c5fd;
-  border-color: #93c5fd;
-  color: #fff !important;
+  background-color: var(--primary-soft);
+  border-color: var(--primary-soft);
+  color: #1F2937 !important;
   box-shadow: none;
 }
 
@@ -425,14 +425,14 @@ body.dashboard-body {
 .tech-card .card-footer .btn-outline-primary.flex-grow-1 {
   background: var(--primary);
   border-color: var(--primary);
-  color: #fff;
+  color: #1F2937;
   flex: 1 1 0%;
 }
 
 .tech-card .card-footer .btn-outline-primary.flex-grow-1:hover {
   background: var(--primary-deeper);
   border-color: var(--primary-deeper);
-  box-shadow: 0 6px 14px -8px rgba(37,99,235,.6);
+  box-shadow: 0 6px 14px -8px rgba(30,64,170,.6);
   color: #fff;
 }
 
@@ -524,8 +524,8 @@ body.dashboard-body {
   border-color: var(--primary);
 }
 .dashboard-body .form-switch .form-check-input:focus {
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 .2rem rgba(37,99,235,.15);
+  border-color: var(--primary-border);
+  box-shadow: 0 0 0 .2rem rgba(30, 64, 175,.15);
 }
 .dashboard-body .form-switch .form-check-input:disabled { cursor: not-allowed; }
 
@@ -579,10 +579,10 @@ body.dashboard-body {
   transition: color .15s, border-color .15s, background .15s;
 }
 
-.nav-tabs .nav-link:hover { color: var(--primary); background: var(--primary-subtle); }
+.nav-tabs .nav-link:hover { color: var(--primary-deeper); background: var(--primary-subtle); }
 
 .nav-tabs .nav-link.active {
-  color: var(--primary);
+  color: var(--primary-deeper);
   border-bottom-color: var(--primary);
   background: transparent;
   font-weight: 600;
@@ -643,7 +643,7 @@ body.dashboard-body {
 
 .admin-table thead th {
   background: var(--primary) !important;
-  color: #fff;
+  color: #1F2937;
   border-bottom-color: var(--primary-dark);
 }
 
@@ -728,10 +728,10 @@ body.dashboard-body {
   transition: color .2s, border-color .2s, background .2s;
 }
 
-.settings-nav .nav-link:hover { color: var(--primary); background: var(--primary-subtle); }
+.settings-nav .nav-link:hover { color: var(--primary-deeper); background: var(--primary-subtle); }
 
 .settings-nav .nav-link.active {
-  color: var(--primary);
+  color: var(--primary-deeper);
   border-bottom-color: var(--primary);
   background: transparent;
   font-weight: 600;
@@ -762,8 +762,8 @@ body.dashboard-body {
 }
 
 .settings-toggle-row .form-check-input:focus {
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 .2rem rgba(37,99,235,.15);
+  border-color: var(--primary-border);
+  box-shadow: 0 0 0 .2rem rgba(30, 64, 175,.15);
 }
 
 .security-info-item {
@@ -880,7 +880,7 @@ body.dashboard-body {
 .cat-avatar {
   width: 64px;
   height: 64px;
-  background: #e8f0fe;
+  background: var(--primary-soft);
   color: var(--admin-ink);
 }
 

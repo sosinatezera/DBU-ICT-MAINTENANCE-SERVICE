@@ -12,7 +12,13 @@
 const THEME_STORAGE_KEY = "theme";
 
 function getTheme() {
-  return localStorage.getItem(THEME_STORAGE_KEY) || "light";
+  try {
+    return localStorage.getItem(THEME_STORAGE_KEY) || "light";
+  } catch (_) {
+    return document.documentElement.getAttribute("data-theme") === "dark"
+      ? "dark"
+      : "light";
+  }
 }
 
 /* Apply the theme to <html>, persist when asked, and sync any
@@ -24,7 +30,11 @@ function applyTheme(theme, save) {
   } else {
     document.documentElement.removeAttribute("data-theme");
   }
-  if (save) localStorage.setItem(THEME_STORAGE_KEY, value);
+  if (save) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, value);
+    } catch (_) {}
+  }
   syncThemeSwitchers(value);
 }
 
@@ -40,7 +50,7 @@ function toggleTheme() {
 function syncThemeSwitchers(theme) {
   const isDark = theme === "dark";
   document.querySelectorAll("[data-theme-switch]").forEach((btn) => {
-    btn.setAttribute("aria-pressed", isDark ? "false" : "true");
+    btn.setAttribute("aria-pressed", String(isDark));
     btn.setAttribute(
       "aria-label",
       isDark ? "Switch to light mode" : "Switch to dark mode",
@@ -72,7 +82,7 @@ function buildThemeSwitch(onClick) {
 
 /* Inject the switcher into the page at the best available spot. */
 function injectThemeSwitch() {
-  if (document.body && document.body.classList.contains("auth-body")) return; // no toggle on login/register
+  if (document.body?.classList.contains("assistant-page")) return;
   if (document.querySelector(".app-theme-switch")) return; // already present
 
   const sidebarNav = document.querySelector(".sidebar");

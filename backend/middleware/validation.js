@@ -39,7 +39,49 @@ const VALID_REQUEST_CATEGORIES = [
   'System / Application',
   'ICT Security',
   'Network Maintenance',
+  'Networking',
+  'Router',
+  'Switch',
+  'Hub',
+  'Modem',
+  'Access Point',
+  'Firewall',
+  'Network Cable',
   'Other'
+];
+/* Devices a requester can pick (the "Device / Equipment" field). The networking
+   subset is offered only when the request category is "Networking" so a
+   requester picks a network-specific device instead of a generic one. */
+const VALID_DEVICES = [
+  'Computer / Desktop',
+  'Laptop',
+  'Printer',
+  'Monitor',
+  'Keyboard',
+  'Mouse',
+  'UPS',
+  'Network Cable',
+  'Switch',
+  'Router',
+  'Access Point',
+  'Firewall',
+  'Network Rack',
+  'Patch Panel',
+  'Modem',
+  'Server',
+  'Other',
+  'Other Network Device'
+];
+const VALID_NETWORK_DEVICES = [
+  'Network Cable',
+  'Switch',
+  'Router',
+  'Access Point',
+  'Firewall',
+  'Patch Panel',
+  'Network Rack',
+  'Modem',
+  'Other Network Device'
 ];
 const VALID_GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'];
 /* Networking: maximum length of a single chat message body. */
@@ -90,7 +132,17 @@ function validateGenericEmail(email) {
 function validatePassword(password) {
   if (!password || typeof password !== 'string') return 'Password is required.';
   if (password.length < 8) return 'Password must be at least 8 characters, contain both letters and numbers, and may include special characters.';
-  if (!PASSWORD_REGEX.test(password)) return 'Password must be at least 8 characters (max 100), contain both letters and numbers, and may include special characters (no spaces).';
+  /* The rule is exactly PASSWORD_REGEX above: 8–16 characters, at least one
+     letter and one number, printable ASCII, no whitespace. Report that limit
+     instead of the old "max 100", which contradicted the regex and left users
+     guessing why a 20-character password was rejected. */
+  if (!PASSWORD_REGEX.test(password)) {
+    if (password.length > 16) return 'Password must be no more than 16 characters.';
+    if (/\s/.test(password)) return 'Password must not contain spaces.';
+    if (!/[A-Za-z]/.test(password)) return 'Password must contain at least one letter.';
+    if (!/\d/.test(password)) return 'Password must contain at least one number.';
+    return 'Password must be 8–16 characters, contain both letters and numbers, and may include special characters (no spaces).';
+  }
   return null;
 }
 
@@ -240,6 +292,8 @@ module.exports = {
   VALID_ASSIGN_STATUSES,
   VALID_INQUIRY_TYPES,
   VALID_REQUEST_CATEGORIES,
+  VALID_DEVICES,
+  VALID_NETWORK_DEVICES,
   VALID_GENDERS,
   VALID_LANGUAGES,
   VALID_DATE_FORMATS,

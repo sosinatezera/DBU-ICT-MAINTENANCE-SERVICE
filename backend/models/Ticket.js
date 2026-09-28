@@ -2,7 +2,7 @@
  * models/Ticket.js
  * Maintenance ticket schema for Smart ICT Maintenance Management System
  *
- * ticketId: Auto-generated unique tracking code (e.g., TK-1001, TK-1002)
+ * ticketId: Auto-generated unique tracking code (e.g., MAU-1001, MAU-1002)
  * status lifecycle: submitted -> under_review -> assigned -> accepted -> in_progress -> resolved -> closed
  */
 
@@ -59,6 +59,11 @@ const ticketSchema = new mongoose.Schema(
         'Other',
       ],
       default: 'Other',
+    },
+    device: {
+      type: String,
+      trim: true,
+      default: null,
     },
     location: {
       type: String,
@@ -254,11 +259,15 @@ ticketSchema.pre('save', async function (next) {
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     );
-    this.ticketId = `TK-${String(counter.seq).padStart(4, '0')}`;
+    this.ticketId = `MAU-${String(counter.seq).padStart(4, '0')}`;
     next();
   } catch (err) {
     next(err);
   }
 });
+
+ticketSchema.index({ department: 1, createdAt: -1 });
+ticketSchema.index({ priority: 1, createdAt: -1 });
+ticketSchema.index({ category: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Ticket', ticketSchema);

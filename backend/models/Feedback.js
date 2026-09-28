@@ -31,4 +31,11 @@ const feedbackSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+/* `request` is already indexed — the `unique: true` on the field above creates a
+   unique index on { request: 1 }. Declaring a second, non-unique index on the
+   same key pattern is an IndexOptionsConflict (Mongo error 85), so it is
+   deliberately NOT repeated here. */
+feedbackSchema.index({ createdAt: -1 });
+feedbackSchema.index({ rating: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Feedback', feedbackSchema);

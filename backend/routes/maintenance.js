@@ -8,12 +8,15 @@ const MaintenanceRecord = require('../models/MaintenanceRecord');
 const Technician        = require('../models/Technician');
 const Ticket            = require('../models/Ticket');
 const Assignment        = require('../models/Assignment');
+const Notification      = require('../models/Notification');
+const { broadcastNotification } = require('../services/notificationService');
 const { authenticate }  = require('../middleware/auth');
 const { authorize }     = require('../middleware/authorize');
 const {
   validateObjectId, validateRequired, validateEnum, validateLength,
   sanitizeString, VALID_MAINT_STATUS,
 } = require('../middleware/validation');
+const { displayTicketId } = require('../utils/ticketId');
 
 /* GET /api/maintenance/my — my repair logs */
 router.get('/my', authenticate, async (req, res, next) => {
@@ -27,7 +30,7 @@ router.get('/my', authenticate, async (req, res, next) => {
       return res.json({ success: true, data: records.map(r => ({
         _id:              r._id,
         ticket_id:        r.request?._id,
-        ticketId:         r.request?.ticketId,
+        ticketId:         displayTicketId(r.request?.ticketId),
         ticket_status:    r.request?.status,
         equipmentType:    r.request?.equipmentType,
         action_taken:     r.action_taken,
@@ -49,7 +52,7 @@ router.get('/my', authenticate, async (req, res, next) => {
     res.json({ success: true, data: records.map(r => ({
       _id:              r._id,
       ticket_id:        r.request?._id,
-      ticketId:         r.request?.ticketId,
+      ticketId:         displayTicketId(r.request?.ticketId),
       ticket_status:    r.request?.status,
       equipmentType:    r.request?.equipmentType,
       action_taken:     r.action_taken,
@@ -151,6 +154,37 @@ router.post('/', authenticate, authorize('Technician', 'ICT Admin'), async (req,
       notes:      notes      || null,
       status:     status     || 'in_progress',
     });
+
+    const ticket = await Ticket.findById(request_id).select('ticketId requester assignedTechnician equipmentType');
+    if (ticket) {
+      const displayId = displayTicketId(ticket.ticketId);
+      const techName = req.user.fullName || 'A technician';
+
+      /* Notify the requester */
+      if (ticket.requester) {
+        const requesterNotif = await Notification.create({
+          user:    ticket.requester,
+          ticket:  ticket._id,
+          title:   `Maintenance Update: ${displayId}`,
+          message: `${techName} logged maintenance activity on your request #${displayId}.`,
+          type:    'info',
+        });
+        broadcastNotification(requesterNotif);
+      }
+
+      /* Notify ICT Admins */
+      const admins = await User.find({ role: 'ICT Admin', status: 'active' }).select('_id');
+      await Promise.all(admins.map(async admin => {
+        const adminNotif = await Notification.create({
+          user:    admin._id,
+          ticket:  ticket._id,
+          title:   `Maintenance Logged: ${displayId}`,
+          message: `${techName} logged maintenance activity on ticket "${displayId}".`,
+          type:    'info',
+        });
+        broadcastNotification(adminNotif);
+      }));
+    }
 
     res.status(201).json({ success: true, message: 'Activity logged.', id: record._id });
   } catch (err) { next(err); }

@@ -3,9 +3,13 @@
  * Outbound email service for the Smart ICT Maintenance Management System.
  *
  * Uses the project's existing Nodemailer dependency and the SMTP_* settings
- * centralised in config/env.js. Email is OPTIONAL in this project: as long as
- * SMTP_HOST, SMTP_USER and SMTP_PASS are left blank, real delivery is disabled
- * and nothing crashes — every send path reports `delivered:false` instead.
+ * centralised in config/env.js. Email is REQUIRED for password recovery: there
+ * is no second channel, so if SMTP_HOST / SMTP_USER / SMTP_PASSWORD are not
+ * usable then "forgot password" is broken for every user. The rest of the system
+ * (ticketing, notifications) still runs without it, which is why an unusable
+ * configuration is reported loudly at boot instead of being treated as normal.
+ * Every send path therefore reports `delivered:false` plus a `code` naming the
+ * failing stage (see EMAIL_ERROR) and never pretends a message was sent.
  *
  * ── Gmail configuration (see .env / .env.example) ─────────────────────────
  *   SMTP_HOST = smtp.gmail.com
@@ -38,31 +42,123 @@
  *     reject, so callers should .catch() it (see scripts/verify-smtp.js).
  */
 
-const nodemailer = require('nodemailer');
-const env = require('../config/env');
+const nodemailer = require("nodemailer");
+const env = require("../config/env");
+const User = require("../models/User");
 
 /* ── Credential redaction ────────────────────────────────────
    Never let the full SMTP account or any raw credentials reach logs. */
 function maskEmail(email) {
-  if (typeof email !== 'string' || !email) return '(unset)';
-  const at = email.lastIndexOf('@');
-  if (at <= 1) return '***@***';
+  if (typeof email !== "string" || !email) return "(unset)";
+  const at = email.lastIndexOf("@");
+  if (at <= 1) return "***@***";
   return `${email.slice(0, 2)}***${email.slice(at - 1, at + 1)}***`;
 }
 
 function maskConfig() {
   return {
-    host: env.SMTP_HOST || '(unset)',
+    host: env.SMTP_HOST || "(unset)",
     port: Number(env.SMTP_PORT) || 587,
     user: maskEmail(env.SMTP_USER),
-    pass: env.SMTP_PASS ? '****(set)' : '(unset)',
+    pass: env.SMTP_PASSWORD || env.SMTP_PASS ? "****(set)" : "(unset)",
   };
 }
 
 /* SMTP is considered configured only when host + credentials all exist.
    A server without any of them cannot deliver mail. */
 function smtpConfigured() {
-  return Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
+  return env.SMTP_CONFIGURED;
+}
+
+/* ── Safe failure classification ────────────────────────────
+   "The email did not go out" has to be diagnosable, because password recovery
+   has no second channel. These three categories are deliberately coarse: each
+   names WHICH stage failed and nothing else. No category, log line or return
+   value ever carries a password, a token, the verification code, a full
+   address or the SMTP AUTH payload. */
+const EMAIL_ERROR = {
+  /* The provider was never usable: variables missing, or the relay rejected
+     the credentials (EAUTH → typically a wrong/normal Gmail password instead of
+     an App Password). */
+  CONFIGURATION: "EMAIL_CONFIGURATION_ERROR",
+  /* The conversation never completed: DNS, TCP, TLS or timeout. */
+  CONNECTION: "EMAIL_CONNECTION_ERROR",
+  /* The relay was reached and answered, but refused the message (size, policy,
+     421 throttling, 5.x.x). */
+  SEND: "EMAIL_SEND_ERROR",
+};
+
+/* Socket/TLS codes that mean we never finished talking to the relay. */
+const CONNECTION_ERROR_CODES = new Set([
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "ECONNABORTED",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+  "ENOTFOUND",
+  "EAI_AGAIN",
+  "EDNS",
+  "ESOCKET",
+  "EPIPE",
+  "ETIMEDOUT",
+  "ETIMEOUT",
+  "STARTTLS",
+]);
+
+/* Which SMTP variables are absent/placeholder. Names only, by construction. */
+function describeMissing() {
+  const missing = (env.SMTP_STATUS && env.SMTP_STATUS.missing) || [];
+  return missing.length ? missing.join(", ") : "none reported";
+}
+
+/* Nodemailer errors are never echoed verbatim: a relay quotes the address it
+   rejected, and some relays echo long AUTH payloads. Redact addresses and
+   long opaque blobs, then truncate — the SMTP response code is what makes the
+   failure actionable, and it is preserved below. */
+function safeMailReason(err) {
+  const raw = err && typeof err.message === "string" ? err.message : "";
+  const cleaned = raw
+    .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, "***@***")
+    .replace(/[A-Za-z0-9+/]{20,}={0,2}/g, "***")
+    .replace(/\b\d{8,}\b/g, "***")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned.length > 160 ? `${cleaned.slice(0, 160)}...` : cleaned;
+}
+
+function classifyMailError(err) {
+  const code = (err && err.code) || "";
+  if (code === "EAUTH" || code === "EENVELOPE")
+    return EMAIL_ERROR.CONFIGURATION;
+  if (CONNECTION_ERROR_CODES.has(code)) return EMAIL_ERROR.CONNECTION;
+  /* Some timeouts surface with no code at all; fall back to the redacted text. */
+  if (
+    !code &&
+    /connect|socket|timeout|dns|getaddrinfo/i.test(safeMailReason(err))
+  ) {
+    return EMAIL_ERROR.CONNECTION;
+  }
+  return EMAIL_ERROR.SEND;
+}
+
+/* Credential-free description of a Nodemailer failure. The SMTP response code
+   (535 vs 550 vs 421) and command are intentionally kept: they carry no secret
+   and are exactly what identifies the specific rejection. */
+function describeMailFailure(err) {
+  return {
+    code: classifyMailError(err),
+    smtpCode: (err && err.code) || "UNKNOWN",
+    responseCode: (err && err.responseCode) || "none",
+    command: (err && err.command) || "none",
+    reason: safeMailReason(err),
+  };
+}
+
+function formatMailFailure(failure) {
+  const head =
+    `${failure.code} (smtp=${failure.smtpCode}, response=${failure.responseCode}` +
+    `, command=${failure.command})`;
+  return failure.reason ? `${head} - ${failure.reason}` : head;
 }
 
 /* ── Transporter construction ────────────────────────────────
@@ -77,12 +173,15 @@ function buildTransporterOptions(overrides) {
   return {
     host: env.SMTP_HOST,
     port,
-    secure: isImplicitTls,                    /* 465 → implicit TLS      */
-    requireTLS: !isImplicitTls,               /* 587 → explicit STARTTLS */
-    connectionTimeout: 15000,                 /* ms — fail fast, don't hang a request */
+    secure: isImplicitTls /* 465 → implicit TLS      */,
+    requireTLS: !isImplicitTls /* 587 → explicit STARTTLS */,
+    connectionTimeout: 15000 /* ms — fail fast, don't hang a request */,
     greetingTimeout: 10000,
     socketTimeout: 20000,
-    auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
+    auth: {
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASSWORD || env.SMTP_PASS,
+    },
     ...overrides,
   };
 }
@@ -100,27 +199,52 @@ function createTransporter() {
   return nodemailer.createTransport(buildTransporterOptions());
 }
 
-/* Build the From header: `"Name" <account@gmail.com>` when SMTP_FROM_NAME is set. */
+/* Build the From header. MAIL_FROM, when set, becomes the mailbox address
+   (optionally labelled by SMTP_FROM_NAME); otherwise the authenticated
+   SMTP_USER account is used (Gmail always rewrites From to the authenticated
+   sender anyway, so MAIL_FROM mainly controls the address for non-Gmail relays). */
 function fromAddress() {
-  const account = env.SMTP_USER;
-  return env.SMTP_FROM_NAME ? `"${env.SMTP_FROM_NAME.replace(/"/g, "'")}" <${account}>` : account;
+  const display = env.SMTP_FROM_NAME
+    ? `"${env.SMTP_FROM_NAME.replace(/"/g, "'")}" `
+    : "";
+  if (env.MAIL_FROM) return `${display}<${env.MAIL_FROM}>`;
+  return env.SMTP_USER ? `${display}<${env.SMTP_USER}>` : env.SMTP_USER;
 }
 
 /**
  * Verify the SMTP connection using Nodemailer's transporter.verify().
- * @returns {Promise<{ok:boolean, detail:string}>} — never rejects, never leaks credentials.
+ * @returns {Promise<{ok:boolean, detail:string, code?:string}>} — never rejects, never leaks credentials.
+ *   `code` is one of the EMAIL_ERROR categories so the boot banner and the CLI
+ *   can report the failing stage rather than a generic "failed".
  */
 async function verifySmtp() {
   if (!smtpConfigured()) {
-    return { ok: false, detail: 'SMTP not configured (SMTP_HOST/SMTP_USER/SMTP_PASS required). Email disabled.' };
+    return {
+      ok: false,
+      code: EMAIL_ERROR.CONFIGURATION,
+      detail:
+        `SMTP not configured - email delivery is disabled, so password reset cannot work. ` +
+        `Missing or invalid: ${describeMissing()}.`,
+    };
   }
   try {
     await getTransporter().verify();
-    return { ok: true, detail: `SMTP connection verified (${maskConfig().host}:${maskConfig().port}) as ${maskConfig().user}.` };
+    return {
+      ok: true,
+      detail: `SMTP connection verified (${maskConfig().host}:${maskConfig().port}) as ${maskConfig().user}.`,
+    };
   } catch (err) {
-    /* Generic, credential-free message. Do NOT echo err.message verbatim —
-       a misbehaving SMTP relay could echo the AUTH payload back. */
-    return { ok: false, detail: "SMTP verification failed (code=" + ((err && err.code) || "UNKNOWN") + ", responseCode=" + ((err && err.responseCode) || "none") + ", command=" + ((err && err.command) || "none") + "). Check Gmail App Password and SMTP settings." };
+    /* Generic, credential-free message built from the category + SMTP codes. */
+    const failure = describeMailFailure(err);
+    return {
+      ok: false,
+      code: failure.code,
+      smtpCode: failure.smtpCode,
+      responseCode: failure.responseCode,
+      detail:
+        `SMTP verification failed: ${formatMailFailure(failure)}. ` +
+        "Check that SMTP_PASSWORD is a Google App Password and that SMTP_HOST/SMTP_PORT match.",
+    };
   }
 }
 
@@ -132,21 +256,37 @@ async function verifySmtp() {
  * @param {string} opts.subject
  * @param {string} [opts.text]
  * @param {string} [opts.html]
- * @returns {Promise<{delivered:boolean, info:string}>}
+ * @returns {Promise<{delivered:boolean, info:string, code?:string}>}
  */
 async function sendEmail({ to, replyTo, subject, text, html }) {
   if (!smtpConfigured()) {
-    return { delivered: false, info: 'SMTP not configured; email disabled.' };
+    return {
+      delivered: false,
+      code: EMAIL_ERROR.CONFIGURATION,
+      info: `SMTP not configured; email disabled (missing: ${describeMissing()}).`,
+    };
   }
   if (!to) {
-    return { delivered: false, info: 'No recipient provided.' };
+    /* CONFIGURATION, not SEND: an empty recipient means the caller was not
+       configured with a destination, so the relay was never even contacted. The
+       contact form reaches this whenever ADMIN_EMAIL is unset, and it must not
+       be reported as a transient failure that invites a retry. */
+    return {
+      delivered: false,
+      code: EMAIL_ERROR.CONFIGURATION,
+      info: "No recipient provided.",
+    };
   }
 
   let transporter;
   try {
     transporter = getTransporter();
   } catch (err) {
-    return { delivered: false, info: 'Unable to build mail transport.' };
+    return {
+      delivered: false,
+      code: EMAIL_ERROR.CONFIGURATION,
+      info: "Unable to build mail transport.",
+    };
   }
 
   try {
@@ -158,10 +298,17 @@ async function sendEmail({ to, replyTo, subject, text, html }) {
       text,
       html,
     });
-    return { delivered: true, info: 'Email delivered to SMTP server.' };
+    return { delivered: true, info: "Email delivered to SMTP server." };
   } catch (err) {
-    console.error('[mailer] Email delivery failed (recipient masked):', maskEmail(String(to)));
-    return { delivered: false, info: 'Email delivery failed.' };
+    const failure = describeMailFailure(err);
+    console.error(
+      `[mailer] ${formatMailFailure(failure)} (recipient masked: ${maskEmail(String(to))})`,
+    );
+    return {
+      delivered: false,
+      code: failure.code,
+      info: "Email delivery failed.",
+    };
   }
 }
 
@@ -173,59 +320,98 @@ async function sendEmail({ to, replyTo, subject, text, html }) {
  */
 async function sendEventEmail({ to, subject, text, html }) {
   if (!smtpConfigured()) {
-    return { delivered: false, info: 'SMTP not configured; email disabled.' };
+    return {
+      delivered: false,
+      code: EMAIL_ERROR.CONFIGURATION,
+      info: `SMTP not configured; email disabled (missing: ${describeMissing()}).`,
+    };
   }
 
   /* Lazy require keeps this module free of a hard model dependency. */
   let settings;
   try {
-    const Settings = require('../models/Settings');
+    const Settings = require("../models/Settings");
     settings = await Settings.getInstance();
   } catch (err) {
-    return { delivered: false, info: 'Email notifications disabled (settings unavailable).' };
+    return {
+      delivered: false,
+      code: EMAIL_ERROR.CONFIGURATION,
+      info: "Email notifications disabled (settings unavailable).",
+    };
   }
   if (!settings || !settings.emailNotifications) {
-    return { delivered: false, info: 'Email notifications are disabled in Settings.' };
+    return {
+      delivered: false,
+      code: EMAIL_ERROR.CONFIGURATION,
+      info: "Email notifications are disabled in Settings.",
+    };
+  }
+
+  const recipient = await User.findOne({ email: String(to).toLowerCase() })
+    .select("role notificationPreferences")
+    .lean();
+  const preferences = recipient?.notificationPreferences;
+  if (
+    preferences?.emailNotifications === false ||
+    (recipient?.role === "Technician" &&
+      preferences?.maintenanceAlerts === false)
+  ) {
+    return {
+      delivered: false,
+      code: EMAIL_ERROR.CONFIGURATION,
+      info: "Email notification disabled by recipient preferences.",
+    };
   }
 
   return sendEmail({ to, subject, text, html });
 }
 
 /**
- * Send a password reset email.
- * @returns {Promise<{delivered:boolean, info:string}>}
+ * Send a password reset verification code email.
+ * @returns {Promise<{delivered:boolean, info:string, code?:string}>}
  *   - delivered:true  → the email was handed to the SMTP server.
  *   - delivered:false → SMTP is not configured or delivery failed; mail NOT sent.
+ *     `code` is the EMAIL_ERROR category that lets the caller log the real cause.
  */
-async function sendPasswordResetEmail({ to, resetUrl }) {
-  /* ── Dev mode / SMTP disabled ────────────────────────────────
-     Do not pretend delivery. Emit the reset link on the server console only
-     (existing development convention in the codebase) and report that no email
-     was sent; the API still returns the generic enumeration-safe message so
-     nothing is leaked to the client. */
+async function sendPasswordResetEmail({ to, code, expiresMinutes = 10 }) {
+  /* ── SMTP unusable ─────────────────────────────────────────
+     Do not pretend delivery, and never log the code itself. The category plus the
+     missing variable names are logged because this is the single reason password
+     recovery can fail outright, and the names carry no secret. */
   if (!smtpConfigured()) {
-    console.log(
-      `[auth/password-reset] SMTP not configured — reset email NOT sent to "${maskEmail(to)}". ` +
-      `RAW RESET LINK (development only): ${resetUrl}`
+    console.error(
+      `[auth/password-reset] ${EMAIL_ERROR.CONFIGURATION} - verification email NOT sent to "${maskEmail(to)}". ` +
+        `Missing or invalid: ${describeMissing()}.`,
     );
-    return { delivered: false, info: 'SMTP not configured; email not delivered.' };
+    return {
+      delivered: false,
+      code: EMAIL_ERROR.CONFIGURATION,
+      info: `SMTP not configured; email not delivered (missing: ${describeMissing()}).`,
+    };
   }
 
   const text =
-    'You requested a password reset for your Smart ICT Maintenance Management System account.\n\n' +
-    'Click the link below to reset your password. This link is valid for 30 minutes and can only be used once.\n\n' +
-    `${resetUrl}\n\n` +
-    'If you did not request this, you can safely ignore this email — your password will not change.\n\n' +
-    'Smart ICT Maintenance Management System';
+    "Your Password Reset Verification Code\n\n" +
+    "You requested a password reset for your Smart ICT Maintenance Management System account.\n\n" +
+    `Your verification code is: ${code}\n\n` +
+    `This code expires in ${expiresMinutes} minutes and can only be used once.\n` +
+    "Never share this code with anyone. If you did not request this, you can safely ignore this email.\n\n" +
+    "Smart ICT Maintenance Management System";
 
   const html =
-    '<p>You requested a password reset for your <strong>Smart ICT Maintenance Management System</strong> account.</p>' +
-    '<p>Click the button below to reset your password. This link is valid for <strong>30 minutes</strong> and can only be used once.</p>' +
-    `<p><a href="${resetUrl}" style="display:inline-block;padding:10px 22px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Reset Password</a></p>` +
-    '<p style="color:#666;">If you did not request this, you can safely ignore this email — your password will not change.</p>' +
+    "<h2>Your Password Reset Verification Code</h2>" +
+    "<p>You requested a password reset for your <strong>Smart ICT Maintenance Management System</strong> account.</p>" +
+    `<p style="font-size:2rem;letter-spacing:.35rem;font-weight:700;">${code}</p>` +
+    `<p>This code expires in <strong>${expiresMinutes} minutes</strong> and can only be used once.</p>` +
+    '<p style="color:#666;">Never share this code with anyone. If you did not request this, you can safely ignore this email.</p>' +
     '<p style="color:#888;font-size:.8rem;">Smart ICT Maintenance Management System</p>';
 
-  return sendEmail({ to, subject: 'Reset your password', text, html });
+  return sendEmail({
+    to,
+    subject: "Smart ICT Maintenance Management System - Password Reset Code",
+    text,
+    html,
+  });
 }
 
 module.exports = {
@@ -238,4 +424,10 @@ module.exports = {
   /* small helpers exposed for the verify script / diagnostics */
   maskEmail,
   maskConfig,
+  /* failure classification, shared by the boot banner, the verify script and
+     the forgot-password controller so all three report the same category */
+  EMAIL_ERROR,
+  describeMissing,
+  describeMailFailure,
+  formatMailFailure,
 };

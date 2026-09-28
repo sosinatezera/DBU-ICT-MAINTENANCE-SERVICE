@@ -8,15 +8,34 @@ const {
   sanitizeString, VALID_ASSET_STATUSES,
 } = require('../middleware/validation');
 
+/* Escape user-supplied search terms so they are treated as literal text. */
+const escapeRegex = (value) =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const getAllAssets = async (req, res, next) => {
   try {
-    const { status } = req.query;
+    const { q, status } = req.query;
 
     /* Optional status filter, e.g. GET /api/assets?status=active
        Requesters use ?status=active so only available assets appear
        in the Submit Request dropdown (decommissioned/inactive are hidden). */
     const filter = {};
     if (status) filter.status = status;
+
+    /* Search: matches the term against any identifying/informational field. */
+    if (q && String(q).trim()) {
+      const rx = { $regex: escapeRegex(String(q).trim()), $options: 'i' };
+      filter.$or = [
+        { asset_name: rx },
+        { asset_tag: rx },
+        { serial_number: rx },
+        { model: rx },
+        { manufacturer: rx },
+        { department: rx },
+        { location: rx },
+        { category: rx },
+      ];
+    }
 
     /* Only ever surface available assets to non-admin viewers.
        Decommissioned assets are treated as retired/inactive. */

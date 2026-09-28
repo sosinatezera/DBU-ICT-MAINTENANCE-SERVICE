@@ -5,7 +5,6 @@
 
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const {
   validateEmail,
@@ -18,17 +17,56 @@ const {
   sanitizeString,
   VALID_GENDERS,
 } = require("../middleware/validation");
-const { sendPasswordResetEmail } = require("../services/mailer");
-const env = require("../config/env");
+const {
+  sendPasswordResetEmail,
+  smtpConfigured,
+  EMAIL_ERROR,
+  describeMissing,
+} = require("../services/mailer");
+const {
+  sendPasswordResetSms,
+  smsConfigured,
+} = require("../services/smsService");
+const RESET_CODE_TTL_MS = 10 * 60 * 1000;
+const RESET_SESSION_TTL_MS = 10 * 60 * 1000;
+const RESET_CODE_MAX_ATTEMPTS = 5;
+const RESET_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
+/* Minimum gap between two code deliveries for the SAME account. The client
+   shows a matching countdown, but the server enforces the real window so the
+   endpoint cannot be hammered/abused to re-send codes. */
+const RESEND_COOLDOWN_MS = 30 * 1000;
 
-/* Token lifetime for password reset links — 15–30 minutes per spec; we use 30. */
-const RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
+function hashResetValue(value) {
+  return crypto.createHash("sha256").update(value).digest("hex");
+}
+
+function readCookie(req, name) {
+  const cookies = String(req.headers.cookie || "").split(";");
+  const entry = cookies.find((item) => item.trim().startsWith(`${name}=`));
+  return entry ? decodeURIComponent(entry.trim().slice(name.length + 1)) : "";
+}
+
+function setResetCookie(res, value, maxAge) {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  res.setHeader(
+    "Set-Cookie",
+    `ict_reset_session=${encodeURIComponent(value)}; Max-Age=${Math.max(0, Math.floor(maxAge / 1000))}; Path=/api/auth; HttpOnly; SameSite=Lax${secure}`,
+  );
+}
 
 /* ── POST /api/auth/register ────────────────────────────────── */
 const register = async (req, res, next) => {
   try {
-    let { fullName, email, password, confirmPassword, department, phone, gender, agreeTerms } =
-      req.body;
+    let {
+      fullName,
+      email,
+      password,
+      confirmPassword,
+      department,
+      phone,
+      gender,
+      agreeTerms,
+    } = req.body;
 
     /* Sanitize */
     fullName = fullName ? sanitizeString(fullName) : "";
@@ -72,7 +110,7 @@ const register = async (req, res, next) => {
 
     /* Validate gender if provided */
     if (gender) {
-      const genderErr = validateEnum(gender, VALID_GENDERS, 'gender');
+      const genderErr = validateEnum(gender, VALID_GENDERS, "gender");
       if (genderErr)
         return res.status(400).json({ success: false, message: genderErr });
     }
@@ -134,7 +172,9 @@ const login = async (req, res, next) => {
 
     const normalizedEmail = email.trim().toLowerCase();
     /* +password: the field is select:false in the schema; login needs the hash. */
-    const user = await User.findOne({ email: normalizedEmail }).select('+password');
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+password",
+    );
     if (!user) {
       /* Only log the input email on the server console — never the password. The
          client keeps receiving the generic message for security. */
@@ -174,10 +214,25 @@ const login = async (req, res, next) => {
       `[auth/login] SUCCESS for "${user.email}" (role: ${user.role}).`,
     );
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role, name: user.fullName },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || "24h" },
+    /* ── Session fixation protection ──────────────────────────
+       The session identifier MUST change when privileges are elevated.
+       Without regenerate(), the pre-login session id survives
+       authentication, so anyone who captured that earlier id (shared or
+       pre-seeded browser, injected cookie, another subdomain) still holds a
+       valid authenticated session after the victim logs in. regenerate()
+       mints a new id, sends a fresh cookie and discards pre-auth data, so
+       the old id stops resolving immediately.
+
+       Uses the built-in express-session API — no additional library. The
+       promise wrapper matches the session.save() style already used below,
+       and any failure is surfaced through this handler's existing catch. */
+    await new Promise((resolve, reject) =>
+      req.session.regenerate((err) => (err ? reject(err) : resolve())),
+    );
+
+    req.session.userId = String(user._id);
+    await new Promise((resolve, reject) =>
+      req.session.save((err) => (err ? reject(err) : resolve())),
     );
 
     const redirectMap = {
@@ -189,7 +244,6 @@ const login = async (req, res, next) => {
     res.json({
       success: true,
       message: "Login successful.",
-      token,
       redirect: redirectMap[user.role] || "/views/user/dashboard.html",
       user: {
         id: user._id,
@@ -204,6 +258,14 @@ const login = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+const logout = (req, res, next) => {
+  req.session.destroy((err) => {
+    if (err) return next(err);
+    res.clearCookie("ict_session", { httpOnly: true, sameSite: "lax" });
+    res.json({ success: true, message: "Logged out." });
+  });
 };
 
 /* ── GET /api/auth/me ───────────────────────────────────────── */
@@ -222,51 +284,155 @@ const getMe = async (req, res, next) => {
 };
 
 /* ── POST /api/auth/forgot-password ────────────────────────────
-   Issues a short-lived, single-use, hashed reset token and sends a reset link.
-   ACCOUNT-ENUMERATION SAFE: we always return the same generic message whether
-   an account exists or not, and never reveal existence via status codes.
-   Errors are only emitted to the server console, never to the client. */
+   Issues a short-lived, single-use, hashed verification code and sends it
+   through the configured mailer for real accounts.
+
+   ACCOUNT-ENUMERATION SAFE:
+   - The delivery-service availability check runs BEFORE the account lookup,
+     so a disabled email/SMS service returns the exact same response for
+     every address and never acts as an existence oracle.
+   - For a real active account the full reset flow runs (OTP generated,
+     hashed, stored, emailed). For unknown/inactive addresses the identical
+     generic success response is returned — status and body never differ in
+     a way that reveals whether an account exists.
+   - Technical failures (SMTP down, delivery rejected) are logged on the
+     server only; the client gets a friendly, generic message plus a `code`
+     naming the failing stage (EMAIL_CONFIGURATION_ERROR /
+     EMAIL_CONNECTION_ERROR / EMAIL_SEND_ERROR, and the SMS equivalents).
+     That code names the stage only — never a host, mailbox or credential. */
 const forgotPassword = async (req, res, next) => {
   try {
-    const { email } = req.body || {};
+    const { email, deliveryMethod = "email" } = req.body || {};
 
     const emailErr = validateEmail(email);
     if (emailErr) {
+      return res.status(422).json({ success: false, message: emailErr });
+    }
+    if (!["email", "sms"].includes(deliveryMethod)) {
       return res
         .status(422)
-        .json({ success: false, message: emailErr });
+        .json({ success: false, message: "Choose Email or SMS delivery." });
+    }
+
+    /* Delivery-availability gate — checked for EVERY caller BEFORE any user
+       lookup so an unconfigured or failing delivery provider can never leak
+       account existence, and raw config details (host, mailboxes, credentials)
+       are never surfaced to users. The reason is written to the server log only.
+       The response carries a `code` naming the failing STAGE — never a host,
+       address or credential — so the client can tell the user what to do next
+       without learning anything about the deployment. */
+    if (
+      (deliveryMethod === "email" && !smtpConfigured()) ||
+      (deliveryMethod === "sms" && !smsConfigured())
+    ) {
+      const unavailable =
+        deliveryMethod === "email"
+          ? EMAIL_ERROR.CONFIGURATION
+          : "SMS_CONFIGURATION_ERROR";
+      console.error(
+        `[auth/forgot-password] ${unavailable} - ${deliveryMethod} delivery is not usable in this deployment, ` +
+          "so password reset cannot complete for any account. " +
+          (deliveryMethod === "email"
+            ? `Missing or invalid: ${describeMissing()}.`
+            : "Set the SMS provider variables in the deployment environment."),
+      );
+      return res.status(503).json({
+        success: false,
+        code: unavailable,
+        message:
+          "Password reset is temporarily unavailable. Please try again later or contact ICT support.",
+      });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    /* Generic success — returned both for existing and non-existing emails so
-       the response tells an attacker nothing about whether the account exists. */
+    /* Identical generic response whether the code was really issued or no
+       sendable account exists — so account existence is never revealed. */
     const genericMessage =
-      "If an account exists for this email, a password reset link has been sent.";
+      "If the email is associated with an account, a verification code has been sent. Please check your inbox and spam folder.";
 
-    /* Find the account; .select('+...') is not needed here because we only need
-       the user document to issue a token. Any lookup failure is non-fatal. */
-    const user = await User.findOne({ email: normalizedEmail });
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+resetPasswordCodeHash +resetPasswordCodeSentAt",
+    );
 
     if (user && user.status === "active") {
-      /* Cryptographic random token — 32 bytes → 64 hex chars.
-         Never user-id, email, timestamp or username based.
-         Only the SHA-256 HASH is stored in the database, never the raw token. */
-      const rawToken = crypto.randomBytes(32).toString("hex");
-      const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+      if (deliveryMethod === "sms" && !user.phone) {
+        /* No phone on file: nothing is sent, but the identical generic
+           response is returned so the account's existence is not disclosed. */
+        console.warn(
+          `[auth/forgot-password] SMS requested for "${user.email}" but no phone on file (server-only log).`,
+        );
+        return res.json({ success: true, message: genericMessage, expiresInSeconds: RESET_CODE_TTL_MS / 1000 });
+      }
 
-      /* Single active token per user: overwrite any previous (also invalidates
-         an unused, still-unexpired token from an earlier request). */
-      user.resetPasswordToken = tokenHash;
-      user.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+      /* Server-side resend cooldown — a second request for the SAME account
+         inside the cooldown window returns the identical generic response and
+         silently keeps the still-valid code (never a status/message that could
+         reveal that an account exists). This complements the client countdown
+         and survives page reloads / direct API calls. */
+      if (
+        user.resetPasswordCodeSentAt &&
+        Date.now() - new Date(user.resetPasswordCodeSentAt).getTime() <
+          RESEND_COOLDOWN_MS
+      ) {
+        return res.json({ success: true, message: genericMessage, expiresInSeconds: RESET_CODE_TTL_MS / 1000 });
+      }
+
+      /* Cryptographic six-digit code. Only its SHA-256 hash is persisted. */
+      const code = String(crypto.randomInt(100000, 1000000));
+
+      /* Overwriting the code invalidates every earlier code for this account
+         (exactly one live code, one-time use, expires in RESET_CODE_TTL_MS). */
+      user.resetPasswordCodeHash = hashResetValue(code);
+      user.resetPasswordCodeExpires = new Date(Date.now() + RESET_CODE_TTL_MS);
+      user.resetPasswordCodeAttempts = 0;
+      user.resetPasswordVerifiedHash = null;
+      user.resetPasswordVerifiedExpires = null;
+      user.resetPasswordDeliveryMethod = deliveryMethod;
+      user.resetPasswordRequestId = crypto.randomUUID();
+      user.resetPasswordCodeSentAt = new Date();
       await user.save({ validateBeforeSave: false });
 
-      const resetUrl = `${env.FRONTEND_URL.replace(/\/$/, "")}/views/reset-password.html?token=${rawToken}`;
-
-      await sendPasswordResetEmail({ to: user.email, resetUrl });
+      const delivery =
+        deliveryMethod === "sms"
+          ? await sendPasswordResetSms({
+              to: user.phone,
+              code,
+              expiresMinutes: RESET_CODE_TTL_MS / 60000,
+            })
+          : await sendPasswordResetEmail({
+              to: user.email,
+              code,
+              expiresMinutes: RESET_CODE_TTL_MS / 60000,
+            });
+      if (!delivery.delivered) {
+        /* Roll back the stored code — a code is never usable if its delivery
+           never happened. Never expose the raw delivery error to the client. */
+        user.resetPasswordCodeHash = null;
+        user.resetPasswordCodeExpires = null;
+        user.resetPasswordCodeAttempts = 0;
+        user.resetPasswordDeliveryMethod = null;
+        user.resetPasswordRequestId = null;
+        user.resetPasswordCodeSentAt = null;
+        await user.save({ validateBeforeSave: false });
+        const failureCode =
+          delivery.code ||
+          (deliveryMethod === "sms" ? "SMS_SEND_ERROR" : EMAIL_ERROR.SEND);
+        console.error(
+          `[auth/forgot-password] ${failureCode} - verification code was NOT delivered ` +
+            `for "${user.email}" (${delivery.info}). The stored code has been rolled back, ` +
+            "so the account is not left with a usable code that never arrived.",
+        );
+        return res.status(503).json({
+          success: false,
+          code: failureCode,
+          message:
+            "We couldn't send the verification code right now. Please try again later.",
+        });
+      }
     } else if (user) {
       console.warn(
-        `[auth/forgot-password] Skipping token for "${user.email}": account status is "${user.status}".`,
+        `[auth/forgot-password] Skipping token for "${user.email}": account status is "${user.status}" (server-only log).`,
       );
     } else {
       console.warn(
@@ -274,24 +440,143 @@ const forgotPassword = async (req, res, next) => {
       );
     }
 
-    return res.json({ success: true, message: genericMessage });
+    return res.json({ success: true, message: genericMessage, expiresInSeconds: RESET_CODE_TTL_MS / 1000 });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/* ── POST /api/auth/verify-reset-code ──────────────────────────
+   Checks the 6-digit code (hash match + attempted-count budget + expiry,
+   all enforced server-side) and, on success, issues a single-use reset
+   authorization token. User-facing messages are generic; technical detail
+   is never sent to the client. */
+const verifyResetCode = async (req, res, next) => {
+  try {
+    const { email, code } = req.body || {};
+    const emailErr = validateEmail(email);
+    if (emailErr) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address.",
+      });
+    }
+    if (typeof code !== "string" || !/^\d{6}$/.test(code.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter the 6-digit verification code.",
+      });
+    }
+    const trimmedCode = code.trim();
+
+    const user = await User.findOne({
+      email: email.trim().toLowerCase(),
+    }).select(
+      "+resetPasswordCodeHash +resetPasswordCodeExpires +resetPasswordCodeAttempts +resetPasswordDeliveryMethod +resetPasswordRequestId",
+    );
+    const invalidMessage =
+      "The verification code is invalid or has expired. Please request a new code.";
+    if (!user || !user.resetPasswordCodeHash) {
+      return res.status(400).json({ success: false, message: invalidMessage });
+    }
+
+    /* Attempt budget — blocks brute force before any comparison work. */
+    if (user.resetPasswordCodeAttempts >= RESET_CODE_MAX_ATTEMPTS) {
+      /* The lockout lasts exactly as long as the current code would have, so
+         tell the client the real cooldown (Retry-After) instead of leaving it
+         to guess with a vague "try again later". */
+      const lockoutSeconds = user.resetPasswordCodeExpires
+        ? Math.max(
+            1,
+            Math.ceil(
+              (new Date(user.resetPasswordCodeExpires).getTime() - Date.now()) /
+                1000,
+            ),
+          )
+        : null;
+      if (lockoutSeconds) res.set("Retry-After", String(lockoutSeconds));
+      return res.status(429).json({
+        success: false,
+        message: "Too many verification attempts. Please request a new code.",
+        /* Duplicated in the body (like the limiter's 429) so a cross-origin
+           client can read the cooldown. */
+        ...(lockoutSeconds ? { retryAfter: lockoutSeconds } : {}),
+      });
+    }
+
+    /* Expiration — enforced on the server, never by client timers. */
+    if (
+      !user.resetPasswordCodeExpires ||
+      user.resetPasswordCodeExpires < new Date()
+    ) {
+      user.resetPasswordCodeHash = null;
+      user.resetPasswordCodeExpires = null;
+      user.resetPasswordCodeAttempts = 0;
+      user.resetPasswordDeliveryMethod = null;
+      user.resetPasswordRequestId = null;
+      user.resetPasswordCodeSentAt = null;
+      await user.save({ validateBeforeSave: false });
+      return res.status(400).json({
+        success: false,
+        message:
+          "This verification code has expired. Please request a new code.",
+      });
+    }
+
+    const expected = Buffer.from(user.resetPasswordCodeHash, "hex");
+    const actual = Buffer.from(hashResetValue(trimmedCode), "hex");
+    if (
+      expected.length !== actual.length ||
+      !crypto.timingSafeEqual(expected, actual)
+    ) {
+      user.resetPasswordCodeAttempts += 1;
+      await user.save({ validateBeforeSave: false });
+      return res.status(400).json({
+        success: false,
+        message:
+          "The verification code is incorrect. Please check the code and try again.",
+      });
+    }
+
+    /* Code accepted. Issue the reset authorization token: opaque, 256-bit,
+       random, stored only as a SHA-256 hash, single-use, expires shortly.
+       It is returned in the body so the flow works when the frontend and API
+       live on different origins (where cross-site cookies can be blocked);
+       the HttpOnly cookie remains as a same-origin hardening layer. */
+    const sessionToken = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordCodeHash = null;
+    user.resetPasswordCodeExpires = null;
+    user.resetPasswordCodeAttempts = 0;
+    user.resetPasswordDeliveryMethod = null;
+    user.resetPasswordRequestId = null;
+    user.resetPasswordCodeSentAt = null;
+    user.resetPasswordVerifiedHash = hashResetValue(sessionToken);
+    user.resetPasswordVerifiedExpires = new Date(
+      Date.now() + RESET_SESSION_TTL_MS,
+    );
+    await user.save({ validateBeforeSave: false });
+    setResetCookie(res, sessionToken, RESET_SESSION_TTL_MS);
+
+    return res.json({
+      success: true,
+      message: "Code verified. Create your new password.",
+      resetToken: sessionToken,
+    });
   } catch (err) {
     next(err);
   }
 };
 
 /* ── POST /api/auth/reset-password ─────────────────────────────
-   Verifies the (hashed) token, enforces expiry + single-use, updates the
-   user's password with the existing bcrypt mechanism, then destroys the token. */
+   Updates the password ONLY when the caller can present a valid reset
+   authorization: the single-use token issued by verify-reset-code, delivered
+   either through the HttpOnly cookie or the JSON body (cross-origin safe).
+   The token is opaque, single-use, expires, and is tied to this reset
+   request — the server resolves the account from the hashed token, so an
+   arbitrary user ID can never be submitted by the client. */
 const resetPassword = async (req, res, next) => {
   try {
-    let { token, password } = req.body || {};
-
-    if (typeof token !== "string" || !token) {
-      return res
-        .status(400)
-        .json({ success: false, message: "An invalid or expired reset token was provided." });
-    }
+    const { password, resetToken } = req.body || {};
     if (typeof password !== "string") {
       return res
         .status(422)
@@ -301,55 +586,89 @@ const resetPassword = async (req, res, next) => {
     const pwErr = validatePassword(password);
     if (pwErr) return res.status(400).json({ success: false, message: pwErr });
 
-    /* In the database we only ever have the hash — look the token up by its
-       SHA-256 digest. If the user is missing, the token was already used and
-       destroyed (single-use) or never existed for this hash. */
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const user = await User.findOne({
-      resetPasswordToken: tokenHash,
-    }).select("+resetPasswordToken +resetPasswordExpires");
-
-    if (!user) {
-      return res
-        .status(400)
-        .json({ success: false, message: "This reset link is invalid or has already been used." });
+    /* Accept either transport for the same opaque token. */
+    let rawToken = typeof resetToken === "string" ? resetToken.trim() : "";
+    if (!rawToken) rawToken = readCookie(req, "ict_reset_session");
+    if (!RESET_TOKEN_PATTERN.test(rawToken)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Your verification session is invalid or has already been used.",
+      });
     }
 
-    if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
-      /* Expired or malformed — destroy it and reject. */
-      user.resetPasswordToken = null;
-      user.resetPasswordExpires = null;
+    const tokenHash = hashResetValue(rawToken);
+    const user = await User.findOne({
+      resetPasswordVerifiedHash: tokenHash,
+    }).select("+resetPasswordVerifiedHash +resetPasswordVerifiedExpires");
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Your verification session is invalid or has already been used.",
+      });
+    }
+
+    if (
+      !user.resetPasswordVerifiedExpires ||
+      user.resetPasswordVerifiedExpires < new Date()
+    ) {
+      user.resetPasswordVerifiedHash = null;
+      user.resetPasswordVerifiedExpires = null;
       await user.save({ validateBeforeSave: false });
-      return res
-        .status(400)
-        .json({ success: false, message: "This reset link has expired. Please request a new one." });
+      setResetCookie(res, "", 0);
+      return res.status(400).json({
+        success: false,
+        message:
+          "Your verification session has expired. Please request a new code.",
+      });
     }
 
     if (user.status !== "active") {
-      return res
-        .status(403)
-        .json({ success: false, message: "Account has been deactivated. Contact ICT Admin." });
+      return res.status(403).json({
+        success: false,
+        message: "Account has been deactivated. Contact ICT Admin.",
+      });
     }
 
     /* Update the password with the SAME mechanism used everywhere (bcrypt,
-       cost 12). NEVER return the password or its hash — the response omits them. */
+       cost 12). Roles, permissions and all other account fields are untouched.
+       NEVER return the password or its hash — the response omits them. */
     user.password = await bcrypt.hash(password, 12);
 
-    /* Invalid the token immediately: single-use guaranteed — the same token
-       can never be used again, and it dies with expiry going forward. */
-    user.resetPasswordToken = null;
-    user.resetPasswordExpires = null;
+    /* Consume the token immediately: single-use is guaranteed — the same
+       token can never be used again, and it dies with expiry going forward.
+       Any leftover code state is cleared too. */
+    user.resetPasswordVerifiedHash = null;
+    user.resetPasswordVerifiedExpires = null;
+    user.resetPasswordCodeHash = null;
+    user.resetPasswordCodeExpires = null;
+    user.resetPasswordCodeAttempts = 0;
+    user.resetPasswordDeliveryMethod = null;
+    user.resetPasswordRequestId = null;
+    user.resetPasswordCodeSentAt = null;
     await user.save({ validateBeforeSave: false });
+    setResetCookie(res, "", 0);
 
     console.log(`[auth/reset-password] Password reset for "${user.email}".`);
 
     return res.json({
       success: true,
-      message: "Your password has been reset. You can now sign in.",
+      message:
+        "Your password has been reset successfully. You can now log in with your new password.",
     });
   } catch (err) {
     next(err);
   }
 };
 
-module.exports = { register, login, getMe, forgotPassword, resetPassword };
+module.exports = {
+  register,
+  login,
+  logout,
+  getMe,
+  forgotPassword,
+  verifyResetCode,
+  resetPassword,
+};

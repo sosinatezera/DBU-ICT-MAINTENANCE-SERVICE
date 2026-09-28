@@ -12,43 +12,44 @@
  * Open: http://localhost:3000
  */
 
-const http = require('http');
-const fs   = require('fs');
-const path = require('path');
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const zlib = require("zlib");
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 
 const MIME = {
-  '.html': 'text/html',
-  '.css':  'text/css',
-  '.js':   'application/javascript',
-  '.json': 'application/json',
-  '.png':  'image/png',
-  '.jpg':  'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif':  'image/gif',
-  '.svg':  'image/svg+xml',
-  '.ico':  'image/x-icon',
-  '.woff': 'font/woff',
-  '.woff2':'font/woff2',
-  '.ttf':  'font/ttf',
-  '.csv':  'text/csv',
-  '.pdf':  'application/pdf',
+  ".html": "text/html",
+  ".css": "text/css",
+  ".js": "application/javascript",
+  ".json": "application/json",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".ttf": "font/ttf",
+  ".csv": "text/csv",
+  ".pdf": "application/pdf",
 };
 
 /* ── URL path aliases (legacy → new) ─────────────────────── */
 const REDIRECTS = {
-  '/pages/':      '/views/',
-  '/css/':        '/assets/css/',
-  '/js/':         '/assets/js/',
+  "/pages/": "/views/",
+  "/css/": "/assets/css/",
+  "/js/": "/assets/js/",
 };
 
 const server = http.createServer((req, res) => {
-  let urlPath = req.url === '/' ? '/views/index.html' : req.url;
+  let urlPath = req.url === "/" ? "/views/index.html" : req.url;
 
   // Strip query strings
-  urlPath = urlPath.split('?')[0];
+  urlPath = urlPath.split("?")[0];
 
   // Apply legacy path redirects (backwards compatibility)
   for (const [from, to] of Object.entries(REDIRECTS)) {
@@ -59,69 +60,105 @@ const server = http.createServer((req, res) => {
   }
 
   const filePath = path.join(ROOT, urlPath);
-  const ext      = path.extname(filePath).toLowerCase();
-  const mime     = MIME[ext] || 'application/octet-stream';
+  const ext = path.extname(filePath).toLowerCase();
+  const mime = MIME[ext] || "application/octet-stream";
 
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      // Try appending .html
-      const withHtml = filePath + '.html';
-      fs.readFile(withHtml, (err2, data2) => {
-        if (err2) {
-          res.writeHead(404, { 'Content-Type': 'text/html' });
-          res.end(`
-            <html><body style="font-family:sans-serif;padding:2rem;background:#f8f9fa;">
-              <div style="max-width:500px;margin:4rem auto;text-align:center;">
-                <h2 style="color:#dc3545;">404 — Not Found</h2>
-                <code style="background:#f1f3f5;padding:4px 12px;border-radius:4px;">${urlPath.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}</code>
-                <br/><br/>
-                <a href="/views/login.html" style="color:#2563eb;">← Back to Login</a>
-              </div>
-            </body></html>
-          `);
-        } else {
-          res.writeHead(200, {
-            'Content-Type': 'text/html',
-            // Root cause of "my new JS never appears in the browser": this server
-            // previously sent NO Cache-Control, so browsers heuristically cached a
-            // stale assets/js/*.js and never ran the updated code. Force revalidation.
-            'Cache-Control': 'no-cache, must-revalidate',
-          });
-          res.end(data2);
-        }
+  const send404 = () => {
+    res.writeHead(404, { "Content-Type": "text/html" });
+    res.end(`
+      <html><body style="font-family:sans-serif;padding:2rem;background:#f8f9fa;">
+        <div style="max-width:500px;margin:4rem auto;text-align:center;">
+          <h2 style="color:#dc3545;">404 — Not Found</h2>
+          <code style="background:#f1f3f5;padding:4px 12px;border-radius:4px;">${urlPath.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")}</code>
+          <br/><br/>
+          <a href="/views/login.html" style="color:#2563eb;">← Back to Login</a>
+        </div>
+      </body></html>
+    `);
+  };
+
+  const sendFile = (servePath, stat) => {
+    const contentType = MIME[path.extname(servePath).toLowerCase()] || mime;
+    const compressible =
+      /^(text\/|application\/(javascript|json|xml)|image\/svg\+xml)/.test(
+        contentType,
+      );
+    const acceptsGzip = (req.headers["accept-encoding"] || "")
+      .split(",")
+      .some((encoding) => {
+        const [name, ...params] = encoding.trim().toLowerCase().split(";");
+        const quality = params.find((param) => param.trim().startsWith("q="));
+        return (
+          name === "gzip" && (!quality || Number(quality.trim().slice(2)) > 0)
+        );
       });
-    } else {
-      const headers = { 'Content-Type': mime };
-      // no-store: never let a browser reuse a stale copy of our scripts/styles/images.
-      // A cached old requests.js (without the /feedback loader) leaves admin
-      // pages frozen on their static "Loading requests..." placeholder; a cached
-      // old home.jpg can keep showing the previous (motherboard) hero background.
-      if (ext === '.js' || ext === '.css' || ext === '.html' || ext === '.jpg' || ext === '.jpeg' || ext === '.png' || ext === '.gif' || ext === '.svg') {
-        headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
-        headers['Pragma'] = 'no-cache';
+    const headers = {
+      "Content-Type": contentType,
+      // "no-cache, must-revalidate": the browser must ALWAYS ask the server,
+      // so an updated JS/CSS/image/html is still picked up on every load —
+      // the same anti-stale guarantee as the old "no-store" policy — but
+      // unchanged files now return HTTP 304 (an empty body) instead of
+      // re-downloading the full bytes on every page view.
+      "Cache-Control": "no-cache, must-revalidate",
+    };
+    if (compressible) headers.Vary = "Accept-Encoding";
+    if (compressible && acceptsGzip) headers["Content-Encoding"] = "gzip";
+
+    // Conditional request: only send the body when the file actually changed.
+    if (stat) {
+      headers["Last-Modified"] = stat.mtime.toUTCString();
+      const since = Date.parse(req.headers["if-modified-since"] || "");
+      if (
+        !Number.isNaN(since) &&
+        Math.floor(stat.mtimeMs / 1000) <= Math.floor(since / 1000)
+      ) {
+        res.writeHead(304, headers);
+        return res.end();
       }
-      res.writeHead(200, headers);
-      res.end(data);
     }
+
+    res.writeHead(200, headers);
+    const source = fs.createReadStream(servePath);
+    source.on("error", (err) => res.destroy(err));
+    if (headers["Content-Encoding"] === "gzip") {
+      source
+        .pipe(zlib.createGzip({ level: zlib.constants.Z_BEST_SPEED }))
+        .pipe(res);
+    } else {
+      source.pipe(res);
+    }
+  };
+
+  fs.stat(filePath, (statErr, stat) => {
+    if (statErr || !stat || stat.isDirectory()) {
+      // Try appending .html
+      const withHtml = filePath + ".html";
+      fs.stat(withHtml, (statErr2, stat2) => {
+        if (statErr2 || !stat2 || stat2.isDirectory()) return send404();
+        sendFile(withHtml, stat2);
+      });
+      return;
+    }
+    sendFile(filePath, stat);
   });
 });
 
 server.listen(PORT, () => {
-  console.log('');
-  console.log('  ╔══════════════════════════════════════════════════════╗');
-  console.log('  ║   Smart ICT Maintenance Management System            ║');
-  console.log('  ║   Frontend Server Running                            ║');
-  console.log('  ╠══════════════════════════════════════════════════════╣');
+  console.log("");
+  console.log("  ╔══════════════════════════════════════════════════════╗");
+  console.log("  ║   Smart ICT Maintenance Management System            ║");
+  console.log("  ║   Frontend Server Running                            ║");
+  console.log("  ╠══════════════════════════════════════════════════════╣");
   console.log(`  ║   Local:  http://localhost:${PORT}                       ║`);
-  console.log('  ╠══════════════════════════════════════════════════════╣');
-  console.log('  ║   Structure:                                         ║');
-  console.log('  ║   views/           → HTML pages                      ║');
-  console.log('  ║   assets/css/      → Stylesheets                     ║');
-  console.log('  ║   assets/js/       → Scripts                         ║');
-  console.log('  ║   assets/images/   → Images                          ║');
-  console.log('  ╠══════════════════════════════════════════════════════╣');
+  console.log("  ╠══════════════════════════════════════════════════════╣");
+  console.log("  ║   Structure:                                         ║");
+  console.log("  ║   views/           → HTML pages                      ║");
+  console.log("  ║   assets/css/      → Stylesheets                     ║");
+  console.log("  ║   assets/js/       → Scripts                         ║");
+  console.log("  ║   assets/images/   → Images                          ║");
+  console.log("  ╠══════════════════════════════════════════════════════╣");
   console.log(`  ║   Login    → http://localhost:${PORT}/views/login.html   ║`);
   console.log(`  ║   Register → http://localhost:${PORT}/views/register.html║`);
-  console.log('  ╚══════════════════════════════════════════════════════╝');
-  console.log('');
+  console.log("  ╚══════════════════════════════════════════════════════╝");
+  console.log("");
 });

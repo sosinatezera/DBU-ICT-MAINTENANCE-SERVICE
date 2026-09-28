@@ -4,12 +4,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <title>Project Completion and Approval Certificate | MAU</title>
     <style>
         :root {
             --navy: #202b36;
             --blue: #52606d;
-            --gold: #d99f00;
+            --blue: #3B82F6;
             --ink: #17212b;
             --muted: #6b7785;
             --paper: #ffffff;
@@ -73,7 +74,7 @@
             content: "";
             position: absolute;
             inset: 8.6mm;
-            border: 0.6px solid var(--gold);
+            border: 0.6px solid var(--blue);
             pointer-events: none;
         }
 
@@ -90,8 +91,10 @@
 
         .logo {
             display: block;
-            width: 25mm;
-            height: 25mm;
+            max-width: 30mm;
+            max-height: 25mm;
+            width: auto;
+            height: auto;
             margin: 0 auto 3mm;
             object-fit: contain;
         }
@@ -129,7 +132,7 @@
         }
 
         .heading-rule {
-            background: var(--gold);
+            background: var(--blue);
             height: 2px;
             margin: 3mm auto 0;
             width: 35mm;
@@ -201,6 +204,14 @@
             min-width: 20mm;
         }
 
+        .line .hint {
+            color: var(--muted);
+            font-size: 8.5pt;
+            font-style: italic;
+            letter-spacing: 0.02em;
+            padding-left: 1mm;
+        }
+
         .approval-section {
             border-top: 1px solid #c9d3dd;
             margin: 5mm 8mm 0;
@@ -220,7 +231,7 @@
         }
 
         .approval-block h3 {
-            border-bottom: 1.5px solid var(--gold);
+            border-bottom: 1.5px solid var(--blue);
             color: var(--navy);
             font-size: 9.3pt;
             letter-spacing: 0.05em;
@@ -294,6 +305,10 @@
                 display: none;
             }
 
+            .hint {
+                display: none;
+            }
+
             .certificate {
                 box-shadow: none;
                 margin: 0;
@@ -304,13 +319,14 @@
 
 <body>
     <div class="toolbar">
-        <button class="print-button" type="button" onclick="window.print()">Print certificate</button>
+        <button class="print-button" type="button" onclick="window.print()"><i class="fa-solid fa-download"></i> Download /
+            Print Certificate</button>
     </div>
 
     <main class="certificate" aria-label="Project Completion and Approval Certificate">
         <div class="content">
             <header class="masthead">
-                <img class="logo" src="../assets/images/mau_logo.jpg" alt="Mekdela Amba University logo" />
+                <img class="logo" src="../assets/images/mau_logo.jpg" alt="Mekdela Amba University logo" loading="lazy" decoding="async" />
                 <div class="university">Mekdela Amba University</div>
                 <div class="department">Department of Information Technology</div>
             </header>
@@ -322,9 +338,10 @@
 
             <p class="body-copy">
                 This is to certify that <span class="line"
-                    style="display: inline-block; width: 72mm; vertical-align: bottom;"></span>
+                    style="display: inline-block; width: 72mm; vertical-align: bottom;"><span class="hint">Full
+                        Name</span></span>
                 has successfully completed the project entitled:
-                <strong class="project-title">Smart ICT Maintenance Service Request &amp; Tracking System</strong>
+                <strong class="project-title">Smart ICT Maintenance Management System</strong>
                 The project was developed as an Information Technology project for managing ICT maintenance service
                 requests,
                 assignment, tracking, maintenance activities, and resolution processes.
@@ -333,15 +350,23 @@
             <section class="info-section" aria-labelledby="project-information">
                 <h2 class="section-label" id="project-information">Project Information</h2>
                 <div class="details">
-                    <div class="detail"><span class="detail-label">Student Name:</span><span class="line"></span></div>
-                    <div class="detail"><span class="detail-label">Student ID:</span><span class="line"></span></div>
+                    <div class="detail"><span class="detail-label">Student Name:</span><span class="line"><span
+                                class="hint">Full Name</span></span></div>
+                    <div class="detail"><span class="detail-label">Student ID:</span><span class="line"><span
+                                class="hint">ID Number</span></span></div>
                     <div class="detail"><span class="detail-label">Department:</span><span>Information Technology</span>
                     </div>
                     <div class="detail"><span class="detail-label">Project Advisor/Mentor:</span><span
-                            class="line"></span></div>
+                            class="line"><span class="hint">Full Name</span></span></div>
                     <div class="detail"><span class="detail-label">Academic Year:</span><span>2026</span></div>
                     <div class="detail"><span class="detail-label">Project Completion Date:</span><span
-                            class="line"></span></div>
+                            class="line"><span class="hint">DD Month YYYY</span></span></div>
+                    <div class="detail"><span class="detail-label">Role / Contribution:</span><span class="line"><span
+                                class="hint">e.g., Project Developer</span></span></div>
+                    <div class="detail"><span class="detail-label">Certificate ID:</span><span class="line"><span
+                                class="hint">To be assigned</span></span></div>
+                    <div class="detail"><span class="detail-label">Certificate Issue Date:</span><span
+                            class="line"><span class="hint">DD Month YYYY</span></span></div>
                 </div>
             </section>
 
@@ -379,7 +404,9 @@
                 </div>
             </section>
 
-            <p class="footer-note">This certificate confirms project completion and the approvals recorded above.</p>
+            <p class="footer-note">This is a certificate template for project documentation. The lines above are to be
+                completed by the student and the designated evaluators. The certificate is finalized and becomes official
+                only after the approvals and institutional signatures above are recorded.</p>
         </div>
     </main>
 </body>

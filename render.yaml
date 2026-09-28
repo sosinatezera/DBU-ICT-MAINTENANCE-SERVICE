@@ -1,23 +1,93 @@
+# ─────────────────────────────────────────────────────────────
+# Render Blueprint — Smart ICT Maintenance Management System
+#
+# SECURITY NOTICE (IMPORTANT):
+# Real credentials are intentionally NOT stored in this file.
+# Set the following secrets ONLY in the Render Dashboard
+# (service -> Environment). Do NOT commit them to the repository:
+#   - MONGO_URI        (MongoDB Atlas connection string)
+#   - SESSION_SECRET   (long random string, e.g. `openssl rand -hex 64`)
+#   - JWT_SECRET       (long random string, e.g. `openssl rand -hex 64`)
+#   - SMTP_USER        (Gmail address that sends the mail)
+#   - SMTP_PASSWORD    (16-char Google App Password for that address)
+#
+# The `sync: false` entries below keep these keys in the blueprint WITHOUT
+# a committed value, so deploys never overwrite the dashboard-set secrets.
+# Backend startup also fails fast in production if SESSION_SECRET is missing.
+#
+# WHY THE SECRETS MATTER — the two that break the login flow:
+#   * SESSION_SECRET missing  -> the service refuses to start at all.
+#   * SMTP_USER / SMTP_PASSWORD missing -> the service starts normally, logs
+#     "EMAIL_CONFIGURATION_ERROR - PASSWORD RESET IS DISABLED", and every
+#     forgot-password request answers 503. An empty value here is NOT the same
+#     as a working email service: set both in the Dashboard before deploying.
+#
+# NOT a secret, but must be set in the Dashboard for the same reason:
+#   * ADMIN_EMAIL missing -> the service starts normally and the login flow works,
+#     but the public contact form answers 503 for EVERY visitor because the ICT
+#     Admin has no inbox to be notified at. Reported at boot as
+#     "CONTACT_FORM_NOTIFICATION_DISABLED".
+# ─────────────────────────────────────────────────────────────
 services:
   - type: web
-    name: ict-maintenance-backend
+    name: dbu-ict-maintenance-service
     env: node
     buildCommand: cd backend && npm install
     startCommand: cd backend && node server.js
     envVars:
       - key: NODE_ENV
         value: production
-      # AI ICT Support — server-side OpenAI integration (blueprint).
-      # OPENAI_API_KEY is REQUIRED but is a secret: add it in the Render
-      # Dashboard (service -> Environment -> Add a variable named OPENAI_API_KEY).
-      # Never commit it to the repo or expose it to the browser.
-      - key: OPENAI_MODEL
-        value: gpt-5.6-luna
+      # AI Assistant — local Ollama (backend-only; never exposed to the browser
+      # or the public internet). A localhost endpoint only works when the
+      # backend runs on the same machine as Ollama.
+      - key: OLLAMA_BASE_URL
+        value: http://localhost:11434
+      - key: OLLAMA_MODEL
+        value: llama3.2
       - key: AI_SUPPORT_ENABLED
         value: "true"
       - key: FRONTEND_ORIGINS
         value: https://smartcomputer-maintenance-system.netlify.app,https://smartcomputermaintenanceservice.netlify.app,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000
+      # Reverse proxy: Render terminates TLS in front of this service, so the
+      # socket address is Render's for every caller. Trusting that single hop
+      # is what makes per-IP rate limiting work at all. A NUMBER is required —
+      # "true" would let a client spoof X-Forwarded-For and escape a rate limit.
+      - key: TRUST_PROXY
+        value: "1"
+      # Email — Gmail SMTP. REQUIRED: password-reset verification codes are the
+      # only way a user can recover access, and this endpoint has no fallback
+      # channel. Credentials are secrets — set them in the Render Dashboard
+      # (service -> Environment); an empty value here disables password reset and
+      # is reported at boot as "EMAIL_CONFIGURATION_ERROR". SMTP_PASSWORD must be
+      # a Google App Password (see backend/.env.example).
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+        value: ""
+      - key: SMTP_PASSWORD
+        sync: false
+        value: ""
+      # ADMIN_EMAIL — the ICT Admin inbox that receives every contact-form
+      # submission. The controller emails it and treats a non-delivery as a
+      # failed submission, so when it is blank the contact form answers 503 for
+      # every visitor even though SMTP is healthy. Reported at boot as
+      # "CONTACT_FORM_NOTIFICATION_DISABLED". Not defaulted in code on purpose:
+      # set the real inbox in the Render Dashboard (service -> Environment).
+      - key: ADMIN_EMAIL
+        sync: false
+        value: ""
+      # Secrets — set in the Render Dashboard, NOT here (see notice above).
       - key: MONGO_URI
-        value: mongodb+srv://meseretayele611_db_user:mesi212123@ict-maintenance.xhanajl.mongodb.net/ict_maintenance_db?retryWrites=true&w=majority&appName=ICT-Maintenance
+        sync: false
+        value: ""
+      # SESSION_SECRET backs express-session. The startup guard aborts the
+      # process in production when it is missing, so it must be declared here.
+      - key: SESSION_SECRET
+        sync: false
+        value: ""
       - key: JWT_SECRET
-        value: 2ed2585c3511d6f8824711bfea48e742d5bd4294af2bc6ecd82a2c7ae23bfbafd2d0553b66ee9f7681f6b7a1db6352d4
+        sync: false
+        value: ""

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Assistant — Smart ICT Maintenance Management System</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/assistant.css" />
+  <script src="/assets/js/api-config.js?v=2"></script>
+</head>
+
+<body class="assistant-page">
+
+  <div class="assistant-shell">
+    <!-- Header -->
+    <header class="assistant-header">
+      <div class="assistant-brand">
+        <span class="assistant-avatar" aria-hidden="true"><i class="bi bi-stars"></i></span>
+        <div class="assistant-brand-text">
+          <strong>Smart ICT AI Assistant</strong>
+          <span class="assistant-status"><i></i><span id="assistantStatusText">Ready to help</span></span>
+        </div>
+      </div>
+      <div class="assistant-header-actions">
+        <button type="button" class="assistant-icon-btn" id="assistantThemeToggle" data-theme-switch
+          aria-pressed="false" title="Switch to dark mode" aria-label="Switch to dark mode">
+          <i class="bi bi-moon-stars theme-moon"></i><i class="bi bi-sun theme-sun"></i>
+        </button>
+        <button type="button" class="assistant-icon-btn" id="assistantNewChat" title="New conversation"
+          aria-label="New conversation">
+          <i class="bi bi-plus-lg"></i>
+        </button>
+        <a class="assistant-icon-btn" href="/" title="Back to Home" aria-label="Back to Home"><i
+            class="bi bi-house"></i></a>
+      </div>
+    </header>
+
+    <!-- Signed-in notice (optional, injected) -->
+    <div class="assistant-notice" id="assistantNotice" hidden></div>
+
+    <!-- Messages -->
+    <div class="assistant-messages" id="assistantMessages" role="log" aria-live="polite"
+      aria-label="AI Assistant conversation"></div>
+
+    <!-- Welcome screen (injected into assistant-messages) -->
+
+    <!-- Composer -->
+    <form class="assistant-composer-wrap" id="assistantForm">
+      <div class="assistant-composer">
+        <input id="assistantFileInput" type="file" multiple hidden
+          accept=".pdf,.docx,.txt,.md,.csv,.xlsx,.pptx,.png,.jpg,.jpeg,.webp,.json,.xml,.yaml,.yml,.html,.htm,.css,.js,.mjs,.cjs,.ts,.tsx,.jsx,.py,.java,.c,.h,.cpp,.hpp,.cs,.go,.rs,.php,.rb,.sh,.bat,.sql,.toml,.ini,.log" />
+        <button type="button" class="assistant-attach" id="assistantAttach" aria-label="Attach files"
+          title="Attach files">
+          <i class="bi bi-paperclip" aria-hidden="true"></i>
+        </button>
+        <textarea id="assistantInput" rows="1" maxlength="4000"
+          placeholder="Ask about maintenance, tickets, assets, or any ICT question..." required></textarea>
+        <button type="button" class="assistant-stop" id="assistantStop" aria-label="Stop generating" hidden>
+          <i class="bi bi-stop-fill" aria-hidden="true"></i>
+        </button>
+        <button type="submit" class="assistant-send" id="assistantSend" aria-label="Send message">
+          <i class="bi bi-arrow-up" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="assistant-attachments" id="assistantAttachments" aria-live="polite"></div>
+      <div class="assistant-attachment-status" id="assistantAttachmentStatus" aria-live="polite"></div>
+      <div class="assistant-composer-footer">
+        <span class="assistant-hint">Enter to send&nbsp;·&nbsp;Shift+Enter for a new line</span>
+        <button type="button" class="assistant-clear" id="assistantClear"><i class="bi bi-trash3"></i> Clear
+          chat</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/assistant.js"></script>
+</body>
+
+</html>

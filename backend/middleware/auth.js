@@ -1,41 +1,26 @@
-const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
 const authenticate = async (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header || !header.startsWith("Bearer "))
+  const userId = req.session?.userId;
+  if (!userId)
     return res
       .status(401)
-      .json({ success: false, message: "No token provided." });
-
-  const token = header.split(" ")[1];
-
-  let payload;
-  try {
-    payload = jwt.verify(token, process.env.JWT_SECRET);
-  } catch {
-    return res
-      .status(401)
-      .json({ success: false, message: "Invalid or expired token." });
-  }
+      .json({ success: false, message: "Not authenticated." });
 
   /* Always resolve the account from the database so deactivated/deleted users lose
-     access immediately and role changes take effect on the next request (no stale-token
-     privilege escalation). */
+     access immediately and role changes take effect on the next request. */
   try {
-    const user = await User.findById(payload.id).select("role status fullName");
+    const user = await User.findById(userId).select("role status fullName");
     if (!user) {
       return res
         .status(401)
         .json({ success: false, message: "Account no longer exists." });
     }
     if (user.status !== "active") {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Account has been deactivated. Contact ICT Admin.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Account has been deactivated. Contact ICT Admin.",
+      });
     }
 
     req.user = {
@@ -51,13 +36,10 @@ const authenticate = async (req, res, next) => {
 };
 
 const optionalAuthenticate = async (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header || !header.startsWith("Bearer ")) return next();
-
-  const token = header.split(" ")[1];
+  const userId = req.session?.userId;
+  if (!userId) return next();
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(payload.id).select("role status fullName");
+    const user = await User.findById(userId).select("role status fullName");
     if (user && user.status === "active") {
       req.user = {
         id: user._id,

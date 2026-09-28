@@ -278,9 +278,10 @@ const sendMessage = async (req, res, next) => {
     try {
       await Notification.create({
         user:    recipientId,
-        title:   `New message from ${req.user.name || 'a user'}`,
+        title:   `New Comment`,
         message: text.length > 90 ? `${text.slice(0, 90)}…` : text,
         type:    'info',
+        notificationType: 'new_comment',
       });
     } catch (_) { /* notification failure never fails the send */ }
 

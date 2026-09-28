@@ -1,7 +1,4 @@
-/**
- * controllers/settingsController.js
- * System-wide settings — read & update (admin only)
- */
+
 const Settings = require("../models/Settings");
 const {
   validateEnum,

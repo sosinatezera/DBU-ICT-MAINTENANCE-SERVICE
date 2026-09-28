@@ -24,7 +24,7 @@
       style="min-height:100vh;width:240px;flex-shrink:0;">
       <a href="/" class="text-decoration-none">
         <div class="text-center mb-4">
-          <i class="bi bi-wrench-adjustable fs-3 text-warning"></i>
+          <i class="bi bi-wrench-adjustable fs-3 text-primary"></i>
           <div class="fw-bold small mt-1"><span data-i18n="side.panel.tech">Technician Panel</span></div>
         </div>
       </a>
@@ -231,37 +231,11 @@
                 <h5 class="mb-0" data-i18n="profile.notifications">Notification Preferences</h5>
               </div>
               <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="notifyAssigned" checked>
-                      <label class="form-check-label" for="notifyAssigned" data-i18n="profile.assignedNotifications">New
-                        Assignments</label>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="notifyUpdates" checked>
-                      <label class="form-check-label" for="notifyUpdates"
-                        data-i18n="profile.updateNotifications">Request Updates</label>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="notifyComments" checked>
-                      <label class="form-check-label" for="notifyComments"
-                        data-i18n="profile.commentNotifications">Comments</label>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="notifyDaily" checked>
-                      <label class="form-check-label" for="notifyDaily" data-i18n="profile.dailySummary">Daily
-                        Summary</label>
-                    </div>
-                  </div>
-                </div>
-              </div </div>
+                <p class="text-muted mb-3">Notification delivery is managed from your account settings.</p>
+                <a href="../settings.html#notificationSettings" class="btn btn-outline-primary btn-sm">
+                  <i class="bi bi-gear me-1"></i>Manage notification preferences
+                </a>
+              </div>
 
               <!-- Performance Stats -->
               <div class="card border-0 shadow-sm mb-4">
@@ -429,17 +403,20 @@
   <!-- Shared libraries must load BEFORE the page logic so apiRequest,
        showToast, profileUploadUrl, Validators, Auth, etc. are defined. -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/js/api-config.js"></script>
-  <script src="/assets/js/main.js?v=7"></script>
+  <script src="/assets/js/api-config.js?v=2"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/assets/js/main.js?v=13"></script>
   <script src="/assets/js/notifications.js?v=7"></script>
   <script src="/assets/js/validation.js?v=6"></script>
   <script src="/assets/js/theme.js"></script>
-  <script src="/assets/js/lang.js?v=9"></script>
+  <script src="/assets/js/lang.js?v=13"></script>
 
   <script>
     document.addEventListener( 'DOMContentLoaded', async () =>
     {
-      if ( typeof Auth === 'undefined' || !Auth.isLoggedIn() )
+      if ( typeof Auth === 'undefined' ) return;
+      await Auth.load();
+      if ( !Auth.isLoggedIn() )
       {
         window.__authRedirecting = true;
         window.location.href = '/views/login.html';
@@ -522,7 +499,7 @@
 
       function setAvatarSource ()
       {
-        // Default avatar = yellow circle with initial. If a profile image exists,
+        // Default avatar = blue circle with initial. If a profile image exists,
         // swap in the image for the large avatars.
         const src = _current && _current.profileImage ? profileUploadUrl( _current.profileImage ) : null;
         const name = _current ? _current.fullName : 'T';
@@ -733,6 +710,7 @@
           showToast( t( 'profile.saved' ) || 'Profile updated successfully.', 'success' );
           await loadProfileData();
           exitEditMode( false );
+          window.setTimeout( () => window.location.reload(), 600 );
         } catch ( err )
         {
           let msg = err.message || 'Failed to save profile.';
@@ -959,17 +937,6 @@
         {
           showToast( err.message || 'Could not delete account.', 'danger' );
           setLoading( 'deleteAccountBtn', null, false );
-        }
-      } );
-
-      // ---------- Notification prefs (store locally) ----------
-      ['notifyAssigned', 'notifyUpdates', 'notifyComments', 'notifyDaily'].forEach( id =>
-      {
-        const el = document.getElementById( id );
-        if ( el )
-        {
-          el.checked = localStorage.getItem( 'nt_' + id ) !== 'false';
-          el.addEventListener( 'change', () => localStorage.setItem( 'nt_' + id, el.checked ) );
         }
       } );
 

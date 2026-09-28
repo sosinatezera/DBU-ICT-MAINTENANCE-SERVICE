@@ -31,7 +31,7 @@ function jsAttr(v) {
 /* ── Reliable Ticket ID helper ──────────────────────────────
    The backend stores the Ticket's Mongo _id in several keys depending on
    endpoint (ticket_id / id / _id / request_id). Always prefer the Mongo _id,
-   never the human-readable TK-XXXX code, for API calls that target /tickets/:id. */
+   never the human-readable MAU-XXXX code, for API calls that target /tickets/:id. */
 function getTicketId(ticket) {
   if (!ticket) return null;
   /* For assignment-shaped records from /technicians/my/assignments the
@@ -182,8 +182,24 @@ async function refreshAfterAction() {
     window.location.pathname.includes("technician/technician-feedback")
   ) {
     const { data } = await apiRequest("/technicians/my/assignments");
-    renderTechFeedbackCards(data);
+    renderTechFeedbackCards(await loadTechnicianFeedbackDetails(data));
   }
+}
+
+async function loadTechnicianFeedbackDetails(assignments) {
+  return Promise.all(
+    (assignments || []).map(async (assignment) => {
+      if (!assignment.has_feedback || !assignment.ticket_id) return assignment;
+      try {
+        const { data: feedback } = await apiRequest(
+          `/tickets/${encodeURIComponent(assignment.ticket_id)}/technician-feedback`,
+        );
+        return { ...assignment, technician_feedback: feedback };
+      } catch (_) {
+        return assignment;
+      }
+    }),
+  );
 }
 
 /* Map a backend error to a clear, user-friendly message. */
@@ -193,7 +209,7 @@ function handleApiError(err) {
   let msg = (err && err.message) || "Something went wrong.";
   if (
     code === 401 ||
-    String(msg).includes("jwt") ||
+    String(msg).toLowerCase().includes("session") ||
     String(msg).includes("expired")
   ) {
     msg = "Your session has expired. Please login again.";
@@ -213,7 +229,8 @@ function handleApiError(err) {
   showToast(msg, "danger");
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await Auth.load();
   if (!requireAuth()) return;
   const p = window.location.pathname;
 
@@ -435,7 +452,7 @@ async function loadDashboardTasks() {
                title="${escHtml(r.title || "")}">
             ${escHtml(r.title || `Ticket ${r.ticketId}`)}
           </div>
-          <small class="text-muted">${escHtml(r.equipmentType || "—")}</small>
+          <small class="text-muted">${escHtml(r.equipmentType || "—")}${r.category ? ` · ${escHtml(r.category)}` : ""}</small>
         </td>
         <td>${priorityBadge(r.priority || "medium")}</td>
         <td>${statusBadge(r.status)}</td>
@@ -555,6 +572,26 @@ function ticketErrorMessage(err) {
   return "Unable to load ticket details. Please try again.";
 }
 
+function renderAdminFeedbackForTechnician(feedback) {
+  if (!feedback) return "";
+  return `
+    <div class="border-top mt-3 pt-3">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <i class="bi bi-clipboard2-check text-primary"></i>
+        <strong class="small">Admin Feedback</strong>
+        ${feedback.ticketStatus ? statusBadge(feedback.ticketStatus) : ""}
+      </div>
+      <div class="small p-3 bg-light rounded" style="white-space:pre-wrap;">${escHtml(feedback.adminComment || "No feedback message provided.")}</div>
+      <div class="d-flex flex-wrap gap-3 mt-2 text-muted" style="font-size:.75rem;">
+        <span><i class="bi bi-person-badge me-1"></i>${escHtml(feedback.admin_name || "ICT Admin")}</span>
+        <span><i class="bi bi-ticket-detailed me-1"></i>${escHtml(feedback.ticketId || "Ticket")}</span>
+        <span><i class="bi bi-clock me-1"></i>${feedback.submittedAt ? formatDateTime(feedback.submittedAt) : "—"}</span>
+      </div>
+      ${feedback.relatedAction ? `<div class="small text-muted mt-2"><strong>Related action:</strong> ${escHtml(feedback.relatedAction)}</div>` : ""}
+      ${feedback.followUpRequired ? `<div class="alert alert-warning py-2 px-3 mt-2 mb-0 small"><i class="bi bi-arrow-repeat me-1"></i>Follow-up required${feedback.followUpNotes ? `: ${escHtml(feedback.followUpNotes)}` : ""}</div>` : ""}
+    </div>`;
+}
+
 async function openViewDetails(requestId) {
   requestId = String(requestId || "").trim();
   if (!requestId || !/^[0-9a-f]{24}$/i.test(requestId)) {
@@ -597,13 +634,16 @@ async function openViewDetails(requestId) {
       ${row("Department", escHtml(r.department))}
       ${row("Location", `<i class="bi bi-geo-alt me-1"></i>${escHtml(r.location || "Not provided")}`)}
       ${row("Equipment", escHtml(r.equipmentType))}
+      
+      ${r.category ? row("Category", escHtml(r.category)) : ""}
       ${r.asset_tag ? row("ICT Asset", `<i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}`) : ""}
       ${r.serialNumber ? row("Serial Number", escHtml(r.serialNumber)) : ""}
       ${row("Description", `<div style="white-space:pre-wrap;">${escHtml(r.problemDescription)}</div>`)}
       ${row("Assigned Technician", escHtml(r.assignedTechnician || "—"))}
       ${row("Priority", priorityBadge(r.priority))}
       ${row("Status", statusBadge(r.status))}
-      ${row("Created", escHtml(formatDate(r.created_at)))}`;
+      ${row("Created", escHtml(formatDate(r.created_at)))}
+      ${renderAdminFeedbackForTechnician(r.admin_feedback)}`;
   } catch (err) {
     if (body)
       body.innerHTML = `<div class="alert alert-danger mb-0">${escHtml(ticketErrorMessage(err))}</div>`;
@@ -661,6 +701,8 @@ async function openUpdateModal(requestId, title, currentStatus) {
           <div class="col-sm-3"><span class="text-muted small d-block">Status</span>${statusBadge(r.status)}</div>
           ${r.asset_tag ? `<div class="col-sm-6"><span class="text-muted small d-block">ICT Asset</span><strong><i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}</strong></div>` : ""}
           <div class="col-sm-6"><span class="text-muted small d-block"><i class="bi bi-geo-alt me-1"></i>Location</span><strong>${escHtml(r.location || "Not provided")}</strong></div>
+          
+          ${r.category ? `<div class="col-sm-6"><span class="text-muted small d-block">Category</span><strong>${escHtml(r.category)}</strong></div>` : ""}
           <div class="col-12"><span class="text-muted small d-block">Description</span>
             <div class="small p-2 bg-white border rounded" style="max-height:80px;overflow-y:auto;">${escHtml(r.problemDescription)}</div>
           </div>
@@ -859,7 +901,7 @@ async function initTechFeedbackPage() {
 
   try {
     const { data } = await apiRequest("/technicians/my/assignments");
-    renderTechFeedbackCards(data);
+    renderTechFeedbackCards(await loadTechnicianFeedbackDetails(data));
   } catch (err) {
     showToast(err.message, "danger");
   }
@@ -900,7 +942,7 @@ function renderTechFeedbackCards(assignments) {
             ${escHtml(r.title || `Ticket ${r.ticketId}`)}
           </h6>
           <div class="text-muted small mb-2">
-            <i class="bi bi-tag me-1"></i>${escHtml(r.equipmentType || "—")}
+            <i class="bi bi-tag me-1"></i>${escHtml(r.equipmentType || "—")}${r.category ? ` · ${escHtml(r.category)}` : ""}
             ${r.department ? `&nbsp;·&nbsp;<i class="bi bi-building me-1"></i>${escHtml(r.department)}` : ""}
           </div>
           <div class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${escHtml(r.location || "Not provided")}</div>
@@ -908,13 +950,33 @@ function renderTechFeedbackCards(assignments) {
             ${statusBadge(r.status)}
             ${
               r.has_feedback
-                ? `<span class="badge bg-success ms-1">Reported</span>`
-                : `<span class="badge bg-light text-dark border ms-1">No report yet</span>`
+                ? `<span class="badge bg-success ms-1">Feedback added</span>`
+                : `<span class="badge bg-light text-dark border ms-1">No feedback yet</span>`
             }
           </div>
           <div class="text-muted" style="font-size:.78rem;">
             <i class="bi bi-calendar3 me-1"></i>Assigned: ${formatDate(r.assigned_at)}
           </div>
+          ${
+            r.technician_feedback
+              ? `
+            <div class="feedback-card mt-3">
+              <div class="feedback-card-header">
+                <h6 class="feedback-card-title"><i class="bi bi-chat-left-text me-1"></i>Technician Feedback</h6>
+                ${statusBadge(r.technician_feedback.status)}
+              </div>
+              <div class="feedback-card-body">
+                <div class="text-muted small fw-semibold mb-1">Feedback message</div>
+                <div class="feedback-message">${escHtml([r.technician_feedback.diagnosis, r.technician_feedback.workPerformed, r.technician_feedback.resolution].filter(Boolean).join(" "))}</div>
+                <div class="feedback-meta">
+                  <span class="feedback-meta-item"><i class="bi bi-person"></i>${escHtml(r.technician_feedback.technician_name || "Technician")}</span>
+                  <span class="feedback-meta-item"><i class="bi bi-calendar3"></i>${formatDateTime(r.technician_feedback.submittedAt)}</span>
+                  <span class="feedback-meta-item"><i class="bi bi-ticket-detailed"></i>${escHtml(r.ticketId || r.ticket_id)}</span>
+                </div>
+              </div>
+            </div>`
+              : ""
+          }
         </div>
         <div class="card-footer bg-transparent border-top-0 px-3 pb-3">
           <div class="d-grid gap-2">
@@ -923,17 +985,17 @@ function renderTechFeedbackCards(assignments) {
                 ? `<button class="btn btn-outline-primary btn-sm fw-semibold btn-view-report"
                          data-id="${escHtml(r.ticket_id)}" data-title="${escHtml(r.title || "")}"
                          data-bs-toggle="modal" data-bs-target="#viewReportModal">
-                   <i class="bi bi-file-earmark-text me-1"></i>View Report
+                   <i class="bi bi-chat-left-text me-1"></i>View Feedback
                  </button>
                  <button class="btn btn-primary btn-sm fw-semibold btn-open-feedback"
                          data-id="${escHtml(r.ticket_id)}" data-title="${escHtml(r.title || "")}"
                          data-bs-toggle="modal" data-bs-target="#feedbackModal">
-                   <i class="bi bi-pencil-square me-1"></i>Edit Report
+                   <i class="bi bi-pencil-square me-1"></i>Edit Feedback
                  </button>`
                 : `<button class="btn btn-primary btn-sm fw-semibold btn-open-feedback"
                          data-id="${escHtml(r.ticket_id)}" data-title="${escHtml(r.title || "")}"
                          data-bs-toggle="modal" data-bs-target="#feedbackModal">
-                   <i class="bi bi-clipboard-plus me-1"></i>Add Report
+                   <i class="bi bi-chat-left-text me-1"></i>Add Feedback
                  </button>`
             }
           </div>
@@ -993,7 +1055,7 @@ function renderAssignedCards(assignments) {
       <div class="card border-0 shadow-sm h-100"
            style="border-left:4px solid ${borderColours[r.priority || "medium"]}!important;">
         <div class="card-body p-3">
-          <div class="d-flex justify-content-between align-items-start mb-2">
+          <div class="d-flex justify_content-between align-items-start mb-2">
             <span class="text-muted small fw-semibold">${escHtml(r.ticketId || r.ticket_id)}</span>
             ${priorityBadge(r.priority || "medium")}
           </div>
@@ -1001,7 +1063,7 @@ function renderAssignedCards(assignments) {
             ${escHtml(r.title || `Ticket ${r.ticketId}`)}
           </h6>
           <div class="text-muted small mb-2">
-            <i class="bi bi-tag me-1"></i>${escHtml(r.equipmentType || "—")}
+            <i class="bi bi-tag me-1"></i>${escHtml(r.equipmentType || "—")}${r.category ? ` · ${escHtml(r.category)}` : ""}
             ${r.department ? `&nbsp;·&nbsp;<i class="bi bi-building me-1"></i>${escHtml(r.department)}` : ""}
           </div>
           <div class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${escHtml(r.location || "Not provided")}</div>
@@ -1061,6 +1123,7 @@ async function loadTaskInfoSection(requestId, sectionId) {
         <div class="col-3"><span class="text-muted small d-block">Priority</span>${priorityBadge(r.priority)}</div>
         <div class="col-3"><span class="text-muted small d-block">Status</span>${statusBadge(r.status)}</div>
         <div class="col-sm-6"><span class="text-muted small d-block">Equipment</span>${escHtml(r.equipmentType || "—")}</div>
+        <div class="col-sm-6"><span class="text-muted small d-block">Category</span>${escHtml(r.category || "—")}</div>
         ${r.asset_tag ? `<div class="col-sm-6"><span class="text-muted small d-block">ICT Asset</span><strong><i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}</strong></div>` : ""}
         <div class="col-sm-6"><span class="text-muted small d-block"><i class="bi bi-geo-alt me-1"></i>Location</span><strong>${escHtml(r.location || "Not provided")}</strong></div>
         <div class="col-12"><span class="text-muted small d-block">Description</span>
@@ -1086,13 +1149,14 @@ function initFeedbackHandlers() {
   const saveBtn = document.getElementById("saveFeedbackBtn");
   if (saveBtn) saveBtn.addEventListener("click", () => submitFeedback());
 
-  const statusSel = document.getElementById("fbStatus");
-  if (statusSel)
-    statusSel.addEventListener("change", updateFeedbackReasonVisibility);
+  const statusSel = document.getElementById("fbResultStatus");
+  if (statusSel) statusSel.addEventListener("change", updateFeedbackPreview);
 
-  const reasonWrap = document.getElementById("fbReasonWrap");
-  if (reasonWrap)
-    reasonWrap.addEventListener("change", updateFeedbackReasonVisibility);
+  // Live preview updates
+  ["fbDiagnosis", "fbWorkPerformed", "fbResolution"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", updateFeedbackPreview);
+  });
 
   // Warn before closing the form if it has unsaved changes
   const modalEl = document.getElementById("feedbackModal");
@@ -1106,54 +1170,41 @@ function initFeedbackHandlers() {
   }
 }
 
-function _feedbackDirty() {
-  if (!document.getElementById("feedbackRequestId")?.value) return false;
-  const f = (id) => document.getElementById(id)?.value.trim() || "";
-  return !!(
-    f("fbDiagnosis") ||
-    f("fbWorkPerformed") ||
-    f("fbPartsUsed") ||
-    f("fbResolution") ||
-    f("fbReasonNotFixed") ||
-    f("fbRecommendation") ||
-    f("fbTechnicianNotes")
-  );
-}
+function updateFeedbackPreview() {
+  const diagnosis = document.getElementById("fbDiagnosis")?.value.trim() || "";
+  const actionTaken =
+    document.getElementById("fbWorkPerformed")?.value.trim() || "";
+  const result = document.getElementById("fbResultStatus")?.value || "";
+  const resolution =
+    document.getElementById("fbResolution")?.value.trim() || "";
+  const previewEl = document.getElementById("feedbackPreview");
 
-function updateFeedbackReasonVisibility() {
-  const status = document.getElementById("fbStatus")?.value;
-  const wrap = document.getElementById("fbReasonWrap");
-  if (!wrap) return;
-  if (status === "Not Fixed") {
-    wrap.classList.remove("d-none");
-  } else {
-    wrap.classList.add("d-none");
-  }
+  if (!previewEl) return;
+
+  const parts = [];
+  if (diagnosis) parts.push(`Diagnosis: ${diagnosis}`);
+  if (actionTaken) parts.push(`Action: ${actionTaken}`);
+  if (result) parts.push(`Status: ${result}`);
+  if (resolution) parts.push(`Result: ${resolution}`);
+
+  previewEl.textContent =
+    parts.join(" | ") ||
+    "Fill in the fields above to see a live preview of your feedback.";
 }
 
 function resetFeedbackForm() {
-  [
-    "fbDiagnosis",
-    "fbWorkPerformed",
-    "fbPartsUsed",
-    "fbResolution",
-    "fbReasonNotFixed",
-    "fbRecommendation",
-    "fbTechnicianNotes",
-  ].forEach((id) => {
+  ["fbDiagnosis", "fbWorkPerformed", "fbResolution"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
-  const status = document.getElementById("fbStatus");
-  if (status) status.value = "Fixed";
-  const conf = document.getElementById("fbConfirmed");
-  if (conf) conf.checked = false;
+  const status = document.getElementById("fbResultStatus");
+  if (status) status.value = "";
   const alert = document.getElementById("feedbackAlert");
   if (alert) {
     alert.classList.add("d-none");
     alert.textContent = "";
   }
-  updateFeedbackReasonVisibility();
+  updateFeedbackPreview();
 }
 
 async function openFeedbackModal(requestId, title) {
@@ -1176,7 +1227,7 @@ async function openFeedbackModal(requestId, title) {
   // "#..." is purely cosmetic — it is never parsed back to build an API call.
   const label = document.getElementById("feedbackModalLabel");
   if (label)
-    label.textContent = `Add Maintenance Report: ${title || `#${requestId}`}`;
+    label.textContent = `Add Technician Feedback: ${title || `#${requestId}`}`;
 
   const info = document.getElementById("feedbackTaskInfo");
   if (info) {
@@ -1191,6 +1242,7 @@ async function openFeedbackModal(requestId, title) {
           <div class="col-sm-4"><span class="text-muted small d-block">Priority</span>${priorityBadge(r.priority)}</div>
           <div class="col-sm-4"><span class="text-muted small d-block">Status</span>${statusBadge(r.status)}</div>
           <div class="col-sm-6"><span class="text-muted small d-block">Equipment</span>${escHtml(r.equipmentType || "—")}</div>
+          <div class="col-sm-6"><span class="text-muted small d-block">Category</span>${escHtml(r.category || "—")}</div>
           <div class="col-sm-6"><span class="text-muted small d-block">Requester</span>${escHtml(r.requester_name || "—")}</div>
           <div class="col-sm-6"><span class="text-muted small d-block"><i class="bi bi-geo-alt me-1"></i>Location</span><strong>${escHtml(r.location || "Not provided")}</strong></div>
           ${r.asset_tag ? `<div class="col-12"><span class="text-muted small d-block">ICT Asset</span><strong><i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}</strong></div>` : ""}
@@ -1214,6 +1266,9 @@ async function openFeedbackModal(requestId, title) {
   );
   if (!m) new bootstrap.Modal(document.getElementById("feedbackModal")).show();
   else m.show();
+
+  // Initialize live preview after modal is shown
+  setTimeout(updateFeedbackPreview, 100);
 }
 
 async function openEditFeedbackModal(requestId, title, report) {
@@ -1247,23 +1302,20 @@ async function openEditFeedbackModal(requestId, title, report) {
   };
   set("fbDiagnosis", report.diagnosis);
   set("fbWorkPerformed", report.workPerformed);
-  set("fbPartsUsed", report.partsUsed);
   set("fbResolution", report.resolution);
-  set("fbStatus", report.status || "Fixed");
-  set("fbReasonNotFixed", report.reasonNotFixed);
-  set("fbRecommendation", report.recommendation);
-  set("fbTechnicianNotes", report.technicianNotes);
-  updateFeedbackReasonVisibility();
-
+  set("fbResultStatus", report.status || "");
   const label = document.getElementById("feedbackModalLabel");
   if (label)
-    label.textContent = `Edit Maintenance Report: ${title || `#${requestId}`}`;
+    label.textContent = `Edit Technician Feedback: ${title || `#${requestId}`}`;
 
   const m = bootstrap.Modal.getInstance(
     document.getElementById("feedbackModal"),
   );
   if (!m) new bootstrap.Modal(document.getElementById("feedbackModal")).show();
   else m.show();
+
+  // Initialize live preview after modal is shown and form is populated
+  setTimeout(updateFeedbackPreview, 100);
 }
 
 async function submitFeedback() {
@@ -1280,16 +1332,8 @@ async function submitFeedback() {
   const body = {
     diagnosis: document.getElementById("fbDiagnosis").value.trim(),
     workPerformed: document.getElementById("fbWorkPerformed").value.trim(),
-    partsUsed: document.getElementById("fbPartsUsed").value.trim() || null,
-    status: document.getElementById("fbStatus").value,
+    status: document.getElementById("fbResultStatus").value,
     resolution: document.getElementById("fbResolution").value.trim(),
-    reasonNotFixed:
-      document.getElementById("fbReasonNotFixed").value.trim() || null,
-    recommendation:
-      document.getElementById("fbRecommendation").value.trim() || null,
-    technicianNotes:
-      document.getElementById("fbTechnicianNotes").value.trim() || null,
-    technicianConfirmed: document.getElementById("fbConfirmed").checked,
   };
 
   if (!body.diagnosis)
@@ -1306,20 +1350,12 @@ async function submitFeedback() {
       "Resolution summary is required.",
       "warning",
     );
-  if (body.status === "Not Fixed" && !body.reasonNotFixed) {
+  if (!body.status)
     return showAlert(
       "feedbackAlert",
-      "Please provide a reason why the issue is not fixed.",
+      "Current result/status is required.",
       "warning",
     );
-  }
-  if (!body.technicianConfirmed) {
-    return showAlert(
-      "feedbackAlert",
-      "Please confirm that this report accurately reflects the work performed.",
-      "warning",
-    );
-  }
 
   setLoading("saveFeedbackBtn", "saveFeedbackSpinner", true);
   try {
@@ -1340,8 +1376,8 @@ async function submitFeedback() {
     );
     showToast(
       _fbMode === "edit"
-        ? "Maintenance report updated."
-        : "Maintenance report submitted.",
+        ? "Technician feedback updated."
+        : "Technician feedback submitted.",
       "success",
     );
     bootstrap.Modal.getInstance(
@@ -1358,7 +1394,10 @@ async function submitFeedback() {
       const fbListEl = document.getElementById("techFeedbackList");
       const newData = await apiRequest("/technicians/my/assignments");
       if (listEl) renderAssignedCards(newData.data);
-      if (fbListEl) renderTechFeedbackCards(newData.data);
+      if (fbListEl)
+        renderTechFeedbackCards(
+          await loadTechnicianFeedbackDetails(newData.data),
+        );
     }
   } catch (err) {
     showAlert("feedbackAlert", err.message, "danger");
@@ -1383,18 +1422,20 @@ async function viewFeedbackReport(requestId) {
   else m.show();
 
   let title = "";
+  let ticketLabel = requestId;
   try {
     const { data: r } = await apiRequest(
       `/tickets/${encodeURIComponent(requestId)}`,
     );
     title = r.title || r.ticketId || requestId;
+    ticketLabel = r.ticketId || r.id || requestId;
   } catch (_) {}
 
   try {
     const { data: report } = await apiRequest(
       `/tickets/${encodeURIComponent(requestId)}/technician-feedback`,
     );
-    if (body) body.innerHTML = renderReportView(report, title, requestId);
+    if (body) body.innerHTML = renderReportView(report, title, ticketLabel);
     const editBtn = document.getElementById("editReportBtn");
     if (editBtn) {
       editBtn.addEventListener("click", () => {
@@ -1418,30 +1459,37 @@ function renderReportView(report, title, requestId) {
         ? '<span class="badge bg-danger">Not Fixed</span>'
         : '<span class="badge bg-warning text-dark">In Progress</span>';
 
-  const row = (label, value, isBlock = false) => `
-    <div class="mb-3">
-      <div class="text-muted small fw-semibold mb-1">${escHtml(label)}</div>
-      <div class="small p-2 bg-light rounded" style="white-space:pre-wrap;">${value ? escHtml(value) : '<span class="text-muted">—</span>'}</div>
-    </div>`;
+  const message = [report.diagnosis, report.workPerformed, report.resolution]
+    .filter(Boolean)
+    .join(" ");
 
   return `
-    <h6 class="fw-bold mb-1">${escHtml(title || `Request #${requestId}`)}</h6>
-    <div class="d-flex gap-2 align-items-center mb-3">${statusBadgeHtml}
-      <span class="text-muted small">Submitted ${report.submittedAt ? formatDateTime(report.submittedAt) : "—"}</span>
-      ${report.completionDate ? `<span class="text-muted small">· Completed ${formatDateTime(report.completionDate)}</span>` : ""}
+    <div class="feedback-card">
+      <div class="feedback-card-header">
+        <h6 class="feedback-card-title">${escHtml(title || "Technician Feedback")}</h6>
+        ${statusBadgeHtml}
+      </div>
+      <div class="feedback-card-body">
+        <div class="text-muted small fw-semibold mb-1">Feedback message</div>
+        <div class="feedback-message">${escHtml(message || "No feedback message available.")}</div>
+        <div class="feedback-meta">
+          <span class="feedback-meta-item"><i class="bi bi-person"></i>${escHtml(report.technician_name || "Technician")}</span>
+          <span class="feedback-meta-item"><i class="bi bi-calendar3"></i>${report.submittedAt ? formatDateTime(report.submittedAt) : "—"}</span>
+          <span class="feedback-meta-item"><i class="bi bi-ticket-detailed"></i>${escHtml(requestId)}</span>
+        </div>
+        <div class="feedback-detail-list mt-3">
+          <div><strong>Diagnosis</strong><span>${escHtml(report.diagnosis || "—")}</span></div>
+          <div><strong>Action taken</strong><span>${escHtml(report.workPerformed || "—")}</span></div>
+          <div><strong>Current result/status</strong><span>${escHtml(report.resolution || "—")}</span></div>
+        </div>
+      </div>
     </div>
-    ${row("Diagnosis / Identified Problem", report.diagnosis)}
-    ${row("Work Performed", report.workPerformed)}
-    ${row("Parts / Materials Used", report.partsUsed)}
-    ${row("Resolution Summary", report.resolution)}
-    ${report.status === "Not Fixed" ? row("Reason Not Fixed", report.reasonNotFixed) : ""}
-    ${row("Recommendation", report.recommendation)}
-    ${row("Technician Notes (internal)", report.technicianNotes)}
-    <div class="d-flex justify-content-end border-top pt-3">
+    <div class="d-flex justify-content-end border-top pt-3 mt-3">
       <button type="button" class="btn btn-outline-primary btn-sm" id="editReportBtn">
-        <i class="bi bi-pencil me-1"></i>Edit Report
+        <i class="bi bi-pencil me-1"></i>Edit Feedback
       </button>
-    </div>`;
+    </div>
+  `;
 }
 
 /* ── Advance a ticket through the real backend transition chain.
@@ -1741,7 +1789,7 @@ function renderHistoryTable(completed, maintMap) {
       <tr>
         <td><strong class="text-primary">${escHtml(r.ticketId || r.ticket_id)}</strong></td>
         <td>${escHtml(r.title || "—")}</td>
-        <td><span class="badge bg-light text-dark border">${escHtml(r.equipmentType || "—")}</span></td>
+        <td><span class="badge bg-light text-dark border">${escHtml(r.equipmentType || "—")}</span>${r.device ? `<div class="small text-muted">${escHtml(r.device)}</div>` : ""}</td>
         <td>${escHtml(r.requester_name || "—")}</td>
         <td>${completedAt}</td>
         <td><span class="text-muted">—</span></td>
@@ -1791,6 +1839,8 @@ async function viewHistoryDetail(requestId, btn) {
           <div class="small text-muted fw-semibold mb-1">Request Details</div>
           <div class="small"><strong>Description:</strong> ${escHtml(r.problemDescription || "—")}</div>
           <div class="small mt-1"><strong>Equipment:</strong> ${escHtml(r.equipmentType || "—")}</div>
+          ${r.device ? `<div class="small mt-1"><strong>Device / Equipment:</strong> ${escHtml(r.device)}</div>` : ""}
+          ${r.category ? `<div class="small mt-1"><strong>Category:</strong> ${escHtml(r.category)}</div>` : ""}
           ${r.asset_tag ? `<div class="small mt-1"><strong>ICT Asset:</strong> ${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}</div>` : ""}
           <div class="small mt-1"><strong>Department:</strong> ${escHtml(r.department || "—")}</div>
         </div>
@@ -1829,6 +1879,8 @@ function exportHistoryCSV() {
     "ID",
     "Title",
     "Equipment Type",
+    "Device / Equipment",
+    "Category",
     "Requester",
     "Department",
     "Assigned Date",
@@ -1838,6 +1890,8 @@ function exportHistoryCSV() {
     r.ticketId,
     `"${(r.title || "").replace(/"/g, '""')}"`,
     `"${(r.equipmentType || "").replace(/"/g, '""')}"`,
+    `"${(r.device || "").replace(/"/g, '""')}"`,
+    `"${(r.category || "").replace(/"/g, '""')}"`,
     `"${(r.requester_name || "").replace(/"/g, '""')}"`,
     `"${(r.department || "").replace(/"/g, '""')}"`,
     formatDate(r.assigned_at),
@@ -1885,7 +1939,7 @@ async function populateAssignRequestSelect() {
         .map((r) => {
           const id = String(r.id || r._id || "");
           if (!id || !/^[0-9a-f]{24}$/i.test(id)) return "";
-          return `<option value="${id}">${escHtml(r.ticketId || id)} — ${escHtml((r.problemDescription || "").substring(0, 60))}</option>`;
+          return `<option value="${id}" data-priority="${escHtml(r.priority || "medium")}">${escHtml(r.ticketId || id)} — ${escHtml((r.problemDescription || "").substring(0, 60))}</option>`;
         })
         .join("");
     }
@@ -1895,6 +1949,24 @@ async function populateAssignRequestSelect() {
 
   sel.innerHTML = options;
   if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
+  updateAssignPriority();
+}
+
+function updateAssignPriority() {
+  const requestSelect = document.getElementById("assignRequest");
+  const prioritySelect = document.getElementById("assignPriority");
+  if (!requestSelect || !prioritySelect) return;
+  const selected = requestSelect.options[requestSelect.selectedIndex];
+  const priority = selected?.dataset.priority || "";
+  prioritySelect.value = priority;
+  updateAssignPriorityStyle();
+}
+
+function updateAssignPriorityStyle() {
+  const prioritySelect = document.getElementById("assignPriority");
+  if (!prioritySelect) return;
+  const priority = prioritySelect.value;
+  prioritySelect.className = `form-select${priority ? ` priority-${priority}` : ""}`;
 }
 
 async function initAdminTechnicians() {
@@ -1911,12 +1983,19 @@ async function initAdminTechnicians() {
 
   // Assign request modal dropdown
   await populateAssignRequestSelect();
+  document
+    .getElementById("assignRequest")
+    ?.addEventListener("change", updateAssignPriority);
+  document
+    .getElementById("assignPriority")
+    ?.addEventListener("change", updateAssignPriorityStyle);
 
   document
     .getElementById("confirmAssignBtn")
     ?.addEventListener("click", async () => {
       const techId = document.getElementById("assignTechId").value;
       const requestId = document.getElementById("assignRequest").value;
+      const priority = document.getElementById("assignPriority").value;
       const notes = document.getElementById("assignNotes")?.value || "";
 
       if (!techId) {
@@ -1940,6 +2019,10 @@ async function initAdminTechnicians() {
         );
         return;
       }
+      if (!priority) {
+        showAlert("assignAlert", "Please select a priority.", "warning");
+        return;
+      }
       if (
         !/^[0-9a-f]{24}$/i.test(techId) ||
         !/^[0-9a-f]{24}$/i.test(requestId)
@@ -1952,7 +2035,12 @@ async function initAdminTechnicians() {
       try {
         await apiRequest("/assignments", {
           method: "POST",
-          body: { ticket_id: requestId, technician_id: techId, notes },
+          body: {
+            ticket_id: requestId,
+            technician_id: techId,
+            notes,
+            priority,
+          },
         });
         showToast("Technician assigned successfully.", "success");
         bootstrap.Modal.getInstance(
@@ -2140,6 +2228,7 @@ function openAssignModal(techId) {
   const alert = document.getElementById("assignAlert");
   if (alert) alert.classList.add("d-none");
   document.getElementById("assignNotes").value = "";
+  updateAssignPriority();
 }
 
 /* ── Add / Edit Technician ──────────────────────────────────── */
