@@ -22,102 +22,104 @@
   --admin-ease:       all .18s ease;
 }
 
-/* ── Admin Admin Content / Layout ──────────────────────────── */
-.dashboard-body .main-content,
-.dashboard-body .flex-grow-1:not(#sidebar) {
-  min-width: 0;                      /* prevents grid overflow on small screens */
+/* ── Maintenance Request Management table ───────────────────────
+   Fixed, balanced tracks keep long values from stretching one column and
+   opening gaps elsewhere. The wrapper remains horizontally scrollable on
+   narrow screens, while long text stays readable inside its own column. */
+.dashboard-body .requests-grid {
+  width: 100%;
+  min-width: 1810px;
+  table-layout: fixed;
 }
 
-/* ── Admin Sidebar ─────────────────────────────────────────── */
-body.dashboard-body {
-  --sbw: 250px;
+.dashboard-body .requests-grid th,
+.dashboard-body .requests-grid td {
+  padding: .55rem .6rem;
+  vertical-align: middle;
 }
 
-#sidebar.sidebar {
-  background: linear-gradient(180deg, #111827 0%, #0b1220 100%) !important;
-  border-right: 1px solid rgba(255,255,255,.06);
-  box-shadow: inset -1px 0 0 rgba(255,255,255,.03);
+.dashboard-body .requests-grid th:nth-child(1),
+.dashboard-body .requests-grid td:nth-child(1) { width: 90px; }
+.dashboard-body .requests-grid th:nth-child(2),
+.dashboard-body .requests-grid td:nth-child(2) { width: 180px; }
+.dashboard-body .requests-grid th:nth-child(3),
+.dashboard-body .requests-grid td:nth-child(3) { width: 140px; }
+.dashboard-body .requests-grid th:nth-child(4),
+.dashboard-body .requests-grid td:nth-child(4) { width: 135px; }
+.dashboard-body .requests-grid th:nth-child(5),
+.dashboard-body .requests-grid td:nth-child(5) { width: 150px; }
+.dashboard-body .requests-grid th:nth-child(6),
+.dashboard-body .requests-grid td:nth-child(6) { width: 130px; }
+.dashboard-body .requests-grid th:nth-child(7),
+.dashboard-body .requests-grid td:nth-child(7) { width: 155px; }
+.dashboard-body .requests-grid th.col-issue-type,
+.dashboard-body .requests-grid td.col-issue-type { width: 168px; }
+.dashboard-body .requests-grid th.col-priority,
+.dashboard-body .requests-grid td.col-priority { width: 92px; }
+.dashboard-body .requests-grid th:nth-child(10),
+.dashboard-body .requests-grid td:nth-child(10) { width: 140px; }
+.dashboard-body .requests-grid th:nth-child(11),
+.dashboard-body .requests-grid td:nth-child(11) { width: 145px; }
+.dashboard-body .requests-grid th:nth-child(12),
+.dashboard-body .requests-grid td:nth-child(12) { width: 100px; }
+.dashboard-body .requests-grid th:nth-child(13),
+.dashboard-body .requests-grid td:nth-child(13) { width: 100px; }
+.dashboard-body .requests-grid th:nth-child(14),
+.dashboard-body .requests-grid td:nth-child(14) { width: 85px; }
+
+.dashboard-body .requests-grid th:nth-child(8),
+.dashboard-body .requests-grid th:nth-child(11) {
+  white-space: normal;
+  line-height: 1.25;
 }
 
-#sidebar .nav-link {
-  padding: .5rem .85rem;
-  border-radius: .5rem;
-  font-size: .9375rem;
-  color: rgba(226,232,240,.74) !important;
-  transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+.dashboard-body .requests-grid td:nth-child(1),
+.dashboard-body .requests-grid td:nth-child(9),
+.dashboard-body .requests-grid td:nth-child(12),
+.dashboard-body .requests-grid td:nth-child(13),
+.dashboard-body .requests-grid td:nth-child(14) {
+  white-space: nowrap;
 }
 
-#sidebar .nav-link:hover:not(.active) {
-  color: #fff !important;
+.dashboard-body .requests-grid td:nth-child(3),
+.dashboard-body .requests-grid td:nth-child(10) {
+  overflow-wrap: anywhere;
 }
 
-#sidebar .nav-link i.bi { transition: color .18s ease; }
-
-#sidebar .nav-link.active {
-  background: linear-gradient(90deg, rgba(30,64,170,.34), rgba(30,64,170,.06)) !important;
-  color: #fff !important;
-  font-weight: 600;
-  border: 1px solid rgba(96,165,250,.35);
-  box-shadow: inset 3px 0 0 0 var(--primary), 0 6px 16px -10px rgba(30,64,170,.9);
+.dashboard-body .requests-grid td:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-#sidebar .nav-link:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(96,165,250,.55);
+.dashboard-body .requests-grid td:nth-child(7) .category-text,
+.dashboard-body .requests-grid .department-text {
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  vertical-align: middle;
 }
 
-#sidebar .sidebar-brand i { color: var(--primary-border); }
-
-#sidebar .sidebar-brand div {
-  letter-spacing: .5px;
-  text-transform: uppercase;
+.dashboard-body .requests-grid .location-text,
+.dashboard-body .requests-grid .equipment-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  vertical-align: top;
 }
 
-/* ── Topbar ────────────────────────────────────────────────── */
-.topbar {
-  min-height: var(--topbar-height);
-  background: rgba(255,255,255,.94) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--admin-border) !important;
+.dashboard-body .requests-grid .issue-type-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
-
-/* ── KPI Cards ─────────────────────────────────────────────── */
-/* Dashboard KPI cards: `card border-0 shadow-sm p-3 d-flex flex-row ... gap-3` */
-.dashboard-body .card.p-3.d-flex.flex-row.align-items-center.gap-3 {
-  border-radius: var(--radius-lg);
-  box-shadow: var(--admin-shadow-card) !important;
-  border: 1px solid var(--admin-border-soft) !important;
-  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-}
-
-.dashboard-body .card.p-3.d-flex.flex-row.align-items-center.gap-3:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--admin-shadow-hover) !important;
-  border-color: var(--admin-border) !important;
-}
-
-/* KPI icon chips: `bg-* bg-opacity-10 p-3 rounded` */
-.dashboard-body .card .bg-opacity-10.p-3.rounded {
-  border-radius: var(--radius-md) !important;
-  flex: 0 0 auto;
-}
-
-/* KPI numbers + labels */
-.dashboard-body .card h4.fw-bold.mb-0 {
-  font-size: 1.75rem;
-  letter-spacing: -.02em;
-  line-height: 1.1;
-}
-
-.dashboard-body .card small.text-muted {
-  display: block;
-  margin-top: .1rem;
-  font-size: .85rem;
-  letter-spacing: .1px;
-  color: var(--admin-muted) !important;
-}
-
 /* Legacy `.kpi-card` (kept for compatibility) */
 .kpi-card {
   border-radius: var(--radius-lg);
@@ -896,3 +898,123 @@ body.dashboard-body {
 #fbKpiTotal,
 #fbKpiLow,
 #fbKpiPending { font-variant-numeric: tabular-nums; }
+
+/* The shared dashboard profile dropdown (.admin-profile-*) is styled in
+   style.css, not here. It now serves Requester, Technician and Admin
+   alike, so it cannot live in the admin-only stylesheet. */
+
+/* ── Maintenance Request Management table — column system ───────
+   Fourteen columns in one auto-layout table let the browser distribute
+   width purely by content, so a single long value opened a wide empty
+   gap before the next column and the row drifted apart in the middle.
+   The table is now table-layout:fixed driven by an explicit <colgroup>,
+   which makes every column width deterministic and identical on every
+   row. Because fixed layout no longer lets a long value widen its
+   column, each cell either wraps inside its measured width or truncates
+   with an ellipsis — nothing is ever clipped.
+   Column order, names and data are unchanged.
+
+   Every rule below is prefixed with .dashboard-body on purpose: the
+   generic rule at the top of this file
+   (.dashboard-body .table td, .dashboard-body .table th) sets
+   white-space/overflow-wrap at a specificity that would otherwise win. */
+.dashboard-body .requests-grid {
+  table-layout: fixed;
+  /* The 14 columns need ~103rem to stay readable. .table-responsive
+     converts the remainder into horizontal scroll on smaller screens
+     rather than crushing the columns. */
+  min-width: 103rem;
+}
+
+/* One horizontal padding for every cell, so the visual gap between any
+   two adjacent columns is identical across all 14 of them. */
+.dashboard-body .requests-grid th,
+.dashboard-body .requests-grid td {
+  padding-left: .6rem;
+  padding-right: .6rem;
+  vertical-align: middle;
+}
+
+/* ── Measured widths, in the required column order ──────────────
+   #ID -> Title -> Requester -> Dept -> Location -> Equipment ->
+   Category -> Issue Type -> Priority -> Technician ->
+   Assignment Status -> Status -> Date -> Actions                    */
+.dashboard-body .requests-grid .c-id                { width: 6rem;   }
+.dashboard-body .requests-grid .c-title             { width: 11rem;  }
+.dashboard-body .requests-grid .c-requester         { width: 8rem;   }
+.dashboard-body .requests-grid .c-department        { width: 8rem;   }
+.dashboard-body .requests-grid .c-location          { width: 8rem;   }
+.dashboard-body .requests-grid .c-equipment         { width: 6.5rem; }
+.dashboard-body .requests-grid .c-category          { width: 7.5rem; }
+.dashboard-body .requests-grid .c-issue-type        { width: 9.5rem; }
+.dashboard-body .requests-grid .c-priority          { width: 6.5rem; }
+.dashboard-body .requests-grid .c-technician        { width: 8rem;   }
+.dashboard-body .requests-grid .c-assignment-status { width: 8rem;   }
+.dashboard-body .requests-grid .c-status            { width: 6.5rem; }
+.dashboard-body .requests-grid .c-date              { width: 6rem;   }
+.dashboard-body .requests-grid .c-actions           { width: 3.5rem; }
+
+/* Base wrapping for every cell at every width. This deliberately
+   overrides responsive.css, which forces
+   .table td, .table th { white-space: nowrap } below 768px. That rule
+   assumes a narrow auto-layout table, but this one keeps its full 103rem
+   measure and scrolls sideways, so nowrap would push long values out of
+   their fixed column and over the next one. Scoped by specificity, so it
+   wins regardless of the order the two stylesheets are linked in. */
+.dashboard-body .requests-grid th,
+.dashboard-body .requests-grid td { white-space: normal; }
+
+/* Short, fixed-content columns stay on one line. Their contents are
+   measured to fit ("MAU-0059", "Critical", "12 Oct 2026"), so this
+   prevents wrapping without truncating anything real. */
+.dashboard-body .requests-grid .c-id,
+.dashboard-body .requests-grid .c-priority,
+.dashboard-body .requests-grid .c-status,
+.dashboard-body .requests-grid .c-assignment-status,
+.dashboard-body .requests-grid .c-date,
+.dashboard-body .requests-grid .c-actions {
+  white-space: nowrap;
+}
+
+.dashboard-body .requests-grid .c-actions { text-align: center; }
+
+/* Title is the one deliberately flexible column: it ellipsises instead
+   of wrapping, so every row keeps a consistent height. The full value
+   remains available through its title attribute. */
+.dashboard-body .requests-grid .c-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Bootstrap badges carry white-space:nowrap, which is precisely what
+   let a long department name widen its column. Let the text fields fold
+   inside the measured width instead of pushing it wider. */
+.dashboard-body .requests-grid .department-text,
+.dashboard-body .requests-grid .category-text {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.dashboard-body .requests-grid .location-text,
+.dashboard-body .requests-grid .equipment-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+
+/* Issue Type clamps to two lines so a long service type cannot grow the
+   row. The clamp sits on the inner <span>, never on the <td>: turning a
+   table cell into a -webkit-box breaks its row layout. */
+.dashboard-body .requests-grid .issue-type-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}

@@ -6,15 +6,15 @@
  * status lifecycle: submitted -> under_review -> assigned -> accepted -> in_progress -> resolved -> closed
  */
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 /* ── Auto-increment counter for ticketId ───────────────────── */
 const CounterSchema = new mongoose.Schema({
-  _id:        { type: String, required: true },
-  seq:        { type: Number, default: 0 },
+  _id: { type: String, required: true },
+  seq: { type: Number, default: 0 },
 });
 
-const Counter = mongoose.model('Counter', CounterSchema);
+const Counter = mongoose.model("Counter", CounterSchema);
 
 /* ── Ticket Schema ─────────────────────────────────────────── */
 const ticketSchema = new mongoose.Schema(
@@ -26,8 +26,12 @@ const ticketSchema = new mongoose.Schema(
     },
     requester: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'Requester is required.'],
+      ref: "User",
+      required: [true, "Requester is required."],
+    },
+    submissionKey: {
+      type: String,
+      default: null,
     },
     department: {
       type: String,
@@ -44,21 +48,48 @@ const ticketSchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
+    /* Device Type is stored as a nullable plain String for compatibility with
+       historical records. New requester submissions require a supported
+       value and matching category in ticketController.
+
+       This was a Mongoose enum of 10 hard-coded values. It is now a plain
+       String so the full admin-managed catalogue (models/DeviceType.js) can be
+       used and so it can be widened without a schema change.
+
+       Dropping the enum is safe for existing data: an enum is only a write-time
+       validator, and every stored document already holds a plain string. All
+       legacy values ("Network", "UPS / Power Supply", "Keyboard / Mouse",
+       "Other", ...) therefore keep reading and displaying exactly as before.
+
+       The value is a denormalised snapshot of the device NAME, not a reference
+       to a DeviceType row, so deactivating or deleting a catalogue entry can
+       never rewrite or hide a historical ticket.
+
+      The old default "Other" is gone: it silently mislabelled every
+      device-less request. Historical/device-less rows remain null. */
     equipmentType: {
       type: String,
-      enum: [
-        'Desktop Computer',
-        'Laptop',
-        'Network',
-        'Printer',
-        'Scanner',
-        'Monitor',
-        'Projector',
-        'UPS / Power Supply',
-        'Keyboard / Mouse',
-        'Other',
-      ],
-      default: 'Other',
+      trim: true,
+      maxlength: [120, "Device type must be no more than 120 characters."],
+      default: null,
+    },
+    /* Canonical device type field kept separate from the legacy equipmentType
+       snapshot so the request flow can store category/device/issue fields
+       independently while older code keeps reading equipmentType. */
+    deviceType: {
+      type: String,
+      trim: true,
+      maxlength: [120, "Device type must be no more than 120 characters."],
+      default: null,
+    },
+    /* Free-text device name supplied by the requester when the selected
+       Device Type is "Other ICT Device". Only meaningful alongside
+       equipmentType === "Other ICT Device"; cleared otherwise. */
+    otherDeviceName: {
+      type: String,
+      trim: true,
+      maxlength: [120, "Device name must be no more than 120 characters."],
+      default: null,
     },
     device: {
       type: String,
@@ -77,7 +108,7 @@ const ticketSchema = new mongoose.Schema(
     },
     assetId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'ICTAsset',
+      ref: "ICTAsset",
       default: null,
     },
     serialNumber: {
@@ -93,6 +124,11 @@ const ticketSchema = new mongoose.Schema(
     /* ── Network Maintenance specific fields (optional; used only when
        category === 'Network Maintenance') ───────────────────────────── */
     serviceType: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    issueType: {
       type: String,
       trim: true,
       default: null,
@@ -119,22 +155,30 @@ const ticketSchema = new mongoose.Schema(
     },
     problemDescription: {
       type: String,
-      required: [true, 'Problem description is required.'],
+      required: [true, "Problem description is required."],
       trim: true,
     },
     priority: {
       type: String,
-      enum: ['low', 'medium', 'high', 'critical'],
-      default: 'medium',
+      enum: ["low", "medium", "high", "critical"],
+      default: "medium",
     },
     status: {
       type: String,
-      enum: ['submitted', 'under_review', 'assigned', 'accepted', 'in_progress', 'resolved', 'closed'],
-      default: 'submitted',
+      enum: [
+        "submitted",
+        "under_review",
+        "assigned",
+        "accepted",
+        "in_progress",
+        "resolved",
+        "closed",
+      ],
+      default: "submitted",
     },
     assignedTechnician: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       default: null,
     },
     identifiedProblem: {
@@ -172,19 +216,27 @@ const ticketSchema = new mongoose.Schema(
        Purpose: evaluate the ICT SERVICE the requester received.
        This is kept as a subdocument so the full ticket carries it. */
     requesterFeedback: {
-      requesterId:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+      requesterId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null,
+      },
       requesterName: { type: String, trim: true, default: null },
-      overallRating:      { type: Number, min: 1, max: 5, default: null },
-      serviceQuality:      { type: String, trim: true, default: null }, // Excellent/Very Good/Good/Fair/Poor
+      overallRating: { type: Number, min: 1, max: 5, default: null },
+      serviceQuality: { type: String, trim: true, default: null }, // Excellent/Very Good/Good/Fair/Poor
       technicianProfessionalism: { type: String, trim: true, default: null },
-      responseTime:        { type: String, trim: true, default: null }, // Fast/Normal/Slow
-      communication:       { type: String, trim: true, default: null },
-      problemResolution:   { type: String, trim: true, default: null }, // Completely Resolved/Partially Resolved/Not Resolved
-      satisfactionLevel:   { type: String, trim: true, default: null }, // Very Satisfied .. Very Dissatisfied
-      wouldRecommend:      { type: String, enum: ['Yes', 'No', null], default: null },
-      comment:             { type: String, trim: true, default: null },
-      suggestions:         { type: String, trim: true, default: null },
-      submittedAt:         { type: Date, default: null },
+      responseTime: { type: String, trim: true, default: null }, // Fast/Normal/Slow
+      communication: { type: String, trim: true, default: null },
+      problemResolution: { type: String, trim: true, default: null }, // Completely Resolved/Partially Resolved/Not Resolved
+      satisfactionLevel: { type: String, trim: true, default: null }, // Very Satisfied .. Very Dissatisfied
+      wouldRecommend: {
+        type: String,
+        enum: ["Yes", "No", null],
+        default: null,
+      },
+      comment: { type: String, trim: true, default: null },
+      suggestions: { type: String, trim: true, default: null },
+      submittedAt: { type: Date, default: null },
     },
     attachment: {
       type: String,
@@ -196,25 +248,29 @@ const ticketSchema = new mongoose.Schema(
        carries the report along with it. Internal notes stay private
        to technicians and ICT Admins (never exposed to requesters). */
     technicianFeedback: {
-      diagnosis:          { type: String, trim: true, default: null }, // identified problem
-      workPerformed:      { type: String, trim: true, default: null }, // action taken
-      partsUsed:          { type: String, trim: true, default: null },
-      resolution:         { type: String, trim: true, default: null }, // resolution summary (public)
+      diagnosis: { type: String, trim: true, default: null }, // identified problem
+      workPerformed: { type: String, trim: true, default: null }, // action taken
+      partsUsed: { type: String, trim: true, default: null },
+      resolution: { type: String, trim: true, default: null }, // resolution summary (public)
       status: {
         type: String,
-        enum: ['Fixed', 'In Progress', 'Not Fixed'],
+        enum: ["Fixed", "In Progress", "Not Fixed"],
         default: null,
       },
-      reasonNotFixed:     { type: String, trim: true, default: null }, // required when status = 'Not Fixed'
-      recommendation:     { type: String, trim: true, default: null },
-      technicianNotes:    { type: String, trim: true, default: null }, // internal notes (private)
-      technicianConfirmed:{ type: Boolean, default: false },
+      reasonNotFixed: { type: String, trim: true, default: null }, // required when status = 'Not Fixed'
+      recommendation: { type: String, trim: true, default: null },
+      technicianNotes: { type: String, trim: true, default: null }, // internal notes (private)
+      technicianConfirmed: { type: Boolean, default: false },
       technician: {
-        technicianId:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+        technicianId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
         technicianName: { type: String, trim: true, default: null },
       },
-      submittedAt:        { type: Date, default: null },
-      completionDate:     { type: Date, default: null }, // resolved date (public)
+      submittedAt: { type: Date, default: null },
+      completionDate: { type: Date, default: null }, // resolved date (public)
     },
     /* ── Admin Service Feedback (management/quality evaluation) ──
        Management/service-level evaluation submitted by an ICT Admin.
@@ -222,44 +278,61 @@ const ticketSchema = new mongoose.Schema(
        NOT re-record the technical repair and must NOT overwrite the
        requester's original feedback or the technician's original report. */
     adminFeedback: {
-      serviceHandlingQuality:  { type: String, trim: true, default: null }, // Excellent/Good/Satisfactory/Needs Improvement/Poor
-      technicianPerformance:   { type: String, trim: true, default: null }, // Excellent/Good/Satisfactory/Needs Improvement
-      responseTime:            { type: String, trim: true, default: null }, // Excellent/Good/Slow
-      resolutionQuality:       { type: String, trim: true, default: null },
-      documentationQuality:    { type: String, trim: true, default: null },
-      policyCompliance:        { type: String, trim: true, default: null }, // Compliant/Non-Compliant/Partial
-      overallServiceQuality:   { type: String, trim: true, default: null },
-      followUpRequired:        { type: Boolean, default: false },
-      followUpNotes:           { type: String, trim: true, default: null },
-      adminComment:            { type: String, trim: true, default: null }, // required
+      serviceHandlingQuality: { type: String, trim: true, default: null }, // Excellent/Good/Satisfactory/Needs Improvement/Poor
+      technicianPerformance: { type: String, trim: true, default: null }, // Excellent/Good/Satisfactory/Needs Improvement
+      responseTime: { type: String, trim: true, default: null }, // Excellent/Good/Slow
+      resolutionQuality: { type: String, trim: true, default: null },
+      documentationQuality: { type: String, trim: true, default: null },
+      policyCompliance: { type: String, trim: true, default: null }, // Compliant/Non-Compliant/Partial
+      overallServiceQuality: { type: String, trim: true, default: null },
+      followUpRequired: { type: Boolean, default: false },
+      followUpNotes: { type: String, trim: true, default: null },
+      adminComment: { type: String, trim: true, default: null }, // required
       administrativeRecommendation: { type: String, trim: true, default: null },
-      adminConfirmed:          { type: Boolean, default: false },
+      adminConfirmed: { type: Boolean, default: false },
       admin: {
-        adminId:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+        adminId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
         adminName: { type: String, trim: true, default: null },
       },
-      submittedAt:             { type: Date, default: null },
+      submittedAt: { type: Date, default: null },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 /* Frequently filtered/counted by requester, status, and assigned tech. */
 ticketSchema.index({ requester: 1, createdAt: -1 });
+ticketSchema.index(
+  { requester: 1, submissionKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { submissionKey: { $type: "string" } },
+  },
+);
 ticketSchema.index({ status: 1 });
 ticketSchema.index({ assignedTechnician: 1, status: 1 });
 
+/* The admin list endpoint (getAllTickets) always sorts by createdAt desc and
+   usually filters on status. `{ status: 1 }` alone can filter but not order, so
+   Mongo had to sort in memory on every page load. This compound index serves
+   both the filter and the sort for that query. */
+ticketSchema.index({ status: 1, createdAt: -1 });
+
 /* ── Auto-generate ticketId before saving ──────────────────── */
-ticketSchema.pre('save', async function (next) {
+ticketSchema.pre("save", async function (next) {
   if (this.ticketId) return next();
 
   try {
     const counter = await Counter.findByIdAndUpdate(
-      { _id: 'ticketId' },
+      { _id: "ticketId" },
       { $inc: { seq: 1 } },
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     );
-    this.ticketId = `MAU-${String(counter.seq).padStart(4, '0')}`;
+    this.ticketId = `MAU-${String(counter.seq).padStart(4, "0")}`;
     next();
   } catch (err) {
     next(err);
@@ -270,4 +343,4 @@ ticketSchema.index({ department: 1, createdAt: -1 });
 ticketSchema.index({ priority: 1, createdAt: -1 });
 ticketSchema.index({ category: 1, createdAt: -1 });
 
-module.exports = mongoose.model('Ticket', ticketSchema);
+module.exports = mongoose.model("Ticket", ticketSchema);

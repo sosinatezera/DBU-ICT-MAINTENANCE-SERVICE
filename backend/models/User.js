@@ -140,4 +140,8 @@ userSchema.index({ role: 1, status: 1, createdAt: -1 });
 userSchema.index({ fullName: 1 });
 userSchema.index({ department: 1, createdAt: -1 });
 
+/* The public landing page counts active users on every load. `{ role, status }`
+   has status as a trailing field, so it cannot serve that query — this does. */
+userSchema.index({ status: 1 });
+
 module.exports = mongoose.model("User", userSchema);

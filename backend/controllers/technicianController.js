@@ -99,6 +99,7 @@ const getMyTechnicianProfile = async (req, res, next) => {
         role: tech.user?.role,
         profileImage: tech.user?.profileImage || null,
         specialization: tech.specialization,
+        employeeId: tech.employeeId || null,
         available: tech.available,
         availability:
           tech.availability || (tech.available ? "available" : "offline"),
@@ -119,6 +120,11 @@ const getMyAssignments = async (req, res, next) => {
 
     const assignments = await Assignment.find({ technician: tech._id })
       .populate({
+        path: "technician",
+        select: "user",
+        populate: { path: "user", select: "fullName email" },
+      })
+      .populate({
         path: "ticket",
         populate: [{ path: "requester", select: "fullName department" }],
       })
@@ -137,6 +143,10 @@ const getMyAssignments = async (req, res, next) => {
       seen.add(ticketKey);
       acc.push({
         _id: a._id,
+        technician_id: a.technician?._id || null,
+        technician_user_id: a.technician?.user?._id || null,
+        technician_name: a.technician?.user?.fullName || null,
+        technician_email: a.technician?.user?.email || null,
         ticket_id: a.ticket?._id || null,
         ticketId: displayTicketId(a.ticket?.ticketId),
         title:
@@ -145,6 +155,11 @@ const getMyAssignments = async (req, res, next) => {
         status: a.ticket?.status,
         equipmentType: a.ticket?.equipmentType,
         category: a.ticket?.category,
+        /* Issue Type / Service Type is its own field and the technician needs
+           it to act on the job — "which problem or service?" is not derivable
+           from the category or the device. Legacy rows predate the field, so
+           serviceType is the fallback. */
+        issueType: a.ticket?.issueType || a.ticket?.serviceType || null,
         problemDescription: a.ticket?.problemDescription,
         requester_name: a.ticket?.requester?.fullName,
         department: a.ticket?.requester?.department,

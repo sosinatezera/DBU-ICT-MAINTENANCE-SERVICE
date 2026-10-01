@@ -15,10 +15,15 @@ const {
   uploadProfileImage,
   removeProfileImage,
   deleteMyAccount,
+  uploadProfileFile,
+  getProfileFiles,
+  downloadProfileFile,
+  deleteProfileFile,
 } = require("../controllers/userController");
 const { authenticate } = require("../middleware/auth");
 const { authorize } = require("../middleware/authorize");
 const uploadProfile = require("../config/multerProfile");
+const uploadDocuments = require("../config/multerDocuments");
 
 /* ── Self-service routes (any authenticated user) ────────── */
 router.put("/profile", authenticate, updateMyProfile);
@@ -43,6 +48,17 @@ router.post(
 );
 router.delete("/profile-image", authenticate, removeProfileImage);
 router.delete("/profile", authenticate, deleteMyAccount);
+
+/* ── Profile File routes ─────────────────────────────────── */
+router.post(
+  "/profile/files",
+  authenticate,
+  uploadDocuments.single("file"),
+  uploadProfileFile,
+);
+router.get("/profile/files", authenticate, getProfileFiles);
+router.get("/profile/files/:id", authenticate, downloadProfileFile);
+router.delete("/profile/files/:id", authenticate, deleteProfileFile);
 
 /* ── Admin-only routes ──────────────────────────────────── */
 router.get("/", authenticate, authorize("ICT Admin"), getAllUsers);

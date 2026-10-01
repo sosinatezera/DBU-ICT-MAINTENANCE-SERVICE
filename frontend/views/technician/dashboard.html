@@ -119,7 +119,7 @@
         </div>
 
         <!-- KPI Cards -->
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4" id="performanceStats">
           <div class="col-6 col-xl-3">
             <div class="card border-0 shadow-sm h-100">
               <div class="card-body d-flex align-items-center gap-3 p-3">
@@ -127,7 +127,7 @@
                   <i class="bi bi-list-task fs-4" style="color:#2563eb;"></i>
                 </div>
                 <div>
-                  <div class="fw-bold fs-4 mb-0 lh-1" id="totalAssigned">0</div>
+                  <div class="fw-bold fs-4 mb-0 lh-1" id="totalAssigned">—</div>
                   <div class="text-muted small" data-i18n="tech.totalAssigned">Total Assigned</div>
                 </div>
               </div>
@@ -140,7 +140,7 @@
                   <i class="bi bi-hourglass-split fs-4" style="color:#fd7e14;"></i>
                 </div>
                 <div>
-                  <div class="fw-bold fs-4 mb-0 lh-1" id="pendingTasks">0</div>
+                  <div class="fw-bold fs-4 mb-0 lh-1" id="pendingTasks">—</div>
                   <div class="text-muted small" data-i18n="status.pending">Pending</div>
                 </div>
               </div>
@@ -153,7 +153,7 @@
                   <i class="bi bi-gear-wide-connected fs-4" style="color:#0dcaf0;"></i>
                 </div>
                 <div>
-                  <div class="fw-bold fs-4 mb-0 lh-1" id="inProgressTasks">0</div>
+                  <div class="fw-bold fs-4 mb-0 lh-1" id="inProgressTasks">—</div>
                   <div class="text-muted small" data-i18n="status.inProgress">In Progress</div>
                 </div>
               </div>
@@ -166,7 +166,7 @@
                   <i class="bi bi-check-circle-fill fs-4" style="color:#198754;"></i>
                 </div>
                 <div>
-                  <div class="fw-bold fs-4 mb-0 lh-1" id="completedTasks">0</div>
+                  <div class="fw-bold fs-4 mb-0 lh-1" id="completedTasks">—</div>
                   <div class="text-muted small" data-i18n="status.completed">Completed</div>
                 </div>
               </div>
@@ -357,6 +357,7 @@
                         data-i18n="tech.report.maintenanceStatus">Maintenance Status</span> <span
                         class="text-danger">*</span></label>
                     <select class="form-select" id="fbStatus">
+                      <option value="" data-i18n="techfb.selectStatus">-- Select Status --</option>
                       <option value="Fixed" data-i18n="status.fixed">Fixed</option>
                       <option value="In Progress" data-i18n="status.inProgress">In Progress</option>
                       <option value="Not Fixed" data-i18n="status.notFixed">Not Fixed</option>
@@ -504,10 +505,10 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/api-config.js?v=2"></script>
-  <script src="/assets/js/lang.js?v=13"></script>
-  <script src="/assets/js/main.js?v=13"></script>
-  <script src="/assets/js/notifications.js?v=7"></script>
-  <script src="/assets/js/technicians.js?v=8"></script>
+  <script src="/assets/js/lang.js?v=16"></script>
+  <script src="/assets/js/main.js?v=17"></script>
+  <script src="/assets/js/notifications.js?v=8"></script>
+  <script src="/assets/js/technicians.js?v=9"></script>
   <script src="/assets/js/profile.js?v=1"></script>
   <script src="/assets/js/theme.js"></script>
 </body>

@@ -296,7 +296,6 @@
       }
 
       showToast(t("profile.saved"), "success");
-      window.setTimeout(() => window.location.reload(), 600);
       renderProfile();
     } catch (err) {
       showErr(err.message || t("profile.loadFailed"));
@@ -591,12 +590,13 @@
     const section = document.getElementById(PROFILE_SECTION_ID);
     if (!section) return;
 
+    await Auth.load();
     const user = requireAuth();
     if (!user) return;
     _role = user.role;
 
     try {
-      const { user: me } = await apiRequest("/auth/me");
+      const me = user;
 
       /* Resolve technician-only fields (never loaded for requesters). */
       let tech = null;

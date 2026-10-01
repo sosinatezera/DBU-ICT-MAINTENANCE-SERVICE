@@ -11,4 +11,5 @@ router.put('/me',             authenticate, authorize('Technician'), updateMyTec
 router.get('/:id',            authenticate, getTechnicianById);
 router.put('/:id',            authenticate, authorize('ICT Admin', 'Technician'), updateTechnician);
 
+
 module.exports = router;

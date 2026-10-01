@@ -33,6 +33,13 @@ async function resolveSrvToDirect(srvUri) {
        must state it. TLS is never disabled here. */
     if (!params.has("tls")) params.set("tls", "true");
     if (!params.has("appName")) params.set("appName", "ict-maintenance-service");
+    /* The two URI forms do NOT share an authSource default. mongodb+srv://
+       implies authSource=admin (which is where Atlas creates the user), while a
+       hand-built mongodb:// URI falls back to the database named in the path.
+       Dropping this made the SRV fallback authenticate as
+       "<user>@ict_maintenance_db" and fail with "bad auth : Authentication
+       failed" every time, so the retry path could never succeed. */
+    if (!params.has("authSource")) params.set("authSource", "admin");
     const qs = params.toString();
     if (qs) directUri += `?${qs}`;
 
@@ -110,29 +117,54 @@ const connectDB = async () => {
       options.dbName = dbName;
     }
 
+    const isTransientNetworkError = (err) =>
+      /querySrv|ENOTFOUND|getaddrinfo|EAI_AGAIN|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE|Mongo(?:ose)?(?:Network|ServerSelection|Topology|Timeout)|buffering timed out/i.test(
+        `${err?.name || ""} ${err?.message || ""}`,
+      );
+
+    /* Atlas is reached over the public internet and drops connections for
+       ordinary reasons — a single timed-out handshake is transient, not a
+       reason to kill the process and take every page down with it. Try the
+       normal URI, then the manually resolved hosts, then retry the whole
+       thing a few times with a growing delay before giving up. */
+    const MAX_ATTEMPTS = Number(process.env.MONGO_CONNECT_ATTEMPTS || 4);
+
     let conn;
-    try {
-      conn = await mongoose.connect(uri, options);
-    } catch (err) {
-      if (
-        isAtlas &&
-        /querySrv|ENOTFOUND|getaddrinfo|EAI_AGAIN|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE|MongoNetwork|MongoServerSelection|MongoTopology/i.test(
-          err.message,
-        )
-      ) {
+    let lastErr;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      if (attempt > 1) {
+        const delay = 2000 * attempt;
         console.warn(
-          "[MongoDB] SRV lookup failed — retrying with manually resolved hosts...",
+          `[MongoDB] Attempt ${attempt}/${MAX_ATTEMPTS} after ${delay}ms...`,
         );
-        const directUri = await resolveSrvToDirect(uri);
-        if (directUri) {
-          conn = await mongoose.connect(directUri, options);
-        } else {
-          throw err;
+        await new Promise((r) => setTimeout(r, delay));
+      }
+      try {
+        conn = await mongoose.connect(uri, options);
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+        if (!isAtlas || !isTransientNetworkError(err)) break;
+
+        if (attempt < MAX_ATTEMPTS) {
+          console.warn("[MongoDB] SRV lookup failed — retrying with manually resolved hosts...");
+          const directUri = await resolveSrvToDirect(uri);
+          if (directUri) {
+            try {
+              conn = await mongoose.connect(directUri, options);
+              lastErr = null;
+              break;
+            } catch (directErr) {
+              lastErr = directErr;
+              if (!isTransientNetworkError(directErr)) break;
+            }
+          }
         }
-      } else {
-        throw err;
       }
     }
+
+    if (!conn) throw lastErr;
 
     console.log(
       `[MongoDB] Connected: ${conn.connection.host} / ${conn.connection.name}`,

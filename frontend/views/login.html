@@ -106,20 +106,26 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/js/validation.js?v=6"></script>
+  <script src="/assets/js/validation.js?v=7"></script>
   <script>
-    /* API base comes from the shared api-config.js (single source of truth). */
-    const API = typeof API_BASE === 'string' ? API_BASE : 'http://localhost:5000/api';
-
     /* Auto-redirect only when the server confirms the current session. */
     ( async function ()
     {
+      const controller = new AbortController();
+      const timer = setTimeout( () => controller.abort(), 15000 );
       try
       {
-        const res = await fetch( `${ API }/auth/me`, { credentials: 'include' } );
+        const res = await fetch( `${ API_BASE }/auth/me`, {
+          credentials: 'include',
+          signal: controller.signal,
+        } );
         const data = await res.json().catch( () => ( {} ) );
         if ( res.ok && data.user ) redirectByRole( data.user.role );
       } catch ( _ ) { }
+      finally
+      {
+        clearTimeout( timer );
+      }
     } )();
 
     function redirectByRole ( role )
@@ -185,24 +191,30 @@
 
       setLoading( true );
       let res;
+      let data;
+      const controller = new AbortController();
+      const timer = setTimeout( () => controller.abort(), 15000 );
       try
       {
-        res = await fetch( `${ API }/auth/login`, {
+        res = await fetch( `${ API_BASE }/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify( { email, password } ),
+          signal: controller.signal,
         } );
+        const raw = await res.text();
+        try { data = raw ? JSON.parse( raw ) : {}; }
+        catch ( _ ) { data = {}; }
       } catch
       {
-        showAlert( 'Cannot connect to the server. Please check your connection and try again.', 'warning' );
+        showAlert( 'The server did not respond. Please retry.', 'warning' );
         setLoading( false );
         return;
+      } finally
+      {
+        clearTimeout( timer );
       }
-
-      /* Parse JSON defensively — a non-JSON body (proxy/HTML error) must not be
-         mistaken for a network failure: show the backend message when we have one. */
-      const data = await res.json().catch( () => ( {} ) );
 
       if ( !res.ok )
       {
@@ -229,8 +241,8 @@
         ...data.user,
         role: roleMap[data.user.role?.toLowerCase()] || data.user.role,
       };
-      showAlert( `Welcome, <strong>${ normalizedUser.fullName }</strong>! Redirecting...`, 'success' );
-      setTimeout( () => window.location.href = data.redirect || redirectByRole( normalizedUser.role ), 1200 );
+      showAlert( `Welcome, <strong>${ normalizedUser.fullName }</strong>!`, 'success' );
+      window.location.href = data.redirect || redirectByRole( normalizedUser.role );
     } );
 
     /* Password toggle */
@@ -244,7 +256,7 @@
     } );
   </script>
   <script src="/assets/js/theme.js"></script>
-  <script src="/assets/js/lang.js?v=13"></script>
+  <script src="/assets/js/lang.js?v=16"></script>
 </body>
 
 </html>

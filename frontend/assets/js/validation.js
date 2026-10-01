@@ -230,7 +230,15 @@ function attachRealTimeValidation(formId, rules) {
 /* ── Submit Button Helpers ───────────────────────────────── */
 
 /**
- * Set loading state on a submit button
+ * Set loading state on a submit button.
+ * This was a byte-for-byte duplicate of main.js setLoading() under a second
+ * name. Two globals with identical behaviour meant a page could clear a
+ * spinner with one helper while the markup expected the other, and a caller
+ * that used the wrong one left the button disabled forever. validation.js
+ * loads BEFORE main.js on every page, so a function declaration here wins the
+ * global — it must therefore forward to the canonical implementation once
+ * main.js has run, and stay a safe no-op-equivalent until then.
+ *
  * @param {string} btnId - Button element ID
  * @param {string} spinnerId - Spinner element ID
  * @param {boolean} isLoading
@@ -238,7 +246,10 @@ function attachRealTimeValidation(formId, rules) {
 function setSubmitLoading(btnId, spinnerId, isLoading) {
   const btn = document.getElementById(btnId);
   const sp  = document.getElementById(spinnerId);
-  if (btn) btn.disabled = isLoading;
+  if (btn) {
+    btn.disabled = isLoading;
+    btn.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+  }
   if (sp)  sp.classList.toggle('d-none', !isLoading);
 }
 

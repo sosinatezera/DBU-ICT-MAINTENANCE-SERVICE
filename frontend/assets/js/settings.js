@@ -38,8 +38,33 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   /* ── Load all data on init ────────────────────────────── */
-  let currentUser = null;
+  let currentUser = Auth.getUser();
   let currentSettings = null;
+  /* Guards against the data-loss case below: if /settings could not be read,
+     the form fields keep their HTML defaults (empty strings, unchecked
+     boxes). Saving in that state would PUT the defaults over the real stored
+     settings and silently wipe them. Until the read succeeds, the settings
+     forms are inert. */
+  let settingsLoaded = false;
+
+  function settingsNotLoaded(alertId) {
+    showAlert(
+      alertId,
+      "System settings could not be loaded, so saving is disabled to protect your current configuration. Check your connection and retry the page.",
+      "warning",
+    );
+    return false;
+  }
+
+  function lockSettingsForms(locked) {
+    ["generalSettingsForm", "notifSettingsForm"].forEach((formId) => {
+      const form = document.getElementById(formId);
+      if (!form) return;
+      form.querySelectorAll("input, select, textarea, button").forEach((el) => {
+        el.disabled = locked;
+      });
+    });
+  }
 
   /* Attach real-time validation to profile form */
   attachRealTimeValidation("profileForm", [
@@ -55,26 +80,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     { fieldId: "newPassword", checks: [Validators.password] },
   ]);
 
+  /* The notification checkboxes below are driven by this load, so it must
+     settle before population — but the profile/security sections can render
+     from the already-loaded session user in the meantime. */
   try {
-    const [userRes, settingsRes] = await Promise.allSettled([
-      apiRequest("/auth/me"),
-      apiRequest("/settings"),
-    ]);
-
-    if (userRes.status === "rejected") {
-      showToast("Failed to load profile data.", "danger");
-      return;
-    }
-    currentUser = userRes.value.user;
-
-    if (settingsRes.status === "fulfilled") {
-      currentSettings = settingsRes.value.data;
-    } else {
-      showToast("Failed to load system settings.", "danger");
-    }
-  } catch (_) {
-    showToast("Failed to load settings page data.", "danger");
-    return;
+    const settingsRes = await apiRequest("/settings");
+    currentSettings = settingsRes.data;
+    settingsLoaded = true;
+  } catch (err) {
+    showToast("Failed to load system settings.", "danger");
+    lockSettingsForms(true);
   }
 
   /* ── Profile photo state (uploaded photo / image URL) ───── */
@@ -139,6 +154,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* ── Populate Security Info ───────────────────────────── */
   populateSecurity(currentUser);
 
+  /* ── Deep link to a tab ─────────────────────────────────
+     The admin profile dropdown links here as #profileTab. Bootstrap
+     tabs key off the panel id, not the fragment, so without this
+     "Profile Settings" would silently open the General pane.
+
+     CSS.escape keeps an arbitrary fragment from being able to break
+     out of the attribute selector; a hash that does not resolve to one
+     of this page's own panes is ignored rather than throwing. */
+  (function activateHashTab() {
+    const hash = window.location.hash.replace(/^#/, "");
+    if (!hash) return;
+    const panes = document.querySelectorAll(
+      "#settingsTabs ~ .tab-content .tab-pane",
+    );
+    const target = document.getElementById(hash);
+    if (!target || !panes.length || !panes.includes(target)) return;
+    const trigger = document.querySelector(
+      `#settingsTabs [data-bs-target="#${CSS.escape(hash)}"]`,
+    );
+    if (!trigger || typeof bootstrap === "undefined") return;
+    bootstrap.Tab.getOrCreateInstance(trigger).show();
+  })();
+
   /* ═══════════════════════════════════════════════════════
      GENERAL SETTINGS — Save
      ═══════════════════════════════════════════════════════ */
@@ -146,6 +184,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     .getElementById("generalSettingsForm")
     ?.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (!settingsLoaded) return settingsNotLoaded("settingsAlert");
       setLoading("saveGeneralBtn", "saveGeneralSpinner", true);
       try {
         await apiRequest("/settings/general", {
@@ -168,8 +207,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (window.__ictPrefs) window.__ictPrefs.refresh();
       } catch (err) {
         showAlert("settingsAlert", err.message, "danger");
+      } finally {
+        setLoading("saveGeneralBtn", "saveGeneralSpinner", false);
       }
-      setLoading("saveGeneralBtn", "saveGeneralSpinner", false);
     });
 
   /* ═══════════════════════════════════════════════════════
@@ -179,6 +219,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     .getElementById("notifSettingsForm")
     ?.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (!settingsLoaded) return settingsNotLoaded("settingsAlert");
       setLoading("saveNotifBtn", "saveNotifSpinner", true);
       try {
         await apiRequest("/settings/notifications", {
@@ -203,8 +244,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         showToast("Notification settings saved.", "success");
       } catch (err) {
         showAlert("settingsAlert", err.message, "danger");
+      } finally {
+        setLoading("saveNotifBtn", "saveNotifSpinner", false);
       }
-      setLoading("saveNotifBtn", "saveNotifSpinner", false);
     });
 
   /* ═══════════════════════════════════════════════════════
@@ -267,8 +309,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("passwordMatchText").textContent = "";
       } catch (err) {
         showAlert("passwordAlert", err.message, "danger");
+      } finally {
+        setLoading("savePasswordBtn", "savePasswordSpinner", false);
       }
-      setLoading("savePasswordBtn", "savePasswordSpinner", false);
     });
 
   /* ── Password confirmation live check ─────────────────── */
@@ -363,8 +406,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         showToast("Profile updated.", "success");
       } catch (err) {
         showAlert("profileAlert", err.message, "danger");
+      } finally {
+        setLoading("saveProfileBtn", "saveProfileSpinner", false);
       }
-      setLoading("saveProfileBtn", "saveProfileSpinner", false);
     });
 
   /* ═══════════════════════════════════════════════════════
@@ -575,22 +619,10 @@ async function initPersonalSettings(user) {
         "side.notifications",
         "Notifications",
       ],
-      [
-        "technician/profile.html",
-        "person-circle",
-        "side.profile",
-        "My Profile",
-      ],
     ];
-    const orderedLinks = [
-      ...links.slice(0, -1),
-      ["settings.html", "gear", "side.settings", "Settings"],
-      links.at(-1),
-    ];
-    const markup = orderedLinks
+    const markup = links
       .map(([href, icon, key, fallback]) => {
-        const active = href === "settings.html";
-        return `<li class="nav-item"><a href="${href}" class="nav-link ${active ? "text-white active bg-white bg-opacity-25 rounded" : "text-white-50"}"${active ? ' data-personal-settings aria-current="page"' : ""}><i class="bi bi-${icon} me-2"></i><span data-i18n="${key}">${fallback}</span></a></li>`;
+        return `<li class="nav-item"><a href="${href}" class="nav-link text-white-50"><i class="bi bi-${icon} me-2"></i><span data-i18n="${key}">${fallback}</span></a></li>`;
       })
       .join("");
     /* Rebuild only when the rendered links are actually wrong, so a correct
@@ -599,7 +631,7 @@ async function initPersonalSettings(user) {
     const currentHrefs = Array.from(sideNav.querySelectorAll("a[href]")).map(
       (link) => link.getAttribute("href"),
     );
-    const wantedHrefs = orderedLinks.map(([href]) => href);
+    const wantedHrefs = links.map(([href]) => href);
     const alreadyCorrect =
       currentHrefs.length === wantedHrefs.length &&
       currentHrefs.every((href, index) => href === wantedHrefs[index]);
@@ -710,8 +742,12 @@ async function initPersonalSettings(user) {
       Auth.setUser({ ...Auth.getUser(), ...updatedUser });
       fillProfile(updatedUser);
       originalProfile = readProfile();
-      document.getElementById("topUserName").textContent =
-        updatedUser.fullName || "";
+      /* Optional: the shared profile dropdown removes the topbar
+         #topUserName when it mounts, so this element may legitimately be
+         gone. Guarded to keep a successful save from reporting a
+         TypeError as a failure. */
+      const topUserName = document.getElementById("topUserName");
+      if (topUserName) topUserName.textContent = updatedUser.fullName || "";
       document.getElementById("sidebarUserName").textContent =
         updatedUser.fullName || "User";
       showFormAlert("profileAlert", "Profile updated successfully.", "success");
@@ -884,7 +920,10 @@ async function initPersonalSettings(user) {
      the page reports an error. */
   fillProfile(user);
   originalProfile = readProfile();
-  document.getElementById("topUserName").textContent = user.fullName || "";
+  /* Optional: absent when the shared profile dropdown replaced the topbar
+     greeting with its own trigger. */
+  const topUserName = document.getElementById("topUserName");
+  if (topUserName) topUserName.textContent = user.fullName || "";
   document.getElementById("accountRole").textContent = user.role || "—";
   document.getElementById("accountStatus").textContent = user.status || "—";
   document.getElementById("accountLastLogin").textContent = user.lastLogin

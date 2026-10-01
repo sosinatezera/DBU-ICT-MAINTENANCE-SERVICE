@@ -54,9 +54,55 @@ function setResetCookie(res, value, maxAge) {
   );
 }
 
+/* ── Public self-registration availability ──────────────────────
+   publicRegistration is an ICT Admin switch. When it is off, accounts are
+   created by an ICT Admin through the Users manager instead.
+
+   Fails CLOSED: if the Settings document cannot be read we report registration
+   as closed. That is the safe direction — the alternative would let anyone
+   create an account during a database incident. It costs nothing in practice
+   because User.create would fail on the same outage anyway. */
+const REGISTRATION_CLOSED_MESSAGE =
+  "Public registration is currently disabled. Please contact ICT support to have an account created.";
+
+async function isPublicRegistrationEnabled() {
+  try {
+    const Settings = require("../models/Settings");
+    const settings = await Settings.getInstance();
+    return settings.publicRegistration === true;
+  } catch (_) {
+    return false;
+  }
+}
+
+/* ── GET /api/auth/registration-status ─────────────────────────
+   Lets the login page hide its "Register" link and the register page refuse to
+   render a dead form, instead of letting a visitor fill in a form that is
+   guaranteed to be rejected.
+
+   Deliberately public and deliberately minimal. It exposes only whether
+   self-registration is currently allowed — the same fact POST /register
+   reveals on its first line — and never any Settings value. */
+const getRegistrationStatus = async (_req, res, next) => {
+  try {
+    const registrationOpen = await isPublicRegistrationEnabled();
+    res.json({ success: true, data: { registrationOpen } });
+  } catch (err) {
+    next(err);
+  }
+};
+
 /* ── POST /api/auth/register ────────────────────────────────── */
 const register = async (req, res, next) => {
   try {
+    /* Checked FIRST, before any field validation, so a closed switch never
+       reveals which fields are valid or burns a bcrypt round. */
+    if (!(await isPublicRegistrationEnabled())) {
+      return res
+        .status(403)
+        .json({ success: false, message: REGISTRATION_CLOSED_MESSAGE });
+    }
+
     let {
       fullName,
       email,
@@ -665,6 +711,7 @@ const resetPassword = async (req, res, next) => {
 
 module.exports = {
   register,
+  getRegistrationStatus,
   login,
   logout,
   getMe,

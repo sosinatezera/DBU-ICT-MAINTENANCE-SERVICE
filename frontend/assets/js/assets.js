@@ -10,6 +10,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 let allAssets = [];
+/* Handlers must be bound exactly once. The Retry button below re-invokes
+   initAssets(), and these elements live outside the table body, so every
+   rebind used to stack another copy of saveAsset — turning one click into two
+   POST/PUT writes. */
+let _assetsHandlersBound = false;
 
 async function initAssets() {
   try {
@@ -30,7 +35,12 @@ async function initAssets() {
         </button>
       </td></tr>`;
     }
+    /* Handlers are still bound below so Search/Save keep working once a retry
+       succeeds, but only the first pass may attach them. */
   }
+
+  if (_assetsHandlersBound) return;
+  _assetsHandlersBound = true;
 
   // Search/filter
   const doFilter = () => {

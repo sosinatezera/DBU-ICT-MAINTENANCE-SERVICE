@@ -147,49 +147,106 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/api-config.js?v=2"></script>
-  <script src="/assets/js/main.js?v=13"></script>
-  <script src="/assets/js/notifications.js?v=7"></script>
-  <script src="/assets/js/requests.js?v=8"></script>
+  <script src="/assets/js/admin-profile-menu.js?v=2"></script>
+  <script src="/assets/js/main.js?v=17"></script>
+  <script src="/assets/js/notifications.js?v=8"></script>
+  <script src="/assets/js/requests.js?v=19"></script>
   <script>
     // Wire up summary counts and Clear All
-    document.addEventListener( 'DOMContentLoaded', async () =>
+    document.addEventListener( 'DOMContentLoaded', () =>
     {
-      // Update summary strip after notifications load
-      const origLoad = window.loadNotificationsPage;
-      const patchSummary = async () =>
+      // Update summary strip from the SAME payload notifications.js already
+      // fetched. This used to issue its own GET /notifications on page load,
+      // so every visit to this page made two identical requests.
+      const patchSummary = () =>
       {
-        try
-        {
-          const { data, unread } = await apiRequest( '/notifications' );
-          document.getElementById( 'totalNotifCount' ).textContent = data.length;
-          document.getElementById( 'unreadNotifCount' ).textContent = unread;
-          document.getElementById( 'readNotifCount' ).textContent = data.length - unread;
-          // sidebar badge
-          const sb = document.getElementById( 'sidebarNotifBadge' );
-          if ( sb ) { sb.textContent = unread; sb.style.display = unread > 0 ? '' : 'none'; }
-        } catch ( _ ) { }
+        const payload = window.__lastNotificationsPayload;
+        if ( !payload || !payload.data ) return;
+        const { data, unread } = payload;
+        document.getElementById( 'totalNotifCount' ).textContent = data.length;
+        document.getElementById( 'unreadNotifCount' ).textContent = unread;
+        document.getElementById( 'readNotifCount' ).textContent = data.length - unread;
+        // sidebar badge
+        const sb = document.getElementById( 'sidebarNotifBadge' );
+        if ( sb ) { sb.textContent = unread; sb.style.display = unread > 0 ? '' : 'none'; }
       };
-      await patchSummary();
-      // Re-patch after each load
-      document.getElementById( 'filterUnread' )?.addEventListener( 'change', patchSummary );
-      document.getElementById( 'markAllReadBtn' )?.addEventListener( 'change', patchSummary );
+
+      /* Re-patch after each load. Polling briefly until notifications.js has
+         published its first payload avoids racing it — this inline block runs in
+         its own DOMContentLoaded listener, so the payload is usually not there
+         yet. The poll is short, self-clearing, and never issues a request. */
+      let _summaryPoll = null;
+      const stopSummaryPoll = () =>
+      {
+        if ( _summaryPoll ) { clearInterval( _summaryPoll ); _summaryPoll = null; }
+      };
+      _summaryPoll = setInterval( () =>
+      {
+        if ( window.__lastNotificationsPayload ) { stopSummaryPoll(); patchSummary(); }
+      }, 100 );
+      setTimeout( stopSummaryPoll, 8000 );
+      patchSummary();
+
+      document.getElementById( 'filterUnread' )?.addEventListener( 'change', () => setTimeout( patchSummary, 0 ) );
+      document.getElementById( 'markAllReadBtn' )?.addEventListener( 'click', () => setTimeout( patchSummary, 0 ) );
 
       // Clear All
+      let _clearingAll = false;
       document.getElementById( 'clearAllBtn' )?.addEventListener( 'click', async () =>
       {
         if ( !confirm( 'Delete all notifications? This cannot be undone.' ) ) return;
+        /* Guard the button: a double-click here re-ran the whole delete fan-out. */
+        if ( _clearingAll ) return;
+        _clearingAll = true;
+        const btn = document.getElementById( 'clearAllBtn' );
+        if ( btn ) btn.disabled = true;
         try
         {
-          const { data } = await apiRequest( '/notifications' );
-          await Promise.all( data.map( n => apiRequest( `/notifications/${ n.id }`, { method: 'DELETE' } ) ) );
-          showToast( 'All notifications cleared.', 'success' );
+          /* Reuse the payload already fetched above rather than another
+             GET /notifications. */
+          const data = ( window.__lastNotificationsPayload?.data )
+            || ( await apiRequest( '/notifications' ) ).data;
+          if ( !data || !data.length )
+          {
+            showToast( 'No notifications to clear.', 'info' );
+            return;
+          }
+
+          /* Bounded concurrency. The old unbounded Promise.all fired one DELETE
+             per notification at once, which on a large inbox meant dozens of
+             simultaneous requests — enough to trip browser per-host connection
+             limits and make the whole operation stall. */
+          const CONCURRENCY = 6;
+          const failures = [];
+          for ( let i = 0; i < data.length; i += CONCURRENCY )
+          {
+            const batch = data.slice( i, i + CONCURRENCY );
+            const results = await Promise.allSettled(
+              batch.map( n => apiRequest( `/notifications/${ n.id }`, { method: 'DELETE' } ) )
+            );
+            results.forEach( ( r, idx ) =>
+            {
+              if ( r.status === 'rejected' ) failures.push( batch[ idx ]?.id );
+            } );
+          }
+
           await loadNotificationsPage();
-          await patchSummary();
+          patchSummary();
+
+          if ( failures.length )
+          {
+            showToast( `Cleared ${data.length - failures.length} of ${data.length}. ${failures.length} could not be removed.`, 'warning' );
+          }
+          else
+          {
+            showToast( 'All notifications cleared.', 'success' );
+          }
         } catch ( err ) { showToast( err.message, 'danger' ); }
+        finally { _clearingAll = false; if ( btn ) btn.disabled = false; }
       } );
     } );
   </script>
-  <script src="/assets/js/lang.js?v=13"></script>
+  <script src="/assets/js/lang.js?v=16"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

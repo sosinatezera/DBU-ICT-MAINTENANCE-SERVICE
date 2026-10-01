@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
-  <link rel="stylesheet" href="/assets/css/admin.css" />
+  <link rel="stylesheet" href="/assets/css/admin.css?v=4" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
@@ -133,26 +133,47 @@
         <div class="card border-0 shadow-sm">
           <div class="card-body p-0">
             <div class="table-responsive">
-              <table class="table table-hover mb-0">
+              <table class="table table-hover mb-0 requests-table requests-grid">
+                <!-- Column widths are declared here, once, so all 14 columns
+                     are deterministic and identical on every row. -->
+                <colgroup>
+                  <col class="c-id" />
+                  <col class="c-title" />
+                  <col class="c-requester" />
+                  <col class="c-department" />
+                  <col class="c-location" />
+                  <col class="c-equipment" />
+                  <col class="c-category" />
+                  <col class="c-issue-type" />
+                  <col class="c-priority" />
+                  <col class="c-technician" />
+                  <col class="c-assignment-status" />
+                  <col class="c-status" />
+                  <col class="c-date" />
+                  <col class="c-actions" />
+                </colgroup>
                 <thead class="table-light">
                   <tr>
-                    <th><span data-i18n="admin.requests.table.id">#ID</span></th>
-                    <th><span data-i18n="admin.requests.table.title">Title</span></th>
-                    <th><span data-i18n="admin.requests.table.requester">Requester</span></th>
-                    <th><span data-i18n="admin.requests.table.dept">Dept</span></th>
-                    <th><span data-i18n="admin.requests.table.location">Location</span></th>
-                    <th><span data-i18n="admin.requests.table.category">Category</span></th>
-<th><span data-i18n="admin.requests.table.priority">Priority</span></th>
-                    <th><span data-i18n="admin.requests.table.technician">Technician</span></th>
-                    <th><span data-i18n="admin.requests.table.assignmentStatus">Assignment Status</span></th>
-                    <th><span data-i18n="admin.requests.table.status">Status</span></th>
-                    <th><span data-i18n="admin.requests.table.date">Date</span></th>
-                    <th><span data-i18n="admin.requests.table.actions">Actions</span></th>
+                    <th class="c-id"><span data-i18n="admin.requests.table.id">#ID</span></th>
+                    <th class="c-title"><span data-i18n="admin.requests.table.title">Title</span></th>
+                    <th class="c-requester"><span data-i18n="admin.requests.table.requester">Requester</span></th>
+                    <th class="c-department"><span data-i18n="admin.requests.table.dept">Dept</span></th>
+                    <th class="c-location"><span data-i18n="admin.requests.table.location">Location</span></th>
+                    <th class="c-equipment"><span data-i18n="admin.requests.table.equipment">Equipment</span></th>
+                    <th class="c-category"><span data-i18n="admin.requests.table.category">Category</span></th>
+                    <th class="c-issue-type">Issue Type / Service Type</th>
+                    <th class="c-priority"><span data-i18n="admin.requests.table.priority">Priority</span></th>
+                    <th class="c-technician"><span data-i18n="admin.requests.table.technician">Technician</span></th>
+                    <th class="c-assignment-status"><span data-i18n="admin.requests.table.assignmentStatus">Assignment Status</span></th>
+                    <th class="c-status"><span data-i18n="admin.requests.table.status">Status</span></th>
+                    <th class="c-date"><span data-i18n="admin.requests.table.date">Date</span></th>
+                    <th class="c-actions text-center"><span data-i18n="admin.requests.table.actions">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody id="requestsTableBody">
                   <tr>
-                    <td colspan="9" class="text-center text-muted py-4"><span data-i18n="admin.requests.loading">Loading
+                    <td colspan="14" class="text-center text-muted py-4"><span
+                        data-i18n="admin.requests.loading">Loading
                         requests...</span></td>
                   </tr>
                 </tbody>
@@ -178,84 +199,88 @@
           <div class="row g-4">
             <!-- Details -->
             <div class="col-md-7" id="requestInfoSection"></div>
-<!-- Assignment Panel -->
-              <div class="col-md-5">
-                <div class="card border-0 bg-light p-3">
-                  <h6 class="fw-semibold mb-3"><i class="bi bi-person-check me-2 text-primary"></i><span
-                      data-i18n="admin.requests.detail.assignTechnician">Assign Technician</span></h6>
-                  <div id="assignAlert" class="alert d-none" role="alert"></div>
-                  <div id="currentAssignment" class="mb-3"></div>
-                  <div class="mb-3">
-                    <label for="assignTechSelect" class="form-label fw-semibold"><span
-                        data-i18n="admin.requests.detail.selectTechnician">Select Technician</span></label>
-                    <select class="form-select" id="assignTechSelect">
-                      <option value=""><span data-i18n="admin.requests.detail.availableTechnicians">-- Available
-                          Technicians --</span></option>
-                    </select>
-                  </div>
-                  <div class="mb-3">
-                    <label for="assignPrioritySelect" class="form-label fw-semibold"><span
-                        data-i18n="admin.requests.detail.selectPriority">Priority</span></label>
-                    <select class="form-select" id="assignPrioritySelect">
-                      <option value="low"><span data-i18n="admin.requests.filter.low">Low — Not Urgent</span></option>
-                      <option value="medium" selected><span data-i18n="admin.requests.filter.medium">Medium — Normal</span></option>
-                      <option value="high"><span data-i18n="admin.requests.filter.high">High — Urgent</span></option>
-                      <option value="critical"><span data-i18n="admin.requests.filter.critical">Critical — Immediate Attention</span></option>
-                    </select>
-                  </div>
-                  <div class="mb-3">
-                    <label for="assignNotes" class="form-label fw-semibold"><span
-                        data-i18n="admin.requests.detail.notes">Notes</span></label>
-                    <textarea class="form-control" id="assignNotes" rows="3"
-                      data-i18n-placeholder="admin.requests.detail.notes.placeholder"
-                      placeholder="Instructions..."></textarea>
-                  </div>
-                  <button type="button" class="btn btn-primary w-100" id="doAssignBtn">
-                    <span class="spinner-border spinner-border-sm me-2 d-none" id="doAssignSpinner"></span>
-                    <span data-i18n="admin.requests.detail.assignTechnician">Assign Technician</span>
-                  </button>
-                  <button type="button" class="btn btn-outline-danger w-100 mt-2 d-none" id="removeAssignmentBtn">
-                    <span class="spinner-border spinner-border-sm me-2 d-none" id="removeAssignmentSpinner"></span>
-                    <i class="bi bi-person-x me-1"></i><span data-i18n="admin.requests.detail.removeAssignment">Remove
-                      Assignment</span>
-                  </button>
+            <!-- Assignment Panel -->
+            <div class="col-md-5">
+              <div class="card border-0 bg-light p-3">
+                <h6 class="fw-semibold mb-3"><i class="bi bi-person-check me-2 text-primary"></i><span
+                    data-i18n="admin.requests.detail.assignTechnician">Assign Technician</span></h6>
+                <div id="assignAlert" class="alert d-none" role="alert"></div>
+                <div id="currentAssignment" class="mb-3"></div>
+                <div class="mb-3">
+                  <label for="assignTechSelect" class="form-label fw-semibold"><span
+                      data-i18n="admin.requests.detail.selectTechnician">Select Technician</span></label>
+                  <select class="form-select" id="assignTechSelect">
+                    <option value=""><span data-i18n="admin.requests.detail.availableTechnicians">-- Available
+                        Technicians --</span></option>
+                  </select>
                 </div>
-                <!-- Priority Update -->
-                <div class="card border-0 bg-light p-3 mt-3">
-                  <h6 class="fw-semibold mb-3"><i class="bi bi-flag me-2 text-primary"></i><span
-                      data-i18n="admin.requests.detail.updatePriority">Update Priority</span></h6>
-                  <div id="priorityAlert" class="alert d-none" role="alert"></div>
-<div class="d-flex gap-2">
-                    <select class="form-select" id="newPrioritySelect">
-                      <option value="low"><span data-i18n="admin.requests.filter.low">Low — Not Urgent</span></option>
-                      <option value="medium"><span data-i18n="admin.requests.filter.medium">Medium — Normal</span></option>
-                      <option value="high"><span data-i18n="admin.requests.filter.high">High — Urgent</span></option>
-                      <option value="critical"><span data-i18n="admin.requests.filter.critical">Critical — Immediate Attention</span></option>
-                    </select>
-                    <button type="button" class="btn btn-primary" id="updatePriorityBtn"><span
-                        data-i18n="admin.requests.detail.updateBtn">Update</span></button>
-                  </div>
+                <div class="mb-3">
+                  <label for="assignPrioritySelect" class="form-label fw-semibold"><span
+                      data-i18n="admin.requests.detail.selectPriority">Priority</span></label>
+                  <select class="form-select" id="assignPrioritySelect">
+                    <option value="low"><span data-i18n="admin.requests.filter.low">Low — Not Urgent</span></option>
+                    <option value="medium" selected><span data-i18n="admin.requests.filter.medium">Medium —
+                        Normal</span></option>
+                    <option value="high"><span data-i18n="admin.requests.filter.high">High — Urgent</span></option>
+                    <option value="critical"><span data-i18n="admin.requests.filter.critical">Critical — Immediate
+                        Attention</span></option>
+                  </select>
                 </div>
-                <!-- Status Update -->
-                <div class="card border-0 bg-light p-3 mt-3">
-                  <h6 class="fw-semibold mb-3"><i class="bi bi-arrow-repeat me-2 text-primary"></i><span
-                      data-i18n="admin.requests.detail.updateStatus">Update Status</span></h6>
-                  <div class="d-flex gap-2">
-                    <select class="form-select" id="newStatusSelect">
-                      <option value="submitted"><span data-i18n="admin.requests.filter.submitted">Submitted</span>
-                      <option value="under_review"><span data-i18n="admin.requests.filter.underReview">Under
-                          Review</span>
-                      <option value="assigned"><span data-i18n="admin.requests.filter.assigned">Assigned</span>
-                      <option value="accepted"><span data-i18n="admin.requests.filter.accepted">Accepted</span>
-                      <option value="in_progress"><span data-i18n="admin.requests.filter.inProgress">In Progress</span>
-                      <option value="resolved"><span data-i18n="admin.requests.filter.resolved">Resolved</span>
-                      <option value="closed"><span data-i18n="admin.requests.filter.closed">Closed</span>
-                    </select>
-                    <button type="button" class="btn btn-primary" id="updateStatusBtn"><span
-                        data-i18n="admin.requests.detail.updateBtn">Update</span></button>
-                  </div>
+                <div class="mb-3">
+                  <label for="assignNotes" class="form-label fw-semibold"><span
+                      data-i18n="admin.requests.detail.notes">Notes</span></label>
+                  <textarea class="form-control" id="assignNotes" rows="3"
+                    data-i18n-placeholder="admin.requests.detail.notes.placeholder"
+                    placeholder="Instructions..."></textarea>
+                </div>
+                <button type="button" class="btn btn-primary w-100" id="doAssignBtn">
+                  <span class="spinner-border spinner-border-sm me-2 d-none" id="doAssignSpinner"></span>
+                  <span data-i18n="admin.requests.detail.assignTechnician">Assign Technician</span>
+                </button>
+                <button type="button" class="btn btn-outline-danger w-100 mt-2 d-none" id="removeAssignmentBtn">
+                  <span class="spinner-border spinner-border-sm me-2 d-none" id="removeAssignmentSpinner"></span>
+                  <i class="bi bi-person-x me-1"></i><span data-i18n="admin.requests.detail.removeAssignment">Remove
+                    Assignment</span>
+                </button>
+              </div>
+              <!-- Priority Update -->
+              <div class="card border-0 bg-light p-3 mt-3">
+                <h6 class="fw-semibold mb-3"><i class="bi bi-flag me-2 text-primary"></i><span
+                    data-i18n="admin.requests.detail.updatePriority">Update Priority</span></h6>
+                <div id="priorityAlert" class="alert d-none" role="alert"></div>
+                <div class="d-flex gap-2">
+                  <select class="form-select" id="newPrioritySelect">
+                    <option value="low"><span data-i18n="admin.requests.filter.low">Low — Not Urgent</span></option>
+                    <option value="medium"><span data-i18n="admin.requests.filter.medium">Medium — Normal</span>
+                    </option>
+                    <option value="high"><span data-i18n="admin.requests.filter.high">High — Urgent</span></option>
+                    <option value="critical"><span data-i18n="admin.requests.filter.critical">Critical — Immediate
+                        Attention</span></option>
+                  </select>
+                  <button type="button" class="btn btn-primary" id="updatePriorityBtn"><span
+                      data-i18n="admin.requests.detail.updateBtn">Update</span></button>
                 </div>
               </div>
+              <!-- Status Update -->
+              <div class="card border-0 bg-light p-3 mt-3">
+                <h6 class="fw-semibold mb-3"><i class="bi bi-arrow-repeat me-2 text-primary"></i><span
+                    data-i18n="admin.requests.detail.updateStatus">Update Status</span></h6>
+                <div class="d-flex gap-2">
+                  <select class="form-select" id="newStatusSelect">
+                    <option value="submitted"><span data-i18n="admin.requests.filter.submitted">Submitted</span>
+                    <option value="under_review"><span data-i18n="admin.requests.filter.underReview">Under
+                        Review</span>
+                    <option value="assigned"><span data-i18n="admin.requests.filter.assigned">Assigned</span>
+                    <option value="accepted"><span data-i18n="admin.requests.filter.accepted">Accepted</span>
+                    <option value="in_progress"><span data-i18n="admin.requests.filter.inProgress">In Progress</span>
+                    <option value="resolved"><span data-i18n="admin.requests.filter.resolved">Resolved</span>
+                    <option value="closed"><span data-i18n="admin.requests.filter.closed">Closed</span>
+                  </select>
+                  <button type="button" class="btn btn-primary" id="updateStatusBtn"><span
+                      data-i18n="admin.requests.detail.updateBtn">Update</span></button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -424,10 +449,11 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/api-config.js?v=2"></script>
-  <script src="/assets/js/lang.js?v=13"></script>
-  <script src="/assets/js/main.js?v=13"></script>
-  <script src="/assets/js/notifications.js?v=7"></script>
-  <script src="/assets/js/requests.js?v=8"></script>
+  <script src="/assets/js/lang.js?v=16"></script>
+  <script src="/assets/js/admin-profile-menu.js?v=2"></script>
+  <script src="/assets/js/main.js?v=17"></script>
+  <script src="/assets/js/notifications.js?v=8"></script>
+  <script src="/assets/js/requests.js?v=23"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

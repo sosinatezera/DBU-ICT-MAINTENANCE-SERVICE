@@ -19,7 +19,11 @@ function ticketCodeMatchQuery(input) {
   const raw = String(input || '').trim().toLowerCase().replace(/\s+/g, '');
   const numeric = raw.replace(/^(mau|tk)-/, '');
   if (!numeric) return null;
-  return { $regex: new RegExp(`^(?:mau|tk)-${escapeRegex(numeric)}$`, 'i') };
+  /* The $regex must be scoped to a FIELD. Returning a bare
+     { $regex: ... } made MongoDB read "$regex" as a top-level operator name
+     and every public track-by-code lookup failed with
+     "unknown top level operator: $regex". */
+  return { ticketId: { $regex: new RegExp(`^(?:mau|tk)-${escapeRegex(numeric)}$`, 'i') } };
 }
 
 module.exports = { displayTicketId, displayTicketText, ticketCodeMatchQuery };

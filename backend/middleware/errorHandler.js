@@ -8,29 +8,29 @@ const errorHandler = (err, req, res, next) => {
   console.error(`[ERROR] ${err.name}: ${err.message}`);
 
   /* ── Mongoose CastError (invalid ObjectId, bad type) ──── */
-  if (err.name === 'CastError') {
+  if (err.name === "CastError") {
     return res.status(400).json({
       success: false,
-      message: `Invalid ${err.path || 'value'} format.`,
+      message: `Invalid ${err.path || "value"} format.`,
     });
   }
 
   /* ── Mongoose ValidationError (schema validation) ─────── */
-  if (err.name === 'ValidationError') {
+  if (err.name === "ValidationError") {
     const errors = {};
-    Object.keys(err.errors).forEach(key => {
+    Object.keys(err.errors).forEach((key) => {
       errors[key] = err.errors[key].message;
     });
     return res.status(400).json({
       success: false,
-      message: 'Validation failed.',
+      message: "Validation failed.",
       errors,
     });
   }
 
   /* ── Mongoose Duplicate Key (E11000) ──────────────────── */
   if (err.code === 11000) {
-    const field = Object.keys(err.keyValue || {})[0] || 'field';
+    const field = Object.keys(err.keyValue || {})[0] || "field";
     return res.status(409).json({
       success: false,
       message: `A record with that ${field} already exists.`,
@@ -38,21 +38,41 @@ const errorHandler = (err, req, res, next) => {
   }
 
   /* ── Multer upload errors (too large / disallowed type) ── */
-  if (err.name === 'MulterError') {
-    const code = err.code === 'LIMIT_FILE_SIZE'
-      ? 'Uploaded file exceeds the 5 MB limit.'
-      : err.message || 'File upload failed.';
+  if (err.name === "MulterError") {
+    const code =
+      err.code === "LIMIT_FILE_SIZE"
+        ? err.field === "profileImage"
+          ? "Uploaded photo exceeds the 5 MB limit."
+          : "Uploaded file exceeds the 10 MB limit."
+        : err.message || "File upload failed.";
     return res.status(400).json({ success: false, message: code });
+  }
+
+  if (err.code === "PROFILE_IMAGE_TYPE") {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+
+  /* ── Rejected file type from multer fileFilter ─────────── */
+  if (
+    err.message &&
+    /Only PDF, DOC, DOCX, JPG, JPEG, and PNG files are allowed\./.test(
+      err.message,
+    )
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 
   /* ── Custom application errors ────────────────────────── */
   const statusCode = err.statusCode || 500;
-  const message    = err.message    || 'Internal Server Error';
+  const message = err.message || "Internal Server Error";
 
   res.status(statusCode).json({
     success: false,
     message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 };
 

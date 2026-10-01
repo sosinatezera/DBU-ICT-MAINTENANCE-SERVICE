@@ -15,17 +15,25 @@
   }
   window.__aiSupportLoaded = true;
 
-  /* Resolve the SMART ICT backend API base exactly like api-config.js does.
-     Guarantees the widget NEVER builds a URL from an undefined API_BASE —
-     otherwise the fetch below throws and the user sees a bogus
-     "Unable to connect" error. Resolution: global API_BASE (set by
-     api-config.js) → window.__API_BASE__ (deploy override) → local backend. */
-  const API_BASE_RESOLVED =
-    (typeof API_BASE === "string" && API_BASE) ||
-    (typeof window !== "undefined" &&
-      typeof window.__API_BASE__ === "string" &&
-      window.__API_BASE__) ||
-    "http://localhost:5000/api";
+  /* api-config.js is the sole source of the backend URL. */
+  const API_BASE_RESOLVED = typeof API_BASE === "string" ? API_BASE : "";
+  if (!API_BASE_RESOLVED) {
+    console.error(
+      "[ai-support] API_BASE is unavailable; load api-config.js first.",
+    );
+    window.__aiSupportLoaded = false;
+    return;
+  }
+
+  const fetchWithTimeout = async (url, options = {}, timeoutMs = 15000) => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  };
 
   const create = (tag, className, text) => {
     const element = document.createElement(tag);
@@ -170,7 +178,7 @@
   const deleteConversation = async (id) => {
     if (!id) return;
     try {
-      await fetch(
+      await fetchWithTimeout(
         `${API_BASE_RESOLVED}/ai/conversation/${encodeURIComponent(id)}`,
         { method: "DELETE", credentials: "include" },
       );
@@ -466,7 +474,7 @@
     restoredConversation = true;
     if (!conversationId) return false;
     try {
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${API_BASE_RESOLVED}/ai/conversation/${encodeURIComponent(conversationId)}`,
         { credentials: "include" },
       );
@@ -497,10 +505,10 @@
     }
   };
 
-  const resetConversation = async () => {
+  const resetConversation = () => {
     const oldId = conversationId;
     activeController?.abort();
-    await deleteConversation(oldId);
+    void deleteConversation(oldId);
     conversation.length = 0;
     saveConversationId(null);
     pendingFiles = [];
@@ -562,7 +570,11 @@
     );
     const controller = new AbortController();
     activeController = controller;
-    const timeoutId = setTimeout(() => controller.abort(), 150000);
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 150000);
     let streamed = null;
     try {
       if (selectedFiles.length) setFileStatus("Analyzing your file...");
@@ -665,7 +677,9 @@
       conversation.pop();
       const messageText =
         error?.name === "AbortError"
-          ? "Generation stopped. You can try again."
+          ? timedOut
+            ? "The AI request timed out. Please try again."
+            : "Generation stopped. You can try again."
           : error.message || "Sorry, I couldn't process that request.";
       if (selectedFiles.length) setFileStatus(messageText);
       if (streamed) {

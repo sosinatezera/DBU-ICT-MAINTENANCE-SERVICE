@@ -9,6 +9,7 @@
     "seed": "node scripts/seed.js",
     "seed:auth": "node seed.js",
     "seed:categories": "node scripts/seedCategories.js",
+    "seed:device-types": "node scripts/seedDeviceTypes.js",
     "verify:auth": "node scripts/testAuth.js",
     "verify:smtp": "node scripts/verify-smtp.js",
     "verify:contact": "node scripts/verify-contact-form.js",

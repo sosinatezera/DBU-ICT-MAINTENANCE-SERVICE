@@ -154,6 +154,10 @@ const updateGeneral = async (req, res, next) => {
 
     settings.updatedBy = req.user.id;
     await settings.save();
+    /* getInstance() memoises the document, so the next reader would pick up
+       the in-memory copy. Invalidate anyway so every reader is guaranteed to
+       observe the write that just happened. */
+    Settings.invalidateInstanceCache();
     res.json({
       success: true,
       message: "General settings updated.",
@@ -173,6 +177,7 @@ const updateNotifications = async (req, res, next) => {
     });
     settings.updatedBy = req.user.id;
     await settings.save();
+    Settings.invalidateInstanceCache();
     res.json({
       success: true,
       message: "Notification settings updated.",
@@ -221,6 +226,7 @@ const updateHomeLayout = async (req, res, next) => {
     };
     settings.updatedBy = req.user.id;
     await settings.save();
+    Settings.invalidateInstanceCache();
     res.json({
       success: true,
       message: "Home image layout saved.",

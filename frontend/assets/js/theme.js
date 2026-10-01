@@ -83,7 +83,17 @@ function buildThemeSwitch(onClick) {
 /* Inject the switcher into the page at the best available spot. */
 function injectThemeSwitch() {
   if (document.body?.classList.contains("assistant-page")) return;
-  if (document.querySelector(".app-theme-switch")) return; // already present
+  const existing = document.querySelector(".app-theme-switch");
+  const sidebarThemeSlot = document.querySelector(
+    ".dashboard-sidebar-theme-slot",
+  );
+  if (existing) {
+    if (sidebarThemeSlot) {
+      existing.classList.add("dashboard-sidebar-theme");
+      sidebarThemeSlot.appendChild(existing);
+    }
+    return;
+  }
 
   const sidebarNav = document.querySelector(".sidebar");
   if (sidebarNav) {
@@ -92,6 +102,11 @@ function injectThemeSwitch() {
     const btn = buildThemeSwitch(toggleTheme);
     btn.classList.add("app-theme-in-sidebar");
     btn.setAttribute("title", "Toggle dark/light mode");
+    if (sidebarThemeSlot) {
+      btn.classList.add("dashboard-sidebar-theme");
+      sidebarThemeSlot.appendChild(btn);
+      return;
+    }
     const brandLink = sidebarNav.querySelector("a[href]");
     if (brandLink && brandLink.parentNode === sidebarNav) {
       brandLink.after(btn);

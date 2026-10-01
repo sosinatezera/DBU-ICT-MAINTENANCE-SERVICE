@@ -3,17 +3,12 @@
     Smart ICT Maintenance Management System
    ============================================================ */
 
-/* API base is declared exactly once, globally, by the shared api-config.js
-   (safe for all pages). NEVER redeclare the `API_BASE` identifier in this
-   file: a `var API_BASE` of the same name collides with the existing global
-   `const API_BASE` and throws "Identifier 'API_BASE' has already been
-   declared" at script instantiation, which kills this entire file so
-   apiRequest, escHtml, showToast, requireAuth, formatDate … all become
-   undefined and every page that calls them breaks. We only fall back to a
-   differently-named constant when api-config.js was not included. */
-const DEFAULT_API_BASE = "http://localhost:5000/api";
+/* API_BASE is defined once by api-config.js before this shared helper loads. */
 function resolveApiBase() {
-  return typeof API_BASE !== "undefined" ? API_BASE : DEFAULT_API_BASE;
+  if (typeof API_BASE === "string" && API_BASE) return API_BASE;
+  throw new Error(
+    "API_BASE is unavailable. Load api-config.js before main.js.",
+  );
 }
 
 /* ── Auth Helpers ─────────────────────────────────────────── */
@@ -22,7 +17,13 @@ let _sessionLoaded = false;
 /* A session is only "resolved" once the server actually answered. Until then
    the state is UNKNOWN — which is not the same as signed out. */
 let _sessionResolved = false;
+/* HTTP status of the last /auth/me response, or null if the request never
+   completed. Lets apiRequest('/auth/me') tell a definitive 401 (session gone)
+   apart from a network fault, so the redirect-to-login behaviour is preserved
+   instead of degrading into a generic empty result. */
+let _sessionStatus = null;
 let _sessionPromise = null;
+const API_REQUEST_TIMEOUT_MS = 15000;
 const Auth = {
   setToken: () => {},
   getToken: () => null,
@@ -35,6 +36,9 @@ const Auth = {
      "unknown" — the request never completed, so we have no evidence either way. */
   getStatus: () => (_sessionResolved ? "known" : "unknown"),
   clear: () => {
+    if (typeof stopGlobalNotificationMonitor === "function") {
+      stopGlobalNotificationMonitor();
+    }
     _sessionUser = null;
     _sessionLoaded = true;
     _sessionResolved = true;
@@ -43,11 +47,14 @@ const Auth = {
   load: async () => {
     if (_sessionLoaded) return _sessionUser;
     if (_sessionPromise) return _sessionPromise;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
     _sessionPromise = fetch(resolveApiBase() + "/auth/me", {
       credentials: "include",
-      headers: { Accept: "application/json" },
+      signal: controller.signal,
     })
       .then(async (res) => {
+        _sessionStatus = res.status;
         /* 401 is the ONLY authoritative proof that the session is gone. */
         if (res.status === 401) {
           _sessionUser = null;
@@ -58,7 +65,11 @@ const Auth = {
         /* Reachable but unusable (5xx, bad gateway, 403): not proof of logout.
            Leave the current state alone and stay retryable. */
         if (!res.ok) return _sessionUser;
-        const data = await res.json().catch(() => ({}));
+        const text = await res.text();
+        let data = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch (_) {}
         _sessionUser = data.user || null;
         _sessionLoaded = true;
         _sessionResolved = true;
@@ -73,11 +84,36 @@ const Auth = {
         return _sessionUser;
       })
       .finally(() => {
+        clearTimeout(timer);
         _sessionPromise = null;
       });
     return _sessionPromise;
   },
 };
+
+/* Public pages (index, login, register, password reset) never mount an app
+   shell, so nothing ever calls Auth.load() there and the session request is
+   pure overhead. Warm it up only for pages that actually need a session. */
+function isPublicPagePath(pathname) {
+  return /\/(index|login|register|forgot-password|reset-password)\.html$/.test(
+    pathname,
+  );
+}
+
+/* Start the session lookup as early as possible.
+   Auth.load() is already idempotent and de-duplicated (_sessionPromise), so
+   calling it here means the request is in flight while the rest of the page is
+   still parsing. Every page init chain awaits Auth.load(); issuing the request
+   at parse time removes one full HTTP round-trip from the critical path and
+   the await is then already resolved (or at worst in flight) by the time
+   DOMContentLoaded fires. It also guarantees exactly ONE /auth/me per page even
+   though several scripts each call Auth.load(). */
+if (
+  typeof window !== "undefined" &&
+  !isPublicPagePath(window.location.pathname)
+) {
+  void Auth.load();
+}
 
 /* ── API Request ──────────────────────────────────────────── */
 /* Concurrent GET de-duplication: when two parts of a page start the exact same
@@ -142,13 +178,14 @@ async function _apiRequestInner(
      so page handlers show a real message and a Retry button. */
   const controller = new AbortController();
   opts.signal = controller.signal;
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const timer = setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
 
   let res;
+  let text;
   try {
     res = await fetch(resolveApiBase() + endpoint, opts);
+    text = await res.text();
   } catch (err) {
-    clearTimeout(timer);
     /* A genuine network-layer failure: the browser could not reach the server
        at all (DNS, connection refused, CORS preflight failure, or a malformed
        URL). Only show the offline banner here — NOT for real HTTP error
@@ -165,13 +202,13 @@ async function _apiRequestInner(
     const e = new Error("Cannot reach server.");
     e.network = true;
     throw e;
+  } finally {
+    clearTimeout(timer);
   }
-  clearTimeout(timer);
 
   hideOfflineBanner();
 
   /* Parse the body defensively — some endpoints may return non-JSON. */
-  const text = await res.text();
   let data = {};
   try {
     data = text ? JSON.parse(text) : {};
@@ -216,6 +253,37 @@ async function _apiRequestInner(
 async function apiRequest(endpoint, opts = {}) {
   const method = opts.method || "GET";
 
+  /* The session lookup gets its own path. Auth.load() already de-duplicates
+     itself (_sessionPromise) and is fired at parse time for every non-public
+     page, so routing apiRequest('/auth/me') through it turns the duplicate
+     calls in admin/dashboard.html, technician/profile.html and user/profile.html
+     into zero extra requests — those pages were issuing two /auth/me round
+     trips on every load.
+
+     Deliberately placed BEFORE the GET cache: session state must never be
+     served from the 4s read cache, and a mutation that calls
+     invalidateGetCache() must not be needed to observe a fresh session. */
+  if (method === "GET" && endpoint === "/auth/me") {
+    const user = await Auth.load();
+    /* Preserve the contract callers had before this path was shared: a 401
+       still throws with .status/.redirected set, so the existing redirect and
+       "session expired" handling in _apiRequestInner's callers is unchanged.
+       A network fault (no status at all) resolves to a null user instead, which
+       every call site already handles. */
+    if (_sessionStatus === 401) {
+      Auth.clear();
+      if (!window.__authRedirecting) {
+        window.__authRedirecting = true;
+        window.location.href = "/views/login.html";
+      }
+      const e = new Error("Session expired. Please log in again.");
+      e.status = 401;
+      e.redirected = true;
+      throw e;
+    }
+    return { success: !!user, user };
+  }
+
   if (method === "GET") {
     const key = `GET ${endpoint}`;
     const cached = _readGetCache(key);
@@ -236,9 +304,86 @@ async function apiRequest(endpoint, opts = {}) {
     return p;
   }
 
-  /* Any write invalidates cached reads so the UI never shows stale data. */
-  invalidateGetCache();
-  return _apiRequestInner(endpoint, opts);
+  /* Invalidate AFTER the write resolves, and only when it actually succeeded.
+     Clearing up-front meant a failed or timed-out mutation still wiped every
+     cached read, so the very next refetch of several unrelated endpoints had
+     to hit the server again — turning one network fault into a burst of extra
+     requests across the page. */
+  return _apiRequestInner(endpoint, opts).then((data) => {
+    invalidateGetCache();
+    return data;
+  });
+}
+
+function apiUploadWithProgress(endpoint, formData, onProgress = () => {}) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", resolveApiBase() + endpoint);
+    request.withCredentials = true;
+    request.timeout = API_REQUEST_TIMEOUT_MS;
+
+    request.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        onProgress(
+          Math.min(100, Math.round((event.loaded / event.total) * 100)),
+        );
+      }
+    });
+
+    request.addEventListener("load", () => {
+      hideOfflineBanner();
+      let data = {};
+      try {
+        data = request.responseText ? JSON.parse(request.responseText) : {};
+      } catch (_) {}
+
+      if (request.status === 401) {
+        Auth.clear();
+        if (!window.__authRedirecting) {
+          window.__authRedirecting = true;
+          window.location.href = "/views/login.html";
+        }
+        const error = new Error(
+          data.message || "Session expired. Please log in again.",
+        );
+        error.status = 401;
+        error.data = data;
+        error.redirected = true;
+        reject(error);
+        return;
+      }
+
+      if (request.status < 200 || request.status >= 300) {
+        const error = new Error(data.message || `Error ${request.status}`);
+        error.status = request.status;
+        error.data = data;
+        reject(error);
+        return;
+      }
+
+      invalidateGetCache();
+      resolve(data);
+    });
+
+    request.addEventListener("error", () => {
+      showOfflineBanner();
+      const error = new Error("Cannot reach server.");
+      error.network = true;
+      reject(error);
+    });
+    request.addEventListener("timeout", () => {
+      const error = new Error(
+        "Request timed out. The server did not respond. Please retry.",
+      );
+      error.network = true;
+      reject(error);
+    });
+    request.addEventListener("abort", () =>
+      reject(new Error("Upload canceled.")),
+    );
+
+    request.send(formData);
+  });
 }
 
 /* ── Offline Banner ───────────────────────────────────────── */
@@ -260,6 +405,9 @@ function showOfflineBanner() {
   }
 }
 function hideOfflineBanner() {
+  /* Any API response proves the backend is reachable again. Failed requests
+     are already settled when this helper is called, so a counter would retain
+     the banner forever when failures outnumber later successes. */
   const b = document.getElementById("offlineBanner");
   if (b) b.remove();
 }
@@ -321,10 +469,16 @@ function showAlert(elementId, message, type = "danger") {
 }
 
 /* ── Loading Button ───────────────────────────────────────── */
+/* Adds aria-busy alongside the visual state so assistive technology announces
+   the transition, and never leaves a spinner visible if the button element is
+   replaced while a request is in flight. */
 function setLoading(btnId, spinnerId, isLoading) {
   const btn = document.getElementById(btnId);
   const sp = document.getElementById(spinnerId);
-  if (btn) btn.disabled = isLoading;
+  if (btn) {
+    btn.disabled = isLoading;
+    btn.setAttribute("aria-busy", isLoading ? "true" : "false");
+  }
   if (sp) sp.classList.toggle("d-none", !isLoading);
 }
 
@@ -336,6 +490,7 @@ function statusBadge(status) {
     assigned: ["Assigned", "info"],
     accepted: ["Accepted", "info"],
     in_progress: ["In Progress", "primary"],
+    completed: ["Completed", "success"],
     resolved: ["Resolved", "success"],
     closed: ["Closed", "dark"],
   };
@@ -564,7 +719,7 @@ function setText(id, val) {
 
 /* ── Attachment URL ────────────────────────────────────────
    Uploaded files are stored by the backend in /uploads and served from
-   the backend origin (e.g. http://localhost:5000/uploads/<filename>). */
+  the backend origin (e.g. <backend-origin>/uploads/<filename>). */
 function uploadUrl(filename) {
   if (!filename) return "#";
   const base =
@@ -596,15 +751,174 @@ function isValidRole(role) {
 
 /* ── Auth Guards ──────────────────────────────────────────── */
 async function logout() {
+  stopGlobalNotificationMonitor();
   try {
-    await fetch(resolveApiBase() + "/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
+    /* Bounded: a hung backend must never keep the user on a disabled button
+       forever. The session cookie is cleared client-side regardless, so an
+       aborted request still ends up logged out. */
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    try {
+      await fetch(resolveApiBase() + "/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
   } catch (_) {}
   Auth.clear();
   window.location.href = "/views/login.html";
 }
+/* Shared by settleSessionLoaders() (auth-failure path) and the universal
+   watchdog below, so both produce the same Retry affordance. The class name
+   is parameterised so the two paths can never mark each other's output. */
+function addLoaderRetryButton(container, markerClass) {
+  if (!container || container.querySelector("." + markerClass)) return;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn btn-sm btn-outline-primary ms-2 " + markerClass;
+  button.textContent = "Retry";
+  button.setAttribute("aria-label", "Retry loading this page");
+  button.addEventListener("click", () => window.location.reload());
+  container.appendChild(button);
+}
+
+function settleSessionLoaders() {
+  const addRetryButton = (container) =>
+    addLoaderRetryButton(container, "session-load-retry");
+
+  const loadingText = /^loading\b[\s\S]{0,100}(?:\.\.\.|…)?$/i;
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+  textNodes.forEach((node) => {
+    if (!loadingText.test((node.nodeValue || "").trim())) return;
+    const owner = node.parentElement;
+    if (!owner || owner.closest("button, [role='button'], .d-none, [hidden]"))
+      return;
+    node.nodeValue = "Data could not be loaded.";
+    owner.classList.add("text-danger", "session-load-message");
+    addRetryButton(owner);
+  });
+
+  document
+    .querySelectorAll(".spinner-border, .spinner-grow")
+    .forEach((spinner) => {
+      if (
+        spinner.closest("button, [role='button'], .d-none, [hidden]") ||
+        getComputedStyle(spinner).display === "none"
+      )
+        return;
+
+      const container = spinner.parentElement;
+      if (!container) return;
+      spinner.remove();
+      if (!container.querySelector(".session-load-message")) {
+        const message = document.createElement("span");
+        message.className = "text-danger small session-load-message";
+        message.textContent = "This section could not be loaded.";
+        container.appendChild(message);
+      }
+      addRetryButton(container);
+    });
+}
+
+/* ── Universal stuck-loader watchdog ─────────────────────────────
+   settleStoppedLoaders() in requests.js already turns abandoned
+   placeholders into an error state + Retry, but it runs only inside
+   requests.js's own DOMContentLoaded `finally`, so it protects only the
+   pages that load requests.js. technician/dashboard.html, for example,
+   loads main.js + notifications.js + technicians.js + profile.js and
+   none of them call it: if its init chain throws before rendering, the
+   three loading placeholders spin forever with no way out.
+
+   This watchdog runs on EVERY page. It is deliberately conservative:
+     - it only rewrites nodes still showing the ORIGINAL static
+       placeholder, so anything a page already rendered is left alone;
+     - it waits past API_REQUEST_TIMEOUT_MS (15s) so a genuinely slow
+       response is not misread as stuck. Should data land after that, the
+       page's own render overwrites the message, making a false positive
+       transient and self-healing — whereas a real stuck spinner would
+       otherwise stay on screen permanently;
+     - it never touches a spinner inside a button (that is real
+       submit-in-progress feedback) nor one with no layout boxes (hidden
+       modal, collapsed pane), nor anything inside a modal.
+   Every replacement carries a Retry control, so a path forward always
+   exists. */
+const LOADER_WATCHDOG_DELAY_MS = 20000;
+
+function installLoaderWatchdog() {
+  /* Public auth pages have no dashboard data regions; their only async state
+     is a spinner inside the submit button, which is excluded below anyway. */
+  if (isPublicPagePath(window.location.pathname)) return;
+
+  window.setTimeout(() => {
+    if (window.__authRedirecting) return;
+
+    const loadingText = /^loading\b[\s\S]{0,100}(?:\.\.\.|…)?$/i;
+
+    const isExcluded = (el) =>
+      !!el.closest("button, [role='button'], [hidden], .d-none, .modal");
+
+    const addRetry = (container) =>
+      addLoaderRetryButton(container, "watchdog-load-retry");
+
+    /* 1. Text placeholders. Only the matching text node is rewritten, so any
+          sibling content the page already rendered survives. */
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+    );
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+    textNodes.forEach((node) => {
+      if (!loadingText.test((node.nodeValue || "").trim())) return;
+      const owner = node.parentElement;
+      if (!owner || isExcluded(owner)) return;
+
+      owner
+        .querySelectorAll(".spinner-border, .spinner-grow")
+        .forEach((sp) => sp.remove());
+      node.nodeValue = "This section could not be loaded.";
+      owner.classList.add("text-danger");
+      addRetry(owner);
+    });
+
+    /* 2. Bare spinners that ship with no text at all, so the match above can
+          never fire on them. */
+    document
+      .querySelectorAll(".spinner-border, .spinner-grow")
+      .forEach((spinner) => {
+        if (isExcluded(spinner)) return;
+        /* An element inside a hidden ancestor still reports a non-"none"
+           computed display, so measure layout boxes rather than trusting
+           getComputedStyle. */
+        if (!spinner.getClientRects().length) return;
+
+        const container = spinner.parentElement;
+        if (!container) return;
+        /* Only act while the block is still essentially empty; anything with
+           real content around the spinner is a page that already rendered. */
+        if ((container.textContent || "").trim().length > 40) return;
+
+        spinner.remove();
+        if (!container.querySelector(".watchdog-load-message")) {
+          const msg = document.createElement("div");
+          msg.className =
+            "text-danger small text-center py-2 watchdog-load-message";
+          msg.innerHTML =
+            '<i class="bi bi-exclamation-triangle me-1"></i>This section could not be loaded.';
+          container.appendChild(msg);
+        }
+        addRetry(container);
+      });
+  }, LOADER_WATCHDOG_DELAY_MS);
+}
+
 function requireAuth() {
   if (!Auth.isLoggedIn()) {
     /* If the session lookup never reached the server we have no evidence that
@@ -617,6 +931,7 @@ function requireAuth() {
           "Not treating this as a logout; the session may still be valid.",
       );
       if (typeof showOfflineBanner === "function") showOfflineBanner();
+      settleSessionLoaders();
       return null;
     }
     window.__authRedirecting = true;
@@ -703,14 +1018,13 @@ function profileUploadUrl(filename) {
   return base + "/uploads/" + encodeURIComponent(String(filename));
 }
 
-/* Priority: Uploaded photo (localStorage) > DB profileImage > Image URL > default ADMIN image > initials */
+/* Priority: DB profileImage > legacy localStorage photo > default image > initials */
 function resolveProfileAvatar(user) {
   if (!user) return null;
+  if (user.profileImage) return profileUploadUrl(user.profileImage);
   var prefs = getProfileImagePrefs(user);
   if (prefs.uploaded) return prefs.uploaded;
   if (prefs.url) return prefs.url;
-  /* Fall back to the profileImage stored in the database. */
-  if (user.profileImage) return profileUploadUrl(user.profileImage);
   if (user.role === "ICT Admin") return DEFAULT_ADMIN_IMAGE;
   if (user.role === "Requester") return DEFAULT_REQUESTER_IMAGE;
   return null;
@@ -732,6 +1046,7 @@ function applyProfileAvatar(user, container) {
     ini.hidden = false;
     return;
   }
+  img.loading = "eager";
 
   img.onload = () => {
     img.hidden = false;
@@ -742,9 +1057,8 @@ function applyProfileAvatar(user, container) {
     ini.hidden = false;
   };
 
-  /* Resolve relative URLs against the API origin (backend), not the page
-     origin, so profile images served from localhost:5000 load correctly
-     when the frontend runs on a different port. */
+  /* Resolve relative URLs against the configured backend origin, not the page
+      origin, so profile images work when the frontend runs on another port. */
   var abs = src;
   try {
     abs = new URL(
@@ -752,7 +1066,13 @@ function applyProfileAvatar(user, container) {
       typeof apiOrigin === "function" ? apiOrigin() : window.location.origin,
     ).href;
   } catch (_) {}
-  if (img.src !== abs) img.src = src;
+  if (img.src !== abs) {
+    img.hidden = true;
+    img.src = src;
+  } else if (img.complete && img.naturalWidth > 0) {
+    img.hidden = false;
+    ini.hidden = true;
+  }
 }
 
 function populateUserInfo() {
@@ -773,7 +1093,12 @@ function populateUserInfo() {
 
   const panelLabel = document.getElementById("panelLabel");
   if (panelLabel) {
-    panelLabel.textContent = "Admin Panel";
+    const panelLabels = {
+      "ICT Admin": "ADMIN PANEL",
+      Requester: "REQUESTER PANEL",
+      Technician: "TECHNICIAN PANEL",
+    };
+    panelLabel.textContent = panelLabels[user.role] || "ICT PANEL";
   }
 
   /* Apply the profile photo to every avatar marked with [data-avatar] */
@@ -788,6 +1113,63 @@ function initSidebarToggle() {
   const sidebar = document.getElementById("sidebar");
   if (!btn || !sidebar) return;
 
+  const { role } = getCurrentRoleAndFile();
+  const dashboardRoles = new Set(["admin", "user", "technician"]);
+  const isRoleDashboard = dashboardRoles.has(role);
+  const desktopStateKey = `ict_${role}_sidebar_collapsed`;
+  const desktopQuery = window.matchMedia("(min-width: 992px)");
+  const mainColumn = document.querySelector(
+    "body.dashboard-body > .d-flex > .flex-grow-1",
+  );
+
+  const setSidebarState = (collapsed) => {
+    document.body.classList.toggle("dashboard-sidebar-collapsed", collapsed);
+    btn.setAttribute("aria-expanded", String(!collapsed));
+    btn.setAttribute(
+      "aria-label",
+      collapsed ? "Expand navigation" : "Collapse navigation",
+    );
+    if (isRoleDashboard && mainColumn && desktopQuery.matches) {
+      sidebar.style.setProperty("left", "0", "important");
+      sidebar.style.setProperty("opacity", "1", "important");
+      sidebar.style.setProperty(
+        "visibility",
+        collapsed ? "hidden" : "visible",
+        "important",
+      );
+      mainColumn.style.setProperty(
+        "margin-left",
+        collapsed ? "0" : "var(--sbw)",
+        "important",
+      );
+      mainColumn.style.setProperty(
+        "opacity",
+        collapsed ? "0.98" : "1",
+        "important",
+      );
+    } else if (isRoleDashboard && mainColumn) {
+      sidebar.style.removeProperty("left");
+      sidebar.style.removeProperty("opacity");
+      sidebar.style.removeProperty("visibility");
+      sidebar.style.removeProperty("transition");
+      mainColumn.style.removeProperty("margin-left");
+      mainColumn.style.removeProperty("opacity");
+    }
+  };
+
+  if (isRoleDashboard) {
+    let collapsed = false;
+    try {
+      collapsed = localStorage.getItem(desktopStateKey) === "true";
+    } catch (_) {}
+    setSidebarState(collapsed);
+    desktopQuery.addEventListener("change", () => {
+      setSidebarState(
+        document.body.classList.contains("dashboard-sidebar-collapsed"),
+      );
+    });
+  }
+
   let overlay = document.querySelector(".sidebar-overlay");
   if (!overlay) {
     overlay = document.createElement("div");
@@ -795,12 +1177,46 @@ function initSidebarToggle() {
     document.body.appendChild(overlay);
   }
   btn.addEventListener("click", () => {
+    if (isRoleDashboard && desktopQuery.matches) {
+      const collapsed = !document.body.classList.contains(
+        "dashboard-sidebar-collapsed",
+      );
+      setSidebarState(collapsed);
+      try {
+        localStorage.setItem(desktopStateKey, String(collapsed));
+      } catch (_) {}
+      return;
+    }
+    if (isRoleDashboard && mainColumn) {
+      sidebar.style.removeProperty("left");
+      sidebar.style.removeProperty("opacity");
+      sidebar.style.removeProperty("visibility");
+      mainColumn.style.removeProperty("margin-left");
+      mainColumn.style.removeProperty("opacity");
+    }
+    const mobileOpen = !sidebar.classList.contains("show");
     sidebar.classList.toggle("show");
     overlay.classList.toggle("show");
+    if (isRoleDashboard) {
+      sidebar.style.setProperty("transition", "none", "important");
+      sidebar.style.setProperty(
+        "left",
+        mobileOpen ? "0" : "calc(-1 * var(--sidebar-width) - 14px)",
+        "important",
+      );
+    }
   });
   overlay.addEventListener("click", () => {
     sidebar.classList.remove("show");
     overlay.classList.remove("show");
+    if (isRoleDashboard) {
+      sidebar.style.setProperty("transition", "none", "important");
+      sidebar.style.setProperty(
+        "left",
+        "calc(-1 * var(--sidebar-width) - 14px)",
+        "important",
+      );
+    }
   });
 }
 
@@ -943,6 +1359,13 @@ const NotificationSound = (() => {
     }
   }
 
+  function reset() {
+    stopSound();
+    pendingSound = false;
+    lastPlayAt = 0;
+    unlocked = false;
+  }
+
   function play() {
     if (!isEnabled()) return false;
     const now = Date.now();
@@ -982,6 +1405,7 @@ const NotificationSound = (() => {
         enabled ? "on" : "off",
       );
     } catch (_) {}
+    if (!enabled) stopSound();
   }
 
   return {
@@ -993,6 +1417,7 @@ const NotificationSound = (() => {
     play,
     setEnabled,
     stopSound,
+    reset,
     getVolume,
     audio,
   };
@@ -1010,7 +1435,12 @@ const MAX_TRACKED_SOUND_IDS = 200;
 function claimNotificationSound(notification) {
   const id = notificationIdentity(notification);
   if (_playedNotificationSounds.has(id)) return false;
+  const seen = readSeenNotificationIds();
+  if (seen.has(id)) return false;
+
   _playedNotificationSounds.add(id);
+  seen.add(id);
+  writeSeenNotificationIds(seen);
   while (_playedNotificationSounds.size > MAX_TRACKED_SOUND_IDS) {
     const oldest = _playedNotificationSounds.values().next().value;
     _playedNotificationSounds.delete(oldest);
@@ -1049,6 +1479,32 @@ function writeSeenNotificationIds(ids) {
 
 let _globalNotificationTimer = null;
 let _globalNotificationStarted = false;
+let _globalNotificationUserKey = "";
+let _notificationBaselineReady = false;
+let _pendingRealtimeNotifications = new Map();
+let _notificationVisibilityHandler = null;
+let _notificationAudioUnlockHandler = null;
+
+function presentGlobalNotification(notification) {
+  if (!claimNotificationSound(notification)) return false;
+
+  if (typeof showToast === "function") {
+    showToast(
+      notification.title || notification.message || "New notification",
+      "info",
+    );
+  }
+  NotificationSound.play();
+
+  const dropdown = document.getElementById("notifDropdown");
+  if (dropdown?.classList.contains("show")) {
+    if (typeof loadBellDropdown === "function") loadBellDropdown();
+  }
+  if (window.location.pathname.includes("notifications.html")) {
+    if (typeof loadNotificationsPage === "function") loadNotificationsPage();
+  }
+  return true;
+}
 
 async function monitorGlobalNotifications() {
   try {
@@ -1059,41 +1515,41 @@ async function monitorGlobalNotifications() {
     }
     const seen = readSeenNotificationIds();
     const identities = notifications.map(notificationIdentity);
-    const isBaseline = !localStorage.getItem(
-      notificationStorageKey(NOTIFICATION_SEEN_KEY),
-    );
-    const newNotifications = isBaseline
-      ? []
-      : notifications.filter(
-          (notification) => !seen.has(notificationIdentity(notification)),
-        );
+    const unread = Number(response?.unread) || 0;
+    updateNotificationBadges(unread);
 
-    notifications.forEach((notification) =>
-      seen.add(notificationIdentity(notification)),
-    );
-    writeSeenNotificationIds(seen);
+    const newNotifications = [];
+    if (!_notificationBaselineReady) {
+      /* Every item in the first successful snapshot predates this page's
+         initialized state, regardless of what an older tab stored locally. */
+      identities.forEach((id) => seen.add(id));
+      writeSeenNotificationIds(seen);
+      _notificationBaselineReady = true;
 
-    if (!isBaseline) {
-      newNotifications.forEach((notification) => {
-        if (!claimNotificationSound(notification)) return;
-        if (typeof showToast === "function") {
-          showToast(
-            notification.title || notification.message || "New notification",
-            "info",
-          );
+      /* A real Socket.IO event may race the initial request. Only alert for a
+         queued event missing from the snapshot that established the baseline. */
+      const baselineIds = new Set(identities);
+      const pending = Array.from(_pendingRealtimeNotifications.values());
+      _pendingRealtimeNotifications.clear();
+      pending.forEach((notification) => {
+        if (!baselineIds.has(notificationIdentity(notification))) {
+          if (presentGlobalNotification(notification))
+            newNotifications.push(notification);
         }
-        NotificationSound.play();
       });
+      return { identities, unread, newNotifications };
     }
 
-    const unread = Number(response?.unread) || 0;
-    ["notifBadge", "topNotifBadge"].forEach((id) => {
-      const badge = document.getElementById(id);
-      if (!badge) return;
-      badge.textContent = unread > 9 ? "9+" : unread;
-      badge.style.display = unread > 0 ? "" : "none";
+    notifications.forEach((notification) => {
+      if (
+        !seen.has(notificationIdentity(notification)) &&
+        presentGlobalNotification(notification)
+      ) {
+        newNotifications.push(notification);
+      }
+      seen.add(notificationIdentity(notification));
     });
-
+    writeSeenNotificationIds(seen);
     return { identities, unread, newNotifications };
   } catch (_) {
     return { identities: [], unread: 0, newNotifications: [] };
@@ -1101,12 +1557,27 @@ async function monitorGlobalNotifications() {
 }
 
 function initGlobalNotificationMonitor() {
-  if (_globalNotificationStarted || !Auth.isLoggedIn()) return;
+  if (!Auth.isLoggedIn()) return;
+  const userKey = notificationUserKey();
+  if (_globalNotificationStarted && _globalNotificationUserKey === userKey)
+    return;
+  if (_globalNotificationStarted) stopGlobalNotificationMonitor();
+
   _globalNotificationStarted = true;
-  const unlockAudio = () => NotificationSound.unlock();
+  _globalNotificationUserKey = userKey;
+  _notificationBaselineReady = false;
+  _pendingRealtimeNotifications.clear();
+  _playedNotificationSounds.clear();
+
+  _notificationAudioUnlockHandler = () => {
+    void NotificationSound.unlock();
+    ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
+      document.removeEventListener(eventName, _notificationAudioUnlockHandler);
+    });
+    _notificationAudioUnlockHandler = null;
+  };
   ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
-    document.addEventListener(eventName, unlockAudio, {
-      once: true,
+    document.addEventListener(eventName, _notificationAudioUnlockHandler, {
       passive: true,
     });
   });
@@ -1114,15 +1585,69 @@ function initGlobalNotificationMonitor() {
   /* Try to connect via Socket.IO for real-time notifications */
   initSocketIONotifications();
 
-  /* Establish the fallback baseline once; use count-only polling while realtime is healthy. */
-  monitorGlobalNotifications();
-  _globalNotificationTimer = setInterval(() => {
-    if (_socketConnected) {
-      pollGlobalNotificationCount();
-    } else {
-      monitorGlobalNotifications();
+  /* Baseline existing notifications before any real-time item can alert. */
+  void monitorGlobalNotifications();
+
+  /* Never poll a tab the user is not looking at. Background tabs used to fire a
+     full GET /notifications every 30s forever, which is pure waste — the
+     browser has already discarded those responses and no one sees them. The
+     catch-up poll on visibilitychange restores the badge immediately. */
+  let _notificationPollInFlight = false;
+  const poll = async () => {
+    if (document.hidden || _notificationPollInFlight) return;
+    _notificationPollInFlight = true;
+    try {
+      if (_socketConnected && _notificationBaselineReady)
+        await pollGlobalNotificationCount();
+      else await monitorGlobalNotifications();
+    } finally {
+      _notificationPollInFlight = false;
     }
-  }, NOTIFICATION_POLL_MS);
+  };
+
+  _notificationVisibilityHandler = () => {
+    if (!document.hidden) void poll();
+  };
+  document.addEventListener("visibilitychange", _notificationVisibilityHandler);
+
+  _globalNotificationTimer = setInterval(poll, NOTIFICATION_POLL_MS);
+}
+
+function stopGlobalNotificationMonitor() {
+  const userKey = _globalNotificationUserKey || notificationUserKey();
+  if (_globalNotificationTimer) clearInterval(_globalNotificationTimer);
+  _globalNotificationTimer = null;
+
+  if (_notificationVisibilityHandler) {
+    document.removeEventListener(
+      "visibilitychange",
+      _notificationVisibilityHandler,
+    );
+    _notificationVisibilityHandler = null;
+  }
+  if (_notificationAudioUnlockHandler) {
+    ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
+      document.removeEventListener(eventName, _notificationAudioUnlockHandler);
+    });
+    _notificationAudioUnlockHandler = null;
+  }
+
+  if (_socket) {
+    _socket.removeAllListeners();
+    _socket.disconnect();
+    _socket = null;
+  }
+  _socketConnected = false;
+  _socketReconnectAttempts = 0;
+  _globalNotificationStarted = false;
+  _globalNotificationUserKey = "";
+  _notificationBaselineReady = false;
+  _pendingRealtimeNotifications.clear();
+  _playedNotificationSounds.clear();
+  NotificationSound.reset();
+  try {
+    localStorage.removeItem(`${NOTIFICATION_SOUND_CONFIG.seenKey}:${userKey}`);
+  } catch (_) {}
 }
 
 async function pollGlobalNotificationCount() {
@@ -1151,7 +1676,7 @@ function initSocketIONotifications() {
   const apiOrigin =
     typeof window.apiOrigin === "function"
       ? window.apiOrigin()
-      : "http://localhost:5000";
+      : resolveApiBase().replace(/\/api\/?$/, "");
 
   _socket = io(apiOrigin, {
     withCredentials: true,
@@ -1198,74 +1723,65 @@ function initSocketIONotifications() {
   });
 }
 
-function markNotificationSeen(notification) {
-  const id = notificationIdentity(notification);
-  const seen = readSeenNotificationIds();
-  if (seen.has(id)) return false;
-  seen.add(id);
-  writeSeenNotificationIds(seen);
-  return true;
-}
-
 function handleRealtimeNotification(notification) {
-  /* Persist the id so the next poll, page reload, or duplicate realtime event
-     cannot show another popup or replay its sound. */
-  if (!markNotificationSeen(notification)) return;
-
-  /* The in-memory claim also gates the popup if storage is unavailable. */
-  if (!claimNotificationSound(notification)) return;
-
-  /* Show toast */
-  if (typeof showToast === "function") {
-    showToast(
-      notification.title || notification.message || "New notification",
-      "info",
-    );
-  }
-  NotificationSound.play();
-
-  /* Refresh bell dropdown if open */
-  const dropdown = document.getElementById("notifDropdown");
-  if (dropdown && dropdown.classList.contains("show")) {
-    if (typeof loadBellDropdown === "function") {
-      loadBellDropdown();
+  const id = notificationIdentity(notification);
+  if (!_notificationBaselineReady) {
+    /* Wait for the authenticated API snapshot so old notifications delivered
+       during socket startup cannot be mistaken for new ones on page load. */
+    _pendingRealtimeNotifications.set(id, notification);
+    while (_pendingRealtimeNotifications.size > MAX_TRACKED_SOUND_IDS) {
+      const oldest = _pendingRealtimeNotifications.keys().next().value;
+      _pendingRealtimeNotifications.delete(oldest);
     }
+    return;
   }
 
-  /* Refresh notifications page if on it */
-  if (window.location.pathname.includes("notifications.html")) {
-    if (typeof loadNotificationsPage === "function") {
-      loadNotificationsPage();
-    }
-  }
+  presentGlobalNotification(notification);
 }
 
 function updateNotificationBadges(unread) {
   if (unread !== undefined) {
+    const count = Number(unread) || 0;
     ["notifBadge", "topNotifBadge", "sidebarNotifBadge"].forEach((id) => {
       const badge = document.getElementById(id);
       if (badge) {
-        badge.textContent = unread > 9 ? "9+" : unread;
-        badge.style.display = unread > 0 ? "" : "none";
+        badge.textContent = count > 9 ? "9+" : count;
+        badge.style.display = count > 0 ? "" : "none";
       }
     });
+    const label = document.getElementById("notifUnreadLabel");
+    if (label) {
+      label.textContent = count;
+      label.style.display = count > 0 ? "" : "none";
+    }
   } else {
     /* Refresh from server */
     refreshBellBadge();
   }
 }
 
+/* Single owner of the bell badge refresh.
+   This used to be declared twice — here and in notifications.js — so whichever
+   script finished parsing last silently replaced the other. The two versions
+   updated different sets of badge elements, which made the count "stick" on
+   some pages. One definition now covers every badge and the dropdown label. */
 function refreshBellBadge() {
   return apiRequest("/notifications/unread-count")
     .then(({ unread }) => {
+      const count = Number(unread) || 0;
       ["notifBadge", "topNotifBadge", "sidebarNotifBadge"].forEach((id) => {
         const badge = document.getElementById(id);
         if (badge) {
-          badge.textContent = unread > 9 ? "9+" : unread;
-          badge.style.display = unread > 0 ? "" : "none";
+          badge.textContent = count > 9 ? "9+" : count;
+          badge.style.display = count > 0 ? "" : "none";
         }
       });
-      return unread;
+      const label = document.getElementById("notifUnreadLabel");
+      if (label) {
+        label.textContent = count;
+        label.style.display = count > 0 ? "" : "none";
+      }
+      return count;
     })
     .catch(() => 0);
 }
@@ -1337,6 +1853,109 @@ function shellI18n(key, fallback) {
   return fallback;
 }
 
+/* Loads the shared profile menu on demand, so pages that do not list it
+   statically still get it. Must NEVER reject or hang: the caller awaits
+   this before populating the sidebar, topbar and footer, so a stalled
+   promise would silently disable the whole dashboard. On failure the
+   dropdown simply does not appear and the page keeps its original
+   topbar controls. */
+function ensureSharedProfileMenu() {
+  if (window.AdminProfileMenu?.mount) return Promise.resolve();
+  const existing = document.querySelector(
+    'script[data-shared-profile-menu="true"]',
+  );
+  if (existing) {
+    if (existing.dataset.loaded === "true") return Promise.resolve();
+    return new Promise((resolve) => {
+      existing.addEventListener("load", resolve, { once: true });
+      existing.addEventListener("error", resolve, { once: true });
+    });
+  }
+
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "/assets/js/admin-profile-menu.js?v=2";
+    script.dataset.sharedProfileMenu = "true";
+    script.addEventListener("load", () => {
+      script.dataset.loaded = "true";
+      resolve();
+    });
+    script.addEventListener("error", () => {
+      console.warn(
+        "[main] Profile menu script failed to load; the dashboard keeps its existing topbar controls.",
+      );
+      script.remove();
+      resolve();
+    });
+    document.head.appendChild(script);
+  });
+}
+
+function ensureSidebarTopStructure() {
+  const sidebar = document.querySelector("#sidebar.sidebar");
+  if (!sidebar || sidebar.querySelector(".dashboard-sidebar-header")) return;
+
+  const { role } = getCurrentRoleAndFile();
+  const panelLabels = {
+    admin: "ADMIN PANEL",
+    user: "REQUESTER PANEL",
+    technician: "TECHNICIAN PANEL",
+  };
+  const brandLink = sidebar.querySelector(":scope > a[href]");
+  const brandContent = brandLink?.firstElementChild;
+  const icon = brandLink?.querySelector("i.bi");
+  const panelLabel =
+    sidebar.querySelector("#panelLabel") ||
+    brandContent?.querySelector("div:last-child");
+
+  const header = document.createElement("div");
+  header.className = "dashboard-sidebar-header";
+
+  const menuSlot = document.createElement("div");
+  menuSlot.className = "dashboard-sidebar-menu-slot";
+
+  let toggle = document.getElementById("sidebarToggle");
+  if (!toggle) {
+    toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.id = "sidebarToggle";
+    toggle.innerHTML = '<i class="bi bi-list" aria-hidden="true"></i>';
+  }
+  toggle.classList.remove("d-lg-none", "btn-outline-secondary");
+  toggle.classList.add("dashboard-sidebar-toggle");
+  toggle.setAttribute("aria-label", "Toggle navigation");
+  toggle.setAttribute("aria-expanded", "true");
+  menuSlot.appendChild(toggle);
+
+  const logoSlot = document.createElement("div");
+  logoSlot.className = "dashboard-sidebar-logo-slot";
+  if (brandLink) {
+    brandLink.classList.add("dashboard-sidebar-logo");
+    if (brandContent) brandContent.classList.add("dashboard-sidebar-brand");
+    if (panelLabel) panelLabel.remove();
+    logoSlot.appendChild(brandLink);
+  } else if (icon) {
+    logoSlot.appendChild(icon);
+  }
+
+  const themeSlot = document.createElement("div");
+  themeSlot.className = "dashboard-sidebar-theme-slot";
+  const existingTheme = sidebar.querySelector(".app-theme-switch");
+  if (existingTheme) {
+    existingTheme.classList.add("dashboard-sidebar-theme");
+    themeSlot.appendChild(existingTheme);
+  }
+  header.append(menuSlot, logoSlot, themeSlot);
+
+  const title = panelLabel || document.createElement("div");
+  title.id = "panelLabel";
+  title.className = "dashboard-sidebar-panel-title";
+  title.textContent = panelLabels[role] || "ICT PANEL";
+
+  sidebar.prepend(header);
+  header.after(title);
+}
+
 function ensureTopbarHeaderStructure() {
   const header = document.querySelector(".topbar");
   if (!header) return;
@@ -1344,6 +1963,7 @@ function ensureTopbarHeaderStructure() {
   if (!h5 || h5.closest(".topbar-title-stack")) return;
 
   const { role, file } = getCurrentRoleAndFile();
+  const isRoleDashboard = ["admin", "user", "technician"].includes(role);
 
   /* A subtitle already sits right under the title on this page — move it
      into the new stack instead of duplicating it. */
@@ -1370,14 +1990,26 @@ function ensureTopbarHeaderStructure() {
   }
 
   /* Pages without a hamburger get one so the mobile drawer always opens */
-  if (!header.querySelector("#sidebarToggle")) {
+  if (
+    !header.querySelector("#sidebarToggle") &&
+    !document.querySelector("#sidebar .dashboard-sidebar-toggle")
+  ) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.id = "sidebarToggle";
-    btn.className = "btn btn-sm btn-outline-secondary d-inline-flex d-lg-none";
+    btn.className = `btn btn-sm btn-outline-secondary d-inline-flex${
+      isRoleDashboard ? " dashboard-sidebar-toggle" : " d-lg-none"
+    }`;
     btn.setAttribute("aria-label", "Toggle navigation");
+    btn.setAttribute("aria-expanded", "true");
     btn.innerHTML = '<i class="bi bi-list fs-5"></i>';
     stack.insertAdjacentElement("beforebegin", btn);
+  } else if (isRoleDashboard && header.querySelector("#sidebarToggle")) {
+    const btn = header.querySelector("#sidebarToggle");
+    btn.classList.remove("d-lg-none");
+    btn.classList.add("dashboard-sidebar-toggle");
+    btn.setAttribute("aria-label", "Toggle navigation");
+    btn.setAttribute("aria-expanded", "true");
   }
 }
 
@@ -1397,38 +2029,41 @@ function injectAppFooter() {
   column.appendChild(footer);
 }
 
-function injectPersonalSettingsLink() {
-  const role = Auth.getUser()?.role;
-  if (role !== "Requester" && role !== "Technician") return;
+function removeSidebarAccountLinks() {
   const nav = document.querySelector("#sidebar ul.nav");
-  if (
-    !nav ||
-    nav.querySelector("[data-personal-settings]") ||
-    nav.querySelector("a[href='/views/settings.html']")
-  )
-    return;
-  const profileLink =
-    nav.querySelector("#profileNavLink") ||
-    Array.from(nav.querySelectorAll("a[href]")).find((link) =>
-      /profile\.html(?:$|#)/.test(link.getAttribute("href")),
-    );
-  if (!profileLink) return;
-  const item = document.createElement("li");
-  item.className = "nav-item";
-  item.innerHTML =
-    '<a href="/views/settings.html" class="nav-link text-white-50" data-personal-settings><i class="bi bi-gear me-2"></i><span data-i18n="side.settings">Settings</span></a>';
-  const profileItem = profileLink.closest("li") || profileLink;
-  profileItem.before(item);
-  /* The link is injected after initLang() has already walked the document, so
-     translate the new node explicitly to match every other sidebar item. */
-  if (typeof applyLanguage === "function") applyLanguage(item);
+  if (!nav) return;
+
+  nav.querySelectorAll("a[href]").forEach((link) => {
+    const href = (link.getAttribute("href") || "").split(/[?#]/, 1)[0];
+    const page = href.split("/").pop().toLowerCase();
+    const label = (
+      link.querySelector("[data-i18n]")?.textContent ||
+      link.textContent ||
+      ""
+    )
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+    if (
+      page === "settings.html" ||
+      page === "profile.html" ||
+      link.matches("[data-personal-settings], #profileNavLink") ||
+      ["profile", "my profile", "profile settings", "settings"].includes(label)
+    ) {
+      (link.closest("li") || link).remove();
+    }
+  });
 }
 
 /* ── DOM Ready ────────────────────────────────────────────── */
 document.addEventListener("DOMContentLoaded", async () => {
+  /* Auth.load() was already started at script-parse time, so this await almost
+     always resolves from cache instead of opening a fresh round-trip. */
   const user = await Auth.load();
+  await ensureSharedProfileMenu();
   void loadAccountPreferences(user);
-  injectPersonalSettingsLink();
+  removeSidebarAccountLinks();
+  ensureSidebarTopStructure();
   ensureTopbarHeaderStructure();
   injectAppFooter();
   populateUserInfo();
@@ -1485,6 +2120,16 @@ document.addEventListener("DOMContentLoaded", async () => {
           notificationContainer.after(headerLogoutBtn);
         else headerControls.appendChild(headerLogoutBtn);
       }
+
+      /* All dashboard roles get the shared profile dropdown, which replaces
+         the standalone logout button injected above and reuses
+         logout() / applyProfileAvatar(). Deliberately outside the
+         `if (headerControls)` block: the dropdown falls back to the topbar
+         when that cluster is absent, so the menu still appears.
+
+         The role gate lives in the module, so the single normalizeRole()
+         definition stays authoritative and unsupported roles return false. */
+      window.AdminProfileMenu?.mount(user);
     }
   }
 
@@ -1507,4 +2152,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (Auth.isLoggedIn()) {
     initGlobalNotificationMonitor();
   }
+
+  installLoaderWatchdog();
 });

@@ -8,6 +8,17 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const Technician = require("../models/Technician");
 const Assignment = require("../models/Assignment");
+const MaintenanceRecord = require("../models/MaintenanceRecord");
+const Ticket = require("../models/Ticket");
+const Notification = require("../models/Notification");
+const Conversation = require("../models/Conversation");
+const Message = require("../models/Message");
+const AIConversation = require("../models/AIConversation");
+const AIFeedback = require("../models/AIFeedback");
+const Feedback = require("../models/Feedback");
+const AuditLog = require("../models/AuditLog");
+const Settings = require("../models/Settings");
+const ProfileFile = require("../models/ProfileFile");
 const path = require("path");
 const fs = require("fs");
 const {
@@ -144,6 +155,7 @@ const createUser = async (req, res, next) => {
       status: status || "active",
       gender: gender || null,
     });
+    req.auditEntityId = user._id;
     /* If creating a Technician, also create a Technician profile */
     if (user.role === "Technician") {
       await Technician.create({
@@ -315,56 +327,167 @@ const deleteUser = async (req, res, next) => {
    assigned requests, so in-flight work is never orphaned. This is separate
    from the soft-delete endpoint above and never changes status fields. */
 const permanentDeleteUser = async (req, res, next) => {
+  let failure = null;
+  let deletedUser = null;
+  let deletedTechnician = false;
+  let profileImage = null;
+  const session = await mongoose.startSession();
+
   try {
     const idErr = validateObjectId(req.params.id, "User");
-    if (idErr) return res.status(400).json({ success: false, message: idErr });
+    if (idErr) {
+      throw Object.assign(new Error(idErr), { statusCode: 400 });
+    }
 
     const id = req.params.id;
-
-    /* Never allow an admin to permanently delete their own active account. */
     if (String(id) === String(req.user.id)) {
-      return res.status(400).json({
-        success: false,
-        message: "You cannot permanently delete your own account.",
-      });
+      throw Object.assign(
+        new Error("You cannot permanently delete your own account."),
+        { statusCode: 400 },
+      );
     }
 
-    const user = await User.findById(id);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
-    }
-
-    /* Technicians: remove the linked Technician profile too, but only when no
-       active assignments exist (mirrors the existing tech-deactivation guard). */
-    if (user.role === "Technician") {
-      const tech = await Technician.findOne({ user: id });
-      if (tech) {
-        const active = await Assignment.countDocuments({
-          technician: tech._id,
-          status: { $in: ["assigned", "accepted", "in_progress"] },
+    await session.withTransaction(async () => {
+      const user = await User.findById(id).session(session);
+      if (!user) {
+        throw Object.assign(new Error("User not found."), {
+          statusCode: 404,
         });
-        if (active > 0) {
-          return res.status(409).json({
-            success: false,
-            message:
-              "Cannot permanently delete this technician — they still have active assigned requests. Reassign or complete them first.",
-          });
-        }
-        await Technician.deleteOne({ _id: tech._id });
       }
-    }
 
-    await User.findByIdAndDelete(id);
+      deletedUser = user;
+      profileImage = user.profileImage;
 
-    res.json({
-      success: true,
-      message: `User "${user.fullName}" permanently deleted.`,
+      if (user.role === "Technician") {
+        deletedTechnician = true;
+        const tech = await Technician.findOne({ user: id }).session(session);
+
+        if (tech) {
+          const activeAssignments = await Assignment.countDocuments({
+            technician: tech._id,
+            status: { $in: ["assigned", "accepted", "in_progress"] },
+          }).session(session);
+          const activeTickets = await Ticket.countDocuments({
+            assignedTechnician: id,
+            status: { $in: ["assigned", "accepted", "in_progress"] },
+          }).session(session);
+          if (activeAssignments > 0 || activeTickets > 0) {
+            throw Object.assign(
+              new Error(
+                "Cannot permanently delete this technician while active requests are assigned. Reassign or complete them first.",
+              ),
+              { statusCode: 409 },
+            );
+          }
+        }
+
+        const requesterTickets = await Ticket.countDocuments({
+          requester: id,
+        }).session(session);
+        if (requesterTickets > 0) {
+          throw Object.assign(
+            new Error(
+              "This account is also linked to requester tickets, so it cannot be permanently deleted without removing ticket history.",
+            ),
+            { statusCode: 409 },
+          );
+        }
+
+        const conversationIds = await Conversation.find({
+          participants: id,
+        })
+          .distinct("_id")
+          .session(session);
+
+        await Message.deleteMany(
+          {
+            $or: [
+              { sender: id },
+              { recipient: id },
+              { conversation: { $in: conversationIds } },
+            ],
+          },
+          { session },
+        );
+        await Conversation.deleteMany({ participants: id }, { session });
+        await Notification.deleteMany({ user: id }, { session });
+        await AIConversation.deleteMany({ user: id }, { session });
+        await AIFeedback.deleteMany({ user: id }, { session });
+        await Feedback.deleteMany({ user: id }, { session });
+
+        await Assignment.updateMany(
+          { assigned_by: id },
+          { $set: { assigned_by: null } },
+          { session },
+        );
+        await AuditLog.updateMany(
+          { user: id },
+          { $set: { user: null } },
+          { session },
+        );
+        await Settings.updateMany(
+          { updatedBy: id },
+          { $set: { updatedBy: null } },
+          { session },
+        );
+        await Ticket.updateMany(
+          { assignedTechnician: id },
+          { $unset: { assignedTechnician: 1 } },
+          { session },
+        );
+        await Ticket.updateMany(
+          { "technicianFeedback.technician.technicianId": id },
+          {
+            $set: { "technicianFeedback.technician.technicianId": null },
+          },
+          { session },
+        );
+
+        if (tech) {
+          await Assignment.deleteMany({ technician: tech._id }, { session });
+          await MaintenanceRecord.deleteMany(
+            { technician: tech._id },
+            { session },
+          );
+          await Technician.deleteOne({ _id: tech._id }, { session });
+        }
+      }
+
+      await User.deleteOne({ _id: id }, { session });
     });
   } catch (err) {
-    next(err);
+    failure = err;
+  } finally {
+    await session.endSession();
   }
+
+  if (failure) {
+    if (failure.statusCode) {
+      return res
+        .status(failure.statusCode)
+        .json({ success: false, message: failure.message });
+    }
+    return next(failure);
+  }
+
+  if (profileImage) {
+    const imagePath = path.join(__dirname, "..", "uploads", profileImage);
+    try {
+      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    } catch (err) {
+      console.warn(
+        "Could not remove deleted user's profile image:",
+        err.message,
+      );
+    }
+  }
+
+  res.json({
+    success: true,
+    message: deletedTechnician
+      ? `Technician "${deletedUser.fullName}" permanently deleted.`
+      : `User "${deletedUser.fullName}" permanently deleted.`,
+  });
 };
 
 /* ── PUT /api/users/:id/password — admin resets password ──── */
@@ -641,6 +764,45 @@ const changeMyPassword = async (req, res, next) => {
 };
 
 /* ── POST /api/users/profile-image — upload profile image ───── */
+const profileImageSignatures = {
+  "image/jpeg": (header) =>
+    header.length >= 3 &&
+    header[0] === 0xff &&
+    header[1] === 0xd8 &&
+    header[2] === 0xff,
+  "image/png": (header) =>
+    header.length >= 8 &&
+    header
+      .subarray(0, 8)
+      .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
+  "image/webp": (header) =>
+    header.length >= 12 &&
+    header.toString("ascii", 0, 4) === "RIFF" &&
+    header.toString("ascii", 8, 12) === "WEBP",
+};
+
+const hasProfileImageSignature = (filePath, mimeType) => {
+  const descriptor = fs.openSync(filePath, "r");
+  const header = Buffer.alloc(12);
+  let bytesRead;
+  try {
+    bytesRead = fs.readSync(descriptor, header, 0, header.length, 0);
+  } finally {
+    fs.closeSync(descriptor);
+  }
+  return !!profileImageSignatures[mimeType]?.(header.subarray(0, bytesRead));
+};
+
+const unlinkProfileImage = async (filename) => {
+  if (!filename || path.basename(filename) !== filename) return;
+  try {
+    await fs.promises.unlink(path.join(__dirname, "..", "uploads", filename));
+  } catch (err) {
+    if (err.code !== "ENOENT")
+      console.error("Could not remove profile image:", err.message);
+  }
+};
+
 const uploadProfileImage = async (req, res, next) => {
   try {
     if (!req.file) {
@@ -649,12 +811,27 @@ const uploadProfileImage = async (req, res, next) => {
         .json({ success: false, message: "No image file provided." });
     }
 
+    const extensionMimeTypes = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".webp": "image/webp",
+    };
+    const extension = path.extname(req.file.originalname).toLowerCase();
+    if (
+      extensionMimeTypes[extension] !== req.file.mimetype ||
+      !hasProfileImageSignature(req.file.path, req.file.mimetype)
+    ) {
+      await unlinkProfileImage(req.file.filename);
+      return res.status(400).json({
+        success: false,
+        message: "The selected file is not a valid JPG, PNG, or WEBP image.",
+      });
+    }
+
     const user = await User.findById(req.user.id);
     if (!user) {
-      // Clean up uploaded file if user not found
-      if (req.file && req.file.path) {
-        fs.unlink(req.file.path, () => {});
-      }
+      await unlinkProfileImage(req.file.filename);
       return res
         .status(404)
         .json({ success: false, message: "User not found." });
@@ -668,12 +845,9 @@ const uploadProfileImage = async (req, res, next) => {
     // Update database before deleting old file
     await user.save({ validateBeforeSave: false });
 
-    // Delete old profile image AFTER successful DB update
-    if (oldFilename) {
-      const oldPath = path.join(__dirname, "..", "uploads", oldFilename);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-      }
+    // Remove the old image only after the new reference has been committed.
+    if (oldFilename && oldFilename !== req.file.filename) {
+      await unlinkProfileImage(oldFilename);
     }
 
     // Return the image URL for immediate frontend display
@@ -687,17 +861,8 @@ const uploadProfileImage = async (req, res, next) => {
     // CRITICAL: If DB update failed, the old image is still intact.
     // The new file on disk will be orphaned; clean it up so the user
     // is not left with a phantom file, but the old image is preserved.
-    if (req.file && req.file.path) {
-      const newlySaved = path.join(
-        __dirname,
-        "..",
-        "uploads",
-        req.file.filename,
-      );
-      if (fs.existsSync(newlySaved)) {
-        fs.unlinkSync(newlySaved);
-      }
-    }
+    if (req.file && req.file.filename)
+      await unlinkProfileImage(req.file.filename);
     next(err);
   }
 };
@@ -759,20 +924,257 @@ const removeProfileImage = async (req, res, next) => {
         .json({ success: false, message: "No profile image to remove." });
     }
 
-    // Delete the image file
-    const imagePath = path.join(__dirname, "..", "uploads", user.profileImage);
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
-    }
-
-    // Clear the profileImage field
+    const oldFilename = user.profileImage;
     user.profileImage = null;
     await user.save({ validateBeforeSave: false });
+    await unlinkProfileImage(oldFilename);
 
     res.json({
       success: true,
       message: "Profile photo removed successfully.",
       data: { profileImage: null },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/* ── Profile file validation — reject forged browser metadata ───── */
+const PROFILE_FILE_EXTENSIONS = new Set([
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".jpg",
+  ".jpeg",
+  ".png",
+]);
+
+function validateStoredProfileFile(filePath, originalName, mimeType) {
+  const extension = path.extname(originalName || "").toLowerCase();
+  if (!PROFILE_FILE_EXTENSIONS.has(extension)) {
+    return false;
+  }
+
+  try {
+    const buffer = fs.readFileSync(filePath).subarray(0, 16);
+
+    if (extension === ".pdf") {
+      return (
+        buffer.length >= 4 &&
+        buffer[0] === 0x25 &&
+        buffer[1] === 0x50 &&
+        buffer[2] === 0x44 &&
+        buffer[3] === 0x46
+      );
+    }
+
+    if (extension === ".png") {
+      return (
+        buffer.length >= 8 &&
+        buffer[0] === 0x89 &&
+        buffer[1] === 0x50 &&
+        buffer[2] === 0x4e &&
+        buffer[3] === 0x47 &&
+        buffer[4] === 0x0d &&
+        buffer[5] === 0x0a &&
+        buffer[6] === 0x1a &&
+        buffer[7] === 0x0a
+      );
+    }
+
+    if (extension === ".jpg" || extension === ".jpeg") {
+      return (
+        buffer.length >= 3 &&
+        buffer[0] === 0xff &&
+        buffer[1] === 0xd8 &&
+        buffer[2] === 0xff
+      );
+    }
+
+    if (extension === ".docx") {
+      const zipHeader =
+        buffer.length >= 4 &&
+        buffer[0] === 0x50 &&
+        buffer[1] === 0x4b &&
+        buffer[2] === 0x03 &&
+        buffer[3] === 0x04;
+      return zipHeader || /^application\/zip$/i.test(mimeType || "");
+    }
+
+    if (extension === ".doc") {
+      const oleHeader =
+        buffer.length >= 8 &&
+        buffer[0] === 0xd0 &&
+        buffer[1] === 0xcf &&
+        buffer[2] === 0x11 &&
+        buffer[3] === 0xe0 &&
+        buffer[4] === 0xa1 &&
+        buffer[5] === 0xb1 &&
+        buffer[6] === 0x1a &&
+        buffer[7] === 0xe1;
+      return oleHeader || /^application\/msword$/i.test(mimeType || "");
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function removeUploadedFile(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) return;
+  try {
+    fs.unlinkSync(filePath);
+  } catch {
+    // best-effort cleanup
+  }
+}
+
+/* ── POST /api/profile/files — upload a profile file ────────── */
+const uploadProfileFile = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res
+        .status(422)
+        .json({ success: false, message: "No file provided." });
+    }
+
+    if (
+      !validateStoredProfileFile(
+        req.file.path,
+        req.file.originalname,
+        req.file.mimetype,
+      )
+    ) {
+      removeUploadedFile(req.file.path);
+      return res.status(415).json({
+        success: false,
+        message: "Unsupported file type or invalid file contents.",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      removeUploadedFile(req.file.path);
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    const isImage = req.file.mimetype.startsWith("image/");
+    const category = isImage ? "image" : "document";
+
+    const profileFile = await ProfileFile.create({
+      user: user._id,
+      originalName: req.file.originalname,
+      storedName: req.file.filename,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+      path: req.file.path,
+      category,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "File uploaded successfully.",
+      data: {
+        id: profileFile._id,
+        originalName: profileFile.originalName,
+        size: profileFile.size,
+        mimeType: profileFile.mimeType,
+        category: profileFile.category,
+        uploadedAt: profileFile.uploadedAt,
+      },
+    });
+  } catch (err) {
+    removeUploadedFile(req.file && req.file.path);
+    next(err);
+  }
+};
+
+/* ── GET /api/profile/files — list user's files ─────────────── */
+const getProfileFiles = async (req, res, next) => {
+  try {
+    const files = await ProfileFile.find({ user: req.user.id })
+      .sort({ uploadedAt: -1 })
+      .lean();
+
+    const data = files.map((f) => ({
+      id: f._id,
+      originalName: f.originalName,
+      size: f.size,
+      mimeType: f.mimeType,
+      category: f.category,
+      uploadedAt: f.uploadedAt,
+    }));
+
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/* ── GET /api/profile/files/:id — download a file ───────────── */
+const downloadProfileFile = async (req, res, next) => {
+  try {
+    const idErr = validateObjectId(req.params.id, "ProfileFile");
+    if (idErr) return res.status(400).json({ success: false, message: idErr });
+
+    const file = await ProfileFile.findById(req.params.id);
+    if (!file) {
+      return res
+        .status(404)
+        .json({ success: false, message: "File not found." });
+    }
+
+    if (String(file.user) !== String(req.user.id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to access this file.",
+      });
+    }
+
+    if (!fs.existsSync(file.path)) {
+      return res
+        .status(404)
+        .json({ success: false, message: "File not found on server." });
+    }
+
+    res.download(file.path, file.originalName);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/* ── DELETE /api/profile/files/:id — delete a file ──────────── */
+const deleteProfileFile = async (req, res, next) => {
+  try {
+    const idErr = validateObjectId(req.params.id, "ProfileFile");
+    if (idErr) return res.status(400).json({ success: false, message: idErr });
+
+    const file = await ProfileFile.findById(req.params.id);
+    if (!file) {
+      return res
+        .status(404)
+        .json({ success: false, message: "File not found." });
+    }
+
+    if (String(file.user) !== String(req.user.id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete this file.",
+      });
+    }
+
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+
+    await ProfileFile.deleteOne({ _id: file._id });
+
+    res.json({
+      success: true,
+      message: "File deleted successfully.",
     });
   } catch (err) {
     next(err);
@@ -794,4 +1196,8 @@ module.exports = {
   uploadProfileImage,
   removeProfileImage,
   deleteMyAccount,
+  uploadProfileFile,
+  getProfileFiles,
+  downloadProfileFile,
+  deleteProfileFile,
 };

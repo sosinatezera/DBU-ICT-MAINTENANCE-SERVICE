@@ -23,7 +23,20 @@ const VALID_ROLES       = ['Requester', 'Technician', 'ICT Admin'];
 const VALID_STATUSES    = ['active', 'inactive'];
 const VALID_PRIORITIES  = ['low', 'medium', 'high', 'critical'];
 const VALID_TICKET_STATUSES = ['submitted', 'under_review', 'assigned', 'accepted', 'in_progress', 'resolved', 'closed'];
-const VALID_EQUIPMENT   = ['Desktop Computer', 'Laptop', 'Network', 'Printer', 'Scanner', 'Monitor', 'Projector', 'UPS / Power Supply', 'Keyboard / Mouse', 'Other'];
+/* LEGACY device list — the hard-coded 10 values that used to back both the
+   Ticket.equipmentType enum and the request form's radio cards. The enum has
+   been removed (see models/DeviceType.js) and the request form now loads the
+   admin-managed catalogue, so this list is NO LONGER used to validate
+   submissions. It is kept exported because reports and historical views still
+   group old tickets by these values, and because it documents exactly which
+   values must keep displaying correctly after the migration. */
+const VALID_EQUIPMENT = ['Desktop Computer', 'Laptop', 'Network', 'Printer', 'Scanner', 'Monitor', 'Projector', 'UPS / Power Supply', 'Keyboard / Mouse', 'Other'];
+/* Catalogue entry that reveals the optional free-text "Specify Device Name"
+   field. Must match DeviceType.OTHER_DEVICE_NAME. */
+const OTHER_DEVICE_TYPE = 'Other ICT Device';
+/* Upper bound for Ticket.equipmentType and Ticket.otherDeviceName. Matches the
+   maxlength on both Ticket schema paths. */
+const DEVICE_TYPE_MAX_LENGTH = 120;
 const VALID_MAINT_STATUS = ['accepted', 'in_progress', 'resolved'];
 const VALID_ASSET_STATUSES = ['active', 'under_maintenance', 'decommissioned'];
 const VALID_ASSIGN_STATUSES = ['assigned', 'accepted', 'in_progress', 'completed', 'reassigned'];
@@ -287,6 +300,8 @@ module.exports = {
   VALID_PRIORITIES,
   VALID_TICKET_STATUSES,
   VALID_EQUIPMENT,
+  OTHER_DEVICE_TYPE,
+  DEVICE_TYPE_MAX_LENGTH,
   VALID_MAINT_STATUS,
   VALID_ASSET_STATUSES,
   VALID_ASSIGN_STATUSES,

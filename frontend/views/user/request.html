@@ -91,7 +91,13 @@
       border-radius: var(--radius-card);
       box-shadow: var(--shadow-card);
       transition: box-shadow var(--transition-base);
-      overflow: hidden;
+      /* Native select menus need to render outside the card bounds instead of
+         being clipped by the card itself. The form field options are a real
+         browser control, not a custom popup, so this container must allow the
+         dropdown list to escape the card's visual box. */
+      overflow: visible;
+      position: relative;
+      z-index: 1;
     }
 
     .section-card:hover {
@@ -187,6 +193,42 @@
       font-size: 0.78rem;
     }
 
+    /* ── Classification dropdowns: Category + Issue Type ────
+       Both are native <select> elements, so the browser draws the option
+       list itself and no ancestor here can clip it (.section-card is
+       `overflow: visible` for exactly that reason). These rules only cover
+       the status/retry affordances the loader adds under the two fields and
+       the pointer affordance of an openable control. */
+    #categoryStatus,
+    #issueTypeHelp {
+      display: block;
+      margin-top: 0.35rem;
+    }
+
+    #categoryStatus:empty {
+      display: none;
+    }
+
+    /* Retry is a link-style control, but it must not inherit .form-text's
+       small muted grey — an error action has to read as one. */
+    #categoryRetry {
+      color: var(--danger);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    #categoryRetry:hover,
+    #categoryRetry:focus-visible {
+      color: #b91c1c;
+      text-decoration: underline;
+    }
+
+    #category:not([disabled]),
+    #issueType:not([disabled]) {
+      cursor: pointer;
+    }
+
     .input-group-text {
       background: #F7FAFC;
       border-color: var(--border-color);
@@ -194,67 +236,109 @@
       border-radius: var(--radius-input);
     }
 
-    /* ── Device Type Cards ───────────────────────────────────── */
+    /* ── Device Type image cards (optional) ─────────────────────
+       Ten fixed cards, image above the name, rendered from the static
+       EQUIPMENT_TYPES list in the markup. They therefore appear instantly:
+       no API call, no spinner, no loading state and no error state. */
     .device-pick {
-      position: relative;
       display: block;
       width: 100%;
+      height: 100%;
+      padding: .55rem;
       border: 2px solid var(--border-color);
       border-radius: 14px;
-      overflow: hidden;
+      background: #fff;
+      color: var(--text-primary);
       cursor: pointer;
-      background: #FFFFFF;
-      transition: border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
-    }
-
-    .device-pick:hover {
-      border-color: var(--blue-500);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(30, 64, 175, 0.12);
-    }
-
-    .device-radio:checked+.device-pick {
-      border-color: var(--blue-600) !important;
-      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15), 0 6px 20px rgba(30, 64, 175, 0.12) !important;
-    }
-
-    .device-radio:checked+.device-pick::after {
-      content: "";
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 22px;
-      height: 22px;
-      background: var(--blue-600);
-      border-radius: 50%;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231F2937'%3E%3Cpath d='M21 7l-7 7-3.5-3.5 1.4-1.4 2.1 2.1 5.6-5.6L21 7z'/%3E%3C/svg%3E");
-      background-size: 14px 14px;
-      background-position: center;
-      background-repeat: no-repeat;
-      z-index: 2;
+      font: inherit;
+      text-align: center;
+      transition: border-color .18s ease, background-color .18s ease,
+        box-shadow .18s ease, transform .18s ease;
     }
 
     .device-pick img {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
       display: block;
-      background: #EEF2F7;
+      width: 100%;
+      height: 96px;
+      object-fit: cover;
+      border-radius: 10px;
+      background: #f1f5f9;
     }
 
     .device-pick-name {
       display: block;
-      text-align: center;
-      padding: 12px 10px;
+      margin-top: .5rem;
+      font-size: .84rem;
       font-weight: 600;
-      font-size: 0.9rem;
+      line-height: 1.35;
       color: var(--text-primary);
-      background: #FFFFFF;
+    }
+
+    .device-pick:hover {
+      border-color: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px -10px rgba(37, 99, 235, .45);
+    }
+
+    /* Keyboard focus lands on the hidden radio (Bootstrap .btn-check), so the
+       ring is drawn on the card that wraps it. */
+    .device-pick:focus-visible {
+      outline: 3px solid rgba(37, 99, 235, .35);
+      outline-offset: 2px;
+    }
+
+    /* Selected — the original blue border/background, kept as a class so the
+       same state drives the visual and the click-to-deselect toggle. */
+    .device-pick.is-selected {
+      border-color: #2563eb;
+      background: #e8f0fe;
+    }
+
+    .device-pick.is-selected .device-pick-name {
+      color: #2563eb;
+    }
+
+    /* "No device selected" / "Selected: …" line under the grid. */
+    .device-type-state {
+      min-height: 1.5rem;
+      margin-top: .75rem;
+      font-size: .84rem;
+      color: var(--text-muted);
+    }
+
+    .device-picker-search-wrap {
+      position: relative;
+      margin-bottom: .4rem;
+    }
+
+    .device-type-optional {
+      display: inline-flex;
+      align-items: center;
+      margin-left: .45rem;
+      padding: .15rem .5rem;
+      border: 1px solid #d7e5f8;
+      border-radius: 999px;
+      background: #f2f7ff;
+      color: #345b8c;
+      font-size: .72rem;
+      font-weight: 600;
+      vertical-align: middle;
     }
 
     @media (max-width: 575.98px) {
       .device-pick img {
-        height: 110px;
+        height: 78px;
+      }
+
+      .device-pick-name {
+        font-size: .78rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .device-pick {
+        transition: none;
       }
     }
 
@@ -418,10 +502,6 @@
 
     /* ── Responsive adjustments ──────────────────────────────── */
     @media (max-width: 575.98px) {
-      .device-pick img {
-        height: 110px;
-      }
-
       .university-header {
         padding: 14px 0 16px;
       }
@@ -566,7 +646,8 @@
                           Name</span> <span class="text-danger">*</span>
                       </label>
                       <input type="text" class="form-control form-control-lg" id="requesterName"
-                        placeholder="e.g. John Doe" required minlength="2" data-i18n-placeholder="req.ph.name" />
+                        placeholder="e.g. John Doe" required minlength="2" readonly
+                        data-i18n-placeholder="req.ph.name" />
                       <div class="invalid-feedback" data-i18n="req.err.fullName">Please enter your full name.</div>
                     </div>
                     <div class="col-md-6">
@@ -593,49 +674,197 @@
                 <div class="section-header">
                   <div class="section-header-content">
                     <span class="step-number">2</span>
-                    <h6 class="section-title" data-i18n="req.deviceType">Device Type</h6>
+                    <h6 class="section-title">Request Classification</h6>
                   </div>
                 </div>
                 <div class="section-body">
-                  <label class="form-label fw-semibold mb-3">
-                    <span data-i18n="req.deviceType.label">Select the device that has a hardware/software fault</span>
-                    <span class="text-danger">*</span>
+                  <div class="mb-4">
+                    <label for="category" class="form-label fw-semibold">
+                      <i class="bi bi-tags me-1" style="color: var(--blue-600);"></i><span
+                        data-i18n="common.category">Category</span> <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select form-select-lg" id="category" name="category" required
+                      aria-describedby="categoryFeedback categoryStatus">
+                      <option value="" disabled selected data-i18n="req.category.select">Select Category</option>
+                    </select>
+                    <div class="invalid-feedback" id="categoryFeedback" data-i18n="req.err.category">Please select a
+                      category.</div>
+                    <div class="form-text mt-1" id="categoryStatus" role="status" aria-live="polite"></div>
+                    <button type="button" class="btn btn-link btn-sm px-0 d-none" id="categoryRetry">
+                      <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Try again
+                    </button>
+                  </div>
+
+                  <label for="deviceType" class="form-label fw-semibold">
+                    <i class="bi bi-pc-display me-1" style="color: var(--blue-600);"></i>
+                    <span data-i18n="req.deviceType">Device Type</span> <span class="text-danger">*</span>
                   </label>
-                  <div class="row g-3" id="deviceTypeCards"></div>
-                  <div class="invalid-feedback d-block mt-2" id="deviceTypeError" style="display:none!important;"></div>
+                  <select class="form-select form-select-lg" id="deviceType" name="deviceType" required
+                    aria-describedby="deviceTypeError">
+                    <option value="" disabled selected>Select Device Type</option>
+                    <option>Desktop Computer</option>
+                    <option>Laptop</option>
+                    <option>Tablet</option>
+                    <option>All-in-One Computer</option>
+                    <option>Thin Client</option>
+                    <option>Workstation</option>
+                    <option>Monitor</option>
+                    <option>Keyboard</option>
+                    <option>Mouse</option>
+                    <option>Webcam</option>
+                    <option>Speakers</option>
+                    <option>Headset</option>
+                    <option>Printer</option>
+                    <option>Scanner</option>
+                    <option>Photocopier</option>
+                    <option>Multifunction Printer (MFP)</option>
+                    <option>Plotter</option>
+                    <option>Projector</option>
+                    <option>Interactive Display</option>
+                    <option>Smart Board</option>
+                    <option>Digital Display</option>
+                    <option>Router</option>
+                    <option>Switch</option>
+                    <option>Hub</option>
+                    <option>Modem</option>
+                    <option>Access Point</option>
+                    <option>Firewall</option>
+                    <option>Network Cable</option>
+                    <option>Patch Panel</option>
+                    <option>Network Rack</option>
+                    <option>Network Adapter / NIC</option>
+                    <option>Wi-Fi Device</option>
+                    <option>Network Repeater / Extender</option>
+                    <option>Load Balancer</option>
+                    <option>Server</option>
+                    <option>Server Rack</option>
+                    <option>NAS Storage</option>
+                    <option>Storage Device</option>
+                    <option>UPS</option>
+                    <option>Power Supply Unit (PSU)</option>
+                    <option>PoE Device</option>
+                    <option>IP Phone</option>
+                    <option>Telephone</option>
+                    <option>VoIP Phone</option>
+                    <option>Video Conferencing Device</option>
+                    <option>Intercom</option>
+                    <option>CCTV Camera</option>
+                    <option>CCTV DVR</option>
+                    <option>CCTV NVR</option>
+                    <option>Biometric/Fingerprint Device</option>
+                    <option>Access Control Device</option>
+                    <option>Door Access Controller</option>
+                    <option>RFID/Card Reader</option>
+                    <option>External Hard Drive</option>
+                    <option>USB Flash Drive</option>
+                    <option>CD/DVD Drive</option>
+                    <option>Barcode Scanner</option>
+                    <option>Card Printer</option>
+                    <option>Other</option>
+                    <optgroup label="Legacy and Additional Device Types">
+                      <option>Network</option>
+                      <option>UPS / Power Supply</option>
+                      <option>Keyboard / Mouse</option>
+                      <option>Computer / Desktop</option>
+                      <option>Other Network Device</option>
+                      <option>Other ICT Device</option>
+                    </optgroup>
+                  </select>
+                  <div class="row g-3 my-2" id="deviceTypeCards" aria-label="Device Type image choices"></div>
+                  <div class="mt-3 d-none" id="otherDeviceNameGroup">
+                    <label for="otherDeviceName" class="form-label fw-semibold">Specify Device Name <span
+                        class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="otherDeviceName" maxlength="120" autocomplete="off" />
+                    <div class="invalid-feedback">Please enter the device name.</div>
+                  </div>
                   <script>
-                    /* Centralized equipment configuration.
-                       - name  = display label on the card (user-facing)
-                       - value = exact value sent to the backend / stored in MongoDB
-                                 (must match the Ticket.equipmentType enum)
-                       - image = verified real photograph matching the device.         */
-                    const equipmentTypes = [
-                      { id: 'dev_computer', name: 'Desktop Computer', value: 'Desktop Computer', image: '/assets/images/desktop.jpg', alt: 'Desktop Computer' },
-                      { id: 'dev_laptop', name: 'Laptop', value: 'Laptop', image: '/assets/images/laptop1.jpg', alt: 'Laptop' },
-                      { id: 'dev_network', name: 'Network', value: 'Network', image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ca8a04'%3E%3Cpath d='M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3-3-3-3 3zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'/%3E%3C/svg%3E", alt: 'Network' },
-                      { id: 'dev_printer', name: 'Printer', value: 'Printer', image: '/assets/images/printer.jpg', alt: 'Printer' },
-                      { id: 'dev_scanner', name: 'Scanner', value: 'Scanner', image: '/assets/images/scanner.jpg', alt: 'Scanner' },
-                      { id: 'dev_monitor', name: 'Monitor', value: 'Monitor', image: '/assets/images/monitor.jpg', alt: 'Monitor' },
-                      { id: 'dev_projector', name: 'Projector', value: 'Projector', image: '/assets/images/project.jpg', alt: 'Projector' },
-                      { id: 'dev_ups', name: 'UPS / Power Supply', value: 'UPS / Power Supply', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80&auto=format&fit=crop', alt: 'UPS / Power Supply' },
-                      { id: 'dev_peripheral', name: 'Keyboard / Mouse', value: 'Keyboard / Mouse', image: '/assets/images/mouse1.jpg', alt: 'Keyboard / Mouse' },
-                      { id: 'dev_other', name: 'Other', value: 'Other', image: '/assets/images/home1.png', alt: 'Other' },
+                    const REQUEST_EQUIPMENT_TYPE_CARDS = [
+                      { name: 'Desktop Computer', value: 'Desktop Computer', image: '/assets/images/desktop.jpg', alt: 'Desktop computer' },
+                      { name: 'Laptop', value: 'Laptop', image: '/assets/images/laptop1.jpg', alt: 'Laptop computer' },
+                      { name: 'Network', value: 'Network', image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ca8a04'%3E%3Cpath d='M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3-3-3-3 3zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'/%3E%3C/svg%3E", alt: 'Network equipment' },
+                      { name: 'Printer', value: 'Printer', image: '/assets/images/printer.jpg', alt: 'Printer' },
+                      { name: 'Scanner', value: 'Scanner', image: '/assets/images/scanner.jpg', alt: 'Scanner' },
+                      { name: 'Monitor', value: 'Monitor', image: '/assets/images/monitor.jpg', alt: 'Monitor' },
+                      { name: 'Projector', value: 'Projector', image: '/assets/images/project.jpg', alt: 'Projector' },
+                      { name: 'UPS / Power Supply', value: 'UPS / Power Supply', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80&auto=format&fit=crop', alt: 'Uninterruptible power supply' },
+                      { name: 'Keyboard / Mouse', value: 'Keyboard / Mouse', image: '/assets/images/mouse1.jpg', alt: 'Keyboard and mouse' },
+                      { name: 'Other', value: 'Other', image: '/assets/images/home1.png', alt: 'Other device' },
                     ];
 
-                    ( function renderEquipmentCards ()
+                    const deviceTypeCardContainer = document.getElementById( 'deviceTypeCards' );
+                    if ( deviceTypeCardContainer )
                     {
-                      const container = document.getElementById( 'deviceTypeCards' );
-                      if ( !container ) return;
-                      container.innerHTML = equipmentTypes.map( ( t, i ) => `
-    <div class="col-6 col-md-4">
-      <input type="radio" class="btn-check device-radio" name="deviceType" id="${ t.id }" value="${ t.value }" ${ i === 0 ? ' required' : '' } />
-      <label class="device-pick" for="${ t.id }">
-        <img src="${ t.image }" alt="${ t.alt }" loading="lazy" decoding="async" />
-        <span class="device-pick-name">${ t.name }</span>
-      </label>
-    </div>`).join( '' );
-                    } )();
+                      deviceTypeCardContainer.innerHTML = REQUEST_EQUIPMENT_TYPE_CARDS.map( ( type ) => `
+                        <div class="col-6 col-md-4">
+                          <button type="button" class="device-pick" data-device-type="${ type.value }" aria-pressed="false">
+                            <img src="${ type.image }" alt="${ type.alt }" loading="lazy" decoding="async" />
+                            <span class="device-pick-name">${ type.name }</span>
+                          </button>
+                        </div>`).join( '' );
+                    }
                   </script>
+                  <div class="invalid-feedback" id="deviceTypeError" role="alert">Please select a device type.</div>
+
+                  <div class="mt-4">
+                    <label for="asset" class="form-label fw-semibold">
+                      <i class="bi bi-pc-display me-1" style="color: var(--blue-600);"></i><span
+                        data-i18n="req.assetTag">ICT Asset</span> <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select form-select-lg" id="asset" required
+                      aria-describedby="assetFeedback assetStatus assetHelp" data-i18n-title="req.assetTag">
+                      <option value="" disabled selected data-i18n="req.selectAsset">Select ICT Asset</option>
+                    </select>
+                    <div class="invalid-feedback" id="assetFeedback"></div>
+                    <div class="form-text" id="assetStatus" role="status" aria-live="polite"></div>
+                    <button type="button" class="btn btn-link btn-sm px-0 d-none" id="assetRetry">
+                      <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Try again
+                    </button>
+                    <div class="form-text" id="assetHelp" data-i18n="req.assetHelp">Choose the registered asset
+                      from the list. Select "No Asset / Not Applicable" if your device is not registered.</div>
+                  </div>
+
+                  <div class="mt-4">
+                    <label for="issueType" class="form-label fw-semibold">
+                      <i class="bi bi-tools me-1" style="color: var(--blue-600);"></i>Issue Type / Service Type
+                      <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group mb-2">
+                      <span class="input-group-text" aria-hidden="true"><i class="bi bi-search"></i></span>
+                      <input type="search" class="form-control" id="issueTypeSearch" placeholder="Search issue type..."
+                        aria-label="Search issue type" aria-controls="issueType" disabled />
+                      <button class="btn btn-outline-secondary" type="button" id="clearIssueType"
+                        aria-label="Clear issue type selection" title="Clear selection" disabled>
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                    <!-- Derived from the selected Category: the taxonomy defines a
+                       valid issue-type list per category, so the field stays
+                       closed until one is chosen and each state says which
+                       case applies. A separate field from Category. -->
+                    <select class="form-select form-select-lg" id="issueType" name="issueType" required
+                      aria-describedby="issueTypeFeedback issueTypeHelp" disabled>
+                      <option value="" selected>Loading categories...</option>
+                    </select>
+                    <div id="otherIssueContainer" hidden>
+                      <label for="otherIssue" class="form-label fw-semibold mt-3">
+                        <i class="bi bi-pencil-square me-1" style="color: var(--blue-600);"></i>Specify Issue / Service
+                      </label>
+                      <input type="text" class="form-control" id="otherIssue" name="otherIssue"
+                        placeholder="Describe the issue or service needed" maxlength="150" />
+                      <div class="invalid-feedback d-block" id="otherIssueFeedback" role="alert">
+                        Please describe the issue or service.
+                      </div>
+                    </div>
+                    <div class="invalid-feedback" id="issueTypeFeedback" role="alert">
+                      Please select an issue type or service.
+                    </div>
+                    <div class="form-text" id="issueTypeHelp" role="status" aria-live="polite">
+                      Loading categories and issue types...
+                    </div>
+                    <button type="button" class="btn btn-link btn-sm px-0 d-none" id="issueTypeRetry">
+                      <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Retry issue types
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -678,62 +907,6 @@
                         maintenance is required.</div>
                       <div class="form-text" data-i18n="req.locationHelp">Enter the building, floor, room, or office
                         where the problem occurred.</div>
-                    </div>
-
-                    <!-- Category -->
-                    <div class="col-12">
-                      <label for="category" class="form-label fw-semibold">
-                        <i class="bi bi-tags me-1" style="color: var(--blue-600);"></i><span
-                          data-i18n="common.category">Request
-                          Category</span> <span class="text-danger">*</span>
-                      </label>
-                      <select class="form-select form-select-lg" id="category" required
-                        aria-describedby="categoryFeedback">
-                        <option value="" disabled selected data-i18n="req.category.select">Select Request Category
-                        </option>
-                        <option value="Hardware Problem" data-i18n="req.category.hardware">Hardware Problem</option>
-                        <option value="Software Problem" data-i18n="req.category.software">Software Problem</option>
-                        <option value="Internet Connectivity" data-i18n="req.category.internet">Internet Connectivity
-                        </option>
-                        <option value="Printer / Scanner" data-i18n="req.category.printer">Printer / Scanner</option>
-                        <option value="Computer / Laptop" data-i18n="req.category.computer">Computer / Laptop</option>
-                        <option value="Account / Password" data-i18n="req.category.account">Account / Password</option>
-                        <option value="Email Problem" data-i18n="req.category.email">Email Problem</option>
-                        <option value="System / Application" data-i18n="req.category.system">System / Application
-                        </option>
-                        <option value="ICT Security" data-i18n="req.category.security">ICT Security</option>
-                        <option value="Network Maintenance" data-i18n="req.category.network">Network Maintenance
-                        </option>
-                        <option value="Networking" data-i18n="req.category.networking">Networking</option>
-                        <optgroup label="Network Equipment">
-                          <option value="Router" data-i18n="req.category.router">Router</option>
-                          <option value="Switch" data-i18n="req.category.switch">Switch</option>
-                          <option value="Hub" data-i18n="req.category.hub">Hub</option>
-                          <option value="Modem" data-i18n="req.category.modem">Modem</option>
-                          <option value="Access Point" data-i18n="req.category.accessPoint">Access Point</option>
-                          <option value="Firewall" data-i18n="req.category.firewall">Firewall</option>
-                          <option value="Network Cable" data-i18n="req.category.networkCable">Network Cable</option>
-                        </optgroup>
-                        <option value="Other" data-i18n="req.category.other">Other</option>
-                      </select>
-                      <div class="invalid-feedback" id="categoryFeedback" data-i18n="req.err.category">Please select a
-                        request category.</div>
-                    </div>
-
-                    <!-- ICT Asset -->
-                    <div class="col-12">
-                      <label for="asset" class="form-label fw-semibold">
-                        <i class="bi bi-pc-display me-1" style="color: var(--blue-600);"></i><span
-                          data-i18n="req.assetTag">ICT Asset
-                          Tag</span>
-                      </label>
-                      <select class="form-select" id="asset" aria-describedby="assetFeedback assetHelp">
-                        <option value="" disabled selected data-i18n="req.loadingAssets">Loading ICT Assets...</option>
-                      </select>
-                      <div class="invalid-feedback" id="assetFeedback"></div>
-                      <div class="form-text" id="assetHelp" data-i18n="req.assetHelp">Select the asset tag if your
-                        device is registered in the
-                        system. Choose "No Asset / Not Applicable" if not applicable.</div>
                     </div>
 
                     <!-- Description -->
@@ -913,11 +1086,12 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="/assets/js/validation.js?v=6"></script>
+  <script src="/assets/js/validation.js?v=7"></script>
   <script src="/assets/js/api-config.js?v=2"></script>
-  <script src="/assets/js/lang.js?v=13"></script>
-  <script src="/assets/js/main.js?v=13"></script>
-  <script src="/assets/js/requests.js?v=9"></script>
+  <script src="/assets/js/device-type-select.js?v=1"></script>
+  <script src="/assets/js/lang.js?v=16"></script>
+  <script src="/assets/js/main.js?v=17"></script>
+  <script src="/assets/js/requests.js?v=20"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

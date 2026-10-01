@@ -2,40 +2,66 @@
  * controllers/feedbackController.js
  * Feedback — requesters rate resolved tickets
  */
-const Feedback = require('../models/Feedback');
-const Ticket   = require('../models/Ticket');
-const User     = require('../models/User');
-const Notification = require('../models/Notification');
-const { broadcastNotification } = require('../services/notificationService');
-const { validateObjectId, validateRequired, validateInteger, validateLength } = require('../middleware/validation');
-const { displayTicketId } = require('../utils/ticketId');
+const Feedback = require("../models/Feedback");
+const Ticket = require("../models/Ticket");
+const User = require("../models/User");
+const Notification = require("../models/Notification");
+const { broadcastNotification } = require("../services/notificationService");
+const {
+  validateObjectId,
+  validateRequired,
+  validateInteger,
+  validateLength,
+} = require("../middleware/validation");
+const { displayTicketId } = require("../utils/ticketId");
 
 /* Escape a string for safe use inside a RegExp (user-supplied filters). */
-const escapeRegExp = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegExp = (s) =>
+  String(s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const getAllFeedback = async (req, res, next) => {
   try {
-    const { rating, minRating, maxRating, status, department, technician, from, to } = req.query;
+    const {
+      rating,
+      minRating,
+      maxRating,
+      status,
+      department,
+      technician,
+      from,
+      to,
+    } = req.query;
 
     const filter = {};
 
     /* Rating filters (top-level Feedback fields). */
     let ratingCond;
-    if (rating !== undefined && rating !== '') {
+    if (rating !== undefined && rating !== "") {
       const r = Number(rating);
       if (Number.isFinite(r)) ratingCond = r;
     }
     const ratingRange = {};
-    if (minRating !== undefined && minRating !== '' && Number.isFinite(Number(minRating))) ratingRange.$gte = Number(minRating);
-    if (maxRating !== undefined && maxRating !== '' && Number.isFinite(Number(maxRating))) ratingRange.$lte = Number(maxRating);
-    if (ratingCond === undefined && Object.keys(ratingRange).length) ratingCond = ratingRange;
+    if (
+      minRating !== undefined &&
+      minRating !== "" &&
+      Number.isFinite(Number(minRating))
+    )
+      ratingRange.$gte = Number(minRating);
+    if (
+      maxRating !== undefined &&
+      maxRating !== "" &&
+      Number.isFinite(Number(maxRating))
+    )
+      ratingRange.$lte = Number(maxRating);
+    if (ratingCond === undefined && Object.keys(ratingRange).length)
+      ratingCond = ratingRange;
     if (ratingCond !== undefined) filter.rating = ratingCond;
 
     /* Date range on when the feedback was submitted. */
     if (from || to) {
       filter.createdAt = {};
       if (from) filter.createdAt.$gte = new Date(`${from}T00:00:00.000Z`);
-      if (to)   filter.createdAt.$lte = new Date(`${to}T23:59:59.999Z`);
+      if (to) filter.createdAt.$lte = new Date(`${to}T23:59:59.999Z`);
     }
 
     /*
@@ -45,51 +71,72 @@ const getAllFeedback = async (req, res, next) => {
      */
     const ticketConds = [];
     if (status) ticketConds.push({ status });
-    if (department) ticketConds.push({ department: new RegExp(escapeRegExp(department), 'i') });
+    if (department)
+      ticketConds.push({
+        department: new RegExp(escapeRegExp(department), "i"),
+      });
     if (technician) {
-      const techIds = (await User.find({ fullName: new RegExp(escapeRegExp(technician), 'i') })
-        .select('_id').lean()).map(u => u._id);
+      const techIds = (
+        await User.find({ fullName: new RegExp(escapeRegExp(technician), "i") })
+          .select("_id")
+          .lean()
+      ).map((u) => u._id);
       /* An empty $in yields no matches (rather than matching everything). */
       ticketConds.push({ assignedTechnician: { $in: techIds } });
     }
 
     if (ticketConds.length) {
-      const matched = await Ticket.find({ $and: ticketConds }).select('_id').lean();
+      const matched = await Ticket.find({ $and: ticketConds })
+        .select("_id")
+        .lean();
       if (!matched.length) {
         return res.json({
           success: true,
           data: [],
-          summary: { totalFeedback: 0, averageRating: 0, fiveStarFeedback: 0, lowRatings: 0, pendingReview: 0 },
+          summary: {
+            totalFeedback: 0,
+            averageRating: 0,
+            fiveStarFeedback: 0,
+            lowRatings: 0,
+            pendingReview: 0,
+          },
         });
       }
-      filter.request = { $in: matched.map(t => t._id) };
+      filter.request = { $in: matched.map((t) => t._id) };
     }
 
     const feedback = await Feedback.find(filter)
-      .populate('user', 'fullName')
+      .populate("user", "fullName")
       .populate({
-        path: 'request',
-        select: 'ticketId problemDescription status equipmentType department assignedTechnician adminFeedback.adminId',
-        populate: { path: 'assignedTechnician', select: 'fullName' },
+        path: "request",
+        select:
+          "ticketId problemDescription status equipmentType department requester assignedTechnician adminFeedback.adminId",
+        populate: [
+          { path: "requester", select: "fullName" },
+          { path: "assignedTechnician", select: "fullName" },
+        ],
       })
       .sort({ createdAt: -1 })
       .lean();
 
-    feedback.forEach(fb => {
-      if (fb.request && fb.request.ticketId) fb.request.ticketId = displayTicketId(fb.request.ticketId);
+    feedback.forEach((fb) => {
+      if (fb.request && fb.request.ticketId)
+        fb.request.ticketId = displayTicketId(fb.request.ticketId);
     });
 
     /* KPIs are computed by the backend from the same filtered dataset —
        never hard-coded in the frontend. */
     const [agg] = await Feedback.aggregate([
       { $match: filter },
-      { $group: {
-        _id: null,
-        total: { $sum: 1 },
-        avg:   { $avg: '$rating' },
-        five:  { $sum: { $cond: [{ $eq: ['$rating', 5] }, 1, 0] } },
-        low:   { $sum: { $cond: [{ $lte: ['$rating', 2] }, 1, 0] } },
-      } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          avg: { $avg: "$rating" },
+          five: { $sum: { $cond: [{ $eq: ["$rating", 5] }, 1, 0] } },
+          low: { $sum: { $cond: [{ $lte: ["$rating", 2] }, 1, 0] } },
+        },
+      },
     ]);
 
     /* "Pending review" = submitted requester feedback that no ICT Admin has
@@ -99,117 +146,161 @@ const getAllFeedback = async (req, res, next) => {
        it is skipped here — it can never be a pending review. Without this the
        access below would throw "Cannot read properties of null (reading '_id')"
        and kill the whole GET /feedbacks response. */
-    const requestIds = [...new Set(feedback
-      .filter(f => f.request && f.request._id)
-      .map(f => String(f.request._id)))];
+    const requestIds = [
+      ...new Set(
+        feedback
+          .filter((f) => f.request && f.request._id)
+          .map((f) => String(f.request._id)),
+      ),
+    ];
     const pendingReview = requestIds.length
-      ? await Ticket.countDocuments({ _id: { $in: requestIds }, 'adminFeedback.adminId': null })
+      ? await Ticket.countDocuments({
+          _id: { $in: requestIds },
+          "adminFeedback.adminId": null,
+        })
       : 0;
 
     res.json({
       success: true,
       data: feedback,
       summary: {
-        totalFeedback:    agg ? agg.total : 0,
-        averageRating:    agg && agg.total ? Math.round(agg.avg * 10) / 10 : 0,
+        totalFeedback: agg ? agg.total : 0,
+        averageRating: agg && agg.total ? Math.round(agg.avg * 10) / 10 : 0,
         fiveStarFeedback: agg ? agg.five : 0,
-        lowRatings:       agg ? agg.low : 0,
+        lowRatings: agg ? agg.low : 0,
         pendingReview,
       },
     });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 const submitFeedback = async (req, res, next) => {
   try {
     const { request_id, rating, comment } = req.body;
 
-    const reqErr = validateRequired(request_id, 'request_id');
-    if (reqErr) return res.status(422).json({ success: false, message: reqErr });
+    const reqErr = validateRequired(request_id, "request_id");
+    if (reqErr)
+      return res.status(422).json({ success: false, message: reqErr });
 
-    const ratingErr = validateRequired(rating, 'rating');
-    if (ratingErr) return res.status(422).json({ success: false, message: ratingErr });
+    const ratingErr = validateRequired(rating, "rating");
+    if (ratingErr)
+      return res.status(422).json({ success: false, message: ratingErr });
 
-    const idErr = validateObjectId(request_id, 'Ticket');
+    const idErr = validateObjectId(request_id, "Ticket");
     if (idErr) return res.status(400).json({ success: false, message: idErr });
 
-    const ratingIntErr = validateInteger(rating, 'Rating', { min: 1, max: 5 });
-    if (ratingIntErr) return res.status(400).json({ success: false, message: ratingIntErr });
+    const ratingIntErr = validateInteger(rating, "Rating", { min: 1, max: 5 });
+    if (ratingIntErr)
+      return res.status(400).json({ success: false, message: ratingIntErr });
 
     if (comment !== undefined && comment !== null) {
-      const commentLenErr = validateLength(String(comment), 'Comment', { max: 500 });
-      if (commentLenErr) return res.status(400).json({ success: false, message: commentLenErr });
+      const commentLenErr = validateLength(String(comment), "Comment", {
+        max: 500,
+      });
+      if (commentLenErr)
+        return res.status(400).json({ success: false, message: commentLenErr });
     }
 
     /* Verify the ticket belongs to the requester and is resolved/closed */
     const ticket = await Ticket.findById(request_id);
     if (!ticket) {
-      return res.status(404).json({ success: false, message: 'Ticket not found.' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Ticket not found." });
     }
 
     /* Compare both IDs as strings so the ownership check works:
        `ticket.requester` is a Mongoose ObjectId and `req.user.id` is also an ObjectId.
        Comparing a string to an ObjectId directly would always be unequal and would
        wrongly reject the ticket owner with a 403. */
-    if (String(ticket.requester) !== String(req.user.id) && req.user.role !== 'ICT Admin') {
-      return res.status(403).json({ success: false, message: 'You can only rate your own tickets.' });
+    if (
+      String(ticket.requester) !== String(req.user.id) &&
+      req.user.role !== "ICT Admin"
+    ) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "You can only rate your own tickets.",
+        });
     }
 
-    if (!['resolved', 'closed'].includes(ticket.status)) {
-      return res.status(400).json({ success: false, message: 'Feedback can only be submitted for resolved or closed tickets.' });
+    if (!["resolved", "closed"].includes(ticket.status)) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message:
+            "Feedback can only be submitted for resolved or closed tickets.",
+        });
     }
 
     /* Prevent duplicate feedback */
     const existing = await Feedback.findOne({ request: request_id });
     if (existing) {
-      return res.status(409).json({ success: false, message: 'Feedback already submitted for this ticket.' });
+      return res
+        .status(409)
+        .json({
+          success: false,
+          message: "Feedback already submitted for this ticket.",
+        });
     }
 
     await Feedback.create({
       request: request_id,
-      user:    req.user.id,
-      rating:  Number(rating),
+      user: req.user.id,
+      rating: Number(rating),
       comment: comment || null,
     });
 
     /* Update ticket feedback fields */
     await Ticket.findByIdAndUpdate(request_id, {
-      feedbackRating:   Number(rating),
+      feedbackRating: Number(rating),
       feedbackComments: comment || null,
     });
 
     const displayId = displayTicketId(ticket.ticketId);
-    const requesterName = req.user.fullName || 'A requester';
+    const requesterName = req.user.fullName || "A requester";
 
     /* Notify assigned technician */
     if (ticket.assignedTechnician) {
       const techNotif = await Notification.create({
-        user:    ticket.assignedTechnician,
-        ticket:  ticket._id,
-        title:   `Feedback Available`,
-        message: `${requesterName} rated your work on ticket #${displayId} with ${rating} star${rating > 1 ? 's' : ''}.`,
-        type:    rating >= 4 ? 'success' : rating >= 3 ? 'info' : 'warning',
-        notificationType: 'feedback_available',
+        user: ticket.assignedTechnician,
+        ticket: ticket._id,
+        title: `Feedback Available`,
+        message: `${requesterName} rated your work on ticket #${displayId} with ${rating} star${rating > 1 ? "s" : ""}.`,
+        type: rating >= 4 ? "success" : rating >= 3 ? "info" : "warning",
+        notificationType: "feedback_available",
       });
       broadcastNotification(techNotif);
     }
 
     /* Notify ICT Admins */
-    const admins = await User.find({ role: 'ICT Admin', status: 'active' }).select('_id').lean();
-    await Promise.all(admins.map(async admin => {
-      const adminNotif = await Notification.create({
-        user:    admin._id,
-        ticket:  ticket._id,
-        title:   `Feedback Received: ${displayId}`,
-        message: `${requesterName} submitted feedback (${rating} star${rating > 1 ? 's' : ''}) for ticket "${displayId}".`,
-        type:    'info',
-        notificationType: 'technician_activity',
-      });
-      broadcastNotification(adminNotif);
-    }));
+    const admins = await User.find({ role: "ICT Admin", status: "active" })
+      .select("_id")
+      .lean();
+    await Promise.all(
+      admins.map(async (admin) => {
+        const adminNotif = await Notification.create({
+          user: admin._id,
+          ticket: ticket._id,
+          title: `Feedback Received: ${displayId}`,
+          message: `${requesterName} submitted feedback (${rating} star${rating > 1 ? "s" : ""}) for ticket "${displayId}".`,
+          type: "info",
+          notificationType: "technician_activity",
+        });
+        broadcastNotification(adminNotif);
+      }),
+    );
 
-    res.status(201).json({ success: true, message: 'Feedback submitted. Thank you!' });
-  } catch (err) { next(err); }
+    res
+      .status(201)
+      .json({ success: true, message: "Feedback submitted. Thank you!" });
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = { getAllFeedback, submitFeedback };

@@ -12,6 +12,7 @@
  *   /api/assignments   — Ticket → Technician assignment
  *   /api/assets        — ICT asset inventory
  *   /api/categories    — Ticket categories
+ *   /api/device-types  — Device Type catalogue (active list + admin CRUD)
  *   /api/notifications — User notifications
  *   /api/feedback      — Ticket feedback / ratings
  *   /api/reports       — Analytics and reports
@@ -81,12 +82,20 @@ if (process.env.NODE_ENV === "production") {
 
 const { logger } = require("./middleware/logger");
 const { errorHandler } = require("./middleware/errorHandler");
+const { authenticate } = require("./middleware/auth");
 const {
   verifySmtp,
   smtpConfigured,
   describeMissing,
 } = require("./services/mailer");
 const { initSocketIO } = require("./services/notificationService");
+const {
+  uploadProfileFile,
+  getProfileFiles,
+  downloadProfileFile,
+  deleteProfileFile,
+} = require("./controllers/userController");
+const uploadDocuments = require("./config/multerDocuments");
 
 const activeAiModel = env.OLLAMA_MODEL || "llama3.2";
 console.log(
@@ -171,6 +180,8 @@ app.set("trust proxy", env.TRUST_PROXY);
 const defaultOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3001",
   "http://localhost:5000",
   "http://127.0.0.1:5000",
   "https://smartcomputer-maintenance-system.netlify.app",
@@ -217,7 +228,9 @@ if (compression) {
       threshold: 1024,
       filter: (req, res) => {
         /* Never compress an already-compressed upload (images, docx, pdf). */
-        if (/^image\/|video\/|audio\//.test(res.getHeader("Content-Type") || "")) {
+        if (
+          /^image\/|video\/|audio\//.test(res.getHeader("Content-Type") || "")
+        ) {
           return false;
         }
         return compression.filter(req, res);
@@ -311,8 +324,21 @@ app.use(logger);
    for a given file never changes and a cached copy can never go stale.
    Previously express.static defaulted to max-age=0, forcing a conditional
    revalidation round-trip for every attachment view. */
+const profileFilesRouter = express.Router();
+profileFilesRouter.post(
+  "/files",
+  authenticate,
+  uploadDocuments.single("file"),
+  uploadProfileFile,
+);
+profileFilesRouter.get("/files", authenticate, getProfileFiles);
+profileFilesRouter.get("/files/:id", authenticate, downloadProfileFile);
+profileFilesRouter.delete("/files/:id", authenticate, deleteProfileFile);
+app.use("/api/profile", profileFilesRouter);
+
 app.use(
   "/uploads",
+  authenticate,
   express.static(path.join(__dirname, "uploads"), {
     maxAge: "30d",
     immutable: true,
@@ -334,6 +360,8 @@ const AUDITED_MOUNTS = {
   "/api/assignments": "assignment",
   "/api/assets": "asset",
   "/api/categories": "category",
+  "/api/issue-types": "issueType",
+  "/api/device-types": "deviceType",
   "/api/maintenance": "maintenance",
   "/api/feedback": "feedback",
   "/api/notifications": "notification",
@@ -351,6 +379,8 @@ app.use("/api/technicians", require("./routes/technicians"));
 app.use("/api/assignments", require("./routes/assignments"));
 app.use("/api/assets", require("./routes/assets"));
 app.use("/api/categories", require("./routes/categories"));
+app.use("/api/issue-types", require("./routes/issueTypes"));
+app.use("/api/device-types", require("./routes/deviceTypes"));
 app.use("/api/notifications", require("./routes/notifications"));
 app.use("/api/feedback", require("./routes/feedback"));
 app.use("/api/reports", require("./routes/reports"));
@@ -394,9 +424,17 @@ app.use((req, res) =>
 /* ── Global Error Handler ───────────────────────────────── */
 app.use(errorHandler);
 
-/* ── Start Server with EADDRINUSE handling ──────────────── */
-const PORT = process.env.PORT || 5000;
+/* ── Start Server — fixed port 5000 ───────────────────────
+  The API is published on ONE fixed port. A busy port must fail loudly rather
+  than silently relocating the REST API and realtime socket away from the
+  origin configured by the browser. */
+const PORT = Number(process.env.PORT || 5000);
+
 const server = app.listen(PORT, () => {
+  /* Socket.IO is bound to the http.Server that owns the fixed API port, so
+       the realtime channel and the REST API can never end up on different
+       origins. */
+  initSocketIO(server, sessionMiddleware);
   console.log("");
   console.log("  ╔══════════════════════════════════════════════════════╗");
   console.log("  ║  Smart ICT Maintenance Management System             ║");
@@ -409,11 +447,6 @@ const server = app.listen(PORT, () => {
   console.log("  ╚══════════════════════════════════════════════════════╝");
   console.log("");
 
-  /* ── SMTP status report ─────────────────────────────────────
-     Password recovery has NO alternative channel, so an unusable SMTP setup
-     silently breaks "forgot password" for every user. It is reported loudly here
-     (and never blocks startup) with the missing variable NAMES only — no host,
-     address or app-password value is ever printed. */
   try {
     if (smtpConfigured()) {
       verifySmtp()
@@ -442,11 +475,6 @@ const server = app.listen(PORT, () => {
     console.error("  Email : SMTP status unavailable (non-fatal).");
   }
 
-  /* ── Contact-form notification report ─────────────────────────
-     The contact form writes every message to MongoDB, but the ICT Admin is
-     reached by email only. A working provider with no recipient still makes
-     POST /api/inquiries answer 503 for every visitor, and nothing else reports
-     it — so it is checked separately, by variable NAME only. */
   try {
     if (env.ADMIN_EMAIL_STATUS.configured) {
       console.log("  Contact: admin notification enabled.");
@@ -469,31 +497,19 @@ const server = app.listen(PORT, () => {
   }
 });
 
-/* ── Initialize Socket.IO for real-time notifications ───────── */
-initSocketIO(server, sessionMiddleware);
-
-server.on("error", (err) => {
-  if (err.code === "EADDRINUSE") {
-    console.error(`\n  [ERROR] Port ${PORT} is already in use.`);
+server.once("error", (err) => {
+  if (err && err.code === "EADDRINUSE") {
     console.error(
-      "  Another instance of the backend may be running with OLD code.",
+      `\n  [ERROR] Port ${PORT} is already in use.\n` +
+        "          Another copy of the backend is probably already running, or\n" +
+        "          a different application owns the port. Stop it and restart.\n" +
+        "          The API port is fixed and never changed automatically,\n" +
+        "          because the frontend API base targets this exact origin.\n",
     );
-    console.error(
-      "  A stale process would keep serving the pre-Ollama (OpenAI)",
-    );
-    console.error("  implementation. Kill it, then restart this server:");
-    console.error("");
-    console.error("    Windows:");
-    console.error("      netstat -ano | findstr :5000");
-    console.error(
-      "      taskkill /F /PID <PID-from-LEFT-column-of-LISTENING-row>",
-    );
-    console.error("");
-    console.error("    Linux/macOS:");
-    console.error("      lsof -iTCP:5000 -sTCP:LISTEN -t | xargs kill -9\n");
     process.exit(1);
   }
-  throw err;
+  console.error("[server] Failed to start:", err);
+  process.exit(1);
 });
 
 /* ── Graceful Shutdown ─────────────────────────────────── */
@@ -509,6 +525,22 @@ function shutdown(signal) {
   });
   setTimeout(() => process.exit(1), 10000);
 }
+
+/* Last line of defence. Most fire-and-forget work (notifications, audit
+   writes) is now guarded at the source, but a rejection that still escapes
+   would otherwise be Node's default behaviour: log, then terminate the
+   process. For this service an in-app notification or audit row is never worth
+   taking the API down for, so log and keep serving. */
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  /* A truly synchronous throw leaves the process in an undefined state, so
+     log it and let the supervisor restart us instead of limping on. */
+  console.error("Uncaught exception:", err);
+  shutdown("uncaughtException");
+});
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));

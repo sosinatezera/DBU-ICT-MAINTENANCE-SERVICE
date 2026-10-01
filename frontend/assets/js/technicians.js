@@ -262,12 +262,19 @@ async function initTechDashboard() {
     );
   }
 
-  await Promise.all([
+  /* allSettled, not all: a single failed panel fetch used to reject here and
+     skip initAvailabilityToggle / initTechActionDelegation / initFeedbackHandlers
+     entirely, leaving the whole dashboard with dead action buttons. Each panel
+     already renders its own error state, so a partial failure must not take
+     the rest of the page down with it. */
+  await Promise.allSettled([
     loadTechProfile(),
     loadDashboardTasks(),
     loadRecentActivity(),
     loadTechFeedbackReports(),
   ]);
+
+  /* These are interaction wiring, never data. Bind them unconditionally. */
   initAvailabilityToggle();
   initTechActionDelegation();
   initFeedbackHandlers();
@@ -453,6 +460,7 @@ async function loadDashboardTasks() {
             ${escHtml(r.title || `Ticket ${r.ticketId}`)}
           </div>
           <small class="text-muted">${escHtml(r.equipmentType || "—")}${r.category ? ` · ${escHtml(r.category)}` : ""}</small>
+          <div class="small"><span class="text-muted">Issue Type:</span> ${escHtml(r.issueType || r.serviceType || "—")}</div>
         </td>
         <td>${priorityBadge(r.priority || "medium")}</td>
         <td>${statusBadge(r.status)}</td>
@@ -476,7 +484,7 @@ async function loadRecentActivity() {
   if (!panel) return;
 
   try {
-    const { data } = await apiRequest("/maintenance/my");
+    const data = await loadMyMaintenanceLog();
 
     if (!data || data.length === 0) {
       panel.innerHTML = `
@@ -634,8 +642,8 @@ async function openViewDetails(requestId) {
       ${row("Department", escHtml(r.department))}
       ${row("Location", `<i class="bi bi-geo-alt me-1"></i>${escHtml(r.location || "Not provided")}`)}
       ${row("Equipment", escHtml(r.equipmentType))}
-      
       ${r.category ? row("Category", escHtml(r.category)) : ""}
+      ${r.issueType || r.serviceType ? row("Issue Type / Service Type", `<i class="bi bi-tools me-1"></i>${escHtml(r.issueType || r.serviceType)}`) : ""}
       ${r.asset_tag ? row("ICT Asset", `<i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}`) : ""}
       ${r.serialNumber ? row("Serial Number", escHtml(r.serialNumber)) : ""}
       ${row("Description", `<div style="white-space:pre-wrap;">${escHtml(r.problemDescription)}</div>`)}
@@ -703,6 +711,7 @@ async function openUpdateModal(requestId, title, currentStatus) {
           <div class="col-sm-6"><span class="text-muted small d-block"><i class="bi bi-geo-alt me-1"></i>Location</span><strong>${escHtml(r.location || "Not provided")}</strong></div>
           
           ${r.category ? `<div class="col-sm-6"><span class="text-muted small d-block">Category</span><strong>${escHtml(r.category)}</strong></div>` : ""}
+          ${r.issueType || r.serviceType ? `<div class="col-sm-6"><span class="text-muted small d-block">Issue Type / Service Type</span><strong>${escHtml(r.issueType || r.serviceType)}</strong></div>` : ""}
           <div class="col-12"><span class="text-muted small d-block">Description</span>
             <div class="small p-2 bg-white border rounded" style="max-height:80px;overflow-y:auto;">${escHtml(r.problemDescription)}</div>
           </div>
@@ -762,6 +771,7 @@ async function saveTaskUpdate(requestId) {
         status: ticketStatusToMaintenance(status),
       },
     });
+    invalidateMyMaintenanceCache();
 
     showToast("Task updated successfully!", "success");
     bootstrap.Modal.getInstance(
@@ -779,12 +789,19 @@ async function saveTaskUpdate(requestId) {
 /* ═══════════════════════════════════════════════════════════
    ASSIGNED REQUESTS PAGE
    ═══════════════════════════════════════════════════════════ */
+let _assignedRequestsBound = false;
+/* Module scope, not function scope. The filter listener below is bound exactly
+   once but is re-entered by the Retry button, so a function-local `all` would
+   keep pointing at the first (possibly empty) fetch while later loads replaced
+   the list on screen — the Filter button would then blank a list that was
+   visibly populated. */
+let _assignedAll = [];
+
 async function initAssignedRequests() {
   if (!requireRole("Technician")) return;
-  let all = [];
 
   try {
-    all = await fetchAssignedRequests();
+    _assignedAll = await fetchAssignedRequests();
   } catch (err) {
     const container = document.getElementById("assignedRequestsList");
     if (container) {
@@ -796,12 +813,24 @@ async function initAssignedRequests() {
     }
   }
 
+  /* The Retry button above re-enters this function, and these elements live
+     outside the replaced list container — so every retry stacked another copy
+     of the save handler, turning one click into two PATCH /tickets/:id/status
+     plus two POST /maintenance writes. Bind once, refetch freely. */
+  if (_assignedRequestsBound) {
+    const deepLinkId = new URLSearchParams(window.location.search).get("id");
+    if (deepLinkId && /^[0-9a-f]{24}$/i.test(deepLinkId))
+      openViewDetails(deepLinkId);
+    return;
+  }
+  _assignedRequestsBound = true;
+
   document.getElementById("filterBtn")?.addEventListener("click", () => {
     const q = document.getElementById("searchInput")?.value.toLowerCase() || "";
     const st = document.getElementById("statusFilter")?.value || "";
     const pr = document.getElementById("priorityFilter")?.value || "";
     renderAssignedCards(
-      all.filter(
+      _assignedAll.filter(
         (r) =>
           (!q ||
             (r.title || "").toLowerCase().includes(q) ||
@@ -863,11 +892,12 @@ async function initAssignedRequests() {
             status: ticketStatusToMaintenance(status),
           },
         });
+        invalidateMyMaintenanceCache();
         showToast("Task updated!", "success");
         bootstrap.Modal.getInstance(
           document.getElementById("taskModal"),
         )?.hide();
-        all = await fetchAssignedRequests();
+        _assignedAll = await fetchAssignedRequests();
       } catch (err) {
         showAlert("taskUpdateAlert", err.message, "danger");
       } finally {
@@ -903,7 +933,21 @@ async function initTechFeedbackPage() {
     const { data } = await apiRequest("/technicians/my/assignments");
     renderTechFeedbackCards(await loadTechnicianFeedbackDetails(data));
   } catch (err) {
+    /* The toast alone is not enough: the list still holds its untouched
+       "Loading assigned requests..." placeholder, so a failed request left
+       the page spinning forever. Replace it with a real failure state. */
     showToast(err.message, "danger");
+    const list = document.getElementById("techFeedbackList");
+    if (list) {
+      list.innerHTML = `
+      <div class="col-12 text-center text-danger py-5">
+        <i class="bi bi-cloud-slash fs-1 d-block mb-2"></i>
+        <p class="mb-2">Unable to load your assigned requests.</p>
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="initTechFeedbackPage()">
+          <i class="bi bi-arrow-clockwise me-1"></i>Retry
+        </button>
+      </div>`;
+    }
   }
 }
 
@@ -945,6 +989,7 @@ function renderTechFeedbackCards(assignments) {
             <i class="bi bi-tag me-1"></i>${escHtml(r.equipmentType || "—")}${r.category ? ` · ${escHtml(r.category)}` : ""}
             ${r.department ? `&nbsp;·&nbsp;<i class="bi bi-building me-1"></i>${escHtml(r.department)}` : ""}
           </div>
+          <div class="small mb-2"><span class="text-muted">Issue Type:</span> ${escHtml(r.issueType || r.serviceType || "—")}</div>
           <div class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${escHtml(r.location || "Not provided")}</div>
           <div class="mb-2">
             ${statusBadge(r.status)}
@@ -1066,6 +1111,7 @@ function renderAssignedCards(assignments) {
             <i class="bi bi-tag me-1"></i>${escHtml(r.equipmentType || "—")}${r.category ? ` · ${escHtml(r.category)}` : ""}
             ${r.department ? `&nbsp;·&nbsp;<i class="bi bi-building me-1"></i>${escHtml(r.department)}` : ""}
           </div>
+          <div class="small mb-2"><span class="text-muted">Issue Type:</span> ${escHtml(r.issueType || r.serviceType || "—")}</div>
           <div class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${escHtml(r.location || "Not provided")}</div>
           <div class="mb-2">${statusBadge(r.status)}</div>
           <div class="text-muted" style="font-size:.78rem;">
@@ -1124,6 +1170,7 @@ async function loadTaskInfoSection(requestId, sectionId) {
         <div class="col-3"><span class="text-muted small d-block">Status</span>${statusBadge(r.status)}</div>
         <div class="col-sm-6"><span class="text-muted small d-block">Equipment</span>${escHtml(r.equipmentType || "—")}</div>
         <div class="col-sm-6"><span class="text-muted small d-block">Category</span>${escHtml(r.category || "—")}</div>
+        <div class="col-sm-6"><span class="text-muted small d-block">Issue Type / Service Type</span>${escHtml(r.issueType || r.serviceType || "—")}</div>
         ${r.asset_tag ? `<div class="col-sm-6"><span class="text-muted small d-block">ICT Asset</span><strong><i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}</strong></div>` : ""}
         <div class="col-sm-6"><span class="text-muted small d-block"><i class="bi bi-geo-alt me-1"></i>Location</span><strong>${escHtml(r.location || "Not provided")}</strong></div>
         <div class="col-12"><span class="text-muted small d-block">Description</span>
@@ -1140,6 +1187,14 @@ async function loadTaskInfoSection(requestId, sectionId) {
    ═══════════════════════════════════════════════════════════ */
 let _fbMode = "add"; // 'add' | 'edit'
 let _fbRequestId = null;
+let _fbSubmitting = false;
+
+function getFeedbackStatusSelect() {
+  return (
+    document.getElementById("fbResultStatus") ||
+    document.getElementById("fbStatus")
+  );
+}
 
 let _fbHandlersBound = false;
 function initFeedbackHandlers() {
@@ -1149,8 +1204,12 @@ function initFeedbackHandlers() {
   const saveBtn = document.getElementById("saveFeedbackBtn");
   if (saveBtn) saveBtn.addEventListener("click", () => submitFeedback());
 
-  const statusSel = document.getElementById("fbResultStatus");
-  if (statusSel) statusSel.addEventListener("change", updateFeedbackPreview);
+  const statusSel = getFeedbackStatusSelect();
+  if (statusSel)
+    statusSel.addEventListener("change", () => {
+      updateFeedbackReasonVisibility();
+      updateFeedbackPreview();
+    });
 
   // Live preview updates
   ["fbDiagnosis", "fbWorkPerformed", "fbResolution"].forEach((id) => {
@@ -1174,7 +1233,7 @@ function updateFeedbackPreview() {
   const diagnosis = document.getElementById("fbDiagnosis")?.value.trim() || "";
   const actionTaken =
     document.getElementById("fbWorkPerformed")?.value.trim() || "";
-  const result = document.getElementById("fbResultStatus")?.value || "";
+  const result = getFeedbackStatusSelect()?.value || "";
   const resolution =
     document.getElementById("fbResolution")?.value.trim() || "";
   const previewEl = document.getElementById("feedbackPreview");
@@ -1192,18 +1251,44 @@ function updateFeedbackPreview() {
     "Fill in the fields above to see a live preview of your feedback.";
 }
 
+function updateFeedbackReasonVisibility() {
+  const status = getFeedbackStatusSelect()?.value;
+  const wrap = document.getElementById("fbReasonWrap");
+  const reason = document.getElementById("fbReasonNotFixed");
+  if (!wrap || !reason) return;
+  const required = status === "Not Fixed";
+  wrap.classList.toggle("d-none", !required);
+  reason.required = required;
+  if (!required) reason.value = "";
+}
+
 function resetFeedbackForm() {
-  ["fbDiagnosis", "fbWorkPerformed", "fbResolution"].forEach((id) => {
+  [
+    "fbDiagnosis",
+    "fbWorkPerformed",
+    "fbResolution",
+    "fbPartsUsed",
+    "fbReasonNotFixed",
+    "fbRecommendation",
+    "fbTechnicianNotes",
+  ].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
-  const status = document.getElementById("fbResultStatus");
-  if (status) status.value = "";
+  const status = getFeedbackStatusSelect();
+  if (status) {
+    status.value = status.querySelector('option[value=""]')
+      ? ""
+      : status.options[0]?.value || "";
+  }
+  const confirmed = document.getElementById("fbConfirmed");
+  if (confirmed) confirmed.checked = false;
   const alert = document.getElementById("feedbackAlert");
   if (alert) {
     alert.classList.add("d-none");
     alert.textContent = "";
   }
+  updateFeedbackReasonVisibility();
   updateFeedbackPreview();
 }
 
@@ -1243,6 +1328,7 @@ async function openFeedbackModal(requestId, title) {
           <div class="col-sm-4"><span class="text-muted small d-block">Status</span>${statusBadge(r.status)}</div>
           <div class="col-sm-6"><span class="text-muted small d-block">Equipment</span>${escHtml(r.equipmentType || "—")}</div>
           <div class="col-sm-6"><span class="text-muted small d-block">Category</span>${escHtml(r.category || "—")}</div>
+          <div class="col-sm-6"><span class="text-muted small d-block">Issue Type / Service Type</span>${escHtml(r.issueType || r.serviceType || "—")}</div>
           <div class="col-sm-6"><span class="text-muted small d-block">Requester</span>${escHtml(r.requester_name || "—")}</div>
           <div class="col-sm-6"><span class="text-muted small d-block"><i class="bi bi-geo-alt me-1"></i>Location</span><strong>${escHtml(r.location || "Not provided")}</strong></div>
           ${r.asset_tag ? `<div class="col-12"><span class="text-muted small d-block">ICT Asset</span><strong><i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}</strong></div>` : ""}
@@ -1303,7 +1389,15 @@ async function openEditFeedbackModal(requestId, title, report) {
   set("fbDiagnosis", report.diagnosis);
   set("fbWorkPerformed", report.workPerformed);
   set("fbResolution", report.resolution);
-  set("fbResultStatus", report.status || "");
+  set("fbPartsUsed", report.partsUsed);
+  set("fbReasonNotFixed", report.reasonNotFixed);
+  set("fbRecommendation", report.recommendation);
+  set("fbTechnicianNotes", report.technicianNotes);
+  const status = getFeedbackStatusSelect();
+  if (status) status.value = report.status || "";
+  const confirmed = document.getElementById("fbConfirmed");
+  if (confirmed) confirmed.checked = true;
+  updateFeedbackReasonVisibility();
   const label = document.getElementById("feedbackModalLabel");
   if (label)
     label.textContent = `Edit Technician Feedback: ${title || `#${requestId}`}`;
@@ -1319,6 +1413,8 @@ async function openEditFeedbackModal(requestId, title, report) {
 }
 
 async function submitFeedback() {
+  if (_fbSubmitting) return;
+
   const id = (document.getElementById("feedbackRequestId").value || "").trim();
   if (!id || !/^[0-9a-f]{24}$/i.test(id)) {
     showAlert(
@@ -1329,11 +1425,20 @@ async function submitFeedback() {
     return;
   }
 
+  const statusSelect = getFeedbackStatusSelect();
+  const confirmation = document.getElementById("fbConfirmed");
   const body = {
     diagnosis: document.getElementById("fbDiagnosis").value.trim(),
     workPerformed: document.getElementById("fbWorkPerformed").value.trim(),
-    status: document.getElementById("fbResultStatus").value,
+    status: statusSelect?.value || "",
     resolution: document.getElementById("fbResolution").value.trim(),
+    partsUsed: document.getElementById("fbPartsUsed")?.value.trim() || "",
+    reasonNotFixed:
+      document.getElementById("fbReasonNotFixed")?.value.trim() || "",
+    recommendation:
+      document.getElementById("fbRecommendation")?.value.trim() || "",
+    technicianNotes:
+      document.getElementById("fbTechnicianNotes")?.value.trim() || "",
   };
 
   if (!body.diagnosis)
@@ -1356,7 +1461,20 @@ async function submitFeedback() {
       "Current result/status is required.",
       "warning",
     );
+  if (body.status === "Not Fixed" && !body.reasonNotFixed)
+    return showAlert(
+      "feedbackAlert",
+      "Please provide a reason why the issue is not fixed.",
+      "warning",
+    );
+  if (confirmation && !confirmation.checked)
+    return showAlert(
+      "feedbackAlert",
+      "Please confirm that this report accurately reflects the work performed.",
+      "warning",
+    );
 
+  _fbSubmitting = true;
   setLoading("saveFeedbackBtn", "saveFeedbackSpinner", true);
   try {
     const method = _fbMode === "edit" ? "PUT" : "POST";
@@ -1386,22 +1504,34 @@ async function submitFeedback() {
     _fbMode = "add";
     _fbRequestId = null;
 
-    // Refresh whichever page is active
-    if (window.location.pathname.includes("technician/dashboard")) {
-      await loadDashboardTasks();
-    } else {
-      const listEl = document.getElementById("assignedRequestsList");
-      const fbListEl = document.getElementById("techFeedbackList");
-      const newData = await apiRequest("/technicians/my/assignments");
-      if (listEl) renderAssignedCards(newData.data);
-      if (fbListEl)
-        renderTechFeedbackCards(
-          await loadTechnicianFeedbackDetails(newData.data),
-        );
+    // A refresh failure must not turn a saved report into a submission error.
+    try {
+      if (window.location.pathname.includes("technician/dashboard")) {
+        await loadDashboardTasks();
+      } else {
+        const listEl = document.getElementById("assignedRequestsList");
+        const fbListEl = document.getElementById("techFeedbackList");
+        const newData = await apiRequest("/technicians/my/assignments");
+        if (listEl) renderAssignedCards(newData.data);
+        if (fbListEl)
+          renderTechFeedbackCards(
+            await loadTechnicianFeedbackDetails(newData.data),
+          );
+      }
+    } catch (refreshError) {
+      console.error(
+        "Report saved, but refreshing the list failed:",
+        refreshError,
+      );
+      showToast(
+        "Report submitted successfully. Refresh the page to update the task list.",
+        "warning",
+      );
     }
   } catch (err) {
     showAlert("feedbackAlert", err.message, "danger");
   } finally {
+    _fbSubmitting = false;
     setLoading("saveFeedbackBtn", "saveFeedbackSpinner", false);
   }
 }
@@ -1520,6 +1650,10 @@ async function advanceTicketStatus(requestId, fromStatus, toStatus) {
   }
 }
 
+/* Bind the form + filter handlers once. A duplicate submit handler would
+   double-post POST /maintenance and walk advanceTicketStatus twice. */
+let _maintenanceLogBound = false;
+
 async function initMaintenanceLog() {
   if (!requireRole("Technician")) return;
   try {
@@ -1553,9 +1687,16 @@ async function initMaintenanceLog() {
     }
   } catch (err) {
     showToast(err.message, "danger");
+    /* Leave the select empty rather than letting a submit post against a
+       requestId that was never loaded. */
+    const sel = document.getElementById("requestSelect");
+    if (sel) sel.innerHTML = `<option value="">-- Unavailable --</option>`;
   }
 
   await loadActivityTimeline();
+
+  if (_maintenanceLogBound) return;
+  _maintenanceLogBound = true;
 
   document
     .getElementById("activityRequestFilter")
@@ -1627,6 +1768,7 @@ async function initMaintenanceLog() {
             status: ticketStatusToMaintenance(status),
           },
         });
+        invalidateMyMaintenanceCache();
         showToast("Activity logged successfully!", "success");
         e.target.reset();
         e.target.classList.remove("was-validated");
@@ -1647,7 +1789,7 @@ async function loadActivityTimeline() {
   container.innerHTML = `<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>`;
 
   try {
-    const { data } = await apiRequest("/maintenance/my");
+    const data = await loadMyMaintenanceLog();
     const filtered = filterVal
       ? data.filter((a) => String(a.ticket_id) === filterVal)
       : data;
@@ -1685,23 +1827,31 @@ async function loadActivityTimeline() {
    TECHNICIAN HISTORY PAGE  (Task #4 — complete)
    ═══════════════════════════════════════════════════════════ */
 let _historyAll = [];
+/* Date-filter and CSV-export listeners must be bound once. The Retry button in
+   the error row re-enters this function; without a guard each retry stacked
+   another export listener, so one click exported the history N times over. */
+let _techHistoryBound = false;
 
 async function initTechHistory() {
   if (!requireRole("Technician")) return;
   try {
-    const [assignRes, maintRes] = await Promise.all([
+    /* allSettled, not all: a maintenance-log failure should not also discard
+       the completed-tasks list, and vice versa. Only a genuine failure of the
+       assignments call (the source of the table) escalates to the error row. */
+    const [assignRes, maintRes] = await Promise.allSettled([
       apiRequest("/technicians/my/assignments"),
-      apiRequest("/maintenance/my"),
+      loadMyMaintenanceLog(),
     ]);
+    if (assignRes.status === "rejected") throw assignRes.reason;
 
-    const completed = assignRes.data.filter((r) =>
+    const completed = assignRes.value.data.filter((r) =>
       ["resolved", "closed"].includes(r.status),
     );
     _historyAll = completed;
 
     // Build maintenance lookup: request_id → latest record
     const maintMap = {};
-    (maintRes.data || []).forEach((m) => {
+    (maintRes.status === "fulfilled" ? maintRes.value : []).forEach((m) => {
       maintMap[String(m.ticket_id)] = m;
     });
 
@@ -1749,6 +1899,9 @@ async function initTechHistory() {
   }
 
   // Date filter
+  if (_techHistoryBound) return;
+  _techHistoryBound = true;
+
   document.getElementById("filterBtn")?.addEventListener("click", () => {
     const from = document.getElementById("dateFrom")?.value;
     const to = document.getElementById("dateTo")?.value;
@@ -1789,7 +1942,7 @@ function renderHistoryTable(completed, maintMap) {
       <tr>
         <td><strong class="text-primary">${escHtml(r.ticketId || r.ticket_id)}</strong></td>
         <td>${escHtml(r.title || "—")}</td>
-        <td><span class="badge bg-light text-dark border">${escHtml(r.equipmentType || "—")}</span>${r.device ? `<div class="small text-muted">${escHtml(r.device)}</div>` : ""}</td>
+        <td><span class="badge bg-light text-dark border">${escHtml(r.equipmentType || "—")}</span>${r.device ? `<div class="small text-muted">${escHtml(r.device)}</div>` : ""}${r.issueType || r.serviceType ? `<div class="small mt-1"><span class="text-muted">Issue Type:</span> ${escHtml(r.issueType || r.serviceType)}</div>` : ""}</td>
         <td>${escHtml(r.requester_name || "—")}</td>
         <td>${completedAt}</td>
         <td><span class="text-muted">—</span></td>
@@ -1802,6 +1955,32 @@ function renderHistoryTable(completed, maintMap) {
       </tr>`;
     })
     .join("");
+}
+
+/* Cached accessor for the technician's own maintenance log.
+   The history page filters this whole collection down to a single ticket on
+   every row expansion, and re-fetched it each time. It changes only when a log
+   is written, so cache it for the session and invalidate after a write. */
+let _myMaintenanceCache = null;
+let _myMaintenanceInFlight = null;
+
+async function loadMyMaintenanceLog() {
+  if (_myMaintenanceCache) return _myMaintenanceCache;
+  if (!_myMaintenanceInFlight) {
+    _myMaintenanceInFlight = apiRequest("/maintenance/my")
+      .then((res) => {
+        _myMaintenanceCache = res.data || [];
+        return _myMaintenanceCache;
+      })
+      .finally(() => {
+        _myMaintenanceInFlight = null;
+      });
+  }
+  return _myMaintenanceInFlight;
+}
+
+function invalidateMyMaintenanceCache() {
+  _myMaintenanceCache = null;
 }
 
 async function viewHistoryDetail(requestId, btn) {
@@ -1824,14 +2003,19 @@ async function viewHistoryDetail(requestId, btn) {
   tr.insertAdjacentElement("afterend", detailRow);
 
   try {
-    const [reqRes, maintRes] = await Promise.all([
+    /* allSettled: previously one rejection (e.g. /maintenance/my failing) threw
+       away the request details too, so a maintenance glitch blanked the whole
+       expanded row. Each half now degrades on its own. */
+    const [reqRes, maintRes] = await Promise.allSettled([
       apiRequest(`/tickets/${requestId}`),
-      apiRequest("/maintenance/my"),
+      loadMyMaintenanceLog(),
     ]);
+    if (reqRes.status === "rejected") throw reqRes.reason;
     const r = reqRes.data;
-    const logs = (maintRes.data || []).filter(
+    const logs = (maintRes.status === "fulfilled" ? maintRes.value : []).filter(
       (m) => String(m.ticket_id) === String(requestId),
     );
+    const maintUnavailable = maintRes.status === "rejected";
 
     document.getElementById(`detail-content-${requestId}`).innerHTML = `
       <div class="row g-3">
@@ -1841,25 +2025,28 @@ async function viewHistoryDetail(requestId, btn) {
           <div class="small mt-1"><strong>Equipment:</strong> ${escHtml(r.equipmentType || "—")}</div>
           ${r.device ? `<div class="small mt-1"><strong>Device / Equipment:</strong> ${escHtml(r.device)}</div>` : ""}
           ${r.category ? `<div class="small mt-1"><strong>Category:</strong> ${escHtml(r.category)}</div>` : ""}
+          ${r.issueType || r.serviceType ? `<div class="small mt-1"><strong>Issue Type / Service Type:</strong> ${escHtml(r.issueType || r.serviceType)}</div>` : ""}
           ${r.asset_tag ? `<div class="small mt-1"><strong>ICT Asset:</strong> ${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}</div>` : ""}
           <div class="small mt-1"><strong>Department:</strong> ${escHtml(r.department || "—")}</div>
         </div>
         <div class="col-md-6">
           <div class="small text-muted fw-semibold mb-1">Maintenance Logs</div>
           ${
-            logs.length
-              ? logs
-                  .map(
-                    (l) => `
+            maintUnavailable
+              ? '<span class="text-muted small">Maintenance logs unavailable.</span>'
+              : logs.length
+                ? logs
+                    .map(
+                      (l) => `
             <div class="small border-start border-2 border-success ps-2 mb-2">
               <div class="fw-semibold">${escHtml(l.action_taken)}</div>
               ${l.parts_used ? `<div class="text-muted"><i class="bi bi-box me-1"></i>${escHtml(l.parts_used)}</div>` : ""}
               ${l.notes ? `<div class="text-muted fst-italic">${escHtml(l.notes)}</div>` : ""}
               <div class="text-muted" style="font-size:.7rem;">${formatDateTime(l.created_at)}</div>
             </div>`,
-                  )
-                  .join("")
-              : '<span class="text-muted small">No logs recorded.</span>'
+                    )
+                    .join("")
+                : '<span class="text-muted small">No logs recorded.</span>'
           }
         </div>
       </div>`;
@@ -1881,6 +2068,7 @@ function exportHistoryCSV() {
     "Equipment Type",
     "Device / Equipment",
     "Category",
+    "Issue Type / Service Type",
     "Requester",
     "Department",
     "Assigned Date",
@@ -1892,6 +2080,7 @@ function exportHistoryCSV() {
     `"${(r.equipmentType || "").replace(/"/g, '""')}"`,
     `"${(r.device || "").replace(/"/g, '""')}"`,
     `"${(r.category || "").replace(/"/g, '""')}"`,
+    `"${(r.issueType || r.serviceType || "").replace(/"/g, '""')}"`,
     `"${(r.requester_name || "").replace(/"/g, '""')}"`,
     `"${(r.department || "").replace(/"/g, '""')}"`,
     formatDate(r.assigned_at),
@@ -1919,9 +2108,20 @@ let _editUserId = null; // User._id for the technician being edited (separate fr
    Only requests that are still awaiting assignment can be picked.
    Calls GET /api/tickets (returns Ticket._id as `id`) and filters to the
    pre-assignment statuses so the backend "already assigned" checks hold. */
-async function populateAssignRequestSelect() {
+let _assignRequestsLoaded = false;
+
+/* Populates the "Assign Request" dropdown.
+
+   Deliberately NOT part of page load: the request list is the heaviest
+   payload on this page and is only needed once an admin actually opens the
+   Assign dialog. `_assignRequestsLoaded` makes it a one-shot fetch, and
+   loadAdminTechnicians() resets that flag so a freshly assigned request
+   shows up next time the dialog is opened. */
+async function populateAssignRequestSelect({ force = false } = {}) {
   const sel = document.getElementById("assignRequest");
   if (!sel) return;
+  if (_assignRequestsLoaded && !force) return;
+  _assignRequestsLoaded = true;
   let options = `<option value="">-- Select Request --</option>`;
 
   // Remember the previously selected value across refreshes
@@ -1969,9 +2169,20 @@ function updateAssignPriorityStyle() {
   prioritySelect.className = `form-select${priority ? ` priority-${priority}` : ""}`;
 }
 
+/* One-shot binding. In particular confirmAssignBtn must not gain a second
+   listener, or a single click issues two POST /assignments. */
+let _adminTechBound = false;
+
 async function initAdminTechnicians() {
   if (!requireRole("ICT Admin")) return;
+
+  /* Render the grid. The assign dropdown is populated lazily on modal open,
+     so page load is one round trip instead of three. */
   await loadAdminTechnicians();
+  updateAssignPriority();
+
+  if (_adminTechBound) return;
+  _adminTechBound = true;
 
   // Search / filter
   document
@@ -1981,8 +2192,7 @@ async function initAdminTechnicians() {
     .getElementById("techAvailFilter")
     ?.addEventListener("change", filterTechCards);
 
-  // Assign request modal dropdown
-  await populateAssignRequestSelect();
+  // Assign request modal dropdown (options already populated above)
   document
     .getElementById("assignRequest")
     ?.addEventListener("change", updateAssignPriority);
@@ -2069,24 +2279,28 @@ async function initAdminTechnicians() {
 
 async function loadAdminTechnicians() {
   try {
-    // Fetch technicians and their workloads in parallel
-    const [techRes, reqRes] = await Promise.all([
+    /* Technicians and their workload are independent, so they are fetched in
+       parallel rather than in sequence.
+
+       The previous code also fetched the FULL ticket list here and never read
+       the result — a wasted round trip that measured ~3.1 s / 74 KB over the
+       Atlas link and was the main reason this page felt stuck on
+       "Loading technicians...". The assign-request dropdown that genuinely
+       needs /tickets is now populated lazily, when the modal is opened. */
+    const [techRes, perfRes] = await Promise.all([
       apiRequest("/technicians"),
-      apiRequest("/tickets"),
+      apiRequest("/reports/technician-performance").catch(() => ({ data: [] })),
     ]);
 
     _techAll = techRes.data;
 
-    // Build workload map: technician name → active request count
-    // (using technician name match since assignments endpoint is technician-scoped)
+    /* Build workload map: technician name → assigned / resolved counts.
+       A failure here is non-fatal: the cards still render, just without the
+       workload bars, instead of leaving the whole page in an error state. */
     const workloadMap = {};
-    // We'll use the /reports/technician-performance to get workload
-    try {
-      const perfRes = await apiRequest("/reports/technician-performance");
-      perfRes.data.forEach((p) => {
-        workloadMap[p.name] = { assigned: p.assigned, resolved: p.resolved };
-      });
-    } catch (_) {}
+    (perfRes?.data || []).forEach((p) => {
+      workloadMap[p.name] = { assigned: p.assigned, resolved: p.resolved };
+    });
 
     // Summary stats
     const available = _techAll.filter((t) => t.available).length;
@@ -2106,6 +2320,9 @@ async function loadAdminTechnicians() {
 
     renderTechnicianCards(_techAll, workloadMap);
     filterTechCards();
+    /* The assignable-request list may have changed (a request was assigned,
+       or the cache window elapsed), so the next dialog open refetches it. */
+    _assignRequestsLoaded = false;
   } catch (err) {
     ["totalTechs", "availableTechs", "busyTechs", "avgTasks"].forEach((id) =>
       setText(id, "—"),
@@ -2198,7 +2415,7 @@ function renderTechnicianCards(technicians, workloadMap) {
               : `<div class="small text-muted mb-2"><i class="bi bi-inbox me-1"></i>No tasks assigned yet</div>`
           }
         </div>
-        <div class="card-footer bg-transparent border-top-0 px-3 pb-3 d-flex gap-2">
+        <div class="card-footer bg-transparent border-top-0 px-3 pb-3 d-flex gap-2 flex-wrap">
           <button class="btn btn-outline-primary btn-sm flex-grow-1"
                   onclick="openAssignModal('${t.id}')"
                   data-bs-toggle="modal" data-bs-target="#assignModal">
@@ -2213,7 +2430,7 @@ function renderTechnicianCards(technicians, workloadMap) {
           <button class="btn btn-outline-danger btn-sm"
                   onclick="openDeleteModal(${jsAttr(t.id)}, ${jsAttr(t.fullName)})"
                   data-bs-toggle="modal" data-bs-target="#deleteTechModal"
-                  title="Deactivate">
+              title="Deactivate" aria-label="Deactivate ${escHtml(t.fullName || "technician")}">
             <i class="bi bi-trash"></i>
           </button>
         </div>
@@ -2225,13 +2442,13 @@ function renderTechnicianCards(technicians, workloadMap) {
 
 function openAssignModal(techId) {
   document.getElementById("assignTechId").value = techId;
+  void populateAssignRequestSelect();
   const alert = document.getElementById("assignAlert");
   if (alert) alert.classList.add("d-none");
   document.getElementById("assignNotes").value = "";
   updateAssignPriority();
 }
 
-/* ── Add / Edit Technician ──────────────────────────────────── */
 function openAddTechModal() {
   document.getElementById("techModalTitle").textContent = "Add Technician";
   document.getElementById("techForm").reset();

@@ -9,9 +9,24 @@
   window.__assistantPageLoaded = true;
 
   const API_BASE_RESOLVED =
-    (typeof window.API_BASE === "string" && window.API_BASE) ||
-    (typeof window.__API_BASE__ === "string" && window.__API_BASE__) ||
-    `${window.location.protocol}//${window.location.hostname || "localhost"}:5000/api`;
+    typeof window.API_BASE === "string" ? window.API_BASE : "";
+  if (!API_BASE_RESOLVED) {
+    console.error(
+      "[assistant] API_BASE is unavailable; load api-config.js first.",
+    );
+    window.__assistantPageLoaded = false;
+    return;
+  }
+
+  const fetchWithTimeout = async (url, options = {}, timeoutMs = 15000) => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  };
 
   /* ── DOM refs ────────────────────────────────────────────── */
   const messages = document.getElementById("assistantMessages");
@@ -183,7 +198,7 @@
   const deleteConversation = async (id) => {
     if (!id) return;
     try {
-      await fetch(
+      await fetchWithTimeout(
         `${API_BASE_RESOLVED}/assistant/conversation/${encodeURIComponent(id)}`,
         {
           method: "DELETE",
@@ -426,7 +441,7 @@
     }
     if (!session.conversationId) return false;
     try {
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${API_BASE_RESOLVED}/assistant/conversation/${encodeURIComponent(session.conversationId)}`,
         { credentials: "include" },
       );
@@ -508,7 +523,11 @@
 
     const controller = new AbortController();
     activeController = controller;
-    const timeoutId = setTimeout(() => controller.abort(), 150000);
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 150000);
     let streamed = null;
     try {
       if (selectedFiles.length) setAttachmentStatus("Analyzing your file...");
@@ -630,7 +649,9 @@
       session.conversation.pop();
       const msg =
         error?.name === "AbortError"
-          ? "Generation stopped. You can try again."
+          ? timedOut
+            ? "The AI request timed out. Please try again."
+            : "Generation stopped. You can try again."
           : error?.message || "Sorry, I couldn't process that request.";
       if (selectedFiles.length) setAttachmentStatus(msg);
       if (streamed) {
@@ -668,7 +689,7 @@
   /* ── Boot ────────────────────────────────────────────────── */
   async function initialize() {
     try {
-      const response = await fetch(`${API_BASE_RESOLVED}/auth/me`, {
+      const response = await fetchWithTimeout(`${API_BASE_RESOLVED}/auth/me`, {
         credentials: "include",
         headers: { Accept: "application/json" },
       });
@@ -683,5 +704,6 @@
     if (!restored) showWelcome();
     input.focus();
   }
+  showWelcome();
   initialize();
 })();

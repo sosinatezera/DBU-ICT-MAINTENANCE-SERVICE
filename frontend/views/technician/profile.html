@@ -116,7 +116,7 @@
         <div class="row g-4">
           <div class="col-lg-8">
             <!-- Personal Information -->
-            <div class="card border-0 shadow-sm mb-4">
+            <div class="card border-0 shadow-sm mb-4" id="profileSettings">
               <div class="card-header bg-white border-0 pb-0">
                 <h5 class="mb-0" data-i18n="profile.personalInfo">Personal Information</h5>
               </div>
@@ -141,6 +141,11 @@
                       <label for="department" class="form-label" data-i18n="profile.department">Department</label>
                       <input type="text" class="form-control" id="department" name="department"
                         placeholder="e.g., Computer Science" data-i18n-placeholder="tpf.ph.dept">
+                    </div>
+                    <div class="col-md-6">
+                      <label for="specialization" class="form-label">Specialization</label>
+                      <input type="text" class="form-control" id="specialization" name="specialization" maxlength="100"
+                        autocomplete="organization-title">
                     </div>
                     <div class="col-md-6">
                       <label for="gender" class="form-label" data-i18n="profile.gender">Gender</label>
@@ -173,7 +178,7 @@
             </div>
 
             <!-- Change Password -->
-            <div class="card border-0 shadow-sm mb-4">
+            <div class="card border-0 shadow-sm mb-4" id="securitySettings">
               <div class="card-header bg-white border-0 pb-0">
                 <h5 class="mb-0" data-i18n="profile.changePassword">Change Password</h5>
               </div>
@@ -238,7 +243,7 @@
               </div>
 
               <!-- Performance Stats -->
-              <div class="card border-0 shadow-sm mb-4">
+              <div class="card border-0 shadow-sm mb-4" id="profilePhotoSettings">
                 <div class="card-header bg-white border-0 pb-0">
                   <h5 class="mb-0" data-i18n="profile.performance">Performance Statistics</h5>
                 </div>
@@ -246,19 +251,19 @@
                   <div class="row g-3">
                     <div class="col-6 col-md-3">
                       <div class="text-center p-3 bg-light rounded">
-                        <div class="fw-bold fs-3 text-primary" id="statCompleted">0</div>
+                        <div class="fw-bold fs-3 text-primary" id="statCompleted">—</div>
                         <small class="text-muted" data-i18n="profile.completed">Completed</small>
                       </div>
                     </div>
                     <div class="col-6 col-md-3">
                       <div class="text-center p-3 bg-light rounded">
-                        <div class="fw-bold fs-3 text-success" id="statResolved">0</div>
+                        <div class="fw-bold fs-3 text-success" id="statResolved">—</div>
                         <small class="text-muted" data-i18n="profile.resolved">Resolved</small>
                       </div>
                     </div>
                     <div class="col-6 col-md-3">
                       <div class="text-center p-3 bg-light rounded">
-                        <div class="fw-bold fs-3 text-warning" id="statInProgress">0</div>
+                        <div class="fw-bold fs-3 text-warning" id="statInProgress">—</div>
                         <small class="text-muted" data-i18n="profile.inProgress">In Progress</small>
                       </div>
                     </div>
@@ -279,17 +284,46 @@
                 <div class="card-header bg-white border-0 pb-0">
                   <h5 class="mb-0" data-i18n="profile.profilePhoto">Profile Photo</h5>
                 </div>
-                <div class="card-body text-center">
+                <div class="card-body">
                   <div
                     class="rounded-circle bg-warning d-flex align-items-center justify-content-center text-dark fw-bold flex-shrink-0 mx-auto mb-3"
                     style="width:80px;height:80px;font-size:2rem;" id="avatarInitialLargePhoto">T</div>
-                  <p class="text-muted small mb-3" data-i18n="profile.photoHint">Click to change photo</p>
-                  <button type="button" class="btn btn-outline-primary" id="changePhotoBtn"
-                    data-i18n="profile.changePhoto">Change Photo</button>
-                  <div class="mt-3">
-                    <button type="button" class="btn btn-outline-danger btn-sm" id="removePhotoBtn"
-                      data-i18n="profile.removePhoto">Remove Photo</button>
+                  <div id="photoAlert" class="alert alert-danger d-none" role="status" aria-live="polite"></div>
+                  <input type="file" class="visually-hidden" id="profilePhotoUpload"
+                    accept="image/jpeg,image/png,image/webp" aria-describedby="profilePhotoHint"
+                    aria-label="Choose a profile photo" />
+                  <div id="profilePhotoPreview" class="d-none align-items-center gap-3 mb-3">
+                    <img id="profilePhotoPreviewImage" class="rounded-circle border"
+                      alt="Selected profile photo preview" width="64" height="64" style="object-fit:cover;" />
+                    <span id="profilePhotoPreviewName" class="small text-muted text-break"></span>
                   </div>
+                  <div id="photoUploadProgress" class="d-none mb-3" aria-live="polite">
+                    <div class="d-flex justify-content-between small mb-1">
+                      <span id="photoUploadProgressLabel">Uploading profile photo...</span>
+                      <span id="photoUploadProgressValue">0%</span>
+                    </div>
+                    <div class="progress" role="progressbar" aria-label="Profile photo upload progress"
+                      aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                      <div id="photoUploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                        style="width:0%"></div>
+                    </div>
+                  </div>
+                  <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-primary btn-sm" id="chooseProfilePhotoBtn">
+                      <i class="bi bi-upload me-1"></i><span data-i18n="profile.uploadPhoto">Upload Photo</span>
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm d-none" id="saveProfilePhotoBtn" disabled>
+                      <span class="spinner-border spinner-border-sm me-1 d-none" id="saveProfilePhotoSpinner"></span>
+                      <i class="bi bi-check-lg me-1" id="saveProfilePhotoIcon"></i><span>Save Photo</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="cancelProfilePhotoBtn">
+                      Cancel
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" id="removeProfilePhotoBtn" disabled>
+                      <i class="bi bi-trash me-1"></i><span data-i18n="profile.removePhoto">Remove Photo</span>
+                    </button>
+                  </div>
+                  <div class="form-text mt-2" id="profilePhotoHint">JPG, JPEG, PNG, or WEBP. Maximum 5 MB.</div>
                 </div>
               </div>
 
@@ -301,7 +335,11 @@
                 <div class="card-body">
                   <ul class="list-group list-group-flush">
                     <li class="list-group-item px-0 d-flex justify-content-between">
-                      <span class="text-muted" data-i18n="profile.memberSince">Member Since</span>
+                      <span class="text-muted">Role</span>
+                      <span class="fw-semibold" id="profileAccountRole">Not available</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                      <span class="text-muted">Registration Date</span>
                       <span class="fw-semibold" id="memberSince">—</span>
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between">
@@ -309,14 +347,97 @@
                       <span class="fw-semibold" id="lastLogin">—</span>
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between">
+                      <span class="text-muted">Username</span>
+                      <span class="fw-semibold" id="profileUsername">Not available</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                      <span class="text-muted">Employee ID</span>
+                      <span class="fw-semibold" id="profileEmployeeId">Not available</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                      <span class="text-muted">Specialization</span>
+                      <span class="fw-semibold" id="profileSpecialization">Not available</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                      <span class="text-muted">Skills</span>
+                      <span class="fw-semibold" id="profileSkills">Not available</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                      <span class="text-muted">Assigned Location</span>
+                      <span class="fw-semibold" id="profileAssignedLocation">Not available</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                      <span class="text-muted">Technician Status</span>
+                      <span class="fw-semibold" id="profileTechnicianStatus">Not available</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                      <span class="text-muted" data-i18n="profile.status">Account Status</span>
+                      <span class="fw-semibold" id="profileAccountStatus">Not available</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between">
                       <span class="text-muted" data-i18n="profile.totalAssigned">Total Assigned</span>
-                      <span class="fw-semibold" id="totalAssigned">0</span>
+                      <span class="fw-semibold" id="totalAssigned">—</span>
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between">
                       <span class="text-muted" data-i18n="profile.completionRate">Completion Rate</span>
-                      <span class="fw-semibold text-success" id="completionRate">0%</span>
+                      <span class="fw-semibold text-success" id="completionRate">—</span>
                     </li>
                   </ul>
+                </div>
+              </div>
+
+              <!-- Profile Files -->
+              <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pb-0">
+                  <h6 class="mb-0"><i class="bi bi-file-earmark-arrow-up text-primary me-2"></i><span
+                      data-i18n="profile.uploadFile">Upload File</span></h6>
+                </div>
+                <div class="card-body">
+                  <div id="fileAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                  <!-- Upload Section -->
+                  <div id="fileUploadSection">
+                    <label for="profileFileUpload" class="form-label fw-semibold small mb-1"
+                      data-i18n="profile.uploadFile">Upload File</label>
+                    <input type="file" class="form-control form-control-sm" id="profileFileUpload"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" aria-describedby="profileFileHint"
+                      aria-label="Choose a file to upload" />
+                    <div class="form-text" id="profileFileHint" data-i18n="pf.fileUploadHint">PDF, DOC, DOCX, JPG, JPEG,
+                      PNG. Max 10 MB.</div>
+                    <div id="fileSelectedPreview" class="d-none mt-2 p-2 border rounded bg-light">
+                      <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                          <i class="bi bi-file-earmark text-primary fs-4" id="filePreviewIcon"></i>
+                          <div>
+                            <div class="fw-semibold small" id="filePreviewName">—</div>
+                            <div class="text-muted small" id="filePreviewSize">—</div>
+                          </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                          <button type="button" class="btn btn-primary btn-sm" id="fileUploadBtn"
+                            data-i18n="profile.upload">Upload</button>
+                          <button type="button" class="btn btn-outline-secondary btn-sm" id="fileCancelBtn"
+                            data-i18n="common.cancel">Cancel</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Uploaded Files List -->
+                  <div id="fileListSection" class="mt-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <h6 class="mb-0" data-i18n="profile.myFiles">My Files</h6>
+                      <button type="button" class="btn btn-outline-secondary btn-sm" id="fileRefreshBtn"
+                        data-i18n="common.refresh"><i class="bi bi-arrow-clockwise"></i></button>
+                    </div>
+                    <div id="fileListLoading" class="text-center py-3 d-none">
+                      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                      <span class="text-muted small ms-2" data-i18n="common.loading">Loading...</span>
+                    </div>
+                    <div id="fileListEmpty" class="text-center py-4 text-muted small d-none" data-i18n="pf.noFiles">No
+                      files uploaded yet.</div>
+                    <div id="fileList" class="list-group list-group-flush"></div>
+                  </div>
                 </div>
               </div>
 
@@ -405,23 +526,18 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/api-config.js?v=2"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="/assets/js/main.js?v=13"></script>
-  <script src="/assets/js/notifications.js?v=7"></script>
-  <script src="/assets/js/validation.js?v=6"></script>
+  <script src="/assets/js/main.js?v=17"></script>
+  <script src="/assets/js/notifications.js?v=8"></script>
+  <script src="/assets/js/validation.js?v=7"></script>
   <script src="/assets/js/theme.js"></script>
-  <script src="/assets/js/lang.js?v=13"></script>
+  <script src="/assets/js/lang.js?v=16"></script>
 
   <script>
     document.addEventListener( 'DOMContentLoaded', async () =>
     {
       if ( typeof Auth === 'undefined' ) return;
       await Auth.load();
-      if ( !Auth.isLoggedIn() )
-      {
-        window.__authRedirecting = true;
-        window.location.href = '/views/login.html';
-        return;
-      }
+      if ( !requireAuth() ) return;
 
       const t = ( key ) => ( window.t ? window.t( key ) : key );
       let _current = null;      // full user profile
@@ -538,6 +654,18 @@
         } );
       }
 
+      function syncHeaderProfilePhoto ()
+      {
+        if ( !_current ) return;
+        const sessionUser = Auth.getUser();
+        if ( sessionUser )
+        {
+          sessionUser.profileImage = _current.profileImage || null;
+          Auth.setUser( sessionUser );
+        }
+        if ( typeof populateUserInfo === 'function' ) populateUserInfo();
+      }
+
       // ---------- Load profile ----------
       async function loadProfileData ()
       {
@@ -565,6 +693,7 @@
           document.getElementById( 'phone' ).value = phoneVal || '';
           document.getElementById( 'department' ).value = user.department || '';
           document.getElementById( 'gender' ).value = user.gender || '';
+          document.getElementById( 'specialization' ).value = _tech?.specialization || '';
           const pwdUsername = document.getElementById( 'pwdUsername' );
           if ( pwdUsername ) pwdUsername.value = user.email || '';
           const cardPwdUsername = document.getElementById( 'cardPwdUsername' );
@@ -579,11 +708,24 @@
           document.getElementById( 'profileFullName' ).textContent = fullName;
           document.getElementById( 'profileEmail' ).textContent = user.email || '';
           document.getElementById( 'sidebarUserName' ).textContent = fullName;
-          document.getElementById( 'topUserName' ).textContent = 'Welcome, ' + fullName;
+          const topUserName = document.getElementById( 'topUserName' );
+          if ( topUserName ) topUserName.textContent = 'Welcome, ' + fullName;
 
           // Account info card
           if ( user.createdAt ) document.getElementById( 'memberSince' ).textContent = formatDate( user.createdAt );
           if ( user.lastLogin ) document.getElementById( 'lastLogin' ).textContent = formatDate( user.lastLogin );
+          document.getElementById( 'profileAccountRole' ).textContent = user.role || 'Not available';
+          document.getElementById( 'profileEmployeeId' ).textContent = _tech?.employeeId || 'Not available';
+          document.getElementById( 'profileSpecialization' ).textContent = _tech?.specialization || 'Not available';
+          const availability = _tech?.availability || ( _tech?.available ? 'available' : 'offline' );
+          const availabilityLabels = { available: 'Available', busy: 'Busy', offline: 'Offline' };
+          document.getElementById( 'profileTechnicianStatus' ).textContent = _tech
+            ? ( availabilityLabels[availability] || 'Not available' )
+            : 'Not available';
+          const accountStatus = user.status || '';
+          document.getElementById( 'profileAccountStatus' ).textContent = accountStatus
+            ? accountStatus.charAt( 0 ).toUpperCase() + accountStatus.slice( 1 )
+            : 'Not available';
           document.getElementById( 'completionRate' ).textContent = ( _tech && _tech.completionRate ) ? _tech.completionRate + '%' : '—';
 
           setAvatarSource();
@@ -595,20 +737,28 @@
             localUser.fullName = user.fullName;
             localUser.email = user.email;
             localUser.role = user.role;
+            localUser.profileImage = user.profileImage || null;
             Auth.setUser( localUser );
           }
           if ( typeof populateUserInfo === 'function' ) populateUserInfo();
+          syncRemovePhotoButton();
         } catch ( err )
         {
           if ( err && err.redirected ) return;
           console.error( 'Failed to load profile:', err );
           const main = document.getElementById( 'profileSection' );
-          if ( main ) main.innerHTML = `<div class="alert alert-danger m-3"><i class="bi bi-exclamation-triangle-fill me-1"></i>${ escHtml( err.message || 'Failed to load profile.' ) } <button class="btn btn-sm btn-outline-danger ms-2" onclick="window.location.reload()">Retry</button></div>`;
+          if ( main )
+          {
+            const alert = document.createElement( 'div' );
+            alert.className = 'alert alert-danger m-3';
+            alert.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i>${ escHtml( err.message || 'Failed to load profile.' ) } <button class="btn btn-sm btn-outline-danger ms-2" onclick="window.location.reload()">Retry</button>`;
+            main.prepend( alert );
+          }
         }
       }
 
       // ---------- Edit / Save / Cancel ----------
-      const EDITABLE = ['fullName', 'phone', 'department', 'gender', 'available'];
+      const EDITABLE = ['fullName', 'phone', 'department', 'gender', 'specialization', 'available'];
 
       function enterEditMode ()
       {
@@ -626,6 +776,7 @@
           document.getElementById( 'phone' ).value = _current.phone || '';
           document.getElementById( 'department' ).value = _current.department || '';
           document.getElementById( 'gender' ).value = _current.gender || '';
+          document.getElementById( 'specialization' ).value = _tech?.specialization || '';
           if ( _tech )
           {
             document.getElementById( 'available' ).value = String( _tech.available !== false );
@@ -657,7 +808,8 @@
         return document.getElementById( 'fullName' ).value.trim() !== ( _current.fullName || '' ) ||
           document.getElementById( 'phone' ).value.trim() !== ( _current.phone || '' ) ||
           document.getElementById( 'department' ).value.trim() !== ( _current.department || '' ) ||
-          document.getElementById( 'gender' ).value !== ( _current.gender || '' );
+          document.getElementById( 'gender' ).value !== ( _current.gender || '' ) ||
+          document.getElementById( 'specialization' ).value.trim() !== ( _tech?.specialization || '' );
       }
 
       // Save Changes
@@ -699,6 +851,7 @@
           phone: phoneNorm,
           department: document.getElementById( 'department' ).value.trim() || null,
           gender: gender,
+          specialization: document.getElementById( 'specialization' ).value.trim() || null,
           available: document.getElementById( 'available' ).value === 'true',
         };
 
@@ -710,7 +863,6 @@
           showToast( t( 'profile.saved' ) || 'Profile updated successfully.', 'success' );
           await loadProfileData();
           exitEditMode( false );
-          window.setTimeout( () => window.location.reload(), 600 );
         } catch ( err )
         {
           let msg = err.message || 'Failed to save profile.';
@@ -851,76 +1003,199 @@
         } );
       }
 
-      // ---------- Change / Remove Photo ----------
-      let photoInput = null;
-      document.getElementById( 'changePhotoBtn' ).addEventListener( 'click', () =>
+      // ---------- Server-backed profile photo upload ----------
+      const PHOTO_TYPES = new Map( [
+        ['.jpg', 'image/jpeg'], ['.jpeg', 'image/jpeg'],
+        ['.png', 'image/png'], ['.webp', 'image/webp'],
+      ] );
+      const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+      const photoInput = document.getElementById( 'profilePhotoUpload' );
+      let photoPreviewUrl = null;
+      let photoSaving = false;
+
+      function showPhotoAlert ( message, type )
       {
-        if ( !photoInput )
+        const alert = document.getElementById( 'photoAlert' );
+        if ( !alert ) return;
+        alert.className = 'alert alert-' + ( type || 'danger' );
+        alert.textContent = message;
+        alert.classList.remove( 'd-none' );
+      }
+
+      function clearPhotoAlert ()
+      {
+        const alert = document.getElementById( 'photoAlert' );
+        if ( alert ) { alert.classList.add( 'd-none' ); alert.textContent = ''; }
+      }
+
+      function clearLegacyPhotoPreference ()
+      {
+        if ( !_current ) return;
+        try
         {
-          photoInput = document.createElement( 'input' );
-          photoInput.type = 'file';
-          photoInput.accept = 'image/jpeg,image/png,image/webp';
-          photoInput.hidden = true;
-          document.body.appendChild( photoInput );
-          photoInput.addEventListener( 'change', handlePhotoSelected );
-        }
-        photoInput.value = '';
+          const key = String( _current.email || _current.id || 'default' ).toLowerCase();
+          const prefs = JSON.parse( localStorage.getItem( 'ict_profile_image_prefs' ) || '{}' );
+          delete prefs[key];
+          localStorage.setItem( 'ict_profile_image_prefs', JSON.stringify( prefs ) );
+        } catch ( _ ) { }
+      }
+
+      function syncRemovePhotoButton ()
+      {
+        const button = document.getElementById( 'removeProfilePhotoBtn' );
+        if ( button ) button.disabled = photoSaving || !( _current && _current.profileImage );
+      }
+
+      function setPhotoSaving ( saving )
+      {
+        photoSaving = saving;
+        const saveButton = document.getElementById( 'saveProfilePhotoBtn' );
+        const chooseButton = document.getElementById( 'chooseProfilePhotoBtn' );
+        const cancelButton = document.getElementById( 'cancelProfilePhotoBtn' );
+        const spinner = document.getElementById( 'saveProfilePhotoSpinner' );
+        const icon = document.getElementById( 'saveProfilePhotoIcon' );
+        const progress = document.getElementById( 'photoUploadProgress' );
+        if ( saveButton ) saveButton.disabled = saving || !photoPreviewUrl;
+        if ( chooseButton ) chooseButton.disabled = saving;
+        if ( cancelButton ) cancelButton.disabled = saving;
+        if ( spinner ) spinner.classList.toggle( 'd-none', !saving );
+        if ( icon ) icon.classList.toggle( 'd-none', saving );
+        if ( photoInput ) photoInput.disabled = saving;
+        if ( progress ) progress.classList.toggle( 'd-none', !saving );
+        if ( !saving ) updatePhotoUploadProgress( 0 );
+        syncRemovePhotoButton();
+      }
+
+      function updatePhotoUploadProgress ( percent )
+      {
+        const value = Math.max( 0, Math.min( 100, percent ) );
+        const bar = document.getElementById( 'photoUploadProgressBar' );
+        const label = document.getElementById( 'photoUploadProgressLabel' );
+        const valueLabel = document.getElementById( 'photoUploadProgressValue' );
+        const progress = document.querySelector( '#photoUploadProgress [role="progressbar"]' );
+        if ( bar ) bar.style.width = value + '%';
+        if ( label ) label.textContent = value >= 100 ? 'Finishing upload...' : 'Uploading profile photo...';
+        if ( valueLabel ) valueLabel.textContent = value + '%';
+        if ( progress ) progress.setAttribute( 'aria-valuenow', String( value ) );
+      }
+
+      function resetPhotoSelection ()
+      {
+        if ( photoPreviewUrl ) URL.revokeObjectURL( photoPreviewUrl );
+        photoPreviewUrl = null;
+        if ( photoInput ) { photoInput.value = ''; photoInput.disabled = false; }
+        const preview = document.getElementById( 'profilePhotoPreview' );
+        const image = document.getElementById( 'profilePhotoPreviewImage' );
+        const name = document.getElementById( 'profilePhotoPreviewName' );
+        const saveButton = document.getElementById( 'saveProfilePhotoBtn' );
+        const cancelButton = document.getElementById( 'cancelProfilePhotoBtn' );
+        if ( preview ) preview.classList.add( 'd-none' );
+        if ( image ) image.removeAttribute( 'src' );
+        if ( name ) name.textContent = '';
+        if ( saveButton ) { saveButton.classList.add( 'd-none' ); saveButton.disabled = true; }
+        if ( cancelButton ) cancelButton.classList.add( 'd-none' );
+      }
+
+      document.getElementById( 'chooseProfilePhotoBtn' ).addEventListener( 'click', () =>
+      {
+        clearPhotoAlert();
         photoInput.click();
       } );
 
-      async function handlePhotoSelected ()
+      photoInput.addEventListener( 'change', () =>
       {
+        clearPhotoAlert();
         const file = photoInput.files && photoInput.files[0];
         if ( !file ) return;
-
-        const allowed = ['image/jpeg', 'image/png', 'image/webp'];
-        if ( !allowed.includes( file.type ) )
+        const extension = file.name.slice( file.name.lastIndexOf( '.' ) ).toLowerCase();
+        if ( !PHOTO_TYPES.has( extension ) || PHOTO_TYPES.get( extension ) !== file.type || file.size > MAX_PHOTO_BYTES )
         {
-          showToast( t( 'profile.invalidImage' ) || 'Please choose a JPG, PNG, or WebP image.', 'danger' );
-          return;
-        }
-        if ( file.size > 5 * 1024 * 1024 )
-        {
-          showToast( t( 'profile.tooLarge' ) || 'Image must be 5 MB or smaller.', 'danger' );
+          resetPhotoSelection();
+          showPhotoAlert( 'Please select a JPG, JPEG, PNG, or WebP image smaller than 5 MB.' );
           return;
         }
 
-        setLoading( 'changePhotoBtn', null, true );
+        if ( photoPreviewUrl ) URL.revokeObjectURL( photoPreviewUrl );
+        photoPreviewUrl = URL.createObjectURL( file );
+        const preview = document.getElementById( 'profilePhotoPreview' );
+        const image = document.getElementById( 'profilePhotoPreviewImage' );
+        const name = document.getElementById( 'profilePhotoPreviewName' );
+        const saveButton = document.getElementById( 'saveProfilePhotoBtn' );
+        const cancelButton = document.getElementById( 'cancelProfilePhotoBtn' );
+        if ( preview ) preview.classList.remove( 'd-none' );
+        if ( name ) name.textContent = file.name;
+        if ( saveButton ) { saveButton.classList.remove( 'd-none' ); saveButton.disabled = true; }
+        if ( cancelButton ) cancelButton.classList.remove( 'd-none' );
+        if ( image )
+        {
+          image.onload = () => { if ( saveButton ) saveButton.disabled = false; };
+          image.onerror = () =>
+          {
+            resetPhotoSelection();
+            showPhotoAlert( 'The selected file is not a readable image.' );
+          };
+          image.src = photoPreviewUrl;
+        }
+      } );
+
+      document.getElementById( 'cancelProfilePhotoBtn' ).addEventListener( 'click', () =>
+      {
+        resetPhotoSelection();
+        clearPhotoAlert();
+      } );
+
+      document.getElementById( 'saveProfilePhotoBtn' ).addEventListener( 'click', async () =>
+      {
+        if ( photoSaving || !photoInput.files?.[0] ) return;
+        const formData = new FormData();
+        formData.append( 'profileImage', photoInput.files[0] );
+        setPhotoSaving( true );
+        clearPhotoAlert();
         try
         {
-          const fd = new FormData();
-          fd.append( 'profileImage', file );
-          const res = await apiRequest( '/users/profile-image', { method: 'POST', body: fd, isFormData: true } );
-          showToast( t( 'profile.success' ) || 'Profile photo updated successfully.', 'success' );
-          if ( _current ) _current.profileImage = ( res.data && res.data.profileImage ) ? res.data.profileImage : null;
+          const res = await apiUploadWithProgress(
+            '/users/profile-image', formData, updatePhotoUploadProgress,
+          );
+          _current.profileImage = res.data.profileImage;
+          clearLegacyPhotoPreference();
           setAvatarSource();
+          syncHeaderProfilePhoto();
+          resetPhotoSelection();
+          showPhotoAlert( 'Profile photo updated successfully.', 'success' );
         } catch ( err )
         {
-          showToast( err.message || 'Could not upload photo.', 'danger' );
+          showPhotoAlert( err.message || 'Could not save the profile photo.' );
         } finally
         {
-          setLoading( 'changePhotoBtn', null, false );
+          setPhotoSaving( false );
         }
-      }
+      } );
 
-      document.getElementById( 'removePhotoBtn' ).addEventListener( 'click', async () =>
+      document.getElementById( 'removeProfilePhotoBtn' ).addEventListener( 'click', async () =>
       {
-        if ( !confirm( t( 'profile.removePhotoConfirm' ) || 'Are you sure you want to remove your profile photo?' ) ) return;
-        setLoading( 'removePhotoBtn', null, true );
+        if ( photoSaving || !( _current && _current.profileImage ) ) return;
+        if ( !confirm( t( 'profile.removePhotoConfirm' ) || 'Remove your current profile photo?' ) ) return;
+        setPhotoSaving( true );
+        clearPhotoAlert();
         try
         {
           await apiRequest( '/users/profile-image', { method: 'DELETE' } );
-          showToast( t( 'profile.success' ) || 'Profile photo removed successfully.', 'success' );
-          if ( _current ) _current.profileImage = null;
+          _current.profileImage = null;
+          clearLegacyPhotoPreference();
+          resetPhotoSelection();
           setAvatarSource();
+          syncHeaderProfilePhoto();
+          showPhotoAlert( 'Profile photo removed.', 'success' );
         } catch ( err )
         {
-          showToast( err.message || 'Could not remove photo.', 'danger' );
+          showPhotoAlert( err.message || 'Could not remove the profile photo.' );
         } finally
         {
-          setLoading( 'removePhotoBtn', null, false );
+          setPhotoSaving( false );
         }
       } );
+
+      syncRemovePhotoButton();
 
       // ---------- Delete Account ----------
       document.getElementById( 'deleteAccountBtn' ).addEventListener( 'click', async () =>
@@ -946,6 +1221,317 @@
       EDITABLE.forEach( id => disableInput( document.getElementById( id ) ) );
 
       await loadProfileData();
+
+      /* ═══════════════════════════════════════════════════════════════
+         PROFILE FILE UPLOAD
+         ══════════════════════════════════════════════════════════════ */
+
+      const ALLOWED_FILE_TYPES = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/jpeg',
+        'image/png',
+      ];
+      const ALLOWED_FILE_EXTENSIONS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+      const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+      let _selectedFile = null;
+      let _fileUploading = false;
+
+      function formatFileSize ( bytes )
+      {
+        if ( bytes < 1024 ) return bytes + ' B';
+        if ( bytes < 1024 * 1024 ) return ( bytes / 1024 ).toFixed( 1 ) + ' KB';
+        return ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) + ' MB';
+      }
+
+      function getFileIcon ( mimeType )
+      {
+        if ( mimeType === 'application/pdf' ) return 'bi-file-earmark-pdf text-danger';
+        if ( mimeType === 'application/msword' || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ) return 'bi-file-earmark-word text-primary';
+        if ( mimeType.startsWith( 'image/' ) ) return 'bi-file-earmark-image text-success';
+        return 'bi-file-earmark text-secondary';
+      }
+
+      function showFileAlert ( message, type )
+      {
+        const el = document.getElementById( 'fileAlert' );
+        if ( !el ) return;
+        el.className = 'alert alert-' + ( type || 'danger' );
+        el.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>' + escHtml( message );
+        el.classList.remove( 'd-none' );
+      }
+
+      function clearFileAlert ()
+      {
+        const el = document.getElementById( 'fileAlert' );
+        if ( el ) { el.classList.add( 'd-none' ); el.innerHTML = ''; }
+      }
+
+      function setFileUploadLoading ( isLoading )
+      {
+        const btn = document.getElementById( 'fileUploadBtn' );
+        if ( btn )
+        {
+          btn.disabled = isLoading;
+          btn.setAttribute( 'aria-busy', isLoading ? 'true' : 'false' );
+          if ( isLoading )
+          {
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span><span data-i18n="profile.uploading">Uploading...</span>';
+          } else
+          {
+            btn.innerHTML = '<i class="bi bi-upload me-1"></i><span data-i18n="profile.upload">Upload</span>';
+          }
+        }
+        const cancelBtn = document.getElementById( 'fileCancelBtn' );
+        if ( cancelBtn ) cancelBtn.disabled = isLoading;
+        _fileUploading = isLoading;
+      }
+
+      function resetFileSelection ()
+      {
+        _selectedFile = null;
+        const fileInput = document.getElementById( 'profileFileUpload' );
+        if ( fileInput ) fileInput.value = '';
+        const preview = document.getElementById( 'fileSelectedPreview' );
+        if ( preview ) preview.classList.add( 'd-none' );
+        const uploadSection = document.getElementById( 'fileUploadSection' );
+        if ( uploadSection ) uploadSection.style.display = '';
+        clearFileAlert();
+      }
+
+      function showFilePreview ( file )
+      {
+        const preview = document.getElementById( 'fileSelectedPreview' );
+        const icon = document.getElementById( 'filePreviewIcon' );
+        const name = document.getElementById( 'filePreviewName' );
+        const size = document.getElementById( 'filePreviewSize' );
+        if ( !preview || !icon || !name || !size ) return;
+
+        icon.className = 'bi ' + getFileIcon( file.type ) + ' fs-4';
+        name.textContent = file.name;
+        size.textContent = formatFileSize( file.size );
+
+        preview.classList.remove( 'd-none' );
+      }
+
+      function validateFile ( file )
+      {
+        if ( !ALLOWED_FILE_TYPES.includes( file.type ) )
+        {
+          return 'Unsupported file type. Allowed: PDF, DOC, DOCX, JPG, JPEG, PNG.';
+        }
+        if ( !ALLOWED_FILE_EXTENSIONS.includes( file.name.substring( file.name.lastIndexOf( '.' ) ).toLowerCase() ) )
+        {
+          return 'Unsupported file extension. Allowed: .pdf, .doc, .docx, .jpg, .jpeg, .png.';
+        }
+        if ( file.size > MAX_FILE_BYTES )
+        {
+          return 'File size exceeds 10 MB limit.';
+        }
+        return null;
+      }
+
+      async function uploadFile ( file )
+      {
+        if ( _fileUploading ) return;
+        setFileUploadLoading( true );
+        clearFileAlert();
+
+        const formData = new FormData();
+        formData.append( 'file', file );
+
+        try
+        {
+          const res = await apiRequest( '/profile/files', {
+            method: 'POST',
+            body: formData,
+            isFormData: true,
+          } );
+          showToast( 'File uploaded successfully.', 'success' );
+          resetFileSelection();
+          await loadFileList();
+        } catch ( err )
+        {
+          if ( err && err.redirected ) return;
+          showFileAlert( err.message || 'Unable to upload the file. Please check the file type and size and try again.', 'danger' );
+        } finally
+        {
+          setFileUploadLoading( false );
+        }
+      }
+
+      async function loadFileList ()
+      {
+        const listEl = document.getElementById( 'fileList' );
+        const loadingEl = document.getElementById( 'fileListLoading' );
+        const emptyEl = document.getElementById( 'fileListEmpty' );
+        if ( !listEl ) return;
+
+        loadingEl?.classList.remove( 'd-none' );
+        emptyEl?.classList.add( 'd-none' );
+        listEl.innerHTML = '';
+
+        try
+        {
+          const res = await apiRequest( '/profile/files' );
+          const files = ( res && res.data ) || [];
+
+          loadingEl?.classList.add( 'd-none' );
+
+          if ( !files.length )
+          {
+            emptyEl?.classList.remove( 'd-none' );
+            return;
+          }
+
+          files.forEach( f =>
+          {
+            const item = document.createElement( 'div' );
+            item.className = 'list-group-item px-0 d-flex align-items-center justify-content-between gap-2';
+            item.dataset.fileId = f.id;
+            const iconClass = getFileIcon( f.mimeType );
+            item.innerHTML = `
+              <div class="d-flex align-items-center gap-2 flex-grow-1 min-w-0">
+                <i class="bi ${ iconClass } fs-4"></i>
+                <div class="min-w-0">
+                  <div class="fw-semibold small text-truncate" title="${ escHtml( f.originalName ) }">${ escHtml( f.originalName ) }</div>
+                  <div class="text-muted small">${ formatFileSize( f.size ) } • ${ new Date( f.uploadedAt ).toLocaleDateString() }</div>
+                </div>
+              </div>
+              <div class="d-flex gap-1 flex-shrink-0">
+                <button type="button" class="btn btn-outline-primary btn-sm" data-action="download" data-file-id="${ f.id }" data-original-name="${ escHtml( f.originalName ) }" aria-label="Download ${ escHtml( f.originalName ) }">
+                  <i class="bi bi-download"></i>
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm" data-action="delete" data-file-id="${ f.id }" aria-label="Delete ${ escHtml( f.originalName ) }">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            `;
+            listEl.appendChild( item );
+          } );
+
+          listEl.querySelectorAll( '[data-action="download"]' ).forEach( btn =>
+          {
+            btn.addEventListener( 'click', async () =>
+            {
+              const fileId = btn.dataset.fileId;
+              const originalName = btn.dataset.originalName;
+              btn.disabled = true;
+              btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+              try
+              {
+                const base = ( typeof API_BASE === 'string' && API_BASE ) ? API_BASE : '/api';
+                const res = await fetch( base + '/profile/files/' + fileId, {
+                  method: 'GET',
+                  credentials: 'include',
+                } );
+                if ( !res.ok ) throw new Error( res.statusText || 'Download failed' );
+                const blob = await res.blob();
+                const url = URL.createObjectURL( blob );
+                const a = document.createElement( 'a' );
+                a.href = url;
+                a.download = originalName;
+                document.body.appendChild( a );
+                a.click();
+                a.remove();
+                URL.revokeObjectURL( url );
+                showToast( 'Download started.', 'success' );
+              } catch ( err )
+              {
+                if ( err && err.redirected ) return;
+                showToast( err.message || 'Download failed.', 'danger' );
+              } finally
+              {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-download"></i>';
+              }
+            } );
+          } );
+
+          listEl.querySelectorAll( '[data-action="delete"]' ).forEach( btn =>
+          {
+            btn.addEventListener( 'click', async () =>
+            {
+              const fileId = btn.dataset.fileId;
+              if ( !confirm( 'Are you sure you want to delete this file?' ) ) return;
+              btn.disabled = true;
+              btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+              try
+              {
+                await apiRequest( '/profile/files/' + fileId, { method: 'DELETE' } );
+                showToast( 'File deleted successfully.', 'success' );
+                await loadFileList();
+              } catch ( err )
+              {
+                if ( err && err.redirected ) return;
+                showToast( err.message || 'Delete failed.', 'danger' );
+              } finally
+              {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-trash"></i>';
+              }
+            } );
+          } );
+
+        } catch ( err )
+        {
+          loadingEl?.classList.add( 'd-none' );
+          if ( err && err.redirected ) return;
+          if ( err.status === 401 || err.status === 403 )
+          {
+            showToast( 'Session expired. Please log in again.', 'danger' );
+          } else
+          {
+            emptyEl?.classList.remove( 'd-none' );
+            showToast( 'Could not load file list.', 'danger' );
+          }
+        }
+      }
+
+      // File input change handler
+      const fileInput = document.getElementById( 'profileFileUpload' );
+      fileInput?.addEventListener( 'change', () =>
+      {
+        clearFileAlert();
+        const file = fileInput.files && fileInput.files[0];
+        if ( !file ) return;
+
+        const error = validateFile( file );
+        if ( error )
+        {
+          showFileAlert( error, 'danger' );
+          fileInput.value = '';
+          return;
+        }
+
+        _selectedFile = file;
+        showFilePreview( file );
+      } );
+
+      // Upload button
+      document.getElementById( 'fileUploadBtn' )?.addEventListener( 'click', async () =>
+      {
+        if ( !_selectedFile || _fileUploading ) return;
+        await uploadFile( _selectedFile );
+      } );
+
+      // Cancel button
+      document.getElementById( 'fileCancelBtn' )?.addEventListener( 'click', () =>
+      {
+        resetFileSelection();
+      } );
+
+      // Refresh button
+      document.getElementById( 'fileRefreshBtn' )?.addEventListener( 'click', () =>
+      {
+        loadFileList();
+      } );
+
+      // Initial load
+      await loadFileList();
+
     } );
   </script>
 </body>

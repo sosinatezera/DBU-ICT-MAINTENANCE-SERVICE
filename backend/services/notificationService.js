@@ -97,24 +97,35 @@ function emitToTechnicians(event, data) {
   emitToRole("Technician", event, data);
 }
 
+/* Deliberately fire-and-forget: every caller invokes this without `await` so
+   that real-time delivery never sits on the latency path of the request that
+   produced it. That contract only holds if this function can never reject —
+   all 21 call sites drop the returned promise on the floor, so an escaping
+   rejection would become an unhandledRejection. */
 async function broadcastNotification(notification) {
-  if (!io) return;
-  const user = await User.findById(notification.user)
-    .select("role notificationPreferences")
-    .lean();
-  if (
-    !user ||
-    !shouldDeliverInAppNotification(
-      user.notificationPreferences,
-      user.role,
-      notification.notificationType,
+  try {
+    if (!io) return;
+    const user = await User.findById(notification.user)
+      .select("role notificationPreferences")
+      .lean();
+    if (
+      !user ||
+      !shouldDeliverInAppNotification(
+        user.notificationPreferences,
+        user.role,
+        notification.notificationType,
+      )
     )
-  )
-    return;
-  emitToUser(notification.user, "notification:new", notification);
-  const unread = await getUnreadCount(notification.user, user);
-  if (unread !== undefined) {
-    emitToUser(notification.user, "notification:unread-count", { unread });
+      return;
+    emitToUser(notification.user, "notification:new", notification);
+    const unread = await getUnreadCount(notification.user, user);
+    if (unread !== undefined) {
+      emitToUser(notification.user, "notification:unread-count", { unread });
+    }
+  } catch (err) {
+    /* The notification is already persisted in the database at every call
+       site, so a delivery failure is a degraded UI, never lost data. */
+    console.error("Notification broadcast failed:", err);
   }
 }
 

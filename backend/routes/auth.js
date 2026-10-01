@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const router = express.Router();
 const {
   register,
+  getRegistrationStatus,
   login,
   logout,
   getMe,
@@ -84,6 +85,11 @@ const verifyAccountRateLimit = rateLimit({
   message: VERIFY_LIMIT_MESSAGE,
 });
 
+/* Declared before /register's rate limiter is irrelevant here, but it is the
+   one public auth route that must stay cheap: the login page calls it on every
+   load to decide whether to offer the Register link, so it carries no limiter
+   and reads only a single boolean. */
+router.get("/registration-status", getRegistrationStatus);
 router.post("/register", authRateLimit, register);
 router.post("/login", authRateLimit, login);
 router.post("/logout", logout);

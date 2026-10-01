@@ -165,11 +165,12 @@ function initNotificationBell(refreshCount = true) {
     <div class="dropdown">
       <button class="btn btn-sm btn-light position-relative border-0 shadow-none p-2"
               id="notifBellBtn" data-bs-toggle="dropdown" aria-expanded="false"
-              title="Notifications" style="background:transparent;"
+              aria-label="Notifications" title="Notifications" style="background:transparent;"
               onclick="loadBellDropdown()">
         <i class="bi bi-bell fs-5 text-secondary"></i>
         <span id="notifBadge"
               class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+            aria-live="polite" aria-atomic="true"
               style="font-size:.6rem;min-width:18px;display:none;">0</span>
       </button>
       <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0"
@@ -231,14 +232,11 @@ function renderBellUnreadCount(unread) {
   return count;
 }
 
-async function refreshBellBadge() {
-  try {
-    const { unread } = await apiRequest("/notifications/unread-count");
-    return renderBellUnreadCount(unread);
-  } catch (_) {
-    return 0;
-  }
-}
+/* NOTE: refreshBellBadge() is defined once in main.js, which is the single
+   owner of every notification badge. It was previously duplicated here, and
+   because both files declare a global function the one loaded last silently
+   won — so on some pages the sidebar badge never updated. Do not re-declare
+   it here; add any new badge target to the main.js implementation. */
 
 function updateSidebarBadge(unread) {
   const sidebarBadge = document.getElementById("sidebarNotifBadge");
@@ -246,6 +244,26 @@ function updateSidebarBadge(unread) {
     sidebarBadge.textContent = unread > 9 ? "9+" : unread;
     sidebarBadge.style.display = unread > 0 ? "" : "none";
   }
+}
+
+function renderNotificationDetailsButton(notification) {
+  if (Auth.getUser()?.role !== "ICT Admin") return "";
+
+  const ticketId = String(notification.ticket_id || "").trim();
+  const hasTicket = /^[0-9a-f]{24}$/i.test(ticketId);
+  const unavailable =
+    "Request details are unavailable. The service request may have been removed or is no longer accessible.";
+
+  return `<div class="notif-view-actions">
+    <button type="button" class="btn btn-sm btn-outline-primary notif-view-details"
+            data-notification-id="${escHtml(notification.id)}"
+            data-ticket-id="${escHtml(ticketId)}"
+            aria-label="View details for ${escHtml(notification.ticketId || notification.title || "service request")}"
+            ${hasTicket ? 'onclick="viewNotificationDetails(event, this)"' : `disabled aria-disabled="true" title="${unavailable}"`}>
+      <i class="bi bi-eye me-1" aria-hidden="true"></i>View Details
+    </button>
+    ${hasTicket ? "" : `<span class="small text-muted" role="status">Request details are unavailable.</span>`}
+  </div>`;
 }
 
 async function loadBellDropdown() {
@@ -295,6 +313,7 @@ async function loadBellDropdown() {
             <div class="small fw-semibold text-truncate ${n.is_read ? "text-muted" : ""}">${escHtml(n.title)}</div>
             <div class="text-muted text-truncate" style="font-size:.75rem;">${escHtml(n.message)}</div>
             <div class="text-muted" style="font-size:.7rem;">${timeAgo(n.created_at)}</div>
+            ${renderNotificationDetailsButton(n)}
           </div>
           ${
             !n.is_read
@@ -363,7 +382,17 @@ async function markAllReadBell(e) {
 /* ═══════════════════════════════════════════════════════════
    FULL NOTIFICATIONS PAGE
    ═══════════════════════════════════════════════════════════ */
+/* One-shot binding: a second markAllReadBtn listener would fire
+   PATCH /notifications/read-all twice and clear the timer set twice. */
+let _notificationsPageBound = false;
+
 async function initNotificationsPage() {
+  /* Guard is set BEFORE the await. Placed after it, two concurrent invocations
+     would both suspend on the fetch and then both pass the check, so the
+     "one-shot" guarantee would not actually hold. */
+  if (_notificationsPageBound) return;
+  _notificationsPageBound = true;
+
   await loadNotificationsPage();
 
   document
@@ -593,6 +622,69 @@ function openNotificationTicket(ticketId) {
   }
 }
 
+async function viewNotificationDetails(event, button) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (button.disabled) return;
+
+  const ticketId = String(button.dataset.ticketId || "").trim();
+  const notificationId = button.dataset.notificationId || "";
+  const card = button.closest(".notif-card, .notif-drop-item");
+  const cardTicketId = String(card?.dataset.ticket || "").trim();
+  if (
+    !/^[0-9a-f]{24}$/i.test(ticketId) ||
+    !notificationId ||
+    cardTicketId !== ticketId
+  ) {
+    showToast(
+      "Request details are unavailable. The service request may have been removed or is no longer accessible.",
+      "warning",
+    );
+    return;
+  }
+
+  const originalLabel = button.innerHTML;
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  button.innerHTML =
+    '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading request details...';
+
+  const stopSound = () => {
+    if (window.NotificationSound?.stopSound) {
+      window.NotificationSound.stopSound();
+    }
+  };
+
+  if (
+    document.getElementById("requestInfoSection") &&
+    typeof openAdminRequestModal === "function"
+  ) {
+    stopSound();
+    await markReadBell(notificationId, card);
+    startExpirationTimer(notificationId);
+    await openAdminRequestModal(ticketId);
+    button.innerHTML = originalLabel;
+    button.disabled = false;
+    button.removeAttribute("aria-busy");
+    return;
+  }
+
+  if (card?.classList.contains("notif-card")) {
+    await markReadPage(notificationId, card);
+    return;
+  }
+
+  if (card?.classList.contains("notif-drop-item")) {
+    await openNotif(card);
+    return;
+  }
+
+  button.innerHTML = originalLabel;
+  button.disabled = false;
+  button.removeAttribute("aria-busy");
+  openNotificationTicket(ticketId);
+}
+
 /* Keyboard activation for notification cards (Enter / Space). */
 function notifCardKeydown(e, id, el) {
   if (e.key === "Enter" || e.key === " ") {
@@ -730,6 +822,11 @@ loadBellDropdown = async function () {
 
   try {
     const { data, unread } = await apiRequest("/notifications");
+    window.__lastNotificationsPayload = { data, unread };
+    /* Start the 60s expiry timers for read notifications. Without this they
+       stayed in the list forever, since nothing else arms them for rows that
+       were already read when the dropdown was rendered. */
+    restoreExpirationTimers(data);
 
     // Update badge
     const badge = document.getElementById("notifBadge");
@@ -814,6 +911,15 @@ loadNotificationsPage = async function () {
 
   try {
     const { data, unread } = await apiRequest("/notifications");
+    /* Published so the summary strip in admin/notifications.html can read the
+       same payload instead of issuing its own duplicate GET /notifications. */
+    window.__lastNotificationsPayload = { data, unread };
+    /* Arm the 60s expiry timers for already-read rows. This is the patched
+       page loader, which fully replaces the original — the original's call was
+       dead code, so read notifications on notifications.html never aged out
+       until a full page reload. Runs on the unfiltered list so a hidden
+       (expired) row still gets its timer. */
+    restoreExpirationTimers(data);
     const filterEl = document.getElementById("filterUnread");
     const allData = filterEl?.checked ? data.filter((n) => !n.is_read) : data;
     const filtered = filterActiveNotifications(allData);
@@ -868,6 +974,7 @@ loadNotificationsPage = async function () {
                 </div>
               </div>
               <p class="mb-0 text-muted" style="font-size:.825rem;line-height:1.4;">${escHtml(n.message)}</p>
+              ${renderNotificationDetailsButton(n)}
             </div>
             ${
               !n.is_read

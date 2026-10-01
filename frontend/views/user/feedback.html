@@ -184,11 +184,32 @@
       justify-content: center;
       width: 36px;
       height: 36px;
+      padding: 0;
       border-radius: 50%;
       background: #FFFFFF;
       border: 1px solid var(--border-color);
       color: var(--text-muted);
+      cursor: pointer;
+      font: inherit;
       transition: var(--transition-base);
+    }
+
+    .feedback-request-arrow:hover {
+      background: var(--blue-50);
+      border-color: var(--primary-deep);
+      color: var(--primary-deep);
+      transform: translateX(2px);
+    }
+
+    .feedback-request-arrow:focus-visible {
+      outline: 3px solid rgba(30, 64, 175, .28);
+      outline-offset: 3px;
+    }
+
+    .feedback-request-arrow:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
     }
 
     .feedback-request-item:hover .feedback-request-arrow {
@@ -655,30 +676,51 @@
               <form id="feedbackForm" novalidate>
                 <input type="hidden" id="feedbackRequestId" />
 
-                <div class="mb-3">
-                  <label class="form-label fw-semibold" data-i18n="fb.ticketId">Request / Ticket ID</label>
-                  <input type="text" class="form-control" id="feedbackRequestTitle" readonly />
+                <div class="mb-4">
+                  <h6 class="fw-bold mb-3">Request Information</h6>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label for="feedbackRequestTitle" class="form-label fw-semibold">Request ID</label>
+                      <input type="text" class="form-control" id="feedbackRequestTitle" readonly />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="feedbackRequestService" class="form-label fw-semibold">Request title / service</label>
+                      <input type="text" class="form-control" id="feedbackRequestService" readonly />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="feedbackRequestTechnician" class="form-label fw-semibold">Technician</label>
+                      <input type="text" class="form-control" id="feedbackRequestTechnician" readonly />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="feedbackRequestStatus" class="form-label fw-semibold">Status</label>
+                      <input type="text" class="form-control" id="feedbackRequestStatus" readonly />
+                    </div>
+                    <div class="col-12">
+                      <label for="feedbackRequestResolution" class="form-label fw-semibold">Resolution</label>
+                      <textarea class="form-control" id="feedbackRequestResolution" rows="2" readonly></textarea>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Star Rating -->
                 <div class="mb-3">
                   <label class="form-label fw-semibold"><span data-i18n="fb.overallRating">Overall Service
                       Rating</span> <span class="text-danger">*</span></label>
-                  <div class="star-rating d-flex gap-2 fs-2" id="starRating" role="group" aria-label="Rating">
+                  <div class="star-rating d-flex gap-2 fs-2" id="starRating" role="radiogroup"
+                    aria-label="Overall service rating">
                     <i class="bi bi-star text-warning star" data-value="1" style="cursor:pointer;" tabindex="0"
-                      role="radio" aria-label="1 star"></i>
+                      role="radio" aria-checked="false" aria-label="1 Star — Very Poor"></i>
                     <i class="bi bi-star text-warning star" data-value="2" style="cursor:pointer;" tabindex="0"
-                      role="radio" aria-label="2 stars"></i>
+                      role="radio" aria-checked="false" aria-label="2 Stars — Poor"></i>
                     <i class="bi bi-star text-warning star" data-value="3" style="cursor:pointer;" tabindex="0"
-                      role="radio" aria-label="3 stars"></i>
+                      role="radio" aria-checked="false" aria-label="3 Stars — Average"></i>
                     <i class="bi bi-star text-warning star" data-value="4" style="cursor:pointer;" tabindex="0"
-                      role="radio" aria-label="4 stars"></i>
+                      role="radio" aria-checked="false" aria-label="4 Stars — Good"></i>
                     <i class="bi bi-star text-warning star" data-value="5" style="cursor:pointer;" tabindex="0"
-                      role="radio" aria-label="5 stars"></i>
+                      role="radio" aria-checked="false" aria-label="5 Stars — Excellent"></i>
                   </div>
                   <input type="hidden" id="ratingValue" name="overallRating" value="" required />
-                  <div class="form-text" id="ratingLabel" aria-live="polite" data-i18n="fb.clickStar">Click a star to
-                    rate</div>
+                  <div class="form-text" id="ratingLabel" aria-live="polite">How would you rate the service?</div>
                 </div>
 
                 <div class="row g-3">
@@ -707,7 +749,7 @@
                     </select>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label fw-semibold small"><span data-i18n="fb.responseTime">Response Time</span>
+                    <label class="form-label fw-semibold small"><span>Response / Resolution Time</span>
                       <span class="text-danger">*</span></label>
                     <select class="form-select" id="fbResponseTime">
                       <option value="" data-i18n="fb.select">-- Select --</option>
@@ -762,9 +804,12 @@
                 </div>
 
                 <div class="mb-3 mt-3">
-                  <label for="comment" class="form-label fw-semibold" data-i18n="fb.comment">Requester Comment</label>
-                  <textarea class="form-control" id="comment" rows="3" data-i18n-placeholder="fb.ph.comment"
+                  <label for="comment" class="form-label fw-semibold">Comment / Feedback <span
+                      class="text-danger">*</span></label>
+                  <textarea class="form-control" id="comment" rows="3" maxlength="1000" required
+                    aria-describedby="commentFeedback"
                     placeholder="Tell us about your experience with the maintenance service..."></textarea>
+                  <div class="invalid-feedback" id="commentFeedback">Please enter your comments.</div>
                 </div>
                 <div class="mb-4">
                   <label for="suggestions" class="form-label fw-semibold" data-i18n="fb.suggestions">Suggestions for
@@ -775,7 +820,8 @@
 
                 <button type="submit" class="btn btn-primary px-4" id="feedbackSubmitBtn">
                   <span class="spinner-border spinner-border-sm me-2 d-none" id="feedbackSpinner"></span>
-                  <i class="bi bi-send me-1"></i><span data-i18n="fb.title">Submit Feedback</span>
+                  <i class="bi bi-send me-1" aria-hidden="true"></i><span id="feedbackSubmitLabel"
+                    data-i18n="fb.title">Submit Feedback</span>
                 </button>
               </form>
             </div>
@@ -788,10 +834,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/api-config.js?v=2"></script>
-  <script src="/assets/js/lang.js?v=13"></script>
+  <script src="/assets/js/lang.js?v=16"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="/assets/js/main.js?v=13"></script>
-  <script src="/assets/js/requests.js?v=8"></script>
+  <script src="/assets/js/main.js?v=17"></script>
+  <script src="/assets/js/requests.js?v=19"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css?v=13" />
   <link rel="stylesheet" href="/assets/css/responsive.css?v=3" />
+  <link rel="stylesheet" href="/assets/css/home-layout.css?v=1" />
   <script src="/assets/js/api-config.js?v=2"></script>
   <style>
     :root {
@@ -68,6 +69,10 @@
       margin: 0;
     }
 
+    [data-navbar-section][hidden] {
+      display: none !important;
+    }
+
     body:not(.dashboard-body):not(.auth-body) {
       padding-top: 0 !important;
     }
@@ -80,6 +85,7 @@
       z-index: 1200 !important;
       min-height: var(--nav-height);
       width: 100% !important;
+      box-sizing: border-box;
       background: rgba(255, 255, 255, .96);
       border-bottom: 1px solid var(--home-border);
       box-shadow: 0 6px 24px -12px rgba(15, 23, 42, .18);
@@ -89,6 +95,10 @@
     }
 
     .main-navbar .container {
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
       min-height: var(--nav-height);
       display: flex;
       align-items: center;
@@ -96,6 +106,7 @@
 
     .main-navbar .navbar-collapse {
       align-items: center;
+      min-width: 0;
     }
 
     .main-navbar .navbar-toggler {
@@ -110,7 +121,7 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%231f2933' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
     }
 
-    @media (max-width: 991.98px) {
+    @media (max-width: 1199.98px) {
 
       .main-navbar .collapse.show,
       .main-navbar .collapsing {
@@ -130,6 +141,7 @@
       gap: 12px;
       padding: 10px 16px 10px 10px;
       min-width: 0;
+      flex: 0 1 auto;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.15));
       border: 2px solid rgba(59, 130, 246, 0.9);
       border-radius: 16px;
@@ -283,7 +295,7 @@
     }
 
     /* Keep everything on one clean line on small-desktop tablets */
-    @media (min-width: 992px) and (max-width: 1259.98px) {
+    @media (min-width: 1200px) and (max-width: 1259.98px) {
       .brand-text-sub {
         display: none;
       }
@@ -305,7 +317,7 @@
       }
     }
 
-    @media (min-width: 992px) and (max-width: 1119.98px) {
+    @media (min-width: 1200px) and (max-width: 1259.98px) {
       .main-navbar {
         padding-top: .35rem;
         padding-bottom: .35rem;
@@ -316,7 +328,7 @@
       }
     }
 
-    @media (max-width: 991.98px) {
+    @media (max-width: 1199.98px) {
 
       .main-navbar .collapse.show,
       .main-navbar .collapsing {
@@ -329,11 +341,17 @@
       }
 
       .nav-link-item::after {
-        display: none;
+        display: block;
+        bottom: 3px;
+        height: 2px;
       }
 
       .nav-link-item.active {
         background: rgba(59, 130, 246, .2);
+      }
+
+      .nav-link-item.active::after {
+        width: 38%;
       }
 
       .navbar-nav .nav-link {
@@ -357,6 +375,14 @@
       }
     }
 
+    @media (min-width: 1200px) {
+      .main-navbar #navMenu>.d-flex {
+        flex: 0 0 auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+      }
+    }
+
     /* ===== Hero ===== */
     .hero-section {
       min-height: 0;
@@ -373,12 +399,19 @@
     /* Hero slides — professional sliding carousel (home1 → home8).
        The track holds every slide in a row; the JS advances the track with a
        transform: translateX() so images physically slide right → left in a
-       continuous loop (home8 slides back to home1 via a clone of slide 1). */
+       continuous loop (the last slide wraps to the first via a clone). */
     .hero-slider {
       position: absolute;
       inset: 0;
       z-index: 0;
       overflow: hidden;
+      /* Containment guarantee: the sliding track is translated as a whole,
+         so the viewport must clip its paint. `overflow:hidden` does that;
+         `contain:paint` additionally isolates the track from the document's
+         scrollable area, which is what stops a wide slide from ever adding a
+         horizontal scrollbar to the page. Neither affects the transition. */
+      contain: paint;
+      max-width: 100%;
     }
 
     .hero-slide-track {
@@ -399,6 +432,9 @@
       height: 100%;
       background-size: cover;
       background-position: center center;
+      /* Never tile: if a photo is missing the slide must stay blank, not
+         repeat itself across the container. */
+      background-repeat: no-repeat;
       will-change: transform;
       pointer-events: none;
     }
@@ -478,6 +514,50 @@
       background: #3B82F6;
       border-color: #3B82F6;
       transform: scale(1.25);
+    }
+
+    .hero-arrow {
+      position: absolute;
+      top: 50%;
+      z-index: 2;
+      display: grid;
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      place-items: center;
+      transform: translateY(-50%);
+      border: 1px solid rgba(255, 255, 255, .65);
+      border-radius: 50%;
+      background: rgba(15, 23, 42, .42);
+      color: #fff;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: background .2s ease, transform .2s ease;
+    }
+
+    .hero-arrow:hover {
+      transform: translateY(-50%) scale(1.06);
+      background: rgba(15, 23, 42, .68);
+    }
+
+    .hero-arrow:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 3px;
+    }
+
+    .hero-arrow-prev {
+      left: clamp(.75rem, 2.5vw, 2rem);
+    }
+
+    .hero-arrow-next {
+      right: clamp(.75rem, 2.5vw, 2rem);
+    }
+
+    @media (max-width: 575.98px) {
+      .hero-arrow {
+        width: 38px;
+        height: 38px;
+      }
     }
 
     /* Reduced motion: show the first slide statically, no sliding */
@@ -866,6 +946,59 @@
       border: 1px solid rgba(255, 255, 255, .08);
     }
 
+    /* Three locally stored section photos, arranged for wide and narrow screens. */
+    .section-image-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+      width: 100%;
+      max-width: 1100px;
+      min-width: 0;
+      margin-inline: auto;
+    }
+
+    .section-image-card {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--home-border);
+      border-radius: 14px;
+      background: var(--home-surface-2);
+      box-shadow: 0 10px 30px -16px rgba(30, 64, 175, .35);
+    }
+
+    .section-image-card img {
+      display: block;
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .section-image-caption {
+      margin: 0;
+      padding: .75rem .9rem;
+      color: var(--home-text-muted);
+      font-size: .875rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1024px) {
+      .section-image-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .section-image-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+      }
+
+      .section-image-card img {
+        height: 240px;
+      }
+    }
+
     /* ===== Contact ===== */
     .contact-card {
       position: relative;
@@ -1015,6 +1148,19 @@
 
     #about .section-title {
       margin-bottom: .75rem;
+    }
+
+    /* Every navbar target clears the fixed navbar, so a native hash jump
+       (JS disabled, middle-click, or any in-page link the script does not
+       intercept) still lands on the heading instead of underneath the bar.
+       The script also subtracts the live navbar height when it scrolls, so
+       this is belt-and-braces for the non-scripted path. */
+    #home,
+    #workflow,
+    #services,
+    #contact,
+    #about {
+      scroll-margin-top: calc(var(--nav-height) + 12px);
     }
 
     #about .about-info-card {
@@ -1181,6 +1327,83 @@
       transition: var(--home-transition);
     }
 
+    /* AI Support Button */
+    .btn-ai-support {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 48px;
+      padding: .65rem 1rem;
+      background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+      color: #FFFFFF !important;
+      font-weight: 700;
+      font-size: .875rem;
+      border: 1px solid rgba(255, 255, 255, .28);
+      border-radius: 999px;
+      min-width: 100px;
+      box-shadow: 0 8px 22px rgba(30, 64, 175, .34);
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      z-index: 1100;
+    }
+
+    body.public-home-page .btn-ai-support {
+      position: fixed !important;
+    }
+
+    .btn-ai-support:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 12px 28px rgba(30, 64, 175, .46), 0 0 18px rgba(96, 165, 250, .2);
+      background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+      color: #FFFFFF !important;
+    }
+
+    .btn-ai-support:focus-visible {
+      outline: 3px solid #FFFFFF;
+      outline-offset: 3px;
+      background: linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%);
+    }
+
+    .btn-ai-support:active {
+      transform: scale(.98);
+    }
+
+    .btn-ai-support[hidden] {
+      display: none !important;
+    }
+
+    body.home-ai-support-visible #scrollTopBtn {
+      right: 20px;
+      bottom: 5rem;
+    }
+
+    body.public-home-page .ai-support-launcher {
+      display: none !important;
+    }
+
+    @media (max-width: 575.98px) {
+      .btn-ai-support {
+        right: 14px;
+        bottom: 14px;
+        min-height: 46px;
+        padding: .6rem .85rem;
+      }
+
+      body.home-ai-support-visible #scrollTopBtn {
+        right: 14px;
+        bottom: 4.5rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn-ai-support {
+        transition: none;
+      }
+    }
+
     .about-tech i {
       font-size: 1.15rem;
       width: 24px;
@@ -1290,7 +1513,7 @@
     }
 
     body:not(.dashboard-body):not(.auth-body) .main-navbar {
-      background: rgba(255, 255, 255, .96) !important;
+      background: #B8F5A8 !important;
       border-bottom-color: rgba(226, 232, 240, .9);
     }
 
@@ -1931,6 +2154,69 @@
       outline-offset: 2px;
     }
 
+    /* ── Footer social icons ────────────────────────────────────────
+       Layout guard: the row is centred and wraps rather than overflowing or
+       clipping on very narrow phones. On desktop/tablet all five fit on one
+       line (5 x 42px + 4 x .9rem), so wrapping never actually triggers there
+       and the appearance is unchanged. */
+    body:not(.dashboard-body):not(.auth-body) .site-footer-social {
+      flex-wrap: wrap;
+      row-gap: .75rem;
+    }
+
+    /* Live buttons: a real <a href> gets native click, keyboard activation and
+       a new tab, so all that is left is to state the pointer explicitly and
+       make sure the whole circle is the hit area (it is — the <i> is inside
+       the anchor and the anchor is the 42px circle). */
+    body:not(.dashboard-body):not(.auth-body) .site-footer .footer-social-btn[href] {
+      cursor: pointer;
+    }
+
+    /* Per-brand hover: a subtle 2px lift plus a gentle 1.06 scale and a soft
+       glow in the brand's own colour. The transition is inherited from the base
+       .footer-social-btn rule, so the motion is identical across all five.
+       X and GitHub are monochrome brands, so they take the neutral foreground
+       rather than inventing a colour for them. */
+    body:not(.dashboard-body):not(.auth-body) .site-footer .footer-social-btn[data-social="facebook"]:hover {
+      color: #fff;
+      background: #1877F2;
+      border-color: #1877F2;
+      box-shadow: 0 10px 24px -8px rgba(24, 119, 242, .8);
+      transform: translateY(-2px) scale(1.06);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer .footer-social-btn[data-social="x"]:hover {
+      color: #1F2937;
+      background: #ffffff;
+      border-color: #ffffff;
+      box-shadow: 0 10px 24px -8px rgba(255, 255, 255, .6);
+      transform: translateY(-2px) scale(1.06);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer .footer-social-btn[data-social="linkedin"]:hover {
+      color: #fff;
+      background: #0A66C2;
+      border-color: #0A66C2;
+      box-shadow: 0 10px 24px -8px rgba(10, 102, 194, .8);
+      transform: translateY(-2px) scale(1.06);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer .footer-social-btn[data-social="github"]:hover {
+      color: #1F2937;
+      background: #ffffff;
+      border-color: #ffffff;
+      box-shadow: 0 10px 24px -8px rgba(255, 255, 255, .6);
+      transform: translateY(-2px) scale(1.06);
+    }
+
+    body:not(.dashboard-body):not(.auth-body) .site-footer .footer-social-btn[data-social="youtube"]:hover {
+      color: #fff;
+      background: #FF0000;
+      border-color: #FF0000;
+      box-shadow: 0 10px 24px -8px rgba(255, 0, 0, .75);
+      transform: translateY(-2px) scale(1.06);
+    }
+
     /* ── Divider + bottom ── */
     body:not(.dashboard-body):not(.auth-body) .site-footer-divider {
       border: 0;
@@ -2019,6 +2305,110 @@
       border-color: rgba(253, 230, 138, .7);
     }
 
+    #home-metrics {
+      position: relative;
+      background: #f8faff !important;
+    }
+
+    #home-metrics::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #c6e8bd;
+      pointer-events: none;
+    }
+
+    #home-metrics .section-label {
+      color: #376b45 !important;
+      background: #edf7e9 !important;
+      border-color: #d1e7c9 !important;
+      font-size: .95rem;
+      padding: .65rem 1.8rem;
+      margin-bottom: 1.875rem;
+    }
+
+    #home-metrics .container {
+      padding-top: 1.125rem;
+    }
+
+    #home-metrics .section-title {
+      font-size: 2.875rem;
+      line-height: 1.2;
+      margin-bottom: 1rem !important;
+    }
+
+    #home-metrics .text-center.mb-5 {
+      margin-bottom: 3.75rem !important;
+    }
+
+    #home-metrics .text-center.mb-5>p {
+      max-width: 700px !important;
+      font-size: 1.25rem;
+      line-height: 1.6;
+    }
+
+    #home-metrics .metric-card {
+      min-height: 330px;
+      padding: 2.75rem 2rem;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, .04);
+    }
+
+    #home-metrics .metric-card>div:first-child {
+      width: 82px !important;
+      height: 82px !important;
+      border-radius: 18px !important;
+    }
+
+    #home-metrics .metric-card>div:first-child i {
+      font-size: 1.5rem;
+    }
+
+    #home-metrics .metric-card h3 {
+      font-size: 1.75rem !important;
+      line-height: 1.2;
+    }
+
+    #home-metrics .metric-card .fw-semibold {
+      font-size: 1.125rem !important;
+    }
+
+    #home-metrics .metric-card p {
+      font-size: 1rem !important;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 767.98px) {
+      #home-metrics .container {
+        padding-top: .75rem;
+      }
+
+      #home-metrics .section-label {
+        padding: .55rem 1.4rem;
+        margin-bottom: 1.5rem;
+      }
+
+      #home-metrics .section-title {
+        font-size: 2.25rem;
+      }
+
+      #home-metrics .text-center.mb-5 {
+        margin-bottom: 2.5rem !important;
+      }
+
+      #home-metrics .metric-card {
+        min-height: 0;
+        padding: 2rem 1.25rem;
+      }
+
+      #home-metrics .metric-card>div:first-child {
+        width: 72px !important;
+        height: 72px !important;
+      }
+    }
+
     /* ===== Reduced motion ====== */
     @media (prefers-reduced-motion: reduce) {
       html {
@@ -2047,14 +2437,13 @@
     }
   </style>
   <link rel="stylesheet" href="/assets/css/theme.css?v=6" />
-  <script src="/assets/js/api-config.js?v=2"></script>
-  <script src="/assets/js/lang.js?v=13"></script>
+  <script src="/assets/js/lang.js?v=16"></script>
 </head>
 
-<body>
+<body class="public-home-page">
 
   <!-- ===== MAIN NAVBAR ===== -->
-  <nav class="main-navbar navbar navbar-expand-lg" id="mainNavbar">
+  <nav class="main-navbar navbar navbar-expand-xl" id="mainNavbar">
     <div class="container">
       <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none" href="#home">
         <span class="navbar-brand-icon">
@@ -2076,8 +2465,6 @@
         <ul class="navbar-nav mx-auto gap-1">
           <li class="nav-item"><a class="nav-link nav-link-item active" href="#home"><span
                 data-i18n="nav.home">Home</span></a></li>
-          <li class="nav-item"><a class="nav-link nav-link-item" href="#features"><span
-                data-i18n="nav.features">Features</span></a></li>
           <li class="nav-item"><a class="nav-link nav-link-item" href="#workflow"><span
                 data-i18n="nav.workflow">Workflow</span></a></li>
           <li class="nav-item"><a class="nav-link nav-link-item" href="#services"><span
@@ -2098,28 +2485,34 @@
 
 
   <!-- ===== HOME - HERO ===== -->
-  <section class="hero-section text-white" id="home">
+  <section class="hero-section text-white" id="home" data-navbar-section="home">
     <div class="hero-slider" id="heroSlider">
       <div class="hero-slide-track" id="heroTrack">
-        <div class="hero-slide hero-slide-1" role="img" aria-label="Hero image 1" data-home-image-id="hero-1"
+        <div class="hero-slide hero-slide-1" role="img" aria-label="Home hero image 1" data-home-image-id="hero-1"
           data-home-image-file="home1.png" draggable="false"></div>
-        <div class="hero-slide hero-slide-2" role="img" aria-label="Hero image 2" data-home-image-id="hero-2"
+        <div class="hero-slide hero-slide-2" role="img" aria-label="Home hero image 2" data-home-image-id="hero-2"
           data-home-image-file="home2.png" draggable="false"></div>
-        <div class="hero-slide hero-slide-3" role="img" aria-label="Hero image 3" data-home-image-id="hero-3"
+        <div class="hero-slide hero-slide-3" role="img" aria-label="Home hero image 3" data-home-image-id="hero-3"
           data-home-image-file="home3.png" draggable="false"></div>
-        <div class="hero-slide hero-slide-4" role="img" aria-label="Hero image 4" data-home-image-id="hero-4"
+        <div class="hero-slide hero-slide-4" role="img" aria-label="Home hero image 4" data-home-image-id="hero-4"
           data-home-image-file="home4.png" draggable="false"></div>
-        <div class="hero-slide hero-slide-5" role="img" aria-label="Hero image 5" data-home-image-id="hero-5"
+        <div class="hero-slide hero-slide-5" role="img" aria-label="Home hero image 5" data-home-image-id="hero-5"
           data-home-image-file="home5.png" draggable="false"></div>
-        <div class="hero-slide hero-slide-6" role="img" aria-label="Hero image 6" data-home-image-id="hero-6"
+        <div class="hero-slide hero-slide-6" role="img" aria-label="Home hero image 6" data-home-image-id="hero-6"
           data-home-image-file="home6.png" draggable="false"></div>
-        <div class="hero-slide hero-slide-7" role="img" aria-label="Hero image 7" data-home-image-file="home7.png"
-          draggable="false"></div>
-        <div class="hero-slide hero-slide-8" role="img" aria-label="Hero image 8" data-home-image-file="home8.png"
-          draggable="false"></div>
+        <div class="hero-slide hero-slide-7" role="img" aria-label="Home hero image 7" data-home-image-id="hero-7"
+          data-home-image-file="home7.png" draggable="false"></div>
+        <div class="hero-slide hero-slide-8" role="img" aria-label="Home hero image 8" data-home-image-id="hero-8"
+          data-home-image-file="home8.png" draggable="false"></div>
       </div>
     </div>
     <div class="hero-overlay"></div>
+    <button class="hero-arrow hero-arrow-prev" id="heroPrevious" type="button" aria-label="Previous slide">
+      <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+    </button>
+    <button class="hero-arrow hero-arrow-next" id="heroNext" type="button" aria-label="Next slide">
+      <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+    </button>
     <div class="container position-relative" style="z-index:1;">
       <div class="row align-items-center g-5">
         <div class="col-lg-6">
@@ -2181,7 +2574,7 @@
   </section>
 
   <!-- ===== STATS BAR ===== -->
-  <section class="stats-bar" id="home-stats">
+  <section class="stats-bar" id="home-stats" data-navbar-section="home">
     <div class="container">
       <div class="row g-0">
         <div class="col-6 col-md-3 stat-item">
@@ -2205,7 +2598,7 @@
   </section>
 
   <!-- ===== KEY METRICS DASHBOARD PREVIEW ===== -->
-  <section class="py-5 my-2" style="background:#f8faff;" id="home-metrics">
+  <section class="py-5 my-2" style="background:#f8faff;" id="home-metrics" data-navbar-section="home">
     <div class="container">
       <div class="text-center mb-5">
         <div class="section-label"><span data-i18n="metrics.label">Key Metrics</span></div>
@@ -2260,7 +2653,7 @@
   </section>
 
   <!-- ===== QUICK ACCESS CARDS ===== -->
-  <section class="py-5 my-2" style="background:#ffffff;" id="home-quick">
+  <section class="py-5 my-2" style="background:#ffffff;" id="home-quick" data-navbar-section="home">
     <div class="container">
       <div class="text-center mb-5">
         <div class="section-label"><span data-i18n="quick.label">Quick Access</span></div>
@@ -2317,8 +2710,37 @@
     </div>
   </section>
 
+  <!-- ===== HOME ICT SUPPORT GALLERY ===== -->
+  <section class="py-5 my-2" style="background:#f8faff;" id="home-gallery" data-navbar-section="home">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-label">ICT Service</div>
+        <h2 class="section-title">Support Across Campus</h2>
+        <p class="text-muted mx-auto" style="max-width:560px;">Practical maintenance and technical support for the
+          people and equipment that keep campus connected.</p>
+      </div>
+      <div class="section-image-grid">
+        <figure class="section-image-card mb-0">
+          <img src="/assets/images/about-maintenance-workshop.jpg"
+            alt="ICT technician working on computer hardware in a maintenance workshop" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Hardware and workstation support for campus teams.</figcaption>
+        </figure>
+        <figure class="section-image-card mb-0">
+          <img src="/assets/images/about-ict-technician.jpg"
+            alt="ICT technician providing hands-on assistance at a workstation" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Hands-on technical assistance when users need it.</figcaption>
+        </figure>
+        <figure class="section-image-card mb-0">
+          <img src="/assets/images/about-printer-equipment.jpg"
+            alt="Printer and office ICT equipment maintained by the service" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Reliable technology for everyday university services.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== FEATURES ===== -->
-  <section id="features" class="py-5 my-2" style="background:#f8faff;">
+  <section id="features" class="py-5 my-2" style="background:#f8faff;" data-navbar-section="features" hidden>
     <div class="container">
       <div class="text-center mb-5">
         <div class="section-label"><span data-i18n="features.label">Features</span></div>
@@ -2326,6 +2748,23 @@
         <p class="text-muted mx-auto" style="max-width:620px;"><span data-i18n="features.desc">A comprehensive toolkit
             designed to streamline the entire
             ICT hardware and software maintenance lifecycle at Mekdela Amba University.</span></p>
+      </div>
+      <div class="section-image-grid mb-4">
+        <figure class="section-image-card mb-0"><img src="/assets/images/desktop.jpg"
+            alt="Desktop computer hardware supported by the service" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Computer hardware and workstations supported by the service.
+          </figcaption>
+        </figure>
+        <figure class="section-image-card mb-0"><img src="/assets/images/laptop1.jpg"
+            alt="Laptop used to submit and track maintenance requests" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Software and digital tools for submitting and tracking requests.
+          </figcaption>
+        </figure>
+        <figure class="section-image-card mb-0"><img src="/assets/images/printer.jpg"
+            alt="Networked office printer maintained as part of ICT equipment" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Connected ICT equipment and infrastructure maintained by the
+            service.</figcaption>
+        </figure>
       </div>
       <div class="row g-4">
         <div class="col-md-6 col-lg-4">
@@ -2399,7 +2838,7 @@
   </section>
 
   <!-- ===== WORKFLOW ===== -->
-  <section id="workflow" class="py-5 my-2" style="background:#ffffff;">
+  <section id="workflow" class="py-5 my-2" style="background:#ffffff;" data-navbar-section="workflow" hidden>
     <div class="container">
       <div class="text-center mb-5">
         <div class="section-label"><span data-i18n="workflow.label">How It Works</span></div>
@@ -2407,6 +2846,21 @@
         <p class="text-muted mx-auto" style="max-width:560px;"><span data-i18n="workflow.subtitle">Every request follows
             a structured, transparent lifecycle
             &#8212; ensuring accountability and timely resolution at each stage.</span></p>
+      </div>
+      <div class="section-image-grid mb-4">
+        <figure class="section-image-card mb-0"><img src="/assets/images/workflow/workflow-01.jpg"
+            alt="Requester submitting an ICT maintenance request" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">A requester reports an ICT problem through the service.</figcaption>
+        </figure>
+        <figure class="section-image-card mb-0"><img src="/assets/images/workflow/workflow-02.jpg"
+            alt="Technician diagnosing an assigned computer repair" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">A technician diagnoses and works on the assigned repair.
+          </figcaption>
+        </figure>
+        <figure class="section-image-card mb-0"><img src="/assets/images/workflow/workflow-03.jpg"
+            alt="Technician completing a repair and tracking its status" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">The completed request is tracked through resolution.</figcaption>
+        </figure>
       </div>
       <div class="row justify-content-center">
         <div class="col-lg-7">
@@ -2475,7 +2929,7 @@
   </section>
 
   <!-- ===== SERVICES ===== -->
-  <section id="services" class="py-5 my-2" style="background:#f8faff;">
+  <section id="services" class="py-5 my-2" style="background:#f8faff;" data-navbar-section="services" hidden>
     <div class="container">
       <div class="text-center mb-5">
         <div class="section-label"><span data-i18n="services.label">Our Services</span></div>
@@ -2484,6 +2938,21 @@
         <p class="text-muted mx-auto" style="max-width:620px;"><span data-i18n="services.subtitle">Specialized computer
             maintenance services exclusively
             focused on hardware repair and software support for the community.</span></p>
+      </div>
+      <div class="section-image-grid mb-4">
+        <figure class="section-image-card mb-0"><img src="/assets/images/services/services-01.jpg"
+            alt="Computer and cable repair service" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Computer diagnosis, repair, and troubleshooting.</figcaption>
+        </figure>
+        <figure class="section-image-card mb-0"><img src="/assets/images/services/services-02.jpg"
+            alt="Printer and device maintenance service" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Hardware servicing and software maintenance for ICT devices.
+          </figcaption>
+        </figure>
+        <figure class="section-image-card mb-0"><img src="/assets/images/services/services-03.jpg"
+            alt="Network and server infrastructure support" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Printer and peripheral support for ICT equipment.</figcaption>
+        </figure>
       </div>
       <div class="row g-4">
         <div class="col-md-6">
@@ -2635,7 +3104,7 @@
   </section>
 
   <!-- ===== CONTACT ===== -->
-  <section id="contact" class="py-5 my-2">
+  <section id="contact" class="py-5 my-2" data-navbar-section="contact" hidden>
     <div class="container">
       <div class="text-center mb-5">
         <div class="section-label"><i class="fa-solid fa-headset me-2"></i><span data-i18n="contact.label">Get in
@@ -2644,6 +3113,20 @@
         <p class="text-muted mx-auto" style="max-width:560px;"><span data-i18n="contact.intro">Need assistance? Reach
             out to our ICT helpdesk or submit
             an inquiry through the form below.</span></p>
+      </div>
+      <div class="section-image-grid mb-4">
+        <figure class="section-image-card mb-0"><img src="/assets/images/contact/contact-01.jpg"
+            alt="ICT help desk agent ready to assist a requester" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Contact the ICT help desk to request assistance.</figcaption>
+        </figure>
+        <figure class="section-image-card mb-0"><img src="/assets/images/contact/contact-02.jpg"
+            alt="Technical support professional assisting at a service desk" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Communicate with technical support about an issue.</figcaption>
+        </figure>
+        <figure class="section-image-card mb-0"><img src="/assets/images/contact/contact-03.jpg"
+            alt="Technician communicating with a maintenance requester" loading="lazy" decoding="async">
+          <figcaption class="section-image-caption">Receive hands-on assistance from an ICT professional.</figcaption>
+        </figure>
       </div>
       <div class="row g-4">
         <div class="col-lg-5">
@@ -2762,7 +3245,7 @@
   </section>
 
   <!-- ===== ABOUT US ===== -->
-  <section id="about" class="py-5 my-2" style="background:#f8faff;">
+  <section id="about" class="py-5 my-2" style="background:#f8faff;" data-navbar-section="about" hidden>
     <div class="container">
       <div class="text-center mb-5">
         <div class="section-label"><span data-i18n="about.label">About Us</span></div>
@@ -2771,6 +3254,30 @@
             Management
             System is designed to digitize and improve hardware and software maintenance request
             management for the community.</span></p>
+      </div>
+      <div id="about-photos" class="about-photos py-5 my-4" style="background:#f8faff;">
+        <div class="text-center mb-4">
+          <h3 class="section-title"><span data-i18n="about.photos">Team & Environment</span></h3>
+          <p class="text-muted mb-0" style="max-width:620px;margin:0 auto;"><span data-i18n="about.photos.desc">ICT
+              maintenance team and project environment at Mekdela Amba University.</span></p>
+        </div>
+        <div class="section-image-grid">
+          <figure class="section-image-card mb-0"><img src="/assets/images/about/about-01.jpg"
+              alt="Professional ICT maintenance team" loading="lazy" decoding="async">
+            <figcaption class="section-image-caption">The people behind ICT maintenance and technical support.
+            </figcaption>
+          </figure>
+          <figure class="section-image-card mb-0"><img src="/assets/images/about/about-02.jpg"
+              alt="University technology environment" loading="lazy" decoding="async">
+            <figcaption class="section-image-caption">A workspace for diagnosing and repairing computer equipment.
+            </figcaption>
+          </figure>
+          <figure class="section-image-card mb-0"><img src="/assets/images/about/about-03.jpg"
+              alt="Modern information technology infrastructure" loading="lazy" decoding="async">
+            <figcaption class="section-image-caption">Technology that supports a university ICT service environment.
+            </figcaption>
+          </figure>
+        </div>
       </div>
       <div class="row g-4 align-items-start">
 
@@ -2901,7 +3408,8 @@
       <!-- Brand -->
       <div class="site-brand-block">
         <span class="site-brand-icon" aria-hidden="true"><i class="fa-solid fa-wrench"></i></span>
-        <h2 class="site-brand-title"><span data-i18n="footer.brand">Smart ICT Maintenance Management System</span></h2>
+        <h2 class="site-brand-title"><span data-i18n="footer.brand">Smart ICT Maintenance Management System</span>
+        </h2>
         <p class="site-brand-about">
           <span data-i18n="footer.about">Mekdela Amba University's dedicated platform for managing hardware and
             software maintenance requests &#8212;
@@ -2930,7 +3438,8 @@
             </li>
             <li><a href="/views/login.html" class="footer-link"><span data-i18n="footer.admin">Admin Panel</span></a>
             </li>
-            <li><a href="/views/login.html" class="footer-link"><span data-i18n="footer.tech">Technician</span></a></li>
+            <li><a href="/views/login.html" class="footer-link"><span data-i18n="footer.tech">Technician</span></a>
+            </li>
             <li><a href="/views/project-certificate.html" class="footer-link">Project Certificate</a></li>
           </ul>
         </div>
@@ -2957,16 +3466,50 @@
         </div>
       </div>
 
-      <!-- Social media -->
+      <!-- Social media
+           ────────────────────────────────────────────────────────────
+           CONFIGURED DESTINATIONS — this block is the single source of
+           truth for the footer social links. Every button is a real
+           <a href="..."> anchor, so the browser handles the click, the
+           focus ring, keyboard activation and the new tab natively. There
+           is no click handler, no preventDefault(), no permission check
+           and no JavaScript of any kind on these buttons, and the href sits
+           on the anchor itself, so the WHOLE 42px circle is the hit area.
+
+           Source of the URLs: the institution's own website
+           (mkau.edu.et) publishes the Facebook, X and YouTube links in its
+           footer; the LinkedIn company page is the one the institution
+           posts from. GitHub is this project's repository.
+
+           GitHub  → https://github.com/sosinatezera/DBU-ICT-MAINTENANCE-SERVICE
+           TO CHANGE ONE: edit that single href below. Nothing else in the
+           project needs to know about it.
+           ──────────────────────────────────────────────────────────── -->
       <div class="site-footer-social">
-        <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"
-          class="footer-social-btn"><i class="fa-brands fa-facebook-f"></i></a>
-        <a href="https://x.com/" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)"
-          class="footer-social-btn"><i class="fa-brands fa-x-twitter"></i></a>
-        <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
-          class="footer-social-btn"><i class="fa-brands fa-linkedin-in"></i></a>
+        <a href="https://www.facebook.com/Mekdela.Amba.University" target="_blank" rel="noopener noreferrer"
+          class="footer-social-btn" data-social="facebook" aria-label="Facebook"
+          title="Mekdela Amba University on Facebook — opens in a new tab">
+          <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+        </a>
+        <a href="https://x.com/mekdela_amba" target="_blank" rel="noopener noreferrer" class="footer-social-btn"
+          data-social="x" aria-label="X" title="Mekdela Amba University on X — opens in a new tab">
+          <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+        </a>
+        <a href="https://www.linkedin.com/company/mekdela-amba-university-mau" target="_blank" rel="noopener noreferrer"
+          class="footer-social-btn" data-social="linkedin" aria-label="LinkedIn"
+          title="Mekdela Amba University on LinkedIn — opens in a new tab">
+          <i class="fa-brands fa-linkedin-in" aria-hidden="true"></i>
+        </a>
         <a href="https://github.com/sosinatezera/DBU-ICT-MAINTENANCE-SERVICE" target="_blank" rel="noopener noreferrer"
-          aria-label="GitHub" class="footer-social-btn"><i class="fa-brands fa-github"></i></a>
+          class="footer-social-btn" data-social="github" aria-label="GitHub"
+          title="Project repository on GitHub — opens in a new tab">
+          <i class="fa-brands fa-github" aria-hidden="true"></i>
+        </a>
+        <a href="https://www.youtube.com/channel/UCqWmoX39VBK8Augft6tZiEA" target="_blank" rel="noopener noreferrer"
+          class="footer-social-btn" data-social="youtube" aria-label="YouTube"
+          title="Mekdela Amba University on YouTube — opens in a new tab">
+          <i class="fa-brands fa-youtube" aria-hidden="true"></i>
+        </a>
       </div>
 
       <hr class="site-footer-divider" />
@@ -2980,13 +3523,17 @@
           <a href="/views/register.html" class="footer-link"><i class="fa-solid fa-user-plus me-1"></i>Register</a>
         </nav>
         <p class="site-footer-copyright">
-          &copy; 2026 <span data-i18n="footer.rights">Mekdela Amba University ICT Hardware &amp; Software
+          &copy; 2026 <span data-i18n="footer.rights">Mekdela Amba University ICT Hardware & Software
             Maintenance
             System. All rights reserved.</span>
         </p>
       </div>
-    </div>
   </footer>
+
+  <button type="button" class="btn-ai-support" id="footerAiSupportBtn" aria-label="Open AI Support assistant"
+    aria-haspopup="dialog" aria-expanded="false" title="Open AI Support" hidden>
+    <i class="bi bi-robot me-2" aria-hidden="true"></i>AI Support
+  </button>
 
   <!-- Scroll to top -->
   <button id="scrollTopBtn" aria-label="Scroll to top">
@@ -2995,6 +3542,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/validation.js?v=6"></script>
+  <script src="/assets/js/hero-reorder.js?v=1"></script>
   <script>
     /* ===== Navbar scroll effect ===== */
     window.addEventListener( 'scroll', () =>
@@ -3002,76 +3550,124 @@
       document.getElementById( 'scrollTopBtn' ).classList.toggle( 'visible', window.scrollY > 300 );
     } );
 
-    /* ===== Single-Section View Navigation =====
-      Clicking an in-page section link shows ONLY its own section (no reload):
-         Home     → #home + #home-stats + #home-metrics + #home-quick
-         Features → #features      Workflow → #workflow
-         Services → #services      Contact  → #contact
-         About Us → #about
-       Only one section is visible at a time;
-       the URL hash updates without a full page reload; the active nav
-       item is highlighted. In-page anchors (hero CTA, quick-access
-       cards, footer links) switch views the same way. */
-    ( function initViewNavigation ()
+    /* ===== Section Navigation (fast scroll + scroll spy) =====
+       The Home page is ONE long scrolling document: every section stays
+       visible and the navbar scrolls to the target. It used to be a
+       single-view switcher that toggled `d-none` on every other section and
+       jumped to the top, which made the active item impossible to keep in
+       sync while scrolling, because there was never more than one section on
+       screen.
+
+         • A navbar click scrolls to the target in a fixed ~300ms, working
+           identically whether the user is at the top or down at the footer.
+         • The destination is offset by the LIVE navbar height (the navbar
+           shrinks on mobile, so a hard-coded value would clip the heading).
+         • The active item updates on click, and a scroll spy keeps it in sync
+           during manual scrolling.
+         • The hash is updated with replaceState — no page reload, no request,
+           and no loading state of any kind. */
+    ( function initSectionNavigation ()
     {
-      const VIEWS = {
-        home: ['home', 'home-stats', 'home-metrics', 'home-quick'],
-        features: ['features'],
-        workflow: ['workflow'],
-        services: ['services'],
-        contact: ['contact'],
-        about: ['about'],
-      };
-      const HASH_VIEW = {
-        'home': 'home', 'features': 'features', 'workflow': 'workflow',
-        'services': 'services', 'contact': 'contact', 'about': 'about',
-      };
-      const allIds = [...new Set( Object.values( VIEWS ).flat() )];
-      const sections = allIds.map( id => document.getElementById( id ) ).filter( Boolean );
+      /* Navbar targets, in document order. This is also the order the scroll
+         spy walks, so it must stay sorted by position on the page. */
+      const TARGETS = [
+        { id: 'home', nav: 'home' },
+        { id: 'workflow', nav: 'workflow' },
+        { id: 'services', nav: 'services' },
+        { id: 'contact', nav: 'contact' },
+        { id: 'about', nav: 'about' },
+      ];
 
-      function setActiveView ( name )
+      /* Sections that belong to Home. Scrolling through them keeps "Home"
+         active, and the hero CTA / quick-access cards can deep-link to them. */
+      const HOME_ALIASES = ['home-stats', 'home-metrics', 'home-quick', 'home-gallery'];
+
+      const navLinks = Array.prototype.slice.call(
+        document.querySelectorAll( '.navbar-nav .nav-link-item' ),
+      );
+      const linkByHash = {};
+      navLinks.forEach( ( link ) =>
       {
-        if ( !VIEWS[name] ) return;
-        sections.forEach( el =>
+        const hash = ( link.getAttribute( 'href' ) || '' ).slice( 1 );
+        if ( hash ) linkByHash[hash] = link;
+      } );
+
+      let activeName = null;
+      function setActive ( name )
+      {
+        if ( !name || name === activeName ) return;
+        activeName = name;
+        const link = linkByHash[name];
+        navLinks.forEach( ( navLink ) =>
         {
-          el.classList.toggle( 'd-none', !VIEWS[name].includes( el.id ) );
+          const isActive = navLink === link;
+          navLink.classList.toggle( 'active', isActive );
+          if ( isActive ) navLink.setAttribute( 'aria-current', 'page' );
+          else navLink.removeAttribute( 'aria-current' );
         } );
-
-        /* The footer belongs to the public shell, not to an individual view. */
-        document.getElementById( 'site-footer' )?.classList.remove( 'd-none' );
-
-        document.querySelectorAll( '.nav-link-item' ).forEach( link => link.classList.remove( 'active' ) );
-        const activeLink = document.querySelector( `.nav-link-item[href="#${ name }"]` );
-        if ( activeLink ) activeLink.classList.add( 'active' );
-
       }
 
-      function navigate ( name, hash )
+      /* Map navbar targets and existing in-page links to a visible view. */
+      function resolveTarget ( hash )
       {
-        setActiveView( name );
-        if ( hash && history.replaceState ) history.replaceState( null, '', '#' + hash );
-        window.scrollTo( { top: 0, behavior: 'smooth' } );
+        if ( !hash ) return null;
+        if ( TARGETS.some( ( t ) => t.id === hash ) )
+        {
+          return { view: hash, nav: hash };
+        }
+        if ( HOME_ALIASES.includes( hash ) )
+        {
+          return { view: 'home', nav: 'home' };
+        }
+        if ( hash === 'features' )
+        {
+          return { view: 'features', nav: 'services' };
+        }
+        return null;
       }
 
-      /* Section links and footer links use the single-view navigation. */
-      document.addEventListener( 'click', event =>
+      function showView ( view, nav )
+      {
+        document.querySelectorAll( '[data-navbar-section]' ).forEach( ( section ) =>
+        {
+          section.hidden = section.dataset.navbarSection !== view;
+        } );
+        const aiSupportButton = document.getElementById( 'footerAiSupportBtn' );
+        if ( aiSupportButton ) aiSupportButton.hidden = view !== 'home';
+        document.body.classList.toggle( 'home-ai-support-visible', view === 'home' );
+        setActive( nav );
+        window.scrollTo( { top: 0, left: 0, behavior: 'instant' } );
+      }
+
+      /* Navbar links, hero CTAs, quick-access cards and footer links all go
+         through this one delegated handler. The selected view is shown without
+         scrolling past the other views. */
+      document.addEventListener( 'click', ( event ) =>
       {
         const link = event.target.closest( 'a[href^="#"]' );
-        if ( link )
+        if ( !link ) return;
+
+        const hash = ( link.getAttribute( 'href' ) || '' ).slice( 1 );
+        const target = resolveTarget( hash );
+        if ( !target ) return;   // not a section we own — leave it to the browser
+
+        event.preventDefault();
+        showView( target.view, target.nav );
+        if ( history.replaceState ) history.replaceState( null, '', '#' + hash );
+
+        const navMenu = document.getElementById( 'navMenu' );
+        if (
+          link.closest( '#mainNavbar' ) && navMenu && navMenu.classList.contains( 'show' ) &&
+          window.bootstrap && window.bootstrap.Collapse
+        )
         {
-          const hash = link.getAttribute( 'href' ).slice( 1 );
-          const view = HASH_VIEW[hash];
-          if ( view )
-          {
-            event.preventDefault();
-            navigate( view, hash );
-          }
+          window.bootstrap.Collapse.getOrCreateInstance( navMenu, { toggle: false } ).hide();
         }
       } );
 
-      /* Honour an initial hash (e.g. #services) on first load */
-      const initial = HASH_VIEW[window.location.hash.slice( 1 )] || 'home';
-      setActiveView( initial );
+      /* Direct links select their corresponding view before the first paint. */
+      const initial = resolveTarget( window.location.hash.slice( 1 ) );
+      showView( initial?.view || 'home', initial?.nav || 'home' );
     } )();
 
     /* ===== Scroll to top ===== */
@@ -3080,22 +3676,25 @@
       window.scrollTo( { top: 0, behavior: 'smooth' } );
     } );
 
-    /* ===== Hero sliding carousel (home1 → home8, ~4s per slide) ===== */
+    /* ===== Hero sliding carousel (eight Home images, ~4s per slide) ===== */
     ( function initHeroSlideshow ()
     {
       const track = document.getElementById( 'heroTrack' );
       const dotsWrap = document.getElementById( 'heroDots' );
+      const previousButton = document.getElementById( 'heroPrevious' );
+      const nextButton = document.getElementById( 'heroNext' );
       if ( !track || !track.children.length ) return;
 
       const slides = Array.prototype.slice.call( track.children );
       const COUNT = slides.length;           /* 8 original slides */
-      const CLONE_INDEX = COUNT;             /* cloned slide 1 sits at index 8 */
+      const FIRST_CLONE_INDEX = 0;
+      const LAST_CLONE_INDEX = COUNT + 1;
       const reduceMotion = window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
       const INTERVAL = 4000;                 /* pause between slides */
       const DURATION = 1000;                 /* must match .hero-slide-track transition */
 
       let current = 0;                       /* logical slide shown in [0..COUNT-1] */
-      let slot = 0;                          /* track index the transform points to */
+      let slot = 1;                          /* track index; a clone of the last slide leads */
       let animating = false;                 /* true while a transform transition runs */
       let timer = null;
       let settleTimer = null;                /* safety net if transitionend is suppressed */
@@ -3110,11 +3709,15 @@
         img.src = url;
       } );
 
-      /* --- Clone slide 1 at the end for a seamless home8 → home1 loop --- */
-      const clone = slides[0].cloneNode( true );
-      clone.setAttribute( 'aria-hidden', 'true' );
-      clone.dataset.heroClone = 'true';
-      track.appendChild( clone );
+      /* Clones at both ends keep next and previous wraparound seamless. */
+      const firstClone = slides[0].cloneNode( true );
+      firstClone.setAttribute( 'aria-hidden', 'true' );
+      firstClone.dataset.heroClone = 'true';
+      const lastClone = slides[COUNT - 1].cloneNode( true );
+      lastClone.setAttribute( 'aria-hidden', 'true' );
+      lastClone.dataset.heroClone = 'true';
+      track.insertBefore( lastClone, track.firstChild );
+      track.appendChild( firstClone );
 
       /* --- Build pagination dots (one per slide) --- */
       slides.forEach( ( _, i ) =>
@@ -3126,7 +3729,7 @@
         dot.setAttribute( 'aria-pressed', i === 0 ? 'true' : 'false' );
         dot.addEventListener( 'click', () =>
         {
-          slideTo( i );
+          slideTo( i + 1 );
           restartTimer(); /* continue auto-advance after manual selection */
         } );
         dotsWrap?.appendChild( dot );
@@ -3137,11 +3740,10 @@
       {
         slot = index;
         track.style.transform = 'translateX(' + ( -index * 100 ) + '%)';
-        if ( index < COUNT )
-        {
-          current = index;
-          updateDots( index );
-        }
+        current = index === FIRST_CLONE_INDEX
+          ? COUNT - 1
+          : index === LAST_CLONE_INDEX ? 0 : index - 1;
+        updateDots( current );
         animating = true;
         if ( settleTimer ) clearTimeout( settleTimer );
         settleTimer = setTimeout( () =>
@@ -3151,18 +3753,19 @@
         }, DURATION + 200 );
       }
 
-      /* --- Snap back to the real slide 1 after reaching the clone --- */
+      /* --- Snap from either edge clone to its matching real slide --- */
       function snapBack ()
       {
-        if ( slot === CLONE_INDEX )
+        if ( slot === FIRST_CLONE_INDEX || slot === LAST_CLONE_INDEX )
         {
           track.classList.add( 'no-animation' );
-          slot = 0;
-          current = 0;
-          track.style.transform = 'translateX(0%)';
+          const wrappedForward = slot === LAST_CLONE_INDEX;
+          slot = wrappedForward ? 1 : COUNT;
+          current = wrappedForward ? 0 : COUNT - 1;
+          track.style.transform = 'translateX(' + ( -slot * 100 ) + '%)';
           void track.offsetWidth; /* force reflow before re-enabling transition */
           track.classList.remove( 'no-animation' );
-          updateDots( 0 );
+          updateDots( current );
         }
       }
 
@@ -3171,8 +3774,27 @@
       {
         if ( reduceMotion || animating ) return;
         snapBack();
-        slideTo( current + 1 );
+        slideTo( slot + 1 );
       }
+
+      function retreat ()
+      {
+        if ( animating ) return;
+        snapBack();
+        slideTo( slot - 1 );
+      }
+
+      previousButton?.addEventListener( 'click', () =>
+      {
+        retreat();
+        restartTimer();
+      } );
+
+      nextButton?.addEventListener( 'click', () =>
+      {
+        if ( !animating ) slideTo( slot + 1 );
+        restartTimer();
+      } );
 
       /* --- Rotate dot active state --- */
       function updateDots ( index )
@@ -3232,8 +3854,12 @@
         else restartTimer();
       } );
 
-      /* Make sure the hero always paints from slide 1 on first paint */
-      slideTo( 0 );
+      /* Start on the first real slide without animating from the leading clone. */
+      track.classList.add( 'no-animation' );
+      track.style.transform = 'translateX(-100%)';
+      void track.offsetWidth;
+      track.classList.remove( 'no-animation' );
+      updateDots( 0 );
       restartTimer();
 
       /* Reorder tool API: pause, resume, reset, and refresh the loop clone
@@ -3244,20 +3870,30 @@
         reset ()
         {
           pauseTimer();
-          snapBack();
-          slideTo( 0 );
+          if ( settleTimer ) clearTimeout( settleTimer );
+          animating = false;
+          slot = 1;
+          current = 0;
+          track.classList.add( 'no-animation' );
+          track.style.transform = 'translateX(-100%)';
+          void track.offsetWidth;
+          track.classList.remove( 'no-animation' );
+          updateDots( 0 );
           restartTimer();
         },
         refreshClone ()
         {
-          const stale = track.querySelector( '[data-hero-clone="true"]' );
-          if ( stale ) stale.remove();
-          const first = track.children[0];
-          if ( !first ) return;
-          const next = first.cloneNode( true );
-          next.dataset.heroClone = 'true';
-          next.setAttribute( 'aria-hidden', 'true' );
-          track.appendChild( next );
+          track.querySelectorAll( '[data-hero-clone="true"]' ).forEach( clone => clone.remove() );
+          const realSlides = Array.prototype.slice.call( track.children );
+          if ( !realSlides.length ) return;
+          const leadingClone = realSlides[realSlides.length - 1].cloneNode( true );
+          leadingClone.dataset.heroClone = 'true';
+          leadingClone.setAttribute( 'aria-hidden', 'true' );
+          const trailingClone = realSlides[0].cloneNode( true );
+          trailingClone.dataset.heroClone = 'true';
+          trailingClone.setAttribute( 'aria-hidden', 'true' );
+          track.insertBefore( leadingClone, track.firstChild );
+          track.appendChild( trailingClone );
         },
       };
     } )();
@@ -3265,29 +3901,65 @@
     /* ===== Live stats from public API =====
        API base is provided by the shared api-config.js loaded in <head>. */
 
+    /* Public stats counters. One request, one short timeout, and a single
+       code path for failure. The old version ran the same fetch twice via a
+       duplicated copy of the body, so the counters could be written from two
+       competing intervals. */
+    const STAT_IDS =
+      [
+        'countUsers', 'countResolved', 'countAssets', 'countTechs',
+        'heroActiveUsers', 'heroTotalRequests', 'heroTotalAssets', 'heroTotalTechnicians',
+        'aboutStatUsers', 'aboutStatTechs', 'aboutStatRequests', 'aboutStatResolved'
+      ];
+
+    let _statsTimer = null;
+
+    function showStatsOffline ()
+    {
+      STAT_IDS.forEach( id =>
+      {
+        const el = document.getElementById( id );
+        if ( el ) el.textContent = '--';
+      } );
+    }
+
+    /* Cancel any in-flight count-up before starting a new one. Without this a
+       second animCount on the same element leaves the old interval running and
+       the two fight over textContent, which looks like a stuck loader. */
+    function animCount ( id, target )
+    {
+      const el = document.getElementById( id );
+      if ( !el ) return;
+      if ( el._countTimer ) clearInterval( el._countTimer );
+      const value = Number( target ) || 0;
+      let cur = 0;
+      const step = Math.max( 1, Math.ceil( value / 40 ) );
+      if ( value <= 0 ) { el.textContent = '0'; return; }
+      el._countTimer = setInterval( () =>
+      {
+        cur = Math.min( cur + step, value );
+        el.textContent = cur;
+        if ( cur >= value ) { clearInterval( el._countTimer ); el._countTimer = null; }
+      }, 40 );
+    }
+
+    let _statsAttempts = 0;
+
     async function loadStats ()
     {
-      const setOffline = () =>
-      {
-        ['countUsers', 'countResolved', 'countAssets', 'countTechs', 'heroActiveUsers', 'heroTotalRequests', 'heroTotalAssets', 'heroTotalTechnicians'].forEach( id =>
-        {
-          const el = document.getElementById( id );
-          if ( el ) el.textContent = '--';
-        } );
-        ['aboutStatUsers', 'aboutStatTechs', 'aboutStatRequests', 'aboutStatResolved'].forEach( id =>
-        {
-          const el = document.getElementById( id );
-          if ( el ) el.textContent = '--';
-        } );
-      };
-
+      /* One-shot: { once: true } on the listener handles the DOMContentLoaded
+         path, and the attempt counter caps the retry below. */
+      const controller = new AbortController();
+      _statsTimer = setTimeout( () => controller.abort(), 8000 );
       try
       {
-        const r = await fetch( API_BASE + '/health' );
-        if ( !r.ok ) throw new Error( 'backend unreachable' );
-        const res = await fetch( API_BASE + '/public/stats' );
+        const res = await fetch( API_BASE + '/public/stats', {
+          signal: controller.signal,
+        } );
         if ( !res.ok ) throw new Error( 'stats unavailable' );
         const { data } = await res.json();
+        if ( !data ) throw new Error( 'stats unavailable' );
+        _statsAttempts = 0;
         animCount( 'countUsers', data.total_users );
         animCount( 'countResolved', data.resolved );
         animCount( 'countAssets', data.total_assets );
@@ -3300,33 +3972,40 @@
         animCount( 'aboutStatTechs', data.total_technicians );
         animCount( 'aboutStatRequests', data.total_tickets );
         animCount( 'aboutStatResolved', data.resolved );
-      } catch ( _ ) { setOffline(); }
-    }
-
-    function animCount ( id, target )
-    {
-      const el = document.getElementById( id );
-      if ( !el ) return;
-      let cur = 0;
-      const step = Math.max( 1, Math.ceil( target / 40 ) );
-      const t = setInterval( () =>
+      } catch ( _ )
       {
-        cur = Math.min( cur + step, target );
-        el.textContent = cur;
-        if ( cur >= target ) clearInterval( t );
-      }, 40 );
+        showStatsOffline();
+        /* Exactly one idle retry. A transient cold-start failure on a public
+           landing page should not leave permanent "--" placeholders, but a
+           server that is genuinely down must not be polled either. */
+        _statsAttempts++;
+        if ( _statsAttempts <= 1 )
+        {
+          const retry = () => { loadStats(); };
+          if ( typeof window.requestIdleCallback === 'function' )
+            window.requestIdleCallback( retry, { timeout: 4000 } );
+          else
+            window.setTimeout( retry, 2500 );
+        }
+      }
+      finally { clearTimeout( _statsTimer ); _statsTimer = null; }
     }
 
-    window.addEventListener( 'load', loadStats );
+    document.addEventListener( 'DOMContentLoaded', loadStats, { once: true } );
 
     /* ===== Contact Form (public — no login required) ===== */
 
     /* Pre-fill name/email when a logged-in user visits the page */
     ( async function initContactForm ()
     {
+      const controller = new AbortController();
+      const timer = setTimeout( () => controller.abort(), 15000 );
       try
       {
-        const res = await fetch( API_BASE + '/auth/me', { credentials: 'include' } );
+        const res = await fetch( API_BASE + '/auth/me', {
+          credentials: 'include',
+          signal: controller.signal,
+        } );
         const data = res.ok ? await res.json() : null;
         const user = data?.user;
         if ( user )
@@ -3337,6 +4016,7 @@
           if ( emailEl && user.email ) emailEl.value = user.email;
         }
       } catch ( _ ) { }
+      finally { clearTimeout( timer ); }
     } )();
 
     attachRealTimeValidation( 'contactForm', [
@@ -3409,6 +4089,8 @@
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>' + ( window.t ? t( 'contact.form.sending' ) : 'Sending...' );
       contactSubmitting = true;
       let succeeded = false;
+      const controller = new AbortController();
+      const timer = setTimeout( () => controller.abort(), 15000 );
       /* Tracks whether the email ACTUALLY went out, so neither the alert nor
          the button label can claim a delivery that never happened. */
       let emailNotified = true;
@@ -3419,6 +4101,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify( payload ),
+          signal: controller.signal,
         } );
         /* The API always answers JSON, but a proxy, a gateway or a cold start
            can return HTML or an empty body. Read the body as text first, so such
@@ -3447,17 +4130,10 @@
           successEl.style.display = 'block';
           document.getElementById( 'contactForm' ).reset();
           clearAllFieldValidations( 'contactForm' );
-          /* Re-fill name/email after reset */
-          let user = null;
-          try
-          {
-            const me = await fetch( API_BASE + '/auth/me', { credentials: 'include' } );
-            user = me.ok ? ( await me.json() ).user : null;
-          } catch ( _ ) { }
           const nameEl = document.getElementById( 'contactName' );
           const emailEl = document.getElementById( 'contactEmail' );
-          if ( user && nameEl && user.fullName ) nameEl.value = user.fullName;
-          if ( user && emailEl && user.email ) emailEl.value = user.email;
+          if ( nameEl ) nameEl.value = payload.fullName;
+          if ( emailEl ) emailEl.value = payload.email;
         }
         else
         {
@@ -3493,6 +4169,7 @@
       }
       finally
       {
+        clearTimeout( timer );
         contactSubmitting = false;
 
         const resetBtn = () =>
@@ -3520,6 +4197,50 @@
     } );
   </script>
   <script src="/assets/js/theme.js"></script>
+  <script>
+    ( () =>
+    {
+      const btn = document.getElementById( "footerAiSupportBtn" );
+      if ( !btn ) return;
+      const syncExpandedState = () =>
+      {
+        const panel = document.querySelector( ".ai-support-panel" );
+        btn.setAttribute( "aria-expanded", String( !!panel?.classList.contains( "is-open" ) ) );
+      };
+      const observePanel = () =>
+      {
+        const panel = document.querySelector( ".ai-support-panel" );
+        if ( !panel ) return false;
+        new MutationObserver( syncExpandedState ).observe( panel, {
+          attributes: true,
+          attributeFilter: ["class"],
+        } );
+        syncExpandedState();
+        return true;
+      };
+      if ( !observePanel() )
+      {
+        const panelObserver = new MutationObserver( () =>
+        {
+          if ( observePanel() ) panelObserver.disconnect();
+        } );
+        panelObserver.observe( document.body, { childList: true, subtree: true } );
+      }
+      btn.addEventListener( "click", () =>
+      {
+        const chatLauncher = document.querySelector( ".ai-support-launcher" );
+        if ( chatLauncher )
+        {
+          chatLauncher.click();
+          syncExpandedState();
+        }
+        else
+        {
+          window.location.href = "/views/assistant.html";
+        }
+      } );
+    } )();
+  </script>
 </body>
 
 </html>

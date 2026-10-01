@@ -7,6 +7,7 @@ const Ticket = require("../models/Ticket");
 const User = require("../models/User");
 const Technician = require("../models/Technician");
 const Notification = require("../models/Notification");
+const Settings = require("../models/Settings");
 const { sendEventEmail } = require("../services/mailer");
 const { broadcastNotification } = require("../services/notificationService");
 const { displayTicketId } = require("../utils/ticketId");
@@ -25,11 +26,12 @@ const getAllAssignments = async (req, res, next) => {
     const list = await Assignment.find()
       .populate({
         path: "ticket",
-        select: "ticketId status priority problemDescription equipmentType",
+        select:
+          "ticketId status priority problemDescription equipmentType issueType serviceType",
       })
       .populate({
         path: "technician",
-        populate: { path: "user", select: "fullName" },
+        populate: { path: "user", select: "fullName email" },
       })
       .populate("assigned_by", "fullName")
       .sort({ createdAt: -1 })
@@ -40,10 +42,16 @@ const getAllAssignments = async (req, res, next) => {
       ticket_id: a.ticket?._id,
       ticketId: displayTicketId(a.ticket?.ticketId),
       equipmentType: a.ticket?.equipmentType,
+      /* Issue Type / Service Type travels with the assignment so the admin
+         assignment view can show what the requester actually asked for.
+         serviceType is the fallback for rows predating the dedicated field. */
+      issueType: a.ticket?.issueType || a.ticket?.serviceType || null,
       priority: a.ticket?.priority,
       ticket_status: a.ticket?.status,
       technician_id: a.technician?._id,
+      technician_user_id: a.technician?.user?._id,
       technician_name: a.technician?.user?.fullName,
+      technician_email: a.technician?.user?.email,
       assigned_by: a.assigned_by?.fullName,
       notes: a.notes,
       status: a.status,
@@ -180,25 +188,59 @@ const createAssignment = async (req, res, next) => {
 
     const displayId = displayTicketId(ticket.ticketId);
 
-    /* Notify the technician (send to the User account linked to this Technician) */
-    const techNotif = await Notification.create({
-      user: tech.user._id,
-      ticket: ticket._id,
-      title: `New Request Assigned`,
-      message: `You have been assigned ticket "${displayId}" (${ticket.equipmentType}). Priority: ${ticket.priority}.`,
-      type: "info",
-      notificationType: "new_request_assigned",
-    });
-    broadcastNotification(techNotif);
+    /* techAutoNotify — the ICT Admin's switch for automatic technician
+       notifications. The assignment notification is the only automatic
+       notification a technician receives, so that is what this gates.
 
-    /* Optional email to the technician (best-effort, never blocks the flow) */
-    if (techUser.email) {
-      sendEventEmail({
-        to: techUser.email,
-        subject: `New assignment — ticket ${displayId}`,
-        text: `Hi ${techUser.fullName || "there"},\n\nYou have been assigned ticket "${displayId}" (${ticket.equipmentType}).\nPriority: ${ticket.priority}. Please log in to the portal to review it.\n\nSmart ICT Maintenance Management System`,
-        html: `<p>Hi ${techUser.fullName || "there"},</p><p>You have been assigned ticket <strong>${displayId}</strong> (${ticket.equipmentType}).</p><p>Priority: <strong>${ticket.priority}</strong>.</p><p>Log in to the portal to review it.</p><p style="color:#888;">Smart ICT Maintenance Management System</p>`,
-      }).catch(() => {}); /* email is best-effort only */
+       When it is off the technician's in-app and email notification is
+       skipped; the assignment itself still happens and the technician still
+       sees the job on their dashboard and notifications page. That is the
+       intended meaning of "auto-notify off": stop the push, do not break the
+       workflow.
+
+       Read per-request so the switch takes effect immediately, and fail OPEN —
+       if Settings cannot be read we notify anyway, because silently dropping a
+       technician's only alert about new work is worse than an unwanted one. */
+    let notifyTechnician = true;
+    try {
+      const settings = await Settings.getInstance();
+      notifyTechnician = settings.techAutoNotify !== false;
+    } catch (_) {
+      /* keep the default: notify */
+    }
+
+    if (notifyTechnician) {
+      /* PRIORITY SOURCE: assignmentPriority, never ticket.priority.
+         The assignment request may itself carry a priority (createAssignment
+         accepts and validates one), and that value is what was just written to
+         the ticket above. `ticket` was loaded at line ~94 and was never
+         re-fetched, so ticket.priority is the value from BEFORE this
+         assignment — reporting it would tell the technician a different
+         priority from the one they will see when they open the ticket. */
+      const notifiedPriority = assignmentPriority;
+
+      /* Notify the technician (send to the User account linked to this Technician) */
+      const techNotif = await Notification.create({
+        user: tech.user._id,
+        ticket: ticket._id,
+        title: `New Request Assigned`,
+        message: `You have been assigned ticket "${displayId}" (${ticket.equipmentType}). Priority: ${notifiedPriority}.`,
+        type: "info",
+        notificationType: "new_request_assigned",
+      });
+      broadcastNotification(techNotif);
+
+      /* Optional email to the technician (best-effort, never blocks the flow).
+         Same authoritative value as the in-app notification — letting the two
+         disagree would be worse than either alone. */
+      if (techUser.email) {
+        sendEventEmail({
+          to: techUser.email,
+          subject: `New assignment — ticket ${displayId}`,
+          text: `Hi ${techUser.fullName || "there"},\n\nYou have been assigned ticket "${displayId}" (${ticket.equipmentType}).\nPriority: ${notifiedPriority}. Please log in to the portal to review it.\n\nSmart ICT Maintenance Management System`,
+          html: `<p>Hi ${techUser.fullName || "there"},</p><p>You have been assigned ticket <strong>${displayId}</strong> (${ticket.equipmentType}).</p><p>Priority: <strong>${notifiedPriority}</strong>.</p><p>Log in to the portal to review it.</p><p style="color:#888;">Smart ICT Maintenance Management System</p>`,
+        }).catch(() => {}); /* email is best-effort only */
+      }
     }
 
     /* Notify the requester */

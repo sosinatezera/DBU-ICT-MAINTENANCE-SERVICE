@@ -30,6 +30,7 @@ const MIME = {
   ".jpeg": "image/jpeg",
   ".gif": "image/gif",
   ".svg": "image/svg+xml",
+  ".mp3": "audio/mpeg",
   ".ico": "image/x-icon",
   ".woff": "font/woff",
   ".woff2": "font/woff2",
@@ -50,6 +51,12 @@ const server = http.createServer((req, res) => {
 
   // Strip query strings
   urlPath = urlPath.split("?")[0];
+  let invalidPath = false;
+  try {
+    urlPath = decodeURIComponent(urlPath);
+  } catch {
+    invalidPath = true;
+  }
 
   // Apply legacy path redirects (backwards compatibility)
   for (const [from, to] of Object.entries(REDIRECTS)) {
@@ -59,7 +66,9 @@ const server = http.createServer((req, res) => {
     }
   }
 
-  const filePath = path.join(ROOT, urlPath);
+  const filePath = path.resolve(ROOT, `.${urlPath}`);
+  const outsideRoot =
+    filePath !== ROOT && !filePath.startsWith(ROOT + path.sep);
   const ext = path.extname(filePath).toLowerCase();
   const mime = MIME[ext] || "application/octet-stream";
 
@@ -76,6 +85,8 @@ const server = http.createServer((req, res) => {
       </body></html>
     `);
   };
+
+  if (invalidPath || outsideRoot) return send404();
 
   const sendFile = (servePath, stat) => {
     const contentType = MIME[path.extname(servePath).toLowerCase()] || mime;

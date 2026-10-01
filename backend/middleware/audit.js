@@ -8,20 +8,20 @@
  * chain and (b) lets us record success=true/false from the final status code.
  * Writes are fire-and-forget and can never break the request flow.
  */
-const AuditLog = require('../models/AuditLog');
+const AuditLog = require("../models/AuditLog");
 
-const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 async function writeAuditLog(entry) {
   try {
     await AuditLog.create({
       user: entry.user || null,
-      action: String(entry.action || '').slice(0, 120),
+      action: String(entry.action || "").slice(0, 120),
       entity: entry.entity ? String(entry.entity).slice(0, 60) : null,
       entityId: entry.entityId ? String(entry.entityId).slice(0, 60) : null,
-      details: entry.details ? String(entry.details).slice(0, 2000) : '',
-      ip: String(entry.ip || '').slice(0, 60),
-      userAgent: String(entry.userAgent || '').slice(0, 300),
+      details: entry.details ? String(entry.details).slice(0, 2000) : "",
+      ip: String(entry.ip || "").slice(0, 60),
+      userAgent: String(entry.userAgent || "").slice(0, 300),
       success: entry.success !== false,
     });
   } catch (err) {
@@ -33,25 +33,26 @@ async function writeAuditLog(entry) {
 
 /* Middleware factory: mount on a path prefix (e.g. app.use('/api/users', ...))
    to audit every mutating request that reaches that prefix. */
-function auditRouter({ entity = 'system' } = {}) {
+function auditRouter({ entity = "system" } = {}) {
   return (req, res, next) => {
-    const method = String(req.method || '').toUpperCase();
+    const method = String(req.method || "").toUpperCase();
     if (!MUTATING_METHODS.has(method)) return next();
     const url = req.originalUrl || req.url;
-    res.on('finish', () => {
+    res.on("finish", () => {
       try {
         writeAuditLog({
           user: req.user?.id,
           action: `${method} ${url}`,
           entity,
           entityId:
+            req.auditEntityId ||
             req.params?.id ||
             req.params?.ticketId ||
             req.body?.ticketId ||
             req.body?.assetTag ||
             null,
-          ip: req.ip || req.socket?.remoteAddress || '',
-          userAgent: req.headers?.['user-agent'] || '',
+          ip: req.ip || req.socket?.remoteAddress || "",
+          userAgent: req.headers?.["user-agent"] || "",
           success: res.statusCode < 400,
         });
       } catch (_) {

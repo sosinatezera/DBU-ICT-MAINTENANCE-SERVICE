@@ -49,13 +49,10 @@ var API_BASE = (function () {
     return PRODUCTION_API_MAP[hostname];
   }
 
-  /* 3. Local development: static server on :3000, backend API on :5000.
-     A file:// page reports an EMPTY hostname, so it must be matched on the
-     protocol instead — otherwise it falls through to the production backend
-     below and every request fails as a network error (file:// sends
-     `Origin: null`, which the backend CORS policy cannot allow). */
+  /* 3. Local development uses the backend's configured default port. */
   var isFile = protocol === "file:";
-  var isLocal = isFile || !hostname || hostname === "localhost" || hostname === "127.0.0.1";
+  var isLocal =
+    isFile || !hostname || hostname === "localhost" || hostname === "127.0.0.1";
   if (isLocal) {
     if (isFile) {
       console.warn(
@@ -66,11 +63,6 @@ var API_BASE = (function () {
           "http://localhost:3000/",
       );
     }
-    /* Mirror the page's own host onto the API so a page reached via
-       127.0.0.1:3000 also calls 127.0.0.1:5000 instead of a different
-       hostname. Both are in the backend CORS allow-list, but keeping the host
-       identical removes the whole class of "works on localhost, fails on
-       127.0.0.1" mismatches (IPv6 ::1 vs IPv4 127.0.0.1 resolution). */
     return "http://" + (hostname || "localhost") + ":5000/api";
   }
 
@@ -124,14 +116,21 @@ var API_UPLOAD_BASE = apiOrigin();
    immediately on every page. `requestIdleCallback` is used when available,
    with a short timeout so the widget still appears promptly. */
 (function loadAiSupportWidget() {
-  if (window.__aiSupportLoaded) return;
+  if (window.__aiSupportLoaded || window.__aiSupportLoading) return;
   if (document.querySelector('script[src*="ai-support.js"]')) return;
   function inject() {
-    if (window.__aiSupportLoaded) return;
-    window.__aiSupportLoaded = true;
+    if (window.__aiSupportLoaded || window.__aiSupportLoading) return;
+    window.__aiSupportLoading = true;
     var script = document.createElement("script");
     script.src = "/assets/js/ai-support.js?v=26";
     script.defer = true;
+    script.onload = function () {
+      window.__aiSupportLoading = false;
+    };
+    script.onerror = function () {
+      window.__aiSupportLoading = false;
+      console.error("[api-config] Unable to load the AI support widget.");
+    };
     document.head.appendChild(script);
   }
   if (typeof window.requestIdleCallback === "function") {

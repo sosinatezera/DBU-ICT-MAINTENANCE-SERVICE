@@ -58,6 +58,21 @@ const { sendEventEmail } = require("../services/mailer");
 const { broadcastNotification } = require("../services/notificationService");
 
 const Ticket = require("../models/Ticket");
+const Category = require("../models/Category");
+const Settings = require("../models/Settings");
+const {
+  isSupportedICTCategory,
+  normalizeCategoryValue,
+  normalizeIssueTypeValue,
+  OTHER_ISSUE_TYPE,
+} = require("../utils/ictCategoryHierarchy");
+const {
+  isIssueTypeAccepted,
+  isIssueTypeAcceptedForUpdate,
+} = require("../services/issueTypeCatalogue");
+const {
+  resolveDeviceTypeCategories,
+} = require("../utils/deviceTypeCategories");
 const User = require("../models/User");
 const Technician = require("../models/Technician");
 const Assignment = require("../models/Assignment");
@@ -72,9 +87,111 @@ const {
   VALID_PRIORITIES,
   VALID_TICKET_STATUSES,
   VALID_EQUIPMENT,
-  VALID_REQUEST_CATEGORIES,
+  OTHER_DEVICE_TYPE,
+  DEVICE_TYPE_MAX_LENGTH,
 } = require("../middleware/validation");
 const { displayTicketId, ticketCodeMatchQuery } = require("../utils/ticketId");
+
+function ticketSubmissionResponse(ticket, requester) {
+  return {
+    success: true,
+    message: "Ticket submitted.",
+    data: {
+      id: ticket._id,
+      requester_id: requester._id,
+      requester_name: requester.fullName,
+      ticketId: displayTicketId(ticket.ticketId),
+      status: ticket.status,
+      created_at: ticket.createdAt,
+      createdAt: ticket.createdAt,
+    },
+  };
+}
+
+async function getAssignedTechnicians(tickets) {
+  const ticketIds = tickets.map((ticket) => ticket._id).filter(Boolean);
+  if (!ticketIds.length) return new Map();
+
+  const assignments = await Assignment.find({
+    ticket: { $in: ticketIds },
+    status: { $ne: "reassigned" },
+  })
+    .select("ticket technician status createdAt")
+    .populate({
+      path: "technician",
+      select: "user",
+      populate: { path: "user", select: "fullName email" },
+    })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const byTicket = new Map();
+  for (const assignment of assignments) {
+    const ticketId = String(assignment.ticket);
+    if (byTicket.has(ticketId)) continue;
+
+    const technician = assignment.technician;
+    const user = technician?.user;
+    byTicket.set(ticketId, {
+      assignmentId: assignment._id,
+      assignmentStatus: assignment.status,
+      technicianId: technician?._id || null,
+      technicianUserId: user?._id || null,
+      technicianName: user?.fullName || null,
+      technicianEmail: user?.email || null,
+    });
+  }
+  return byTicket;
+}
+
+/* ── Device Type handling (shared by create + admin update) ─────
+  The field remains nullable for existing records and admin updates. New
+  requester submissions require a supported Device Type and Category before
+  the ticket is written.
+
+  Values are not checked against a Mongoose enum, so the admin-managed
+  catalogue and legacy values on historical tickets keep round-tripping.
+
+   Choosing "Other ICT Device" additionally requires the free-text
+   "Specify Device Name" field. For every other choice that field is cleared,
+   so a stale value can never linger next to a real device type. */
+function resolveDeviceFields(body) {
+  const sourceDeviceType =
+    typeof body.deviceType === "string" && body.deviceType.trim()
+      ? body.deviceType.trim()
+      : typeof body.equipmentType === "string" && body.equipmentType.trim()
+        ? body.equipmentType.trim()
+        : null;
+
+  const equipmentType = sourceDeviceType;
+
+  if (equipmentType && equipmentType.length > DEVICE_TYPE_MAX_LENGTH) {
+    return {
+      error: `Device type must be no more than ${DEVICE_TYPE_MAX_LENGTH} characters.`,
+    };
+  }
+
+  /* Not the "Other" entry (including no selection at all) — no custom name. */
+  if (equipmentType !== OTHER_DEVICE_TYPE) {
+    return { equipmentType, otherDeviceName: null, error: null };
+  }
+
+  const otherDeviceName =
+    typeof body.otherDeviceName === "string"
+      ? sanitizeString(body.otherDeviceName)
+      : "";
+
+  if (!otherDeviceName) {
+    return { error: "Please enter the device name." };
+  }
+  const nameLenErr = validateLength(otherDeviceName, "Device name", {
+    min: 2,
+    max: DEVICE_TYPE_MAX_LENGTH,
+  });
+  if (nameLenErr) return { error: nameLenErr };
+
+  return { equipmentType, otherDeviceName, error: null };
+}
 
 /* ── GET /api/tickets — all tickets (admin) ───────────────── */
 const getAllTickets = async (req, res, next) => {
@@ -84,16 +201,59 @@ const getAllTickets = async (req, res, next) => {
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
 
-    const tickets = await Ticket.find(filter)
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit =
+      Number.isInteger(requestedLimit) && requestedLimit > 0
+        ? Math.min(requestedLimit, 100)
+        : null;
+    let ticketQuery = Ticket.find(filter)
       .populate("requester", "fullName email department")
       .populate("assignedTechnician", "fullName email")
       .populate("assetId", "asset_tag asset_name")
-      .sort({ createdAt: -1 })
-      .lean();
+      .sort({ createdAt: -1 });
+    if (limit) ticketQuery = ticketQuery.limit(limit);
+    let tickets;
+    if (limit && req.query.includeFeedback === "true") {
+      const feedbackQuery = Ticket.find({
+        $or: [
+          { "requesterFeedback.overallRating": { $ne: null } },
+          { "technicianFeedback.technicianConfirmed": true },
+          { "adminFeedback.adminConfirmed": true },
+        ],
+      })
+        .populate("requester", "fullName email department")
+        .populate("assignedTechnician", "fullName email")
+        .populate("assetId", "asset_tag asset_name")
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .lean();
+      const [recentTickets, feedbackTickets] = await Promise.all([
+        ticketQuery.limit(limit).lean(),
+        feedbackQuery,
+      ]);
+      const uniqueTickets = new Map();
+      [...recentTickets, ...feedbackTickets].forEach((ticket) =>
+        uniqueTickets.set(String(ticket._id), ticket),
+      );
+      tickets = [...uniqueTickets.values()].sort(
+        (left, right) => right.createdAt - left.createdAt,
+      );
+    } else {
+      if (limit) ticketQuery = ticketQuery.limit(limit);
+      tickets = await ticketQuery.lean();
+    }
+    const assignedTechnicians = await getAssignedTechnicians(tickets);
 
     res.json({
       success: true,
-      data: tickets.map((t) => formatTicket(t, req.user.role, req.user.id)),
+      data: tickets.map((t) =>
+        formatTicket(
+          t,
+          req.user.role,
+          req.user.id,
+          assignedTechnicians.get(String(t._id)),
+        ),
+      ),
     });
   } catch (err) {
     next(err);
@@ -104,14 +264,23 @@ const getAllTickets = async (req, res, next) => {
 const getMyTickets = async (req, res, next) => {
   try {
     const tickets = await Ticket.find({ requester: req.user.id })
+      .populate("requester", "fullName email department")
       .populate("assignedTechnician", "fullName email")
       .populate("assetId", "asset_tag asset_name")
       .sort({ createdAt: -1 })
       .lean();
+    const assignedTechnicians = await getAssignedTechnicians(tickets);
 
     res.json({
       success: true,
-      data: tickets.map((t) => formatTicket(t, req.user.role, req.user.id)),
+      data: tickets.map((t) =>
+        formatTicket(
+          t,
+          req.user.role,
+          req.user.id,
+          assignedTechnicians.get(String(t._id)),
+        ),
+      ),
     });
   } catch (err) {
     next(err);
@@ -140,17 +309,31 @@ const trackTicket = async (req, res, next) => {
         .json({ success: false, message: "Ticket not found." });
     }
 
+    const assignedTechnicians = await getAssignedTechnicians([ticket]);
+    const assignedTechnician = assignedTechnicians.get(String(ticket._id));
+
     /* Return limited public info for tracking */
     res.json({
       success: true,
       data: {
         ticketId: displayTicketId(ticket.ticketId),
+        requester_name: ticket.requester?.fullName || null,
         status: ticket.status,
-        equipmentType: ticket.equipmentType,
+        equipmentType: ticket.equipmentType || null,
+        otherDeviceName: ticket.otherDeviceName || null,
+        deviceLabel: formatDeviceLabel(ticket),
         device: ticket.device || null,
         category: ticket.category || null,
         problemDescription: ticket.problemDescription,
-        assignedTechnician: ticket.assignedTechnician?.fullName || null,
+        assignedTechnician: assignedTechnician?.technicianName || null,
+        technician: assignedTechnician
+          ? {
+              id: assignedTechnician.technicianId,
+              userId: assignedTechnician.technicianUserId,
+              name: assignedTechnician.technicianName,
+              email: assignedTechnician.technicianEmail,
+            }
+          : null,
         identifiedProblem: ticket.identifiedProblem,
         resolutionResponse: ticket.resolutionResponse,
         isFixed: ticket.isFixed,
@@ -181,6 +364,9 @@ const getTicketById = async (req, res, next) => {
         .status(404)
         .json({ success: false, message: "Ticket not found." });
     }
+
+    const assignedTechnicians = await getAssignedTechnicians([ticket]);
+    const assignedTechnician = assignedTechnicians.get(String(ticket._id));
 
     /* Role-based access:
        - ICT Admin sees every ticket.
@@ -220,7 +406,12 @@ const getTicketById = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: formatTicket(ticket, req.user.role, req.user.id),
+      data: formatTicket(
+        ticket,
+        req.user.role,
+        req.user.id,
+        assignedTechnician,
+      ),
     });
   } catch (err) {
     next(err);
@@ -230,10 +421,45 @@ const getTicketById = async (req, res, next) => {
 /* ── POST /api/tickets — create new ticket ────────────────── */
 const createTicket = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-    const user = await User.findById(userId).select(
-      "fullName phone department email",
+    const requesterId = req.user.id;
+    const requester = await User.findById(requesterId).select(
+      "role fullName phone department email",
     );
+    if (!requester) {
+      return res.status(401).json({
+        success: false,
+        message: "The authenticated requester account no longer exists.",
+      });
+    }
+    if (requester.role !== "Requester") {
+      return res.status(403).json({
+        success: false,
+        message: "Only requesters can submit maintenance tickets.",
+      });
+    }
+
+    const submissionKey = String(req.body.submissionKey || "");
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        submissionKey,
+      )
+    ) {
+      return res.status(422).json({
+        success: false,
+        message: "A valid submission key is required.",
+      });
+    }
+
+    const existingTicket = await Ticket.findOne({
+      requester: requester._id,
+      submissionKey,
+    });
+    if (existingTicket) {
+      req.auditEntityId = existingTicket._id;
+      return res
+        .status(200)
+        .json(ticketSubmissionResponse(existingTicket, requester));
+    }
 
     /* Validate required */
     const descErr = validateRequired(
@@ -243,17 +469,42 @@ const createTicket = async (req, res, next) => {
     if (descErr)
       return res.status(422).json({ success: false, message: descErr });
 
-    /* Validate optional enums */
-    const eqErr = validateEnum(
-      req.body.equipmentType,
-      VALID_EQUIPMENT,
-      "equipment type",
-    );
-    if (eqErr) return res.status(400).json({ success: false, message: eqErr });
+    /* Device Type is required for new requests. Accept the canonical field name
+       while still honoring the legacy equipmentType alias. */
+    const {
+      equipmentType,
+      otherDeviceName,
+      error: deviceErr,
+    } = resolveDeviceFields(req.body);
+    if (deviceErr)
+      return res.status(400).json({ success: false, message: deviceErr });
+    if (!equipmentType) {
+      return res
+        .status(422)
+        .json({ success: false, message: "Please select a device type." });
+    }
 
-    /* Priority is assigned by admin only; requester cannot set it.
-       Default to 'medium' for all new requester tickets. */
-    const priority = "medium";
+    const allowedCategories = await resolveDeviceTypeCategories(equipmentType);
+    if (!allowedCategories) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Unsupported device type." });
+    }
+
+    /* Priority is assigned by admin only; the requester cannot set it. New
+       tickets therefore start at the ICT Admin's configured default.
+       Read per-request rather than cached in a module constant so switching
+       the default takes effect immediately. A Settings read that fails falls
+       back to "medium" rather than rejecting the submission — losing a
+       priority preference is recoverable, refusing a maintenance request is
+       not. */
+    let priority = "medium";
+    try {
+      const settings = await Settings.getInstance();
+      priority = settings.defaultPriority || "medium";
+    } catch (_) {
+      /* keep the "medium" fallback */
+    }
 
     /* Validate location — required */
     const locErr = validateRequired(req.body.location, "Location");
@@ -273,28 +524,104 @@ const createTicket = async (req, res, next) => {
     if (catErr)
       return res.status(422).json({ success: false, message: catErr });
 
-    const catEnumErr = validateEnum(
-      req.body.category,
-      VALID_REQUEST_CATEGORIES,
-      "request category",
+    const category = sanitizeString(String(req.body.category ?? "").trim());
+
+    /* DATABASE-FIRST VALIDATION.
+       The Category collection is the source of truth the requester picked from,
+       so an unknown, deactivated or tampered value is rejected here before it
+       can reach MongoDB. The stored value is "<Group> > <Label>", so the label
+       is the part to look up.
+
+       Two fallbacks keep this from ever locking requesters out mid-migration:
+         • isSupportedICTCategory  — accepts the built-in taxonomy, so a request
+           still succeeds on a database that has not been seeded yet.
+         • allowedCategories       — device-specific categories proposed for the
+           chosen device type.
+       An empty value is already rejected above by validateRequired. */
+    const categoryLabel = category.includes(">")
+      ? category.slice(category.indexOf(">") + 1).trim()
+      : category;
+    const categoryIsActive = categoryLabel
+      ? await Category.exists({ name: categoryLabel, active: true })
+      : null;
+
+    if (
+      !categoryIsActive &&
+      !isSupportedICTCategory(category) &&
+      !allowedCategories.includes(category)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Unsupported ICT category. Please choose a category from the list.",
+      });
+    }
+
+    const selectedIssueType = sanitizeString(
+      String(req.body.issueType ?? req.body.serviceType ?? "").trim(),
     );
-    if (catEnumErr)
-      return res.status(400).json({ success: false, message: catEnumErr });
+    const customIssueType = sanitizeString(
+      String(req.body.otherIssue ?? "").trim(),
+    );
+    const isCustomIssueType =
+      normalizeIssueTypeValue(selectedIssueType) ===
+      normalizeIssueTypeValue(OTHER_ISSUE_TYPE);
+    const issueTypeValue = isCustomIssueType
+      ? customIssueType
+      : selectedIssueType;
+    if (!issueTypeValue) {
+      return res.status(422).json({
+        success: false,
+        message: "Please select an issue type or service.",
+      });
+    }
+
+    const legacyServiceTypeValue = sanitizeString(
+      String(req.body.serviceType ?? req.body.networkServiceType ?? "").trim(),
+    );
+
+    /* Category and Issue Type are two separate fields and are validated as
+       such. Both checks read the live catalogue, so a value the dropdown
+       offered is never rejected here and one it did not offer cannot be
+       smuggled in — Category = Network with Issue Type = "Free text" only
+       passes through the documented "Other ICT Issue" escape hatch. */
+    const normalizedCategory = normalizeCategoryValue(category);
+    if (
+      !normalizedCategory ||
+      !(await isIssueTypeAccepted(issueTypeValue, category, {
+        allowCustom: isCustomIssueType,
+      }))
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "The selected issue type is not valid for the selected category.",
+      });
+    }
 
     /* Validate asset if provided */
     let assetId = null;
-    if (req.body.asset_id && req.body.asset_id !== "none") {
-      const assetIdErr = validateObjectId(req.body.asset_id, "Asset");
+    const requestedAssetId =
+      typeof req.body.asset_id === "string" ? req.body.asset_id.trim() : "";
+    if (!requestedAssetId) {
+      return res.status(422).json({
+        success: false,
+        message: "Please select an ICT Asset Tag or No Asset / Not Applicable.",
+      });
+    }
+    if (requestedAssetId !== "none") {
+      const assetIdErr = validateObjectId(requestedAssetId, "Asset");
       if (assetIdErr)
         return res
           .status(400)
           .json({ success: false, message: "Invalid asset selection." });
 
-      const asset = await ICTAsset.findById(req.body.asset_id);
-      if (!asset) {
+      const asset = await ICTAsset.findById(requestedAssetId);
+      if (!asset || asset.status !== "active") {
         return res.status(400).json({
           success: false,
-          message: "The selected asset does not exist in the system.",
+          message:
+            "The selected ICT asset is unavailable. Please choose an active asset.",
         });
       }
       assetId = asset._id;
@@ -321,18 +648,22 @@ const createTicket = async (req, res, next) => {
     }
 
     const payload = {
-      requester: userId,
-      department: req.body.department || user?.department || null,
-      phone: req.body.phone || user?.phone || null,
+      requester: requester._id,
+      submissionKey,
+      department: requester.department || null,
+      phone: req.body.phone || requester.phone || null,
       title: req.body.title || null,
-      equipmentType: req.body.equipmentType || "Other",
+      equipmentType: equipmentType,
+      deviceType: equipmentType,
+      otherDeviceName: otherDeviceName,
       device: req.body.device || null,
-      category: req.body.category || null,
+      category,
       location: location,
       assetId: assetId,
       serialNumber: req.body.serialNumber || null,
       officeBlock: req.body.officeBlock || null,
-      serviceType: req.body.serviceType || null,
+      serviceType: legacyServiceTypeValue || null,
+      issueType: issueTypeValue,
       networkDevice: req.body.networkDevice || null,
       ipAddress: req.body.ipAddress || null,
       macAddress: req.body.macAddress || null,
@@ -343,13 +674,31 @@ const createTicket = async (req, res, next) => {
       attachment: req.file ? req.file.filename : null,
     };
 
-    const ticket = await Ticket.create(payload);
+    let ticket;
+    try {
+      ticket = await Ticket.create(payload);
+    } catch (err) {
+      if (err.code === 11000 && err.keyPattern?.submissionKey) {
+        const duplicate = await Ticket.findOne({
+          requester: requester._id,
+          submissionKey,
+        });
+        if (duplicate) {
+          req.auditEntityId = duplicate._id;
+          return res
+            .status(200)
+            .json(ticketSubmissionResponse(duplicate, requester));
+        }
+      }
+      throw err;
+    }
+    req.auditEntityId = ticket._id;
 
     const displayId = displayTicketId(ticket.ticketId);
 
     /* Notify the requester */
     const requesterNotif = await Notification.create({
-      user: userId,
+      user: requester._id,
       ticket: ticket._id,
       title: `Request Submitted`,
       message: `Your service request #${displayId} has been submitted and is awaiting review.`,
@@ -359,12 +708,12 @@ const createTicket = async (req, res, next) => {
     broadcastNotification(requesterNotif);
 
     /* Optional email confirmation to the requester (never blocks the flow) */
-    if (user?.email) {
+    if (requester.email) {
       sendEventEmail({
-        to: user.email,
+        to: requester.email,
         subject: `Ticket ${displayId} received — Smart ICT Maintenance Management System`,
-        text: `Hi ${user.fullName || ""},\n\nYour service request #${displayId} has been submitted and is awaiting review.\n\nTrack it on the portal using ticket ID ${displayId}.\n\nSmart ICT Maintenance Management System`,
-        html: `<p>Hi ${user.fullName || "there"},</p><p>Your service request <strong>#${displayId}</strong> has been submitted and is awaiting review.</p><p>You can track its progress on the portal with ticket ID <strong>${displayId}</strong>.</p><p style="color:#888;">Smart ICT Maintenance Management System</p>`,
+        text: `Hi ${requester.fullName},\n\nYour service request #${displayId} has been submitted and is awaiting review.\n\nTrack it on the portal using ticket ID ${displayId}.\n\nSmart ICT Maintenance Management System`,
+        html: `<p>Hi ${requester.fullName},</p><p>Your service request <strong>#${displayId}</strong> has been submitted and is awaiting review.</p><p>You can track its progress on the portal with ticket ID <strong>${displayId}</strong>.</p><p style="color:#888;">Smart ICT Maintenance Management System</p>`,
       }).catch(() => {}); /* email is best-effort only */
     }
 
@@ -385,7 +734,7 @@ const createTicket = async (req, res, next) => {
             : isHighPriority
               ? "High Priority Request"
               : "New Service Request",
-          message: `Ticket "${displayId}" submitted by ${user?.fullName}. Equipment: ${payload.equipmentType}.`,
+          message: `Ticket "${displayId}" submitted by ${requester.fullName}. Equipment: ${payload.equipmentType}.`,
           type: isCritical ? "danger" : isHighPriority ? "warning" : "info",
           notificationType: isCritical
             ? "critical_request"
@@ -399,8 +748,8 @@ const createTicket = async (req, res, next) => {
           sendEventEmail({
             to: admin.email,
             subject: `New ${payload.priority.toUpperCase()} ticket ${displayId}`,
-            text: `A new ${payload.priority} priority ticket (${displayId}) was submitted by ${user?.fullName || "a requester"}.\nEquipment: ${payload.equipmentType}.\n\nLog in to review it.\n\nSmart ICT Maintenance Management System`,
-            html: `<p>A new <strong>${payload.priority.toUpperCase()}</strong> priority ticket (<strong>${displayId}</strong>) was submitted by ${user?.fullName || "a requester"}.</p><p>Equipment: ${payload.equipmentType}.</p><p>Log in to the admin portal to review it.</p><p style="color:#888;">Smart ICT Maintenance Management System</p>`,
+            text: `A new ${payload.priority} priority ticket (${displayId}) was submitted by ${requester.fullName}.\nEquipment: ${payload.equipmentType}.\n\nLog in to review it.\n\nSmart ICT Maintenance Management System`,
+            html: `<p>A new <strong>${payload.priority.toUpperCase()}</strong> priority ticket (<strong>${displayId}</strong>) was submitted by ${requester.fullName}.</p><p>Equipment: ${payload.equipmentType}.</p><p>Log in to the admin portal to review it.</p><p style="color:#888;">Smart ICT Maintenance Management System</p>`,
           }).catch(() => {}); /* email is best-effort only */
         }
       }),
@@ -410,21 +759,13 @@ const createTicket = async (req, res, next) => {
        assigned to it ("New Assignment"); an unassigned technician must not get
        a clickable "New Ticket" notification for a ticket they cannot open. */
 
-    res.status(201).json({
-      success: true,
-      message: "Ticket submitted.",
-      data: {
-        id: ticket._id /* real MongoDB ticket ID  */,
-        ticketId: displayTicketId(
-          ticket.ticketId,
-        ) /* human-readable tracking code (MAU-xxxx) */,
-        status: ticket.status /* initial status set by the model */,
-        created_at: ticket.createdAt /* server-generated request date/time */,
-        createdAt: ticket.createdAt,
-      },
-    });
+    res.status(201).json(ticketSubmissionResponse(ticket, requester));
   } catch (err) {
-    next(err);
+    console.error("Maintenance request creation failed.");
+    res.status(500).json({
+      success: false,
+      message: "Unable to create maintenance request. Please try again.",
+    });
   }
 };
 
@@ -455,13 +796,18 @@ const updateTicket = async (req, res, next) => {
     }
 
     if (equipmentType !== undefined) {
-      const eqErr = validateEnum(
+      /* Same rules as creation: optional, free text, and "Other ICT Device"
+         requires a name. Reusing resolveDeviceFields keeps an admin edit from
+         being able to produce a state the request form could never create. */
+      const resolved = resolveDeviceFields({
         equipmentType,
-        VALID_EQUIPMENT,
-        "equipment type",
-      );
-      if (eqErr)
-        return res.status(400).json({ success: false, message: eqErr });
+        otherDeviceName: req.body.otherDeviceName,
+      });
+      if (resolved.error) {
+        return res
+          .status(400)
+          .json({ success: false, message: resolved.error });
+      }
     }
 
     if (status !== undefined) {
@@ -470,9 +816,13 @@ const updateTicket = async (req, res, next) => {
         return res.status(400).json({ success: false, message: statErr });
     }
 
-    /* Get the current ticket to check for priority change */
+    /* Get the current ticket to check for priority change, and to read the
+       Issue Type it already stores. That stored value is what lets a ticket
+       whose Issue Type has since been deactivated still be edited — see
+       isIssueTypeAcceptedForUpdate. Without it in the projection an admin
+       could not save an unrelated field change on such a ticket. */
     const currentTicket = await Ticket.findById(req.params.id).select(
-      "priority requester assignedTechnician ticketId",
+      "priority requester assignedTechnician ticketId category issueType",
     );
     const priorityChanged =
       priorityToUpdate !== undefined &&
@@ -491,10 +841,12 @@ const updateTicket = async (req, res, next) => {
       isFixed,
       reasonIfNotFixed,
       serviceType,
+      issueType,
       networkDevice,
       ipAddress,
       macAddress,
       affectedUsers,
+      otherDeviceName,
     } = req.body;
 
     const updateFields = {
@@ -511,11 +863,70 @@ const updateTicket = async (req, res, next) => {
       isFixed,
       reasonIfNotFixed,
       serviceType,
+      issueType,
       networkDevice,
       ipAddress,
       macAddress,
       affectedUsers,
     };
+
+    /* An admin may correct the Issue Type. Validate it against the ticket's
+       own category so the stored pair can never drift apart, and reject the
+       whole update rather than persisting an invalid value. */
+    if (issueType !== undefined) {
+      const issueTypeValue = sanitizeString(String(issueType || "").trim());
+
+      if (!issueTypeValue) {
+        return res.status(400).json({
+          success: false,
+          message: "Please select an issue type or service.",
+        });
+      }
+
+      if (!currentTicket) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Ticket not found." });
+      }
+
+      /* Lenient pairing for updates: tickets created before this taxonomy
+         exist carry a free-text category ("Laptop", "Email Problem") and no
+         Issue Type at all. Requiring the strict Category→Issue Type pairing
+         would leave those records impossible to edit, so an update accepts
+         any known Issue Type when the stored category is a legacy one, and
+         accepts the ticket's own already-stored Issue Type even if that Issue
+         Type has since been deactivated. New submissions always go through the
+         strict create check, which rejects anything not currently active. */
+      const ticketCategory = currentTicket.category || "";
+      if (
+        !(await isIssueTypeAcceptedForUpdate(
+          issueTypeValue,
+          ticketCategory,
+          currentTicket.issueType,
+        ))
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "The selected issue type is not valid for this request's category.",
+        });
+      }
+
+      updateFields.issueType = issueTypeValue;
+    } else {
+      /* Not supplied — never touch the stored value. */
+      delete updateFields.issueType;
+    }
+
+    /* Only write the "Specify Device Name" field when the admin actually sent
+       equipmentType, so an unrelated field edit can't silently clear it.
+       resolveDeviceFields already decides the correct value (including null for
+       any non-"Other" device type). */
+    if (equipmentType !== undefined) {
+      const resolved = resolveDeviceFields({ equipmentType, otherDeviceName });
+      updateFields.equipmentType = resolved.equipmentType;
+      updateFields.otherDeviceName = resolved.otherDeviceName;
+    }
 
     if (priorityToUpdate !== undefined) {
       updateFields.priority = priorityToUpdate;
@@ -827,10 +1238,16 @@ const updateStatus = async (req, res, next) => {
       broadcastNotification(techNotif);
     }
 
+    const assignedTechnicians = await getAssignedTechnicians([updated]);
     res.json({
       success: true,
       message: `Status updated to "${statusDisplay[status] || status}".`,
-      data: formatTicket(updated, req.user.role, req.user.id),
+      data: formatTicket(
+        updated,
+        req.user.role,
+        req.user.id,
+        assignedTechnicians.get(String(updated._id)),
+      ),
     });
   } catch (err) {
     next(err);
@@ -895,14 +1312,13 @@ function validateFeedbackPayload(payload, { isEdit = false } = {}) {
       return `${f === "diagnosis" ? "Diagnosis" : f === "workPerformed" ? "Work performed" : "Resolution summary"} is required.`;
     }
   }
-  if (payload.status) {
-    const statusErr = validateEnum(
-      payload.status,
-      VALID_TECH_FEEDBACK_STATUS,
-      "report status",
-    );
-    if (statusErr) return statusErr;
-  }
+  if (!payload.status) return "Current result/status is required.";
+  const statusErr = validateEnum(
+    payload.status,
+    VALID_TECH_FEEDBACK_STATUS,
+    "report status",
+  );
+  if (statusErr) return statusErr;
   if (payload.status === "Not Fixed") {
     if (!payload.reasonNotFixed)
       return "Please provide a reason why the issue is not fixed.";
@@ -1013,6 +1429,16 @@ const submitTechnicianFeedback = async (req, res, next) => {
       ticket.technicianFeedback &&
       ticket.technicianFeedback.technicianConfirmed
     ) {
+      if (
+        String(ticket.technicianFeedback.technician?.technicianId) ===
+        String(req.user.id)
+      ) {
+        return res.status(200).json({
+          success: true,
+          message: "Maintenance report was already submitted.",
+          data: formatFeedbackReport(ticket.technicianFeedback),
+        });
+      }
       return res.status(409).json({
         success: false,
         message:
@@ -1040,54 +1466,68 @@ const submitTechnicianFeedback = async (req, res, next) => {
       in_progress: "in_progress",
     };
     if (ASSIGN_FB_MAP[ticket.status]) {
-      await Assignment.updateMany(
-        {
-          ticket: ticket._id,
-          status: { $in: ["assigned", "accepted", "in_progress"] },
-        },
-        { $set: { status: ASSIGN_FB_MAP[ticket.status] } },
-      );
+      try {
+        await Assignment.updateMany(
+          {
+            ticket: ticket._id,
+            status: { $in: ["assigned", "accepted", "in_progress"] },
+          },
+          { $set: { status: ASSIGN_FB_MAP[ticket.status] } },
+        );
+      } catch (assignmentError) {
+        console.error(
+          "Technician report saved, but assignment sync failed:",
+          assignmentError,
+        );
+      }
     }
 
     /* Notify requester + admins of the outcome */
-    const ticketCode = displayTicketId(ticket.ticketId);
-    const notifyTitle =
-      report.status === "Fixed"
-        ? `Request Resolved`
-        : `Request Updated: ${report.status}`;
-    const notifyMsg =
-      report.status === "Fixed"
-        ? `The technician has completed your request #${ticketCode}. Please rate the service.`
-        : `The technician has updated the work performed on request #${ticketCode} (${report.status}).`;
-    if (ticket.requester) {
-      const requesterNotif = await Notification.create({
-        user: ticket.requester,
-        ticket: ticket._id,
-        title: notifyTitle,
-        message: notifyMsg,
-        type: report.status === "Fixed" ? "success" : "info",
-        notificationType:
-          report.status === "Fixed" ? "request_resolved" : "request_updated",
-      });
-      broadcastNotification(requesterNotif);
-    }
-    if (report.status === "Fixed") {
-      const admins = await User.find({
-        role: "ICT Admin",
-        status: "active",
-      }).select("_id");
-      await Promise.all(
-        admins.map(async (a) => {
-          const adminNotif = await Notification.create({
-            user: a._id,
-            ticket: ticket._id,
-            title: `Request Resolved: ${ticketCode}`,
-            message: `Ticket "${ticketCode}" resolved by ${user.name || "technician"}.`,
-            type: "success",
-            notificationType: "request_completed_admin",
-          });
-          broadcastNotification(adminNotif);
-        }),
+    try {
+      const ticketCode = displayTicketId(ticket.ticketId);
+      const notifyTitle =
+        report.status === "Fixed"
+          ? `Request Resolved`
+          : `Request Updated: ${report.status}`;
+      const notifyMsg =
+        report.status === "Fixed"
+          ? `The technician has completed your request #${ticketCode}. Please rate the service.`
+          : `The technician has updated the work performed on request #${ticketCode} (${report.status}).`;
+      if (ticket.requester) {
+        const requesterNotif = await Notification.create({
+          user: ticket.requester,
+          ticket: ticket._id,
+          title: notifyTitle,
+          message: notifyMsg,
+          type: report.status === "Fixed" ? "success" : "info",
+          notificationType:
+            report.status === "Fixed" ? "request_resolved" : "request_updated",
+        });
+        broadcastNotification(requesterNotif);
+      }
+      if (report.status === "Fixed") {
+        const admins = await User.find({
+          role: "ICT Admin",
+          status: "active",
+        }).select("_id");
+        await Promise.all(
+          admins.map(async (a) => {
+            const adminNotif = await Notification.create({
+              user: a._id,
+              ticket: ticket._id,
+              title: `Request Resolved: ${ticketCode}`,
+              message: `Ticket "${ticketCode}" resolved by ${user.name || "technician"}.`,
+              type: "success",
+              notificationType: "request_completed_admin",
+            });
+            broadcastNotification(adminNotif);
+          }),
+        );
+      }
+    } catch (notificationError) {
+      console.error(
+        "Technician report saved, but notification delivery failed:",
+        notificationError,
       );
     }
 
@@ -1166,13 +1606,20 @@ const editTechnicianFeedback = async (req, res, next) => {
       in_progress: "in_progress",
     };
     if (ASSIGN_FB_MAP_EDIT[ticket.status]) {
-      await Assignment.updateMany(
-        {
-          ticket: ticket._id,
-          status: { $in: ["assigned", "accepted", "in_progress"] },
-        },
-        { $set: { status: ASSIGN_FB_MAP_EDIT[ticket.status] } },
-      );
+      try {
+        await Assignment.updateMany(
+          {
+            ticket: ticket._id,
+            status: { $in: ["assigned", "accepted", "in_progress"] },
+          },
+          { $set: { status: ASSIGN_FB_MAP_EDIT[ticket.status] } },
+        );
+      } catch (assignmentError) {
+        console.error(
+          "Technician report updated, but assignment sync failed:",
+          assignmentError,
+        );
+      }
     }
 
     res.json({
@@ -1712,7 +2159,30 @@ function formatFeedbackPublic(report) {
   };
 }
 
-function formatTicket(t, viewerRole = "ICT Admin", viewerId = null) {
+/* ── Helper: one display string for a ticket's device ─────────
+   Returns null when no device was recorded, so every view can render a clean
+   "not specified" instead of the string "null"/"undefined".
+
+   Handles three shapes:
+     • new catalogue pick                     → "Router"
+     • "Other ICT Device" + specified name    → "Other ICT Device — Attendance reader"
+     • legacy enum "Other" + free-text device → "Other — Attendance reader"
+   The legacy branch is what keeps pre-migration tickets displaying their real
+   device after the enum was removed. */
+function formatDeviceLabel(t) {
+  const type = t.equipmentType || null;
+  const detail =
+    t.otherDeviceName || (type === "Other" ? t.device || null : null) || null;
+  if (type && detail) return `${type} — ${detail}`;
+  return type || detail || null;
+}
+
+function formatTicket(
+  t,
+  viewerRole = "ICT Admin",
+  viewerId = null,
+  assignedTechnician = null,
+) {
   const isAdmin = viewerRole === "ICT Admin";
   const isTech = viewerRole === "Technician";
 
@@ -1763,12 +2233,19 @@ function formatTicket(t, viewerRole = "ICT Admin", viewerId = null) {
   return {
     id: t._id,
     ticketId: displayTicketId(t.ticketId),
+    requester_id: t.requester?._id || t.requester || null,
     requester_name: t.requester?.fullName || null,
     requester_email: t.requester?.email || null,
     department: t.department,
     phone: t.phone,
     title: t.title,
-    equipmentType: t.equipmentType,
+    /* Device Type is optional, so the raw value is passed through untouched
+       (may be null) and deviceLabel is the single string every view should
+       render — it already folds in the "Other ICT Device" name and the legacy
+       "Other" + device pairing. */
+    equipmentType: t.equipmentType || null,
+    otherDeviceName: t.otherDeviceName || null,
+    deviceLabel: formatDeviceLabel(t),
     device: t.device || null,
     category: t.category,
     location: t.location || "Not provided",
@@ -1778,6 +2255,13 @@ function formatTicket(t, viewerRole = "ICT Admin", viewerId = null) {
     serialNumber: t.serialNumber,
     officeBlock: t.officeBlock,
     problemDescription: t.problemDescription,
+    /* Issue Type / Service Type — the "what problem or service is required?"
+       answer, chosen by the requester as its OWN field, independent of
+       category, deviceType and assetId. This is the canonical value; every
+       requester / admin / technician / report view reads it from here.
+       `serviceType` is still returned because the legacy network reports
+       aggregate on it, and legacy records predate this field. */
+    issueType: t.issueType || t.serviceType || null,
     serviceType: t.serviceType,
     networkDevice: t.networkDevice,
     ipAddress: t.ipAddress,
@@ -1785,7 +2269,13 @@ function formatTicket(t, viewerRole = "ICT Admin", viewerId = null) {
     affectedUsers: t.affectedUsers,
     priority: t.priority,
     status: t.status,
-    assignedTechnician: t.assignedTechnician?.fullName || null,
+    assignedTechnician: assignedTechnician?.technicianName || null,
+    technician_id: assignedTechnician?.technicianId || null,
+    technician_user_id: assignedTechnician?.technicianUserId || null,
+    technician_name: assignedTechnician?.technicianName || null,
+    technician_email: assignedTechnician?.technicianEmail || null,
+    assignment_id: assignedTechnician?.assignmentId || null,
+    assignment_status: assignedTechnician?.assignmentStatus || null,
     identifiedProblem: t.identifiedProblem,
     resolutionResponse: t.resolutionResponse,
     isFixed: t.isFixed,
@@ -1793,7 +2283,12 @@ function formatTicket(t, viewerRole = "ICT Admin", viewerId = null) {
     feedbackRating: canSeeRequesterFeedback ? t.feedbackRating : null,
     feedbackComments: canSeeRequesterFeedback ? t.feedbackComments : null,
     attachment: t.attachment,
-    requester_feedback: rf ? formatRequesterFeedback(rf) : null,
+    requester_feedback: rf
+      ? {
+          ...formatRequesterFeedback(rf),
+          requester_name: t.requester?.fullName || null,
+        }
+      : null,
     has_requester_feedback: !!rf,
     technician_feedback: techFeedback,
     has_technician_feedback: !!tf,
@@ -1874,6 +2369,8 @@ function validateRequesterFeedbackPayload(payload) {
   }
   if (validateRequired(payload.serviceQuality, "Service quality"))
     return "Service quality is required.";
+  if (validateRequired(payload.comment, "Comment"))
+    return "Comment is required.";
   if (
     validateRequired(
       payload.technicianProfessionalism,
@@ -1978,10 +2475,16 @@ const submitRequesterFeedback = async (req, res, next) => {
     if (validationErr)
       return res.status(422).json({ success: false, message: validationErr });
 
-    const user = await User.findById(req.user.id).select("fullName");
+    const requester = await User.findById(ticket.requester).select("fullName");
+    if (!requester) {
+      return res.status(409).json({
+        success: false,
+        message: "The ticket requester account no longer exists.",
+      });
+    }
     ticket.requesterFeedback = {
-      requesterId: req.user.id,
-      requesterName: user?.fullName || req.user.name || "Requester",
+      requesterId: requester._id,
+      requesterName: requester.fullName,
       overallRating: Number(payload.overallRating),
       serviceQuality: payload.serviceQuality,
       technicianProfessionalism: payload.technicianProfessionalism,
@@ -2006,13 +2509,14 @@ const submitRequesterFeedback = async (req, res, next) => {
       const Feedback = require("../models/Feedback");
       const existing = await Feedback.findOne({ request: ticket._id });
       if (existing) {
+        existing.user = requester._id;
         existing.rating = Number(payload.overallRating);
         existing.comment = payload.comment || null;
         await existing.save();
       } else {
         await Feedback.create({
           request: ticket._id,
-          user: req.user.id,
+          user: requester._id,
           rating: Number(payload.overallRating),
           comment: payload.comment || null,
         });
@@ -2037,9 +2541,9 @@ const getRequesterFeedback = async (req, res, next) => {
     const idErr = validateObjectId(req.params.id, "Ticket");
     if (idErr) return res.status(400).json({ success: false, message: idErr });
 
-    const ticket = await Ticket.findById(req.params.id).select(
-      "requesterFeedback requester",
-    );
+    const ticket = await Ticket.findById(req.params.id)
+      .select("requesterFeedback requester")
+      .populate("requester", "fullName");
     if (!ticket)
       return res
         .status(404)
@@ -2064,7 +2568,13 @@ const getRequesterFeedback = async (req, res, next) => {
       }
     }
 
-    res.json({ success: true, data: formatRequesterFeedback(report) });
+    res.json({
+      success: true,
+      data: {
+        ...formatRequesterFeedback(report),
+        requester_name: ticket.requester?.fullName || null,
+      },
+    });
   } catch (err) {
     next(err);
   }

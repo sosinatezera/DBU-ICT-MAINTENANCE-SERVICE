@@ -56,21 +56,38 @@ const getMyNotifications = async (req, res, next) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit))
-        .populate("ticket", "ticketId")
+        .populate({
+          path: "ticket",
+          select: "ticketId requester equipmentType",
+          populate: { path: "requester", select: "fullName" },
+        })
         .lean(),
     ]);
 
-    const data = notifications.map((n) => ({
-      id: n._id,
-      ticket_id: n.ticket?._id || null,
-      ticketId: displayTicketId(n.ticket?.ticketId),
-      title: displayTicketText(n.title),
-      message: displayTicketText(n.message),
-      type: n.type,
-      notificationType: n.notificationType,
-      is_read: n.is_read,
-      created_at: n.createdAt,
-    }));
+    const data = notifications.map((n) => {
+      const ticketId = displayTicketId(n.ticket?.ticketId);
+      const isNewRequest = [
+        "new_service_request",
+        "high_priority_request",
+        "critical_request",
+      ].includes(n.notificationType);
+      const message =
+        isNewRequest && n.ticket?.requester?.fullName
+          ? `Ticket "${ticketId}" submitted by ${n.ticket.requester.fullName}. Equipment: ${n.ticket.equipmentType || "Other"}.`
+          : displayTicketText(n.message);
+      return {
+        id: n._id,
+        ticket_id: n.ticket?._id || null,
+        ticketId,
+        requester_name: n.ticket?.requester?.fullName || null,
+        title: displayTicketText(n.title),
+        message: displayTicketText(message),
+        type: n.type,
+        notificationType: n.notificationType,
+        is_read: n.is_read,
+        created_at: n.createdAt,
+      };
+    });
 
     res.json({ success: true, data, unread, total: notifications.length });
   } catch (err) {
