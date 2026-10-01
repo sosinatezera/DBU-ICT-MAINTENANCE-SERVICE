@@ -397,9 +397,10 @@
 
                   <!-- Upload Section -->
                   <div id="fileUploadSection">
-                    <label for="profileFileUpload" class="form-label fw-semibold small mb-1"
-                      data-i18n="profile.uploadFile">Upload File</label>
-                    <input type="file" class="form-control form-control-sm" id="profileFileUpload"
+                    <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="attachFileButton">
+                      <i class="bi bi-paperclip me-1" aria-hidden="true"></i>Attach / Upload File
+                    </button>
+                    <input type="file" class="visually-hidden" id="profileFileUpload"
                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" aria-describedby="profileFileHint"
                       aria-label="Choose a file to upload" />
                     <div class="form-text" id="profileFileHint" data-i18n="pf.fileUploadHint">PDF, DOC, DOCX, JPG, JPEG,
@@ -411,6 +412,7 @@
                           <div>
                             <div class="fw-semibold small" id="filePreviewName">—</div>
                             <div class="text-muted small" id="filePreviewSize">—</div>
+                            <div class="text-muted small" id="filePreviewType">—</div>
                           </div>
                         </div>
                         <div class="d-flex gap-2">
@@ -1307,11 +1309,13 @@
         const icon = document.getElementById( 'filePreviewIcon' );
         const name = document.getElementById( 'filePreviewName' );
         const size = document.getElementById( 'filePreviewSize' );
-        if ( !preview || !icon || !name || !size ) return;
+        const type = document.getElementById( 'filePreviewType' );
+        if ( !preview || !icon || !name || !size || !type ) return;
 
         icon.className = 'bi ' + getFileIcon( file.type ) + ' fs-4';
         name.textContent = file.name;
         size.textContent = formatFileSize( file.size );
+        type.textContent = file.type || ext.substring( 1 ).toUpperCase();
 
         preview.classList.remove( 'd-none' );
       }
@@ -1492,6 +1496,10 @@
 
       // File input change handler
       const fileInput = document.getElementById( 'profileFileUpload' );
+      document.getElementById( 'attachFileButton' ).addEventListener( 'click', () =>
+      {
+        fileInput.click();
+      } );
       fileInput?.addEventListener( 'change', () =>
       {
         clearFileAlert();
