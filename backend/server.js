@@ -175,7 +175,7 @@ app.set("trust proxy", env.TRUST_PROXY);
    included only outside production. Additional exact origins may be supplied
    through FRONTEND_ORIGINS; wildcard origins are never used. */
 const productionOrigins = [
-  "https://simms-ict-maintanance-system.netlify.app",
+  "https://simms-ict-maintenance-system.netlify.app",
   "https://smartcomputer-maintenance-system.netlify.app",
   "https://smartcomputermaintenanceservice.netlify.app",
 ];

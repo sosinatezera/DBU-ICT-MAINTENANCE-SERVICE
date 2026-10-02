@@ -27,7 +27,7 @@ var __KNOWN_BACKEND_URL =
 
 /* Production URL mapping: Netlify frontend -> Render backend */
 var PRODUCTION_API_MAP = {
-  "simms-ict-maintanance-system.netlify.app": __KNOWN_BACKEND_URL,
+  "simms-ict-maintenance-system.netlify.app": __KNOWN_BACKEND_URL,
   "smartcomputer-maintenance-system.netlify.app": __KNOWN_BACKEND_URL,
   "smartcomputermaintenanceservice.netlify.app": __KNOWN_BACKEND_URL,
 };
