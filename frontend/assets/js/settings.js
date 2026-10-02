@@ -684,6 +684,348 @@ async function initPersonalSettings(user) {
   };
   let originalProfile = null;
 
+  const photoInput = document.getElementById("profilePhotoInput");
+  const photoAvatar = document.getElementById("profileSettingsAvatar");
+  const photoPreview = document.getElementById("profilePhotoPreview");
+  const photoPreviewImage = document.getElementById("profilePhotoPreviewImage");
+  const photoSaveButton = document.getElementById("saveProfilePhotoBtn");
+  const photoCancelButton = document.getElementById("cancelProfilePhotoBtn");
+  const photoChooseLabel = document.getElementById("profilePhotoChooseLabel");
+  const fileInput = document.getElementById("profileFileInput");
+  const filePreview = document.getElementById("profileFilePreview");
+  const fileUploadButton = document.getElementById("uploadProfileFileBtn");
+  let selectedPhoto = null;
+  let photoPreviewUrl = null;
+  let selectedProfileFile = null;
+
+  const showUploadAlert = (id, message, type = "danger") => {
+    const alert = document.getElementById(id);
+    if (!alert) return;
+    alert.className = `alert alert-${type} mt-2 mb-0`;
+    alert.textContent = message;
+    alert.classList.remove("d-none");
+  };
+  const clearUploadAlert = (id) =>
+    document.getElementById(id)?.classList.add("d-none");
+  const formatFileSize = (size) => {
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+  };
+  const extensionOf = (name) => name.split(".").pop().toLowerCase();
+  const photoMimeByExtension = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+  };
+  const fileMimeByExtension = {
+    pdf: "application/pdf",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+  };
+
+  const resetPhotoSelection = () => {
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    photoPreviewUrl = null;
+    selectedPhoto = null;
+    if (photoInput) photoInput.value = "";
+    photoPreview?.classList.add("d-none");
+    photoSaveButton?.classList.add("d-none");
+    photoCancelButton?.classList.add("d-none");
+    if (photoSaveButton) photoSaveButton.disabled = false;
+    if (photoAvatar) applyProfileAvatar(Auth.getUser(), photoAvatar);
+  };
+
+  photoInput?.addEventListener("change", () => {
+    const file = photoInput.files?.[0];
+    if (!file) return;
+    clearUploadAlert("profilePhotoAlert");
+    const extension = extensionOf(file.name);
+    if (
+      !Object.hasOwn(photoMimeByExtension, extension) ||
+      file.type !== photoMimeByExtension[extension]
+    ) {
+      resetPhotoSelection();
+      showUploadAlert(
+        "profilePhotoAlert",
+        "Choose a JPG, JPEG, PNG, or WEBP image.",
+      );
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      resetPhotoSelection();
+      showUploadAlert(
+        "profilePhotoAlert",
+        "The selected photo exceeds the 5 MB limit.",
+      );
+      return;
+    }
+    selectedPhoto = file;
+    photoPreviewUrl = URL.createObjectURL(file);
+    photoPreviewImage.src = photoPreviewUrl;
+    document.getElementById("profilePhotoPreviewName").textContent = file.name;
+    photoPreview.classList.remove("d-none");
+    photoPreview.classList.add("d-flex");
+    const avatarImage = photoAvatar?.querySelector(".profile-avatar-image");
+    const avatarInitial = photoAvatar?.querySelector(
+      ".profile-avatar-initials",
+    );
+    if (avatarImage) {
+      avatarImage.src = photoPreviewUrl;
+      avatarImage.hidden = false;
+    }
+    if (avatarInitial) avatarInitial.hidden = true;
+    photoSaveButton?.classList.remove("d-none");
+    photoCancelButton?.classList.remove("d-none");
+  });
+
+  photoCancelButton?.addEventListener("click", () => {
+    resetPhotoSelection();
+    clearUploadAlert("profilePhotoAlert");
+  });
+
+  photoSaveButton?.addEventListener("click", async () => {
+    if (!selectedPhoto) return;
+    photoSaveButton.disabled = true;
+    document
+      .getElementById("saveProfilePhotoSpinner")
+      ?.classList.remove("d-none");
+    clearUploadAlert("profilePhotoAlert");
+    try {
+      const formData = new FormData();
+      formData.append("profileImage", selectedPhoto);
+      const { data } = await apiRequest("/users/profile-image", {
+        method: "POST",
+        body: formData,
+        isFormData: true,
+      });
+      const updatedUser = {
+        ...Auth.getUser(),
+        profileImage: data.profileImage,
+      };
+      Auth.setUser(updatedUser);
+      if (typeof populateUserInfo === "function") populateUserInfo();
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+      photoPreviewUrl = null;
+      selectedPhoto = null;
+      photoInput.value = "";
+      photoPreview?.classList.add("d-none");
+      photoSaveButton.classList.add("d-none");
+      photoCancelButton.classList.add("d-none");
+      photoChooseLabel.textContent = "Change Photo";
+      showUploadAlert(
+        "profilePhotoAlert",
+        "Profile photo updated successfully.",
+        "success",
+      );
+    } catch (error) {
+      showUploadAlert(
+        "profilePhotoAlert",
+        error.message || "Could not upload the profile photo.",
+      );
+    } finally {
+      photoSaveButton.disabled = false;
+      document
+        .getElementById("saveProfilePhotoSpinner")
+        ?.classList.add("d-none");
+    }
+  });
+
+  const resetProfileFileSelection = () => {
+    selectedProfileFile = null;
+    if (fileInput) fileInput.value = "";
+    filePreview?.classList.add("d-none");
+    if (fileUploadButton) fileUploadButton.disabled = false;
+  };
+
+  fileInput?.addEventListener("change", () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    clearUploadAlert("profileFileAlert");
+    const extension = extensionOf(file.name);
+    if (
+      !Object.hasOwn(fileMimeByExtension, extension) ||
+      file.type !== fileMimeByExtension[extension]
+    ) {
+      resetProfileFileSelection();
+      showUploadAlert(
+        "profileFileAlert",
+        "Choose a PDF, DOC, DOCX, JPG, JPEG, or PNG file.",
+      );
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      resetProfileFileSelection();
+      showUploadAlert(
+        "profileFileAlert",
+        "The selected file exceeds the 10 MB limit.",
+      );
+      return;
+    }
+    selectedProfileFile = file;
+    document.getElementById("profileFilePreviewName").textContent = file.name;
+    document.getElementById("profileFilePreviewType").textContent =
+      file.type || extension.toUpperCase();
+    document.getElementById("profileFilePreviewSize").textContent =
+      formatFileSize(file.size);
+    filePreview.classList.remove("d-none");
+  });
+
+  document
+    .getElementById("cancelProfileFileBtn")
+    ?.addEventListener("click", () => {
+      resetProfileFileSelection();
+      clearUploadAlert("profileFileAlert");
+    });
+
+  const loadProfileFiles = async () => {
+    const loading = document.getElementById("profileFileLoading");
+    const list = document.getElementById("profileFileList");
+    const empty = document.getElementById("profileFileEmpty");
+    loading?.classList.remove("d-none");
+    try {
+      const { data = [] } = await apiRequest("/users/profile/files");
+      list.replaceChildren();
+      empty?.classList.toggle("d-none", data.length > 0);
+      data.forEach((file) => {
+        const item = document.createElement("div");
+        item.className = "list-group-item px-0 py-3";
+        const row = document.createElement("div");
+        row.className =
+          "d-flex flex-wrap justify-content-between align-items-center gap-3";
+        const details = document.createElement("div");
+        details.className = "min-w-0";
+        const name = document.createElement("div");
+        name.className = "fw-semibold text-break";
+        name.textContent = file.originalName;
+        const metadata = document.createElement("div");
+        metadata.className = "text-muted small";
+        const uploadedAt = new Date(file.uploadedAt);
+        metadata.textContent = `${file.mimeType} · ${formatFileSize(file.size)} · ${Number.isNaN(uploadedAt.getTime()) ? "" : uploadedAt.toLocaleDateString()}`;
+        details.append(name, metadata);
+        const actions = document.createElement("div");
+        actions.className = "d-flex gap-2 flex-shrink-0";
+        const download = document.createElement("button");
+        download.type = "button";
+        download.className = "btn btn-outline-primary btn-sm";
+        download.innerHTML = '<i class="bi bi-download me-1"></i>Download';
+        download.addEventListener("click", () => downloadProfileFile(file));
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "btn btn-outline-danger btn-sm";
+        remove.innerHTML = '<i class="bi bi-trash me-1"></i>Delete';
+        remove.addEventListener("click", () => deleteProfileFile(file, remove));
+        actions.append(download, remove);
+        row.append(details, actions);
+        item.append(row);
+        list.append(item);
+      });
+    } catch (error) {
+      showUploadAlert(
+        "profileFileAlert",
+        error.message || "Could not load profile files.",
+      );
+    } finally {
+      loading?.classList.add("d-none");
+    }
+  };
+
+  const downloadProfileFile = async (file) => {
+    try {
+      const response = await fetch(
+        `${resolveApiBase()}/users/profile/files/${encodeURIComponent(file.id)}`,
+        {
+          credentials: "include",
+        },
+      );
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.message || "Could not download this file.");
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = file.originalName;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      showUploadAlert(
+        "profileFileAlert",
+        error.message || "Could not download this file.",
+      );
+    }
+  };
+
+  const deleteProfileFile = async (file, button) => {
+    if (!window.confirm(`Delete ${file.originalName}?`)) return;
+    button.disabled = true;
+    try {
+      await apiRequest(`/users/profile/files/${encodeURIComponent(file.id)}`, {
+        method: "DELETE",
+      });
+      showUploadAlert(
+        "profileFileAlert",
+        "File deleted successfully.",
+        "success",
+      );
+      await loadProfileFiles();
+    } catch (error) {
+      button.disabled = false;
+      showUploadAlert(
+        "profileFileAlert",
+        error.message || "Could not delete this file.",
+      );
+    }
+  };
+
+  fileUploadButton?.addEventListener("click", async () => {
+    if (!selectedProfileFile) return;
+    fileUploadButton.disabled = true;
+    document
+      .getElementById("uploadProfileFileSpinner")
+      ?.classList.remove("d-none");
+    clearUploadAlert("profileFileAlert");
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedProfileFile);
+      await apiRequest("/users/profile/files", {
+        method: "POST",
+        body: formData,
+        isFormData: true,
+      });
+      resetProfileFileSelection();
+      showUploadAlert(
+        "profileFileAlert",
+        "File uploaded successfully.",
+        "success",
+      );
+      await loadProfileFiles();
+    } catch (error) {
+      showUploadAlert(
+        "profileFileAlert",
+        error.message || "Could not upload this file.",
+      );
+    } finally {
+      fileUploadButton.disabled = false;
+      document
+        .getElementById("uploadProfileFileSpinner")
+        ?.classList.add("d-none");
+    }
+  });
+
+  const signedInUser = Auth.getUser() || user;
+  if (photoAvatar) applyProfileAvatar(signedInUser, photoAvatar);
+  if (signedInUser.profileImage && photoChooseLabel) {
+    photoChooseLabel.textContent = "Change Photo";
+  }
+  loadProfileFiles();
+
   const fillProfile = (profile) => {
     profileFields.fullName.value = profile.fullName || "";
     profileFields.email.value = profile.email || "";

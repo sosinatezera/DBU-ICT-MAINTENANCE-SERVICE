@@ -105,306 +105,376 @@
           <div class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
               <div class="d-flex align-items-center gap-4">
-                <div class="profile-avatar profile-avatar-lg" id="profileAvatar" data-avatar aria-label="Profile">
-                  <img class="profile-avatar-image" alt="Profile Photo" hidden loading="lazy" decoding="async" />
-                  <span class="profile-avatar-initials" id="avatarInitials">U</span>
-                </div>
-                <div class="flex-grow-1">
-                  <h4 class="mb-1" id="profileFullName" data-i18n="pf.userName">User Name</h4>
-                  <p class="text-muted mb-1" id="profileEmail">user@example.com</p>
-                  <span class="badge bg-success" id="profileRole"></span>
-                </div>
-                <button type="button" class="btn btn-primary btn-sm" id="editProfileBtn">
-                  <i class="bi bi-pencil me-1"></i><span data-i18n="profile.edit">Edit Profile</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="row g-4">
-            <div class="col-lg-8">
-              <!-- Personal Information -->
-              <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 pb-0">
-                  <h5 class="mb-0"><i class="bi bi-person-lines-fill text-primary me-2"></i><span
-                      data-i18n="profile.personal">Personal Information</span></h5>
-                </div>
-                <div class="card-body">
-                  <div id="profileAlert" class="alert d-none"></div>
-                  <form id="profileForm">
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <label for="fullName" class="form-label fw-semibold small" data-i18n="profile.fullName">Full
-                          Name</label>
-                        <input type="text" class="form-control" id="fullName" name="fullName" required>
-                        <div class="invalid-feedback"></div>
-                      </div>
-                      <div class="col-md-6">
-                        <label for="email" class="form-label fw-semibold small" data-i18n="profile.email">Email
-                          Address</label>
-                        <input type="email" class="form-control" id="email" name="email" readonly disabled>
-                        <div class="form-text small text-muted" data-i18n="pf.emailNoEdit">Email cannot be changed.
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <label for="phone" class="form-label fw-semibold small" data-i18n="profile.phone">Phone
-                          Number</label>
-                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="09XXXXXXXX" readonly
-                          disabled>
-                        <div class="invalid-feedback"></div>
-                      </div>
-                      <div class="col-md-6">
-                        <label for="department" class="form-label fw-semibold small"
-                          data-i18n="profile.department">Department</label>
-                        <input type="text" class="form-control" id="department" name="department"
-                          data-i18n-placeholder="pf.ph.department" placeholder="e.g., Computer Science" readonly
-                          disabled>
-                      </div>
-                      <div class="col-md-6">
-                        <label for="gender" class="form-label fw-semibold small"
-                          data-i18n="profile.gender">Gender</label>
-                        <select class="form-select" id="gender" name="gender" disabled>
-                          <option value="">—</option>
-                          <option value="Male" data-i18n="auth.gender.male">Male</option>
-                          <option value="Female" data-i18n="auth.gender.female">Female</option>
-                          <option value="Other" data-i18n="auth.gender.other">Other</option>
-                          <option value="Prefer not to say" data-i18n="auth.gender.prefer">Prefer not to say</option>
-                        </select>
-                      </div>
+                <div class="d-flex align-items-center gap-4 flex-wrap">
+                  <div class="profile-avatar profile-avatar-lg" id="profileAvatar" data-avatar aria-label="Profile">
+                    <img class="profile-avatar-image" alt="Profile Photo" hidden loading="lazy" decoding="async" />
+                    <span class="profile-avatar-initials" id="avatarInitials">U</span>
+                  </div>
+                  <div class="flex-grow-1">
+                    <h4 class="mb-1" id="profileFullName" data-i18n="pf.userName">User Name</h4>
+                    <p class="text-muted small mb-1">Username: <span id="profileUsername">Not provided</span></p>
+                    <p class="text-muted mb-1" id="profileEmail">user@example.com</p>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                      <span class="badge bg-primary" id="profileRole">Requester</span>
+                      <span id="profileHeaderStatus"><span class="badge bg-success">Active</span></span>
                     </div>
-                    <div class="d-flex gap-2 mt-3" id="profileActions" style="display:none !important;">
-                      <button type="submit" class="btn btn-primary" id="profileSaveBtn">
-                        <span class="spinner-border spinner-border-sm me-1 d-none" id="profileSaveSpinner"></span>
-                        <i class="bi bi-check-lg me-1" id="profileSaveIcon"></i><span data-i18n="profile.save"
-                          id="profileSaveLabel">Save Changes</span>
-                      </button>
-                      <button type="button" class="btn btn-outline-secondary" id="cancelEditBtn">
-                        <span data-i18n="profile.cancel">Cancel</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Change Password -->
-              <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 pb-0">
-                  <h5 class="mb-0"><i class="bi bi-key text-primary me-2"></i><span
-                      data-i18n="profile.changePassword">Change Password</span></h5>
-                </div>
-                <div class="card-body">
-                  <div id="passwordAlert" class="alert d-none"></div>
-                  <form id="passwordForm">
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <label for="currentPassword" class="form-label fw-semibold small"
-                          data-i18n="profile.currentPassword">Current Password</label>
-                        <div class="input-group">
-                          <input type="password" class="form-control" id="currentPassword" name="currentPassword"
-                            required>
-                          <button class="btn btn-outline-secondary password-toggle" type="button"
-                            data-target="currentPassword" aria-label="Show password">
-                            <i class="bi bi-eye"></i>
-                          </button>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <label for="newPassword" class="form-label fw-semibold small"
-                          data-i18n="profile.newPassword">New Password</label>
-                        <div class="input-group">
-                          <input type="password" class="form-control" id="newPassword" name="newPassword" required
-                            minlength="8">
-                          <button class="btn btn-outline-secondary password-toggle" type="button"
-                            data-target="newPassword" aria-label="Show password">
-                            <i class="bi bi-eye"></i>
-                          </button>
-                        </div>
-                        <div class="form-text small text-muted" data-i18n="profile.passwordHint">Minimum 8 characters,
-                          must contain letters and numbers.</div>
-                      </div>
-                      <div class="col-md-6">
-                        <label for="confirmPassword" class="form-label fw-semibold small"
-                          data-i18n="profile.confirmPassword">Confirm New Password</label>
-                        <div class="input-group">
-                          <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
-                            required>
-                          <button class="btn btn-outline-secondary password-toggle" type="button"
-                            data-target="confirmPassword" aria-label="Show password">
-                            <i class="bi bi-eye"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="d-flex gap-2 mt-3">
-                      <button type="submit" class="btn btn-primary" id="passwordSaveBtn">
-                        <span class="spinner-border spinner-border-sm me-1 d-none" id="passwordSaveSpinner"></span>
-                        <i class="bi bi-check-lg me-1"></i><span data-i18n="profile.updatePassword">Update
-                          Password</span>
-                      </button>
-                    </div>
-                  </form>
+                  </div>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="chooseProfilePhotoBtn">
+                      <i class="bi bi-camera me-1"></i><span id="chooseProfilePhotoLabel">Upload Photo</span>
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" id="editProfileBtn">
+                      <i class="bi bi-pencil me-1"></i><span data-i18n="profile.edit">Edit Profile</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="col-lg-4">
-              <!-- Account Information -->
-              <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 pb-0">
-                  <h5 class="mb-0"><i class="bi bi-shield-check text-primary me-2"></i><span
-                      data-i18n="profile.accountInfo">Account Information</span></h5>
-                </div>
-                <div class="card-body">
-                  <ul class="list-group list-group-flush">
-                    <li class="list-group-item px-0 d-flex justify-content-between">
-                      <span class="text-muted small" data-i18n="profile.role">Role</span>
-                      <span class="fw-semibold" id="accountRole">—</span>
-                    </li>
-                    <li class="list-group-item px-0 d-flex justify-content-between">
-                      <span class="text-muted small" data-i18n="profile.status">Status</span>
-                      <span class="fw-semibold" id="accountStatus">—</span>
-                    </li>
-                    <li class="list-group-item px-0 d-flex justify-content-between">
-                      <span class="text-muted small" data-i18n="profile.memberSince">Member Since</span>
-                      <span class="fw-semibold small" id="memberSince">—</span>
-                    </li>
-                    <li class="list-group-item px-0 d-flex justify-content-between">
-                      <span class="text-muted small" data-i18n="profile.lastLogin">Last Login</span>
-                      <span class="fw-semibold small" id="lastLogin">—</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <!-- Profile Photo -->
-              <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 pb-0">
-                  <h6 class="mb-0"><i class="bi bi-person-bounding-box text-primary me-2"></i><span
-                      data-i18n="profile.profilePhoto">Profile Photo</span></h6>
-                </div>
-                <div class="card-body">
-                  <div id="photoAlert" class="alert alert-danger d-none" role="alert"></div>
-                  <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="profile-avatar profile-avatar-lg" id="profilePhotoAvatar" data-avatar
-                      aria-label="Profile photo">
-                      <img class="profile-avatar-image" alt="Profile Photo" hidden loading="lazy" decoding="async" />
-                      <span class="profile-avatar-initials">U</span>
-                    </div>
-                    <div class="flex-grow-1 min-w-0">
-                      <div class="fw-semibold small text-truncate" id="profilePhotoName">—</div>
-                      <div class="text-muted small text-truncate" id="profilePhotoEmail">—</div>
-                    </div>
+            <div class="row g-4">
+              <div class="col-lg-8">
+                <!-- Personal Information -->
+                <div class="card border-0 shadow-sm mb-4">
+                  <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="mb-0"><i class="bi bi-person-lines-fill text-primary me-2"></i><span
+                        data-i18n="profile.personal">Personal Information</span></h5>
                   </div>
-                  <input type="file" class="visually-hidden" id="profilePhotoUpload"
-                    accept="image/jpeg,image/png,image/webp" aria-describedby="profilePhotoHint"
-                    aria-label="Choose a profile photo" />
-                  <div id="profilePhotoPreview" class="d-none align-items-center gap-3 mb-3">
-                    <img id="profilePhotoPreviewImage" class="rounded-circle border"
-                      alt="Selected profile photo preview" width="64" height="64" style="object-fit:cover;" />
-                    <span id="profilePhotoPreviewName" class="small text-muted text-break"></span>
-                  </div>
-                  <div id="photoUploadProgress" class="d-none mb-3" aria-live="polite">
-                    <div class="d-flex justify-content-between small mb-1">
-                      <span id="photoUploadProgressLabel">Uploading profile photo...</span>
-                      <span id="photoUploadProgressValue">0%</span>
-                    </div>
-                    <div class="progress" role="progressbar" aria-label="Profile photo upload progress"
-                      aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                      <div id="photoUploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated"
-                        style="width:0%"></div>
-                    </div>
-                  </div>
-                  <div class="d-flex flex-wrap gap-2">
-                    <button type="button" class="btn btn-primary btn-sm" id="chooseProfilePhotoBtn">
-                      <i class="bi bi-upload me-1"></i><span data-i18n="profile.uploadPhoto">Upload Photo</span>
-                    </button>
-                    <button type="button" class="btn btn-primary btn-sm d-none" id="saveProfilePhotoBtn" disabled>
-                      <span class="spinner-border spinner-border-sm me-1 d-none" id="saveProfilePhotoSpinner"></span>
-                      <i class="bi bi-check-lg me-1" id="saveProfilePhotoIcon"></i><span>Save Photo</span>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="cancelProfilePhotoBtn">
-                      Cancel
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" id="removeProfilePhotoBtn" disabled>
-                      <i class="bi bi-trash me-1"></i><span data-i18n="profile.removePhoto">Remove Photo</span>
-                    </button>
-                  </div>
-                  <div class="form-text mt-2" id="profilePhotoHint">JPG, JPEG, PNG, or WEBP. Maximum 5 MB.</div>
-                </div>
-              </div>
-
-              <!-- Profile Files -->
-              <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 pb-0">
-                  <h6 class="mb-0"><i class="bi bi-file-earmark-arrow-up text-primary me-2"></i><span
-                      data-i18n="profile.uploadFile">Upload File</span></h6>
-                </div>
-                <div class="card-body">
-                  <div id="fileAlert" class="alert alert-danger d-none" role="alert"></div>
-
-                  <!-- Upload Section -->
-                  <div id="fileUploadSection">
-                    <label for="profileFileUpload" class="form-label fw-semibold small mb-1"
-                      data-i18n="profile.uploadFile">Upload File</label>
-                    <input type="file" class="form-control form-control-sm" id="profileFileUpload"
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" aria-describedby="profileFileHint"
-                      aria-label="Choose a file to upload" />
-                    <div class="form-text" id="profileFileHint" data-i18n="pf.fileUploadHint">PDF, DOC, DOCX, JPG, JPEG,
-                      PNG. Max 10 MB.</div>
-                    <div id="fileSelectedPreview" class="d-none mt-2 p-2 border rounded bg-light">
-                      <div class="d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-2">
-                          <i class="bi bi-file-earmark text-primary fs-4" id="filePreviewIcon"></i>
-                          <div>
-                            <div class="fw-semibold small" id="filePreviewName">—</div>
-                            <div class="text-muted small" id="filePreviewSize">—</div>
+                  <div class="card-body">
+                    <div id="profileAlert" class="alert d-none"></div>
+                    <form id="profileForm">
+                      <div class="row g-3">
+                        <div class="col-md-6">
+                          <label for="fullName" class="form-label fw-semibold small" data-i18n="profile.fullName">Full
+                            Name</label>
+                          <input type="text" class="form-control" id="fullName" name="fullName" required>
+                          <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="email" class="form-label fw-semibold small" data-i18n="profile.email">Email
+                            Address</label>
+                          <input type="email" class="form-control" id="email" name="email" readonly disabled>
+                          <div class="form-text small text-muted" data-i18n="pf.emailNoEdit">Email cannot be changed.
                           </div>
                         </div>
-                        <div class="d-flex gap-2">
-                          <button type="button" class="btn btn-primary btn-sm" id="fileUploadBtn"
-                            data-i18n="profile.upload">Upload</button>
-                          <button type="button" class="btn btn-outline-secondary btn-sm" id="fileCancelBtn"
-                            data-i18n="common.cancel">Cancel</button>
+                        <div class="col-md-6">
+                          <label for="username" class="form-label fw-semibold small">Username</label>
+                          <input type="text" class="form-control" id="username" name="username" readonly disabled>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="positionProgram" class="form-label fw-semibold small">Position / Program</label>
+                          <input type="text" class="form-control" id="positionProgram" name="positionProgram" readonly
+                            disabled>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="phone" class="form-label fw-semibold small" data-i18n="profile.phone">Phone
+                            Number</label>
+                          <input type="tel" class="form-control" id="phone" name="phone" placeholder="09XXXXXXXX"
+                            readonly disabled>
+                          <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="department" class="form-label fw-semibold small"
+                            data-i18n="profile.department">Department</label>
+                          <input type="text" class="form-control" id="department" name="department"
+                            data-i18n-placeholder="pf.ph.department" placeholder="e.g., Computer Science" readonly
+                            disabled>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="gender" class="form-label fw-semibold small"
+                            data-i18n="profile.gender">Gender</label>
+                          <select class="form-select" id="gender" name="gender" disabled>
+                            <option value="">—</option>
+                            <option value="Male" data-i18n="auth.gender.male">Male</option>
+                            <option value="Female" data-i18n="auth.gender.female">Female</option>
+                            <option value="Other" data-i18n="auth.gender.other">Other</option>
+                            <option value="Prefer not to say" data-i18n="auth.gender.prefer">Prefer not to say</option>
+                          </select>
                         </div>
                       </div>
-                    </div>
+                      <div class="d-flex gap-2 mt-3" id="profileActions" style="display:none !important;">
+                        <button type="submit" class="btn btn-primary" id="profileSaveBtn">
+                          <span class="spinner-border spinner-border-sm me-1 d-none" id="profileSaveSpinner"></span>
+                          <i class="bi bi-check-lg me-1" id="profileSaveIcon"></i><span data-i18n="profile.save"
+                            id="profileSaveLabel">Save Changes</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="cancelEditBtn">
+                          <span data-i18n="profile.cancel">Cancel</span>
+                        </button>
+                      </div>
+                    </form>
                   </div>
+                </div>
 
-                  <!-- Uploaded Files List -->
-                  <div id="fileListSection" class="mt-3">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                      <h6 class="mb-0" data-i18n="profile.myFiles">My Files</h6>
-                      <button type="button" class="btn btn-outline-secondary btn-sm" id="fileRefreshBtn"
-                        data-i18n="common.refresh"><i class="bi bi-arrow-clockwise"></i></button>
-                    </div>
-                    <div id="fileListLoading" class="text-center py-3 d-none">
-                      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                      <span class="text-muted small ms-2" data-i18n="common.loading">Loading...</span>
-                    </div>
-                    <div id="fileListEmpty" class="text-center py-4 text-muted small d-none" data-i18n="pf.noFiles">No
-                      files uploaded yet.</div>
-                    <div id="fileList" class="list-group list-group-flush"></div>
+                <!-- Change Password -->
+                <div class="card border-0 shadow-sm mb-4">
+                  <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="mb-0"><i class="bi bi-key text-primary me-2"></i><span
+                        data-i18n="profile.changePassword">Change Password</span></h5>
+                  </div>
+                  <div class="card-body">
+                    <div id="passwordAlert" class="alert d-none"></div>
+                    <form id="passwordForm">
+                      <div class="row g-3">
+                        <div class="col-md-6">
+                          <label for="currentPassword" class="form-label fw-semibold small"
+                            data-i18n="profile.currentPassword">Current Password</label>
+                          <div class="input-group">
+                            <input type="password" class="form-control" id="currentPassword" name="currentPassword"
+                              required>
+                            <button class="btn btn-outline-secondary password-toggle" type="button"
+                              data-target="currentPassword" aria-label="Show password">
+                              <i class="bi bi-eye"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="newPassword" class="form-label fw-semibold small"
+                            data-i18n="profile.newPassword">New Password</label>
+                          <div class="input-group">
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" required
+                              minlength="8">
+                            <button class="btn btn-outline-secondary password-toggle" type="button"
+                              data-target="newPassword" aria-label="Show password">
+                              <i class="bi bi-eye"></i>
+                            </button>
+                          </div>
+                          <div class="form-text small text-muted" data-i18n="profile.passwordHint">Minimum 8 characters,
+                            must contain letters and numbers.</div>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="confirmPassword" class="form-label fw-semibold small"
+                            data-i18n="profile.confirmPassword">Confirm New Password</label>
+                          <div class="input-group">
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
+                              required>
+                            <button class="btn btn-outline-secondary password-toggle" type="button"
+                              data-target="confirmPassword" aria-label="Show password">
+                              <i class="bi bi-eye"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary" id="passwordSaveBtn">
+                          <span class="spinner-border spinner-border-sm me-1 d-none" id="passwordSaveSpinner"></span>
+                          <i class="bi bi-check-lg me-1"></i><span data-i18n="profile.updatePassword">Update
+                            Password</span>
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 </div>
               </div>
 
-              <!-- Danger Zone -->
-              <div class="card border-0 shadow-sm border-danger mb-4">
-                <div class="card-header bg-white border-0 pb-0">
-                  <h6 class="mb-0 text-danger fw-bold"><i class="bi bi-exclamation-triangle me-1"></i><span
-                      data-i18n="profile.dangerZone">Danger Zone</span></h6>
+              <div class="col-lg-4">
+                <!-- Requester Information -->
+                <div class="card border-0 shadow-sm mb-4 d-none" id="requesterInformationCard">
+                  <div class="card-header bg-white border-0 pb-0">
+                    <h6 class="mb-0"><i class="bi bi-clipboard-data text-primary me-2"></i>Requester Information</h6>
+                  </div>
+                  <div class="card-body">
+                    <ul class="list-group list-group-flush small">
+                      <li class="list-group-item px-0 d-flex justify-content-between gap-3"><span
+                          class="text-muted">Requester ID</span><span class="fw-semibold text-break text-end"
+                          id="requesterId">—</span></li>
+                      <li class="list-group-item px-0 d-flex justify-content-between gap-3"><span
+                          class="text-muted">Department</span><span class="fw-semibold text-end"
+                          id="requesterDepartment">—</span></li>
+                      <li class="list-group-item px-0 d-flex justify-content-between gap-3"><span
+                          class="text-muted">Location / Office</span><span class="fw-semibold text-end"
+                          id="requesterLocation">Not provided</span></li>
+                      <li class="list-group-item px-0 d-flex justify-content-between gap-3"><span
+                          class="text-muted">Maintenance requests</span><span class="fw-semibold"
+                          id="requesterRequestCount">—</span></li>
+                      <li class="list-group-item px-0 d-flex justify-content-between gap-3"><span
+                          class="text-muted">Open requests</span><span class="fw-semibold"
+                          id="requesterOpenCount">—</span></li>
+                      <li class="list-group-item px-0 d-flex justify-content-between gap-3"><span
+                          class="text-muted">Completed requests</span><span class="fw-semibold"
+                          id="requesterCompletedCount">—</span></li>
+                      <li class="list-group-item px-0 d-flex justify-content-between gap-3"><span
+                          class="text-muted">Last request date</span><span class="fw-semibold text-end"
+                          id="requesterLastRequest">—</span></li>
+                    </ul>
+                  </div>
                 </div>
-                <div class="card-body">
-                  <p class="text-muted small mb-3" data-i18n="profile.deleteAccountDesc">Permanently delete your account
-                    and all associated data. This action cannot be undone.</p>
-                  <button type="button" class="btn btn-danger btn-sm" id="deleteAccountBtn">
-                    <i class="bi bi-trash me-1"></i><span data-i18n="profile.deleteAccount">Delete Account</span>
-                  </button>
+
+                <!-- Account Information -->
+                <div class="card border-0 shadow-sm mb-4">
+                  <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="mb-0"><i class="bi bi-shield-check text-primary me-2"></i><span
+                        data-i18n="profile.accountInfo">Account Information</span></h5>
+                  </div>
+                  <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                      <li class="list-group-item px-0 d-flex justify-content-between">
+                        <span class="text-muted small" data-i18n="profile.role">Role</span>
+                        <span class="fw-semibold" id="accountRole">—</span>
+                      </li>
+                      <li class="list-group-item px-0 d-flex justify-content-between">
+                        <span class="text-muted small" data-i18n="profile.status">Status</span>
+                        <span class="fw-semibold" id="accountStatus">—</span>
+                      </li>
+                      <li class="list-group-item px-0 d-flex justify-content-between">
+                        <span class="text-muted small" data-i18n="profile.memberSince">Member Since</span>
+                        <span class="fw-semibold small" id="memberSince">—</span>
+                      </li>
+                      <li class="list-group-item px-0 d-flex justify-content-between">
+                        <span class="text-muted small" data-i18n="profile.lastLogin">Last Login</span>
+                        <span class="fw-semibold small" id="lastLogin">—</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- Profile Photo -->
+                <div class="card border-0 shadow-sm mb-4">
+                  <div class="card-header bg-white border-0 pb-0">
+                    <h6 class="mb-0"><i class="bi bi-person-bounding-box text-primary me-2"></i><span
+                        data-i18n="profile.profilePhoto">Profile Photo</span></h6>
+                  </div>
+                  <div class="card-body">
+                    <div id="photoAlert" class="alert alert-danger d-none" role="alert"></div>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                      <div class="profile-avatar profile-avatar-lg" id="profilePhotoAvatar" data-avatar
+                        aria-label="Profile photo">
+                        <img class="profile-avatar-image" alt="Profile Photo" hidden loading="lazy" decoding="async" />
+                        <span class="profile-avatar-initials">U</span>
+                      </div>
+                      <div class="flex-grow-1 min-w-0">
+                        <div class="fw-semibold small text-truncate" id="profilePhotoName">—</div>
+                        <div class="text-muted small text-truncate" id="profilePhotoEmail">—</div>
+                      </div>
+                    </div>
+                    <input type="file" class="visually-hidden" id="profilePhotoUpload"
+                      accept="image/jpeg,image/png,image/webp" aria-describedby="profilePhotoHint"
+                      aria-label="Choose a profile photo" />
+                    <div id="profilePhotoPreview" class="d-none align-items-center gap-3 mb-3">
+                      <img id="profilePhotoPreviewImage" class="rounded-circle border"
+                        alt="Selected profile photo preview" width="64" height="64" style="object-fit:cover;" />
+                      <span id="profilePhotoPreviewName" class="small text-muted text-break"></span>
+                    </div>
+                    <div id="photoUploadProgress" class="d-none mb-3" aria-live="polite">
+                      <div class="d-flex justify-content-between small mb-1">
+                        <span id="photoUploadProgressLabel">Uploading profile photo...</span>
+                        <span id="photoUploadProgressValue">0%</span>
+                      </div>
+                      <div class="progress" role="progressbar" aria-label="Profile photo upload progress"
+                        aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <div id="photoUploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                          style="width:0%"></div>
+                      </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                      <button type="button" class="btn btn-primary btn-sm d-none" id="saveProfilePhotoBtn" disabled>
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="saveProfilePhotoSpinner"></span>
+                        <i class="bi bi-check-lg me-1" id="saveProfilePhotoIcon"></i><span>Save Photo</span>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="cancelProfilePhotoBtn">
+                        Cancel
+                      </button>
+                      <button type="button" class="btn btn-outline-danger btn-sm" id="removeProfilePhotoBtn" disabled>
+                        <i class="bi bi-trash me-1"></i><span data-i18n="profile.removePhoto">Remove Photo</span>
+                      </button>
+                    </div>
+                    <div class="form-text mt-2" id="profilePhotoHint">JPG, JPEG, PNG, or WEBP. Maximum 5 MB.</div>
+                  </div>
+                </div>
+
+                <!-- Profile Files -->
+                <div class="card border-0 shadow-sm mb-4">
+                  <div class="card-header bg-white border-0 pb-0">
+                    <h6 class="mb-0"><i class="bi bi-file-earmark-arrow-up text-primary me-2"></i><span
+                        data-i18n="profile.uploadFile">Upload File</span></h6>
+                  </div>
+                  <div class="card-body">
+                    <div id="fileAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <!-- Upload Section -->
+                    <div id="fileUploadSection">
+                      <input type="file" class="visually-hidden" id="profileFileUpload"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" aria-describedby="profileFileHint"
+                        aria-label="Choose a supporting file" />
+                      <div class="dropdown" id="profileFileDropdown">
+                        <button type="button" class="btn btn-outline-primary dropdown-toggle" id="profileFileMenuButton"
+                          aria-haspopup="true" aria-expanded="false" aria-controls="profileFileMenu">
+                          <i class="bi bi-paperclip me-1"></i>Attach / Upload File
+                        </button>
+                        <div class="dropdown-menu" id="profileFileMenu" role="menu"
+                          aria-labelledby="profileFileMenuButton">
+                          <button type="button" class="dropdown-item" role="menuitem" data-file-kind="document"><i
+                              class="bi bi-file-earmark-text me-2"></i>Upload Document <span
+                              class="small text-muted">PDF, DOC, DOCX</span></button>
+                          <button type="button" class="dropdown-item" role="menuitem" data-file-kind="image"><i
+                              class="bi bi-image me-2"></i>Upload Image <span class="small text-muted">JPG, JPEG,
+                              PNG</span></button>
+                          <button type="button" class="dropdown-item" role="menuitem" data-file-kind="supporting"><i
+                              class="bi bi-paperclip me-2"></i>Upload Supporting File</button>
+                          <div class="dropdown-divider"></div>
+                          <button type="button" class="dropdown-item" role="menuitem" data-file-kind="view"><i
+                              class="bi bi-folder2-open me-2"></i>View My Files</button>
+                        </div>
+                      </div>
+                      <div class="text-muted small"><span id="filePreviewType">—</span> · <span
+                          id="filePreviewSize">—</span></div>
+                      <div class="form-text" id="profileFileHint" data-i18n="pf.fileUploadHint">PDF, DOC, DOCX, JPG,
+                        JPEG,
+                        PNG. Max 10 MB.</div>
+                      <div id="fileSelectedPreview" class="d-none mt-2 p-2 border rounded bg-light">
+                        <div class="d-flex align-items-center justify-content-between">
+                          <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-file-earmark text-primary fs-4" id="filePreviewIcon"></i>
+                            <div>
+                              <div class="fw-semibold small" id="filePreviewName">—</div>
+                              <div class="text-muted small" id="filePreviewSize">—</div>
+                            </div>
+                          </div>
+                          <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary btn-sm" id="fileUploadBtn"
+                              data-i18n="profile.upload">Upload</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="fileCancelBtn"
+                              data-i18n="common.cancel">Cancel</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Uploaded Files List -->
+                    <div id="fileListSection" class="mt-3">
+                      <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="mb-0" data-i18n="profile.myFiles">My Files</h6>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="fileRefreshBtn"
+                          data-i18n="common.refresh"><i class="bi bi-arrow-clockwise"></i></button>
+                      </div>
+                      <div id="fileListLoading" class="text-center py-3 d-none">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span class="text-muted small ms-2" data-i18n="common.loading">Loading...</span>
+                      </div>
+                      <div id="fileListEmpty" class="text-center py-4 text-muted small d-none" data-i18n="pf.noFiles">No
+                        files uploaded yet.</div>
+                      <div id="fileList" class="list-group list-group-flush" tabindex="-1"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="card border-0 shadow-sm border-danger mb-4">
+                  <div class="card-header bg-white border-0 pb-0">
+                    <h6 class="mb-0 text-danger fw-bold"><i class="bi bi-exclamation-triangle me-1"></i><span
+                        data-i18n="profile.dangerZone">Danger Zone</span></h6>
+                  </div>
+                  <div class="card-body">
+                    <p class="text-muted small mb-3" data-i18n="profile.deleteAccountDesc">Permanently delete your
+                      account
+                      and all associated data. This action cannot be undone.</p>
+                    <button type="button" class="btn btn-danger btn-sm" id="deleteAccountBtn">
+                      <i class="bi bi-trash me-1"></i><span data-i18n="profile.deleteAccount">Delete Account</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
       </main>
     </div>
   </div>
@@ -665,9 +735,14 @@
           setProfileValue( 'phone', user.phone );
           setProfileValue( 'department', user.department );
           setProfileValue( 'gender', user.gender );
+          const username = user.username || user.userName || user.handle || '';
+          const positionProgram = user.position || user.program || user.positionProgram || '';
+          setProfileValue( 'username', username || 'Not provided' );
+          setProfileValue( 'positionProgram', positionProgram || 'Not provided' );
 
           const fullName = user.fullName || 'User';
           setProfileText( 'profileFullName', fullName );
+          setProfileText( 'profileUsername', username || 'Not provided' );
           setProfileText( 'profileEmail', user.email );
           setProfileText( 'profilePhotoName', fullName );
           setProfileText( 'profilePhotoEmail', user.email );
@@ -682,6 +757,10 @@
           if ( accountRole ) accountRole.innerHTML = '<span class="badge bg-' + ( roleMap[role] || 'secondary' ) + '">' + escHtml( role ) + '</span>';
 
           const status = user.status || 'active';
+          const headerStatus = document.getElementById( 'profileHeaderStatus' );
+          if ( headerStatus ) headerStatus.innerHTML = status === 'active'
+            ? '<span class="badge bg-success">Active</span>'
+            : '<span class="badge bg-secondary">Inactive</span>';
           const accountStatus = document.getElementById( 'accountStatus' );
           if ( accountStatus ) accountStatus.innerHTML = status === 'active'
             ? '<span class="badge bg-success">Active</span>'
@@ -700,6 +779,18 @@
           setProfileText( 'topUserName', 'Welcome, ' + fullName );
           setProfileText( 'sidebarAvatarInitials', fullName.charAt( 0 ).toUpperCase() );
           setProfileText( 'topAvatarInitials', fullName.charAt( 0 ).toUpperCase() );
+
+          const requesterCard = document.getElementById( 'requesterInformationCard' );
+          requesterCard?.classList.toggle( 'd-none', user.role !== 'Requester' );
+          if ( user.role === 'Requester' )
+          {
+            setProfileText( 'requesterId', user.id || user._id || 'Not provided' );
+            setProfileText( 'requesterDepartment', user.department || 'Not provided' );
+            setProfileText( 'requesterLocation', user.location || user.office || 'Not provided' );
+            loadRequesterSummary();
+          }
+          const choosePhotoLabel = document.getElementById( 'chooseProfilePhotoLabel' );
+          if ( choosePhotoLabel ) choosePhotoLabel.textContent = user.profileImage ? 'Change Photo' : 'Upload Photo';
 
           applyProfileAvatar( user, document.getElementById( 'profileAvatar' ) );
           applyProfileAvatar( user, document.querySelector( '[data-avatar]' ) );
@@ -726,6 +817,26 @@
           stopProfileLoading();               // spinner ALWAYS stops on failure
           if ( err && err.redirected ) return;   // apiRequest is redirecting to login
           showProfileLoadError( profileErrorMessage( err ) );
+        }
+      }
+
+      async function loadRequesterSummary ()
+      {
+        try
+        {
+          const response = await apiRequest( '/tickets/my' );
+          const tickets = Array.isArray( response && response.data ) ? response.data : [];
+          const completed = tickets.filter( ticket => ['resolved', 'closed'].includes( String( ticket.status || '' ).toLowerCase() ) ).length;
+          const dates = tickets.map( ticket => new Date( ticket.createdAt || ticket.created_at || 0 ) ).filter( date => Number.isFinite( date.getTime() ) && date.getTime() > 0 );
+          const latestDate = dates.length ? new Date( Math.max( ...dates.map( date => date.getTime() ) ) ) : null;
+          setProfileText( 'requesterRequestCount', tickets.length );
+          setProfileText( 'requesterOpenCount', tickets.length - completed );
+          setProfileText( 'requesterCompletedCount', completed );
+          setProfileText( 'requesterLastRequest', latestDate ? formatDate( latestDate ) : '—' );
+        } catch ( _ )
+        {
+          ['requesterRequestCount', 'requesterOpenCount', 'requesterCompletedCount', 'requesterLastRequest']
+            .forEach( id => setProfileText( id, 'Unavailable' ) );
         }
       }
 
@@ -1186,6 +1297,8 @@
           );
           photoUser = { ...photoUser, profileImage: res.data.profileImage };
           clearLegacyPhotoPreference();
+          const choosePhotoLabel = document.getElementById( 'chooseProfilePhotoLabel' );
+          if ( choosePhotoLabel ) choosePhotoLabel.textContent = 'Change Photo';
           refreshAvatars();
           resetPhotoSelection();
           showPhotoAlert( 'Profile photo updated successfully.', 'success' );
@@ -1209,6 +1322,8 @@
           await apiRequest( '/users/profile-image', { method: 'DELETE' } );
           photoUser = { ...photoUser, profileImage: null };
           clearLegacyPhotoPreference();
+          const choosePhotoLabel = document.getElementById( 'chooseProfilePhotoLabel' );
+          if ( choosePhotoLabel ) choosePhotoLabel.textContent = 'Upload Photo';
           resetPhotoSelection();
           refreshAvatars();
           showPhotoAlert( 'Profile photo removed.', 'success' );
@@ -1308,16 +1423,99 @@
         const icon = document.getElementById( 'filePreviewIcon' );
         const name = document.getElementById( 'filePreviewName' );
         const size = document.getElementById( 'filePreviewSize' );
+        const type = document.getElementById( 'filePreviewType' );
         if ( !preview || !icon || !name || !size ) return;
 
         const ext = file.name.substring( file.name.lastIndexOf( '.' ) ).toLowerCase();
-        const isImage = file.type.startsWith( 'image/' );
         icon.className = 'bi ' + getFileIcon( file.type ) + ' fs-4';
         name.textContent = file.name;
         size.textContent = formatFileSize( file.size );
+        if ( type ) type.textContent = file.type || ext.replace( '.', '' ).toUpperCase();
 
         preview.classList.remove( 'd-none' );
       }
+
+      const fileDropdown = document.getElementById( 'profileFileDropdown' );
+      const fileMenuButton = document.getElementById( 'profileFileMenuButton' );
+      const fileMenu = document.getElementById( 'profileFileMenu' );
+      const fileListSection = document.getElementById( 'fileListSection' );
+      const fileAcceptByKind = {
+        document: '.pdf,.doc,.docx',
+        image: '.jpg,.jpeg,.png',
+        supporting: '.pdf,.doc,.docx,.jpg,.jpeg,.png',
+      };
+
+      function setFileMenuOpen ( isOpen, focusEdge )
+      {
+        if ( !fileMenu || !fileMenuButton ) return;
+        fileMenu.classList.toggle( 'show', isOpen );
+        fileMenuButton.setAttribute( 'aria-expanded', String( isOpen ) );
+        if ( isOpen && focusEdge )
+        {
+          const items = fileMenu.querySelectorAll( '[role="menuitem"]' );
+          items[focusEdge === 'last' ? items.length - 1 : 0]?.focus();
+        }
+      }
+
+      fileMenuButton?.addEventListener( 'click', () =>
+      {
+        setFileMenuOpen( !fileMenu?.classList.contains( 'show' ) );
+      } );
+      fileMenuButton?.addEventListener( 'keydown', event =>
+      {
+        if ( event.key === 'ArrowDown' || event.key === 'ArrowUp' )
+        {
+          event.preventDefault();
+          setFileMenuOpen( true, event.key === 'ArrowUp' ? 'last' : 'first' );
+        }
+      } );
+      fileMenu?.addEventListener( 'keydown', event =>
+      {
+        const items = Array.from( fileMenu.querySelectorAll( '[role="menuitem"]' ) );
+        const currentIndex = items.indexOf( document.activeElement );
+        if ( event.key === 'Escape' )
+        {
+          event.preventDefault();
+          setFileMenuOpen( false );
+          fileMenuButton?.focus();
+          return;
+        }
+        if ( ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes( event.key ) )
+        {
+          event.preventDefault();
+          const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1
+            : ( currentIndex + ( event.key === 'ArrowDown' ? 1 : items.length - 1 ) ) % items.length;
+          items[nextIndex]?.focus();
+        }
+      } );
+      fileMenu?.addEventListener( 'focusout', event =>
+      {
+        if ( !fileDropdown?.contains( event.relatedTarget ) ) setFileMenuOpen( false );
+      } );
+      document.addEventListener( 'click', event =>
+      {
+        if ( fileDropdown && !fileDropdown.contains( event.target ) ) setFileMenuOpen( false );
+      } );
+      fileMenu?.querySelectorAll( '[data-file-kind]' ).forEach( item =>
+      {
+        item.addEventListener( 'click', () =>
+        {
+          const kind = item.dataset.fileKind;
+          setFileMenuOpen( false );
+          if ( kind === 'view' )
+          {
+            fileListSection?.scrollIntoView( { behavior: 'smooth', block: 'start' } );
+            document.getElementById( 'fileList' )?.focus( { preventScroll: true } );
+            return;
+          }
+          const fileInput = document.getElementById( 'profileFileUpload' );
+          if ( fileInput && fileAcceptByKind[kind] )
+          {
+            fileInput.accept = fileAcceptByKind[kind];
+            fileInput.click();
+          }
+        } );
+      } );
 
       function validateFile ( file )
       {
@@ -1347,7 +1545,7 @@
 
         try
         {
-          const res = await apiRequest( '/profile/files', {
+          const res = await apiRequest( '/users/profile/files', {
             method: 'POST',
             body: formData,
             isFormData: true,
@@ -1378,7 +1576,7 @@
 
         try
         {
-          const res = await apiRequest( '/profile/files' );
+          const res = await apiRequest( '/users/profile/files' );
           const files = ( res && res.data ) || [];
 
           loadingEl?.classList.add( 'd-none' );
@@ -1395,20 +1593,21 @@
             item.className = 'list-group-item px-0 d-flex align-items-center justify-content-between gap-2';
             item.dataset.fileId = f.id;
             const iconClass = getFileIcon( f.mimeType );
+            const fileType = f.mimeType || ( String( f.originalName || '' ).split( '.' ).pop() || '' ).toUpperCase();
             item.innerHTML = `
               <div class="d-flex align-items-center gap-2 flex-grow-1 min-w-0">
                 <i class="bi ${ iconClass } fs-4"></i>
                 <div class="min-w-0">
                   <div class="fw-semibold small text-truncate" title="${ escHtml( f.originalName ) }">${ escHtml( f.originalName ) }</div>
-                  <div class="text-muted small">${ formatFileSize( f.size ) } • ${ new Date( f.uploadedAt ).toLocaleDateString() }</div>
+                  <div class="text-muted small">${ escHtml( fileType ) } · ${ formatFileSize( f.size ) } · ${ new Date( f.uploadedAt ).toLocaleDateString() }</div>
                 </div>
               </div>
               <div class="d-flex gap-1 flex-shrink-0">
-                <button type="button" class="btn btn-outline-primary btn-sm" data-action="download" data-file-id="${ f.id }" data-original-name="${ escHtml( f.originalName ) }" aria-label="Download ${ escHtml( f.originalName ) }">
-                  <i class="bi bi-download"></i>
+                <button type="button" class="btn btn-outline-primary btn-sm" data-action="download" data-file-id="${ f.id }" data-original-name="${ escHtml( f.originalName ) }" aria-label="View or download ${ escHtml( f.originalName ) }">
+                  <i class="bi bi-download me-sm-1"></i><span class="d-none d-sm-inline">View / Download</span>
                 </button>
                 <button type="button" class="btn btn-outline-danger btn-sm" data-action="delete" data-file-id="${ f.id }" aria-label="Delete ${ escHtml( f.originalName ) }">
-                  <i class="bi bi-trash"></i>
+                  <i class="bi bi-trash me-sm-1"></i><span class="d-none d-sm-inline">Delete</span>
                 </button>
               </div>
             `;
@@ -1426,7 +1625,7 @@
               try
               {
                 const base = ( typeof API_BASE === 'string' && API_BASE ) ? API_BASE : '/api';
-                const res = await fetch( base + '/profile/files/' + fileId, {
+                const res = await fetch( base + '/users/profile/files/' + fileId, {
                   method: 'GET',
                   credentials: 'include',
                 } );
@@ -1463,7 +1662,7 @@
               btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
               try
               {
-                await apiRequest( '/profile/files/' + fileId, { method: 'DELETE' } );
+                await apiRequest( '/users/profile/files/' + fileId, { method: 'DELETE' } );
                 showToast( 'File deleted successfully.', 'success' );
                 await loadFileList();
               } catch ( err )

@@ -992,17 +992,17 @@ function validateStoredProfileFile(filePath, originalName, mimeType) {
     }
 
     if (extension === ".docx") {
-      const zipHeader =
+      return (
         buffer.length >= 4 &&
         buffer[0] === 0x50 &&
         buffer[1] === 0x4b &&
         buffer[2] === 0x03 &&
-        buffer[3] === 0x04;
-      return zipHeader || /^application\/zip$/i.test(mimeType || "");
+        buffer[3] === 0x04
+      );
     }
 
     if (extension === ".doc") {
-      const oleHeader =
+      return (
         buffer.length >= 8 &&
         buffer[0] === 0xd0 &&
         buffer[1] === 0xcf &&
@@ -1011,8 +1011,8 @@ function validateStoredProfileFile(filePath, originalName, mimeType) {
         buffer[4] === 0xa1 &&
         buffer[5] === 0xb1 &&
         buffer[6] === 0x1a &&
-        buffer[7] === 0xe1;
-      return oleHeader || /^application\/msword$/i.test(mimeType || "");
+        buffer[7] === 0xe1
+      );
     }
 
     return false;

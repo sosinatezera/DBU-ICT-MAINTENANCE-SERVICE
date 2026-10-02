@@ -140,8 +140,8 @@
         <div class="flex-grow-1">
             <header
                 class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
-                <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle" aria-label="Toggle navigation"><i
-                        class="bi bi-list"></i></button>
+                <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle"
+                    aria-label="Toggle navigation"><i class="bi bi-list"></i></button>
                 <h5 class="mb-0 fw-bold" data-i18n="page.settings">Settings</h5>
                 <div class="text-muted small">Personal account and preferences</div>
                 <div class="d-flex align-items-center gap-3">
@@ -161,6 +161,93 @@
                                     <div class="flex-grow-1">
                                         <h2 class="h5 mb-1" data-i18n="profile.title">Profile</h2>
                                         <p class="text-muted mb-3">View and update your personal information.</p>
+                                        <section class="border-top pt-3 mb-4" aria-labelledby="profilePhotoTitle">
+                                            <h3 class="h6 fw-semibold mb-3" id="profilePhotoTitle">Profile Photo</h3>
+                                            <div class="d-flex align-items-center gap-3 flex-wrap">
+                                                <div class="profile-avatar profile-avatar-lg" id="profileSettingsAvatar"
+                                                    data-avatar aria-label="Profile photo">
+                                                    <img class="profile-avatar-image" alt="Profile photo" hidden />
+                                                    <span class="profile-avatar-initials">U</span>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <input type="file" class="visually-hidden" id="profilePhotoInput"
+                                                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                                        aria-describedby="profilePhotoHint" />
+                                                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                                                        <label for="profilePhotoInput"
+                                                            class="btn btn-primary btn-sm mb-0"
+                                                            id="chooseProfilePhotoBtn"><i
+                                                                class="bi bi-camera me-1"></i><span
+                                                                id="profilePhotoChooseLabel">Upload Photo</span></label>
+                                                        <button type="button" class="btn btn-primary btn-sm d-none"
+                                                            id="saveProfilePhotoBtn"><span
+                                                                class="spinner-border spinner-border-sm me-1 d-none"
+                                                                id="saveProfilePhotoSpinner"></span>Save Photo</button>
+                                                        <button type="button"
+                                                            class="btn btn-outline-secondary btn-sm d-none"
+                                                            id="cancelProfilePhotoBtn">Cancel</button>
+                                                    </div>
+                                                    <div id="profilePhotoPreview"
+                                                        class="d-none align-items-center gap-2 mt-2">
+                                                        <img id="profilePhotoPreviewImage" alt="Selected photo preview"
+                                                            width="48" height="48" class="rounded-circle border"
+                                                            style="object-fit:cover" />
+                                                        <span id="profilePhotoPreviewName"
+                                                            class="small text-muted text-break"></span>
+                                                    </div>
+                                                    <div class="form-text mt-2" id="profilePhotoHint">JPG, JPEG, PNG, or
+                                                        WEBP. Maximum 5 MB.</div>
+                                                    <div id="profilePhotoAlert" class="alert d-none mt-2 mb-0"
+                                                        role="status" aria-live="polite"></div>
+                                                </div>
+                                            </div>
+                                        </section>
+                                        <section class="border-top pt-3 mb-4" aria-labelledby="profileFilesTitle">
+                                            <h3 class="h6 fw-semibold mb-1" id="profileFilesTitle">Profile Files</h3>
+                                            <p class="text-muted small mb-3">Upload documents or supporting files
+                                                associated with your profile.</p>
+                                            <input type="file" class="visually-hidden" id="profileFileInput"
+                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                                aria-describedby="profileFileHint" />
+                                            <label for="profileFileInput" class="btn btn-outline-primary btn-sm mb-0"
+                                                id="chooseProfileFileBtn"><i class="bi bi-paperclip me-1"></i>Attach /
+                                                Upload File</label>
+                                            <div class="form-text mt-2" id="profileFileHint">PDF, DOC, DOCX, JPG, or
+                                                PNG. Maximum 10 MB.</div>
+                                            <div id="profileFilePreview" class="d-none border rounded p-3 mt-3">
+                                                <div class="row g-2 small mb-3">
+                                                    <div class="col-sm-5"><span class="text-muted">File Name</span>
+                                                        <div class="fw-semibold text-break" id="profileFilePreviewName">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3"><span class="text-muted">File Type</span>
+                                                        <div class="fw-semibold" id="profileFilePreviewType"></div>
+                                                    </div>
+                                                    <div class="col-sm-4"><span class="text-muted">File Size</span>
+                                                        <div class="fw-semibold" id="profileFilePreviewSize"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-primary btn-sm"
+                                                        id="uploadProfileFileBtn">
+                                                        <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                            id="uploadProfileFileSpinner"></span>Upload File
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                        id="cancelProfileFileBtn">Cancel</button>
+                                                </div>
+                                            </div>
+                                            <div id="profileFileAlert" class="alert d-none mt-3 mb-0" role="status"
+                                                aria-live="polite"></div>
+                                            <div class="mt-4">
+                                                <h4 class="h6 fw-semibold mb-2">My Files</h4>
+                                                <div id="profileFileLoading" class="small text-muted d-none"
+                                                    aria-live="polite">Loading files...</div>
+                                                <div id="profileFileEmpty" class="small text-muted py-2 d-none">No
+                                                    profile files uploaded yet.</div>
+                                                <div id="profileFileList" class="list-group list-group-flush"></div>
+                                            </div>
+                                        </section>
                                         <div id="profileAlert" class="alert d-none" role="status" aria-live="polite">
                                         </div>
                                         <form id="profileForm" novalidate>
@@ -527,7 +614,7 @@
     <script src="/assets/js/main.js?v=17"></script>
     <script src="/assets/js/notifications.js?v=8"></script>
     <script src="/assets/js/theme.js"></script>
-    <script src="/assets/js/settings.js?v=14"></script>
+    <script src="/assets/js/settings.js?v=15"></script>
 </body>
 
 </html>

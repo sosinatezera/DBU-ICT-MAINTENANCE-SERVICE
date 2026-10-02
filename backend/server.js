@@ -336,6 +336,12 @@ profileFilesRouter.get("/files/:id", authenticate, downloadProfileFile);
 profileFilesRouter.delete("/files/:id", authenticate, deleteProfileFile);
 app.use("/api/profile", profileFilesRouter);
 
+/* Profile attachments must only be served through the owner-checked download
+   endpoint above, never through the generic authenticated uploads directory. */
+app.use("/uploads/profile-files", authenticate, (req, res) => {
+  res.status(404).json({ success: false, message: "File not found." });
+});
+
 app.use(
   "/uploads",
   authenticate,
