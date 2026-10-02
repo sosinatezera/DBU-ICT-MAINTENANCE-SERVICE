@@ -18,7 +18,8 @@ require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
    send fails. Stripping whitespace here — once, at the single point every
    caller reads — keeps the credential usable however it was pasted, both in
    backend/.env and in the hosting provider's dashboard. */
-const stripCredentialWhitespace = (value) => String(value || "").replace(/\s+/g, "");
+const stripCredentialWhitespace = (value) =>
+  String(value || "").replace(/\s+/g, "");
 
 const smtpUser = String(process.env.SMTP_USER || "").trim();
 const smtpPassword = stripCredentialWhitespace(
@@ -37,10 +38,7 @@ const smtpStatus = (() => {
   if (!host) missing.push("SMTP_HOST");
   if (!user) missing.push("SMTP_USER");
   if (!pass) missing.push("SMTP_PASSWORD (or legacy SMTP_PASS)");
-  if (
-    !missing.length &&
-    (placeholder.test(user) || placeholder.test(pass))
-  ) {
+  if (!missing.length && (placeholder.test(user) || placeholder.test(pass))) {
     missing.push("placeholder value still present in SMTP_USER/SMTP_PASSWORD");
   }
   return { configured: missing.length === 0, missing };
@@ -81,7 +79,9 @@ module.exports = {
 
   // Frontend base URL retained for other frontend integrations. Matches the
   // developer origin by default; override for production when needed.
-  FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
+  FRONTEND_URL:
+    process.env.FRONTEND_URL ||
+    (process.env.NODE_ENV === "production" ? "" : "http://localhost:3000"),
 
   // Email (Gmail SMTP — SMTP_HOST/SMTP_USER/SMTP_PASSWORD are REQUIRED for
   // password recovery. SMTP_PASSWORD must be a GOOGLE APP PASSWORD, NOT the
@@ -123,7 +123,10 @@ module.exports = {
   AI_MAX_FILE_SIZE_MB: Number(process.env.AI_MAX_FILE_SIZE_MB) || 10,
 
   // Local AI (Ollama) — the only AI provider of the AI Assistant.
-  OLLAMA_BASE_URL: (process.env.OLLAMA_BASE_URL || "http://localhost:11434")
+  OLLAMA_BASE_URL: (
+    process.env.OLLAMA_BASE_URL ||
+    (process.env.NODE_ENV === "production" ? "" : "http://localhost:11434")
+  )
     .trim()
     .replace(/\/+$/, ""),
   OLLAMA_MODEL: (process.env.OLLAMA_MODEL || "llama3.2").trim(),
@@ -148,7 +151,8 @@ module.exports = {
      Production defaults are strict, development defaults are practical for
      local testing, and every value can be overridden in .env. */
   RATE_LIMIT: (() => {
-    const isProduction = (process.env.NODE_ENV || "development") === "production";
+    const isProduction =
+      (process.env.NODE_ENV || "development") === "production";
     const positive = (raw, fallback) => {
       const n = Number(raw);
       return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
@@ -206,7 +210,9 @@ module.exports = {
   TRUST_PROXY: (() => {
     const raw = String(process.env.TRUST_PROXY || "").trim();
     if (raw === "") {
-      return (process.env.NODE_ENV || "development") === "production" ? 1 : false;
+      return (process.env.NODE_ENV || "development") === "production"
+        ? 1
+        : false;
     }
     if (raw === "true") return true;
     if (raw === "false") return false;

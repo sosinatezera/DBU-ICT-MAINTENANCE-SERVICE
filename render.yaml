@@ -37,17 +37,19 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # AI Assistant — local Ollama (backend-only; never exposed to the browser
-      # or the public internet). A localhost endpoint only works when the
-      # backend runs on the same machine as Ollama.
+      # Set this to a network-reachable Ollama service URL if AI is enabled.
+      # The service URL must be reachable from this Render container.
       - key: OLLAMA_BASE_URL
-        value: http://localhost:11434
+        sync: false
+        value: ""
       - key: OLLAMA_MODEL
         value: llama3.2
       - key: AI_SUPPORT_ENABLED
         value: "true"
+      - key: FRONTEND_URL
+        value: https://simms-ict-maintanance-system.netlify.app
       - key: FRONTEND_ORIGINS
-        value: https://smartcomputer-maintenance-system.netlify.app,https://smartcomputermaintenanceservice.netlify.app,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000
+        value: https://simms-ict-maintanance-system.netlify.app,https://smartcomputer-maintenance-system.netlify.app,https://smartcomputermaintenanceservice.netlify.app
       # Reverse proxy: Render terminates TLS in front of this service, so the
       # socket address is Render's for every caller. Trusting that single hop
       # is what makes per-IP rate limiting work at all. A NUMBER is required —

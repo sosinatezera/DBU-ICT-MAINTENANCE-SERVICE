@@ -113,7 +113,10 @@ function mergeSignals(...signals) {
 const ollamaService = {
   /* ── Configuration (centralized here — reads env, never hard-codes) ── */
   get baseUrl() {
-    return (env.OLLAMA_BASE_URL || "http://localhost:11434")
+    return (
+      env.OLLAMA_BASE_URL ||
+      (env.NODE_ENV === "production" ? "" : "http://localhost:11434")
+    )
       .trim()
       .replace(/\/+$/, "");
   },

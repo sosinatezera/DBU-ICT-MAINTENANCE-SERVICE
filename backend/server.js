@@ -171,27 +171,42 @@ const app = express();
 app.set("trust proxy", env.TRUST_PROXY);
 
 /* ── Core Middleware ─────────────────────────────────────── */
-/* CORS origins: combine the default development origins with any origins
-   provided via the FRONTEND_ORIGINS env var (comma-separated). This union
-   ensures known frontend origins (development AND the deployed Netlify
-   sites) are always allowed, while still letting operators add extra
-   origins through the environment. credentials:true is preserved and a
-   wildcard is never used. */
-const defaultOrigins = [
+/* Production CORS allows the deployed frontend origins only. Localhost is
+   included only outside production. Additional exact origins may be supplied
+   through FRONTEND_ORIGINS; wildcard origins are never used. */
+const productionOrigins = [
+  "https://simms-ict-maintanance-system.netlify.app",
+  "https://smartcomputer-maintenance-system.netlify.app",
+  "https://smartcomputermaintenanceservice.netlify.app",
+];
+const localDevOrigins = ["localhost", "127.0.0.1", "::1"];
+const developmentOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://localhost:3001",
   "http://127.0.0.1:3001",
   "http://localhost:5000",
   "http://127.0.0.1:5000",
-  "https://smartcomputer-maintenance-system.netlify.app",
-  "https://smartcomputermaintenanceservice.netlify.app",
 ];
 const envOrigins = process.env.FRONTEND_ORIGINS
   ? process.env.FRONTEND_ORIGINS.split(",")
-      .map((o) => o.trim())
-      .filter(Boolean)
+      .map((o) => o.trim().replace(/\/+$/, ""))
+      .filter((origin) => {
+        if (!origin) return false;
+        try {
+          const hostname = new URL(origin).hostname;
+          return (
+            env.NODE_ENV !== "production" || !localDevOrigins.includes(hostname)
+          );
+        } catch {
+          return false;
+        }
+      })
   : [];
+const defaultOrigins =
+  env.NODE_ENV === "production"
+    ? productionOrigins
+    : [...productionOrigins, ...developmentOrigins];
 const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
 
 app.use(
@@ -210,10 +225,28 @@ app.use(
   }),
 );
 
+/* SameSite=None is required for the direct Netlify-to-Render session cookie.
+   Reject browser-originated state changes from any other origin; requests
+   without an Origin header remain available for non-browser API clients. */
+const stateChangingMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+app.use((req, res, next) => {
+  const origin = req.get("origin");
+  if (
+    !origin ||
+    !stateChangingMethods.has(req.method) ||
+    allowedOrigins.includes(origin)
+  ) {
+    return next();
+  }
+  return res.status(403).json({
+    success: false,
+    message: "Request origin is not allowed.",
+  });
+});
 /* ── Security headers (Helmet) ──────────────────────────────
    Defaults harden API responses. We relax crossOriginResourcePolicy
    to "cross-origin" so uploaded attachments under /uploads remain
-   displayable on the separate frontend origin (localhost:3000). */
+    displayable on the separate frontend origin. */
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -267,17 +300,16 @@ app.use(
 app.use(express.json({ limit: DEFAULT_JSON_LIMIT }));
 app.use(express.urlencoded({ extended: true, limit: DEFAULT_JSON_LIMIT }));
 
-const localDevOrigins = ["localhost", "127.0.0.1", "::1"];
 const isLocalDevelopmentFrontend = (() => {
-  const configuredUrl = (
+  const configuredUrl = String(
     process.env.FRONTEND_URL ||
-    env.FRONTEND_URL ||
-    "http://localhost:3000"
+      env.FRONTEND_URL ||
+      (env.NODE_ENV === "production" ? "" : "http://localhost:3000"),
   ).trim();
   try {
     return localDevOrigins.includes(new URL(configuredUrl).hostname);
   } catch {
-    return true;
+    return env.NODE_ENV !== "production";
   }
 })();
 const isSecureSessionCookie =
@@ -312,7 +344,7 @@ const sessionMiddleware = session({
   }),
   cookie: {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: isSecureSessionCookie ? "none" : "lax",
     secure: isSecureSessionCookie,
     maxAge: env.SESSION_TTL_MS,
   },
@@ -430,10 +462,7 @@ app.use((req, res) =>
 /* ── Global Error Handler ───────────────────────────────── */
 app.use(errorHandler);
 
-/* ── Start Server — fixed port 5000 ───────────────────────
-  The API is published on ONE fixed port. A busy port must fail loudly rather
-  than silently relocating the REST API and realtime socket away from the
-  origin configured by the browser. */
+/* Render supplies PORT; local development falls back to port 5000. */
 const PORT = Number(process.env.PORT || 5000);
 
 const server = app.listen(PORT, () => {
@@ -446,7 +475,7 @@ const server = app.listen(PORT, () => {
   console.log("  ║  Smart ICT Maintenance Management System             ║");
   console.log("  ║  (Backend API)                                       ║");
   console.log("  ╠══════════════════════════════════════════════════════╣");
-  console.log(`  ║  Server  : http://localhost:${PORT}                      ║`);
+  console.log(`  ║  Server  : listening on port ${PORT}                     ║`);
   console.log("  ║  Database: MongoDB                                   ║");
   console.log("  ╠══════════════════════════════════════════════════════╣");
   console.log("  ║  Roles: Requester | Technician | ICT Admin           ║");
