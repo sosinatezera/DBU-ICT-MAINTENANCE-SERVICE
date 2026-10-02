@@ -1,8 +1,9 @@
 /**
  * services/ollamaService.js
- * Centralized provider for the Master AI system — local Ollama (the ONLY AI
- * provider). The backend is the sole caller of Ollama; the browser never talks
- * to Ollama directly.
+ * Centralized provider for the Master AI system — configurable Ollama (the
+ * ONLY AI provider). The backend is the sole caller; the browser never talks
+ * to Ollama directly. Local development defaults to localhost; production
+ * requires an explicitly configured reachable service URL.
  *
  * Responsibilities (single module, no hard-coded config):
  *   - connection management        (base URL, reachable /api/tags checks)
@@ -121,12 +122,7 @@ const ollamaService = {
     if (externalUrl && externalUrl.trim()) {
       return externalUrl.trim().replace(/\/+$/, "");
     }
-    /* Fallback only for development; in production the URL must be set
-       via the OLLAMA_BASE_URL environment variable so the backend knows
-       where the local Ollama instance is reachable. */
-    return env.NODE_ENV === "production"
-      ? "http://localhost:11434"
-      : "http://localhost:11434";
+    return env.NODE_ENV === "production" ? "" : "http://localhost:11434";
   },
   get model() {
     return (env.OLLAMA_MODEL || "llama3.2").trim();

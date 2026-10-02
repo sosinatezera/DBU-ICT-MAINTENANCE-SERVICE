@@ -22,7 +22,7 @@
  *   /api/settings      — System settings (ICT Admin)
  *   /api/public        — Public stats (no auth)
  *   /api/ai            — Master AI (AI Assistant; public health + streaming chat;
- *                        admin status at /api/assistant/admin/status; local Ollama)
+ *                        admin status at /api/assistant/admin/status; configured Ollama)
  *   /api/assistant     — Master AI (same router: GET health + POST chat)
  */
 

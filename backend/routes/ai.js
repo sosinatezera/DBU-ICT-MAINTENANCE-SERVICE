@@ -156,7 +156,7 @@ const SYSTEM_PROMPT = `You are Master AI, the professional project-aware and gen
 PROJECT CONTEXT
 
 - The application is the Smart ICT Maintenance Management System for university ICT support.
-- The frontend is a browser-based HTML/CSS/JavaScript application. The backend is an Express API using MongoDB and a server-side local Ollama provider.
+- The frontend is a browser-based HTML/CSS/JavaScript application. The backend is an Express API using MongoDB and a server-side configured Ollama provider.
 - Known workflows include requester ticket submission and tracking, technician assignment and maintenance updates, administrator management of users/assets/categories/reports/settings, feedback, notifications, and AI assistance.
 - Do not claim unsupported features such as job matching. When asked about implementation details not available in the supplied current-page context or this summary, say that the detail is unavailable rather than guessing.
 
@@ -451,7 +451,7 @@ function isClientGone(res) {
   return Boolean(res.destroyed || res.writableEnded);
 }
 
-/* Chat with the local Ollama model via the centralized service — real model
+/* Chat with the configured Ollama model via the centralized service — real model
    inference, never fabricated. */
 async function handleOllamaChat(
   req,

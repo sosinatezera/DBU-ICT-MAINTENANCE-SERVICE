@@ -1,6 +1,6 @@
 /* ============================================================
    assistant.js — Dedicated Smart ICT AI Assistant page
-   Talks to the local Ollama backend via /api/assistant/chat
+  Talks to the configured Ollama backend via /api/assistant/chat
    (SSE streaming with a non-stream JSON fallback).
    ============================================================ */
 
