@@ -179,3 +179,27 @@ html, body { overflow-x: hidden; }
   .table-responsive { border-radius: var(--radius-sm); }
   .table-responsive table { min-width: 560px; }
 }
+
+/* Shared spacing refinements for dashboard headers and compact controls. */
+@media (max-width: 991.98px) {
+  .dashboard-body > .d-flex > .flex-grow-1 { min-width: 0; }
+  .topbar { gap: .75rem; }
+  .topbar h5 { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+}
+
+@media (max-width: 767.98px) {
+  .topbar { min-height: 56px; }
+  .topbar .d-flex.align-items-center { min-width: 0; }
+  .topbar .profile-avatar { flex: 0 0 36px; }
+  .card-header { align-items: center; }
+  .dropdown-menu { max-width: calc(100vw - 1.5rem); }
+}
+
+@media (max-width: 575.98px) {
+  .topbar { gap: .5rem; }
+  .topbar > h5 { font-size: .95rem; }
+  .topbar .btn { flex: 0 0 auto; }
+  .dropdown-menu { min-width: min(280px, calc(100vw - 1.5rem)); }
+  .form-control, .form-select { min-width: 0; }
+  .table-responsive { margin-inline: 0; }
+}

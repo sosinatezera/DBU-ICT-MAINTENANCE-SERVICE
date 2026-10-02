@@ -14,9 +14,9 @@
   --primary-hover: #2563EB;
   --primary-deeper: #1E40AF;
   --primary-deep: #1E3A8A;
-  --primary-soft: #D1D5DB;
-  --primary-subtle: #F3F4F6;
-  --primary-border: #9CA3AF;
+  --primary-soft: #EFF6FF;
+  --primary-subtle: #F8FBFF;
+  --primary-border: #BFDBFE;
   --accent: #60A5FA;
 
   /* Semantic — deliberately NOT the brand colour. These carry meaning
@@ -80,7 +80,7 @@
 
   /* Enterprise aliases — additive; values mirror the palette used below */
   --primary-dark: #1E40AF;
-  --primary-light: #D1D5DB;
+  --primary-light: #EFF6FF;
   --shadow-sm: var(--shadow);
   --shadow-tight: 0 1px 2px rgba(15, 23, 42, .05);
 }
