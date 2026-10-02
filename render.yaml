@@ -37,11 +37,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # Set this to a network-reachable Ollama service URL if AI is enabled.
-      # The service URL must be reachable from this Render container.
       - key: OLLAMA_BASE_URL
-        sync: false
-        value: ""
+        fromService:
+          name: simms-ollama
+          type: pserv
+          property: hostport
       - key: OLLAMA_MODEL
         value: llama3.2
       - key: AI_SUPPORT_ENABLED
@@ -93,3 +93,25 @@ services:
       - key: JWT_SECRET
         sync: false
         value: ""
+
+  # Private CPU Ollama. Render supplies its real private host:port to the
+  # backend via fromService above. Set this service to the backend's region
+  # before syncing; private networking requires both services in one region.
+  # Compute and persistent storage are paid Render resources.
+  - type: pserv
+    name: simms-ollama
+    runtime: docker
+    dockerfilePath: ./deploy/ollama/Dockerfile
+    dockerContext: .
+    plan: 2c-4g
+    disk:
+      name: simms-ollama-models
+      mountPath: /root/.ollama
+      sizeGB: 10
+    envVars:
+      - key: OLLAMA_HOST
+        value: 0.0.0.0:11434
+      - key: OLLAMA_MODELS
+        value: /root/.ollama/models
+      - key: OLLAMA_MODEL
+        value: llama3.2

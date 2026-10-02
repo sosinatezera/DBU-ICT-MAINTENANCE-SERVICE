@@ -39,6 +39,7 @@ function prepareMessages(messages, images) {
 
 /* Stable, machine-readable error codes used across the route layer. */
 const ERROR_CODES = Object.freeze({
+  PROVIDER_NOT_CONFIGURED: "PROVIDER_NOT_CONFIGURED",
   OLLAMA_UNAVAILABLE: "OLLAMA_UNAVAILABLE",
   MODEL_NOT_FOUND: "MODEL_NOT_FOUND",
   TIMEOUT: "TIMEOUT",
@@ -49,6 +50,8 @@ const ERROR_CODES = Object.freeze({
 
 /* Friendly messages shown to users. Technical details never leak here. */
 const USER_MESSAGES = Object.freeze({
+  [ERROR_CODES.PROVIDER_NOT_CONFIGURED]:
+    "AI service is not configured. Please contact the administrator.",
   [ERROR_CODES.OLLAMA_UNAVAILABLE]:
     "AI service is temporarily unavailable. Please try again later.",
   [ERROR_CODES.MODEL_NOT_FOUND]:
@@ -65,6 +68,7 @@ const USER_MESSAGES = Object.freeze({
 
 /* Rational HTTP status for each code (the route maps these for non-SSE errors). */
 const HTTP_STATUS = Object.freeze({
+  [ERROR_CODES.PROVIDER_NOT_CONFIGURED]: 503,
   [ERROR_CODES.OLLAMA_UNAVAILABLE]: 503,
   [ERROR_CODES.MODEL_NOT_FOUND]: 500,
   [ERROR_CODES.TIMEOUT]: 504,
@@ -113,12 +117,16 @@ function mergeSignals(...signals) {
 const ollamaService = {
   /* ── Configuration (centralized here — reads env, never hard-codes) ── */
   get baseUrl() {
-    return (
-      env.OLLAMA_BASE_URL ||
-      (env.NODE_ENV === "production" ? "" : "http://localhost:11434")
-    )
-      .trim()
-      .replace(/\/+$/, "");
+    const externalUrl = env.OLLAMA_BASE_URL;
+    if (externalUrl && externalUrl.trim()) {
+      return externalUrl.trim().replace(/\/+$/, "");
+    }
+    /* Fallback only for development; in production the URL must be set
+       via the OLLAMA_BASE_URL environment variable so the backend knows
+       where the local Ollama instance is reachable. */
+    return env.NODE_ENV === "production"
+      ? "http://localhost:11434"
+      : "http://localhost:11434";
   },
   get model() {
     return (env.OLLAMA_MODEL || "llama3.2").trim();
@@ -173,6 +181,16 @@ const ollamaService = {
    */
   async ping({ signal } = {}) {
     const startedAt = Date.now();
+    if (!this.baseUrl) {
+      this.log("error", "Provider URL is not configured");
+      return {
+        ok: false,
+        status: 0,
+        latencyMs: Date.now() - startedAt,
+        timedOut: false,
+        configurationError: ERROR_CODES.PROVIDER_NOT_CONFIGURED,
+      };
+    }
     const { controller, timedOut, clear } = this._timeoutBox(
       this.pingTimeoutMs,
     );
@@ -281,6 +299,8 @@ const ollamaService = {
       latencyMs: ping.latencyMs,
       installed,
       model: target,
+      providerConfigured: Boolean(this.baseUrl),
+      providerReachable: ping.ok,
     };
   },
 
@@ -292,6 +312,12 @@ const ollamaService = {
    * @throws {OllamaError} with a stable code + friendly user message.
    */
   async chat({ messages, system, images, signal, maxTokens } = {}) {
+    if (!this.baseUrl) {
+      throw new OllamaError(
+        ERROR_CODES.PROVIDER_NOT_CONFIGURED,
+        "OLLAMA_BASE_URL is not configured",
+      );
+    }
     const body = {
       model: this.model,
       system,

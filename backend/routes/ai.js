@@ -239,6 +239,13 @@ Every answer must be accurate, helpful, clear, safe, and honest. Never claim som
 router.get("/health", async (_req, res) => {
   const enabled = ollamaService.isEnabled();
   const check = await ollamaService.verifyModel();
+  const configuration = !check.providerConfigured
+    ? USER_MESSAGES[ERROR_CODES.PROVIDER_NOT_CONFIGURED]
+    : !check.providerReachable
+      ? USER_MESSAGES[ERROR_CODES.OLLAMA_UNAVAILABLE]
+      : !check.installed
+        ? USER_MESSAGES[ERROR_CODES.MODEL_NOT_FOUND]
+        : "configured";
   res.json({
     success: true,
     configured: enabled && check.ok,
@@ -246,10 +253,9 @@ router.get("/health", async (_req, res) => {
     provider: "ollama",
     model: ollamaService.model,
     modelInstalled: check.installed,
-    configuration:
-      check.ok && enabled
-        ? "configured"
-        : USER_MESSAGES[ERROR_CODES.OLLAMA_UNAVAILABLE],
+    providerConfigured: check.providerConfigured,
+    providerReachable: check.providerReachable,
+    configuration: enabled ? configuration : "AI support is disabled.",
   });
 });
 
@@ -585,15 +591,20 @@ async function streamOllamaChat(
     res.removeListener("close", onClose);
   };
 
-  const preflight = await ollamaService.ping({
+  const preflight = await ollamaService.verifyModel(undefined, {
     signal: abortController.signal,
   });
   if (!preflight.ok) {
     detachListeners();
     if (isClientGone(res)) return;
+    const code = !preflight.providerConfigured
+      ? ERROR_CODES.PROVIDER_NOT_CONFIGURED
+      : !preflight.providerReachable
+        ? ERROR_CODES.OLLAMA_UNAVAILABLE
+        : ERROR_CODES.MODEL_NOT_FOUND;
     return res.status(503).json({
       success: false,
-      message: USER_MESSAGES[ERROR_CODES.OLLAMA_UNAVAILABLE],
+      message: USER_MESSAGES[code],
     });
   }
 

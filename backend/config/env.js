@@ -21,6 +21,23 @@ require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 const stripCredentialWhitespace = (value) =>
   String(value || "").replace(/\s+/g, "");
 
+function normalizeOllamaBaseUrl(value) {
+  const configured = String(value || "").trim();
+  if (!configured) return "";
+  const withProtocol = /^https?:\/\//i.test(configured)
+    ? configured
+    : `http://${configured}`;
+  try {
+    const parsed = new URL(withProtocol);
+    if (!parsed.hostname || !["http:", "https:"].includes(parsed.protocol)) {
+      return "";
+    }
+    return parsed.toString().replace(/\/+$/, "");
+  } catch {
+    return "";
+  }
+}
+
 const smtpUser = String(process.env.SMTP_USER || "").trim();
 const smtpPassword = stripCredentialWhitespace(
   process.env.SMTP_PASSWORD || process.env.SMTP_PASS || "",
@@ -123,12 +140,10 @@ module.exports = {
   AI_MAX_FILE_SIZE_MB: Number(process.env.AI_MAX_FILE_SIZE_MB) || 10,
 
   // Local AI (Ollama) — the only AI provider of the AI Assistant.
-  OLLAMA_BASE_URL: (
+  OLLAMA_BASE_URL: normalizeOllamaBaseUrl(
     process.env.OLLAMA_BASE_URL ||
-    (process.env.NODE_ENV === "production" ? "" : "http://localhost:11434")
-  )
-    .trim()
-    .replace(/\/+$/, ""),
+      (process.env.NODE_ENV === "production" ? "" : "http://localhost:11434"),
+  ),
   OLLAMA_MODEL: (process.env.OLLAMA_MODEL || "llama3.2").trim(),
   OLLAMA_TIMEOUT_MS: Number(process.env.OLLAMA_TIMEOUT_MS) || 120000,
   OLLAMA_PING_TIMEOUT_MS: Number(process.env.OLLAMA_PING_TIMEOUT_MS) || 3000,
