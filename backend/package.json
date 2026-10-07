@@ -15,7 +15,7 @@
     "verify:contact": "node scripts/verify-contact-form.js",
     "diagnose:forgot": "node scripts/diagnose-forgot-password.js",
     "verify:password-reset": "node scripts/verify-password-reset.js",
-    "verify:ollama": "node scripts/verify-ollama.js",
+    "verify:ai": "node scripts/verify-ai.js",
     "verify:session": "node scripts/verify-session-persistence.js",
     "reset:users": "node resetUsers.js",
     "migrate:student-to-requester": "node migrateStudentToRequester.js"

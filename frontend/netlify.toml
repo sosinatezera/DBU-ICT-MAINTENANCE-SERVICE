@@ -2,7 +2,7 @@
   publish = "."
   publish_dir = "."
 
-[[redirects]]
-  from = "/*"
-  to = "/views/index.html"
-  status = 200
+# Catch-all removed — this is a multi-page HTML app with file-based routing.
+# The Express server (server.js) handles routing to views/.
+# Redirecting all routes to /views/index.html would break every page.
+# See _redirects for the explicit root rewrite only.

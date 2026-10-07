@@ -12,8 +12,8 @@
              function apiOrigin()   -> returns the origin root
 
    Resolution order:
-   1. Explicit override via window.__API_BASE__ (set BEFORE this file loads)
-   2. PRODUCTION_API_MAP hostname lookup
+   1. Production hostname mapping (cannot be overridden)
+   2. Explicit override via window.__API_BASE__ (development/custom hosts)
    3. Localhost fallback (development)
    4. Known backend URL as safety net for hosting platforms
    ============================================================ */
@@ -27,27 +27,25 @@ var __KNOWN_BACKEND_URL =
 
 /* Production URL mapping: Netlify frontend -> Render backend */
 var PRODUCTION_API_MAP = {
-  "simms-ict-maintenance-system.netlify.app": __KNOWN_BACKEND_URL,
-  "smartcomputer-maintenance-system.netlify.app": __KNOWN_BACKEND_URL,
-  "smartcomputermaintenanceservice.netlify.app": __KNOWN_BACKEND_URL,
+  "simms-mau.netlify.app": __KNOWN_BACKEND_URL,
 };
 
 var API_BASE = (function () {
-  /* 1. Explicit deploy-time override (see comments above). */
+  var protocol = window.location.protocol;
+  var hostname = window.location.hostname;
+
+  /* Production domains must never inherit a localhost deploy-time override. */
+  if (PRODUCTION_API_MAP[hostname]) {
+    return PRODUCTION_API_MAP[hostname];
+  }
+
+  /* 2. Explicit override is supported only outside mapped production domains. */
   if (
     typeof window !== "undefined" &&
     typeof window.__API_BASE__ === "string" &&
     window.__API_BASE__
   ) {
     return window.__API_BASE__;
-  }
-
-  var protocol = window.location.protocol;
-  var hostname = window.location.hostname;
-
-  /* 2. Production: map known frontend domains to the Render backend origin. */
-  if (PRODUCTION_API_MAP[hostname]) {
-    return PRODUCTION_API_MAP[hostname];
   }
 
   /* 3. Local development uses the backend's configured default port. */
@@ -123,7 +121,7 @@ var API_UPLOAD_BASE = apiOrigin();
     if (window.__aiSupportLoaded || window.__aiSupportLoading) return;
     window.__aiSupportLoading = true;
     var script = document.createElement("script");
-    script.src = "/assets/js/ai-support.js?v=26";
+    script.src = "/assets/js/ai-support.js?v=29";
     script.defer = true;
     script.onload = function () {
       window.__aiSupportLoading = false;

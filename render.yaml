@@ -10,6 +10,7 @@
 #   - JWT_SECRET       (long random string, e.g. `openssl rand -hex 64`)
 #   - SMTP_USER        (Gmail address that sends the mail)
 #   - SMTP_PASSWORD    (16-char Google App Password for that address)
+#   - GEMINI_API_KEY   (Google AI Studio free-tier key for the AI Assistant — no credit card)
 #
 # The `sync: false` entries below keep these keys in the blueprint WITHOUT
 # a committed value, so deploys never overwrite the dashboard-set secrets.
@@ -32,24 +33,28 @@ services:
   - type: web
     name: dbu-ict-maintenance-service
     env: node
+    plan: free
     buildCommand: cd backend && npm install
     startCommand: cd backend && node server.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: OLLAMA_BASE_URL
-        fromService:
-          name: simms-ollama
-          type: pserv
-          property: hostport
-      - key: OLLAMA_MODEL
-        value: llama3.2
+      # Master AI uses Google Gemini AI Studio Free Tier only. GEMINI_API_KEY
+      # is a secret: create a free key at https://aistudio.google.com/apikey
+      # and set it in the Render Dashboard (service -> Environment), NOT here.
+      - key: AI_PROVIDER
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: GEMINI_API_KEY
+        sync: false
+        value: ""
       - key: AI_SUPPORT_ENABLED
         value: "true"
       - key: FRONTEND_URL
-        value: https://simms-ict-maintenance-system.netlify.app
+        value: https://simms-mau.netlify.app
       - key: FRONTEND_ORIGINS
-        value: https://simms-ict-maintenance-system.netlify.app,https://smartcomputer-maintenance-system.netlify.app,https://smartcomputermaintenanceservice.netlify.app
+        value: https://simms-mau.netlify.app
       # Reverse proxy: Render terminates TLS in front of this service, so the
       # socket address is Render's for every caller. Trusting that single hop
       # is what makes per-IP rate limiting work at all. A NUMBER is required —
@@ -93,25 +98,3 @@ services:
       - key: JWT_SECRET
         sync: false
         value: ""
-
-  # Private CPU Ollama. Render supplies its real private host:port to the
-  # backend via fromService above. Set this service to the backend's region
-  # before syncing; private networking requires both services in one region.
-  # Compute and persistent storage are paid Render resources.
-  - type: pserv
-    name: simms-ollama
-    runtime: docker
-    dockerfilePath: ./deploy/ollama/Dockerfile
-    dockerContext: .
-    plan: 2c-4g
-    disk:
-      name: simms-ollama-models
-      mountPath: /root/.ollama
-      sizeGB: 10
-    envVars:
-      - key: OLLAMA_HOST
-        value: 0.0.0.0:11434
-      - key: OLLAMA_MODELS
-        value: /root/.ollama/models
-      - key: OLLAMA_MODEL
-        value: llama3.2

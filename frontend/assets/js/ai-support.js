@@ -6,7 +6,7 @@
       "DOMContentLoaded",
       () => {
         const script = document.createElement("script");
-        script.src = "/assets/js/ai-support.js?v=26";
+        script.src = "/assets/js/ai-support.js?v=29";
         document.head.appendChild(script);
       },
       { once: true },
@@ -33,6 +33,26 @@
     } finally {
       window.clearTimeout(timeoutId);
     }
+  };
+
+  const chatRequestError = (error, timedOut = false) => {
+    if (error?.name === "AbortError") {
+      return timedOut
+        ? "The AI request timed out. Please try again."
+        : "Generation stopped. You can try again.";
+    }
+    if (error instanceof TypeError || error?.name === "NetworkError") {
+      let backend = API_BASE_RESOLVED;
+      try {
+        backend = new URL(API_BASE_RESOLVED).origin;
+      } catch (_) {}
+      console.error(
+        `[ai-support] Chat request could not reach ${backend}. The backend may be unavailable or the browser may have blocked the request (CORS/network).`,
+        error,
+      );
+      return `Cannot reach the Master AI backend at ${backend}. The service may be unavailable or the browser may have blocked the request (CORS/network). Please try again later.`;
+    }
+    return error?.message || "Sorry, I couldn't process that request.";
   };
 
   const create = (tag, className, text) => {
@@ -83,7 +103,7 @@
       </div>
       <button type="button" class="ai-support-close" aria-label="Close AI Support"><i class="bi bi-x-lg"></i></button>
     </header>
-    <div class="ai-support-intro"><strong>How can I help?</strong><span>Ask about ICT maintenance, everyday technology, or a general question.</span></div>
+    <div class="ai-support-intro"><strong>How can I help?</strong><span>Ask about this system’s roles and workflows, or ask a general question.</span></div>
     <div class="ai-support-suggestions" aria-label="Suggested questions"></div>
     <div class="ai-support-messages" role="log" aria-live="polite" aria-label="AI support conversation"></div>
     <div class="ai-support-attachments" id="aiSupportAttachments"></div>
@@ -289,9 +309,10 @@
     } catch (error) {
       thinking.remove();
       conversation.pop();
-      const messageText = error?.name === "AbortError"
-        ? "Generation stopped. You can try again."
-        : error?.message || "Sorry, I couldn't process that request.";
+      const messageText =
+        error?.name === "AbortError"
+          ? "Generation stopped. You can try again."
+          : error?.message || "Sorry, I couldn't process that request.";
       if (selectedFiles.length) setFileStatus(messageText);
       if (streamed) {
         streamed.set(messageText);
@@ -389,6 +410,8 @@
     };
   };
   const suggestedQuestions = [
+    "How does a requester submit and track a maintenance ticket?",
+    "Which system actions are restricted to ICT Admins?",
     "My computer is running very slowly. What should I check?",
     "My Wi-Fi is connected but there is no internet.",
     "How do I fix a printer that is not printing?",
@@ -522,7 +545,7 @@
   const showWelcome = () => {
     if (!messages.children.length)
       addMessage(
-        "Hi! I am Master AI, your general-purpose assistant. Ask me anything about technology, education, programming, mathematics, science, writing, troubleshooting, or general knowledge.",
+        "Hi! I’m Master AI, here to help with the Smart ICT Maintenance Management System and general questions. For project questions, I’ll use verified system information and tell you when I don’t have enough context.",
         "ai",
       );
   };
@@ -675,12 +698,7 @@
     } catch (error) {
       thinking.remove();
       conversation.pop();
-      const messageText =
-        error?.name === "AbortError"
-          ? timedOut
-            ? "The AI request timed out. Please try again."
-            : "Generation stopped. You can try again."
-          : error.message || "Sorry, I couldn't process that request.";
+      const messageText = chatRequestError(error, timedOut);
       if (selectedFiles.length) setFileStatus(messageText);
       if (streamed) {
         streamed.set(messageText);

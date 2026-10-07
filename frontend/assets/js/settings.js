@@ -40,12 +40,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* ── Load all data on init ────────────────────────────── */
   let currentUser = Auth.getUser();
   let currentSettings = null;
+  let profileSaving = false;
+  let notificationSettingsSaving = false;
   /* Guards against the data-loss case below: if /settings could not be read,
      the form fields keep their HTML defaults (empty strings, unchecked
      boxes). Saving in that state would PUT the defaults over the real stored
      settings and silently wipe them. Until the read succeeds, the settings
      forms are inert. */
   let settingsLoaded = false;
+  let generalSettingsSaving = false;
 
   function settingsNotLoaded(alertId) {
     showAlert(
@@ -65,6 +68,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     });
   }
+
+  lockSettingsForms(true);
 
   /* Attach real-time validation to profile form */
   attachRealTimeValidation("profileForm", [
@@ -87,6 +92,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const settingsRes = await apiRequest("/settings");
     currentSettings = settingsRes.data;
     settingsLoaded = true;
+    lockSettingsForms(false);
   } catch (err) {
     showToast("Failed to load system settings.", "danger");
     lockSettingsForms(true);
@@ -116,8 +122,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     setVal("settingOrgName", currentSettings.organizationName);
     setVal("settingSystemDesc", currentSettings.systemDescription);
     const defaultLang =
-      currentSettings.defaultLanguage === "en" ||
-      currentSettings.defaultLanguage === "am"
+      ["en", "am", "om"].includes(currentSettings.defaultLanguage)
         ? currentSettings.defaultLanguage
         : "en";
     setVal("settingLanguage", defaultLang);
@@ -185,9 +190,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     ?.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (!settingsLoaded) return settingsNotLoaded("settingsAlert");
+      if (generalSettingsSaving) return;
+      generalSettingsSaving = true;
       setLoading("saveGeneralBtn", "saveGeneralSpinner", true);
       try {
-        await apiRequest("/settings/general", {
+        const response = await apiRequest("/settings/general", {
           method: "PUT",
           body: {
             systemName: getVal("settingSystemName"),
@@ -198,16 +205,22 @@ document.addEventListener("DOMContentLoaded", async () => {
             dateFormat: getVal("settingDateFormat"),
           },
         });
+        if (response.success !== true || !response.data) {
+          throw new Error("Settings update was not confirmed by the server.");
+        }
+        currentSettings = response.data;
         showAlert(
           "settingsAlert",
           "General settings saved successfully.",
           "success",
         );
-        showToast("General settings saved.", "success");
+        showToast("General settings saved successfully.", "success");
         if (window.__ictPrefs) window.__ictPrefs.refresh();
       } catch (err) {
         showAlert("settingsAlert", err.message, "danger");
+        showToast(err.message || "Failed to save general settings.", "danger");
       } finally {
+        generalSettingsSaving = false;
         setLoading("saveGeneralBtn", "saveGeneralSpinner", false);
       }
     });
@@ -220,45 +233,80 @@ document.addEventListener("DOMContentLoaded", async () => {
     ?.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (!settingsLoaded) return settingsNotLoaded("settingsAlert");
+      if (notificationSettingsSaving) return;
+      notificationSettingsSaving = true;
+      const saveLabel = document.getElementById("saveNotifLabel");
+      const originalSaveLabel =
+        saveLabel?.textContent || "Save Notification Preferences";
+      if (saveLabel) saveLabel.textContent = "Saving...";
       setLoading("saveNotifBtn", "saveNotifSpinner", true);
+      const submittedPreferences = {
+        notifNewRequest: getCheck("notifNewRequest"),
+        notifAssignment: getCheck("notifAssignment"),
+        notifStatusChange: getCheck("notifStatusChange"),
+        notifCompletion: getCheck("notifCompletion"),
+        notifSystemSecurity: getCheck("notifSystemSecurity"),
+        emailNotifications: getCheck("emailNotifications"),
+      };
       try {
-        await apiRequest("/settings/notifications", {
+        const response = await apiRequest("/settings/notifications", {
           method: "PUT",
-          body: {
-            notifNewRequest: getCheck("notifNewRequest"),
-            notifAssignment: getCheck("notifAssignment"),
-            notifStatusChange: getCheck("notifStatusChange"),
-            notifCompletion: getCheck("notifCompletion"),
-            notifSystemSecurity: getCheck("notifSystemSecurity"),
-            emailNotifications: getCheck("emailNotifications"),
-          },
+          body: submittedPreferences,
         });
+        const preferencesConfirmed =
+          response?.success === true &&
+          response.data &&
+          Object.entries(submittedPreferences).every(
+            ([key, value]) => response.data[key] === value,
+          );
+        if (!preferencesConfirmed) {
+          throw new Error(
+            "Server response did not confirm all notification preferences.",
+          );
+        }
+        currentSettings = response.data;
+        Object.entries(submittedPreferences).forEach(([key, value]) =>
+          setCheck(key, response.data[key]),
+        );
         if (notificationSound && window.NotificationSound) {
           window.NotificationSound.setEnabled(notificationSound.checked);
         }
-        showAlert(
-          "settingsAlert",
+        showToast(
           "Notification preferences saved successfully.",
           "success",
         );
-        showToast("Notification settings saved.", "success");
       } catch (err) {
-        showAlert("settingsAlert", err.message, "danger");
+        console.error(
+          "Failed to save notification preferences:",
+          err?.message || err,
+        );
+        showToast(
+          "Failed to save notification preferences. Please try again.",
+          "danger",
+        );
       } finally {
+        notificationSettingsSaving = false;
         setLoading("saveNotifBtn", "saveNotifSpinner", false);
+        if (saveLabel) {
+          saveLabel.textContent = originalSaveLabel;
+        }
       }
     });
 
   /* ═══════════════════════════════════════════════════════
      CHANGE PASSWORD
      ═══════════════════════════════════════════════════════ */
+  let passwordUpdating = false;
   document
     .getElementById("changePasswordForm")
     ?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const current = getVal("currentPassword");
-      const newPw = getVal("newPassword");
-      const confirm = getVal("confirmPassword");
+      if (passwordUpdating) return;
+
+      const current = document.getElementById("currentPassword").value;
+      const newPw = document.getElementById("newPassword").value;
+      const confirm = document.getElementById("confirmPassword").value;
+      document.getElementById("passwordAlert")?.classList.add("d-none");
 
       /* Validate fields */
       let hasError = false;
@@ -278,39 +326,80 @@ document.addEventListener("DOMContentLoaded", async () => {
         clearFieldValidation("newPassword");
       }
 
-      const matchErr = Validators.passwordMatch(newPw, confirm);
-      if (matchErr) {
-        showFieldError("confirmPassword", matchErr);
+      if (!confirm) {
+        showFieldError("confirmPassword", "Please confirm your password.");
+        hasError = true;
+      } else if (newPw !== confirm) {
+        showFieldError(
+          "confirmPassword",
+          "New password and confirmation password do not match.",
+        );
         hasError = true;
       } else {
-        showFieldValid("confirmPassword");
+        clearFieldValidation("confirmPassword");
       }
 
       if (newPw === current) {
-        showAlert(
-          "passwordAlert",
+        showFieldError(
+          "newPassword",
           "New password must be different from the current password.",
-          "warning",
         );
         hasError = true;
       }
 
       if (hasError) return;
 
+      passwordUpdating = true;
       setLoading("savePasswordBtn", "savePasswordSpinner", true);
+      document.getElementById("savePasswordLabel").textContent = "Updating...";
       try {
-        await apiRequest("/users/change-password", {
+        const response = await apiRequest("/users/change-password", {
           method: "PUT",
           body: { currentPassword: current, newPassword: newPw },
         });
+        if (response.success !== true) {
+          throw new Error("Password update was not confirmed by the server.");
+        }
+
         showAlert("passwordAlert", "Password updated successfully.", "success");
-        showToast("Password updated.", "success");
+        showToast("Password updated successfully.", "success");
         document.getElementById("changePasswordForm").reset();
+        ["currentPassword", "newPassword", "confirmPassword"].forEach((id) =>
+          clearFieldValidation(id),
+        );
+        document
+          .querySelectorAll("#changePasswordForm [data-toggle-password]")
+          .forEach((button) => {
+            const target = document.getElementById(
+              button.getAttribute("data-toggle-password"),
+            );
+            if (target) target.type = "password";
+            button.setAttribute("aria-pressed", "false");
+            button.setAttribute(
+              "aria-label",
+              `Show ${target?.id === "currentPassword" ? "current" : target?.id === "newPassword" ? "new" : "confirmation"} password`,
+            );
+            const icon = button.querySelector("i");
+            if (icon) icon.className = "bi bi-eye";
+          });
         document.getElementById("passwordMatchText").textContent = "";
       } catch (err) {
-        showAlert("passwordAlert", err.message, "danger");
+        let message = "Failed to update password. Please try again.";
+        if (err.status === 400 || err.status === 422) {
+          message = err.message;
+          if (message === "Current password is incorrect.") {
+            showFieldError("currentPassword", message);
+          } else if (message) {
+            showFieldError("newPassword", message);
+          }
+        }
+        showAlert("passwordAlert", message, "danger");
+        showToast(message, "danger");
       } finally {
+        passwordUpdating = false;
         setLoading("savePasswordBtn", "savePasswordSpinner", false);
+        document.getElementById("savePasswordLabel").textContent =
+          "Update Password";
       }
     });
 
@@ -330,8 +419,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (a === b) {
       matchText.textContent = "Passwords match.";
       matchText.className = "form-text text-success";
+      clearFieldValidation("confirmPassword");
     } else {
-      matchText.textContent = "Passwords do not match.";
+      matchText.textContent =
+        "New password and confirmation password do not match.";
       matchText.className = "form-text text-danger";
     }
   }
@@ -354,6 +445,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     .getElementById("profileForm")
     ?.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (profileSaving) return;
 
       /* Validate fields */
       let hasError = false;
@@ -376,7 +468,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (hasError) return;
 
+      profileSaving = true;
       setLoading("saveProfileBtn", "saveProfileSpinner", true);
+      document.getElementById("saveProfileLabel").textContent = "Saving...";
       try {
         const res = await apiRequest("/users/profile", {
           method: "PUT",
@@ -389,44 +483,56 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         /* Update local session */
         const stored = Auth.getUser();
-        if (stored) {
-          stored.fullName = getVal("profileName");
-          Auth.setUser(stored);
-        }
+        currentUser = { ...(stored || currentUser), ...res.data };
+        Auth.setUser(currentUser);
 
         /* Refresh the profile header */
-        if (res.data) {
-          currentUser = res.data;
-          populateProfile(currentUser);
-          populateSecurity(currentUser);
-          persistProfilePhotoState();
-        }
+        populateProfile(currentUser);
+        populateSecurity(currentUser);
+        persistProfilePhotoState();
 
         showAlert("profileAlert", "Profile updated successfully.", "success");
-        showToast("Profile updated.", "success");
+        showToast("Profile updated successfully.", "success");
       } catch (err) {
-        showAlert("profileAlert", err.message, "danger");
+        showAlert(
+          "profileAlert",
+          "Failed to update profile. Please try again.",
+          "danger",
+        );
+        showToast("Failed to update profile. Please try again.", "danger");
       } finally {
+        profileSaving = false;
         setLoading("saveProfileBtn", "saveProfileSpinner", false);
+        document.getElementById("saveProfileLabel").textContent =
+          "Save Profile";
       }
     });
 
   /* ═══════════════════════════════════════════════════════
      PASSWORD TOGGLE
      ═══════════════════════════════════════════════════════ */
-  document.querySelectorAll("[data-toggle-password]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = document.getElementById(
-        btn.getAttribute("data-toggle-password"),
-      );
-      if (!target) return;
-      const isPassword = target.type === "password";
-      target.type = isPassword ? "text" : "password";
-      btn.querySelector("i").className = isPassword
-        ? "bi bi-eye-slash"
-        : "bi bi-eye";
+  document
+    .querySelectorAll("#changePasswordForm [data-toggle-password]")
+    .forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        const targetId = button.getAttribute("data-toggle-password");
+        const target = document.getElementById(targetId);
+        if (!target) return;
+
+        const isPassword = target.type === "password";
+        target.type = isPassword ? "text" : "password";
+        button.setAttribute("aria-pressed", String(isPassword));
+        button.setAttribute(
+          "aria-label",
+          `${isPassword ? "Hide" : "Show"} ${targetId === "currentPassword" ? "current" : targetId === "newPassword" ? "new" : "confirmation"} password`,
+        );
+        const icon = button.querySelector("i");
+        if (icon) {
+          icon.className = isPassword ? "bi bi-eye-slash" : "bi bi-eye";
+        }
+      });
     });
-  });
 
   /* ═══════════════════════════════════════════════════════
      PROFILE PHOTO — upload / image URL / remove
@@ -434,36 +540,69 @@ document.addEventListener("DOMContentLoaded", async () => {
      ═══════════════════════════════════════════════════════ */
   const photoInput = document.getElementById("profilePhotoUpload");
   const urlInput = document.getElementById("profileImageUrl");
+  const uploadPhotoBtn = document.getElementById("uploadProfilePhotoBtn");
+  const uploadPhotoLabel = document.getElementById("uploadProfilePhotoLabel");
   const removeBtn = document.getElementById("removeProfilePhotoBtn");
+  const profilePhotoMimeTypes = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+  };
+  const maxProfilePhotoSize = 1.5 * 1024 * 1024;
+  let selectedProfilePhoto = null;
+  let profilePhotoPreviewUrl = null;
+  let profilePhotoUploading = false;
+
+  function releaseProfilePhotoPreview() {
+    if (profilePhotoPreviewUrl) {
+      URL.revokeObjectURL(profilePhotoPreviewUrl);
+      profilePhotoPreviewUrl = null;
+    }
+  }
 
   photoInput?.addEventListener("change", () => {
     const file = photoInput.files && photoInput.files[0];
     if (!file) return;
 
-    if (!/^image\//.test(file.type)) {
-      showAlert(
-        "profileAlert",
-        "Please choose an image file (JPG, PNG or WebP).",
-        "warning",
-      );
+    const extension = file.name
+      .slice(file.name.lastIndexOf("."))
+      .toLowerCase();
+    if (profilePhotoMimeTypes[extension] !== file.type) {
+      selectedProfilePhoto = null;
       photoInput.value = "";
+      releaseProfilePhotoPreview();
+      applyProfileAvatar(currentUser, document.getElementById("profileAvatar"));
+      showAlert("profileAlert", "Please select a valid image file.", "warning");
       return;
     }
-    if (file.size > 1.5 * 1024 * 1024) {
-      showAlert("profileAlert", "Image must be 1.5 MB or smaller.", "warning");
+    if (file.size > maxProfilePhotoSize) {
+      selectedProfilePhoto = null;
       photoInput.value = "";
+      releaseProfilePhotoPreview();
+      applyProfileAvatar(currentUser, document.getElementById("profileAvatar"));
+      showAlert(
+        "profileAlert",
+        "Profile photo must be 1.5 MB or smaller.",
+        "warning",
+      );
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      profilePhoto.uploaded = e.target.result;
-      profilePhoto.url = "";
-      if (urlInput) urlInput.value = "";
-      persistProfilePhotoState();
-    };
-    reader.readAsDataURL(file);
+    selectedProfilePhoto = file;
+    releaseProfilePhotoPreview();
+    profilePhotoPreviewUrl = URL.createObjectURL(file);
+    const avatar = document.getElementById("profileAvatar");
+    const avatarImage = avatar?.querySelector(".profile-avatar-image");
+    const avatarInitials = avatar?.querySelector(".profile-avatar-initials");
+    if (avatarImage && avatarInitials) {
+      avatarImage.src = profilePhotoPreviewUrl;
+      avatarImage.hidden = false;
+      avatarInitials.hidden = true;
+    }
+    document.getElementById("profileAlert")?.classList.add("d-none");
   });
+  if (photoInput) photoInput.disabled = false;
 
   urlInput?.addEventListener("input", () => {
     if (profilePhoto.uploaded) return; /* uploaded photo has priority */
@@ -471,12 +610,115 @@ document.addEventListener("DOMContentLoaded", async () => {
     persistProfilePhotoState();
   });
 
+  uploadPhotoBtn?.addEventListener("click", async () => {
+    if (profilePhotoUploading) return;
+    if (!selectedProfilePhoto) {
+      showAlert(
+        "profileAlert",
+        "Please choose a profile photo first.",
+        "warning",
+      );
+      return;
+    }
+
+    profilePhotoUploading = true;
+    uploadPhotoBtn.disabled = true;
+    uploadPhotoLabel.textContent = "Uploading...";
+    try {
+      const formData = new FormData();
+      formData.append("profileImage", selectedProfilePhoto);
+      const response = await apiRequest("/users/profile-image", {
+        method: "POST",
+        body: formData,
+        isFormData: true,
+      });
+      if (!response.data?.profileImage) {
+        throw new Error("Profile photo upload returned no saved image.");
+      }
+
+      currentUser = { ...currentUser, profileImage: response.data.profileImage };
+      Auth.setUser(currentUser);
+      profilePhoto = { uploaded: null, url: "" };
+      setProfileImagePrefs(currentUser, profilePhoto);
+      if (urlInput) urlInput.value = "";
+      selectedProfilePhoto = null;
+      if (photoInput) photoInput.value = "";
+      releaseProfilePhotoPreview();
+      applyProfileAvatar(currentUser, document.getElementById("profileAvatar"));
+      if (typeof populateUserInfo === "function") populateUserInfo();
+      showAlert(
+        "profileAlert",
+        "Profile photo uploaded successfully.",
+        "success",
+      );
+      showToast("Profile photo uploaded successfully.", "success");
+    } catch (err) {
+      showAlert(
+        "profileAlert",
+        "Failed to upload profile photo. Please try again.",
+        "danger",
+      );
+      showToast("Failed to upload profile photo. Please try again.", "danger");
+    } finally {
+      profilePhotoUploading = false;
+      uploadPhotoBtn.disabled = false;
+      uploadPhotoLabel.textContent = "Upload Profile Photo";
+    }
+  });
+  if (uploadPhotoBtn) uploadPhotoBtn.disabled = false;
+
+  const removePhotoModalElement = document.getElementById(
+    "removeProfilePhotoModal",
+  );
+  const removePhotoModal =
+    removePhotoModalElement && typeof bootstrap !== "undefined"
+      ? bootstrap.Modal.getOrCreateInstance(removePhotoModalElement)
+      : null;
+  const confirmRemovePhotoBtn = document.getElementById(
+    "confirmRemoveProfilePhotoBtn",
+  );
+
   removeBtn?.addEventListener("click", () => {
-    profilePhoto = { uploaded: null, url: "" };
-    if (photoInput) photoInput.value = "";
-    if (urlInput) urlInput.value = "";
-    persistProfilePhotoState();
-    showToast("Custom photo removed. Default ADMIN image restored.", "info");
+    removePhotoModal?.show();
+  });
+
+  confirmRemovePhotoBtn?.addEventListener("click", async () => {
+    if (profilePhotoUploading) return;
+    confirmRemovePhotoBtn.disabled = true;
+    try {
+      if (currentUser.profileImage) {
+        await apiRequest("/users/profile-image", { method: "DELETE" });
+      }
+      currentUser = { ...currentUser, profileImage: null };
+      Auth.setUser(currentUser);
+      profilePhoto = { uploaded: null, url: "" };
+      setProfileImagePrefs(currentUser, profilePhoto);
+      selectedProfilePhoto = null;
+      if (photoInput) photoInput.value = "";
+      if (urlInput) urlInput.value = "";
+      releaseProfilePhotoPreview();
+      applyProfileAvatar(currentUser, document.getElementById("profileAvatar"));
+      if (typeof populateUserInfo === "function") populateUserInfo();
+      showAlert(
+        "profileAlert",
+        "Profile photo removed successfully.",
+        "success",
+      );
+      showToast("Profile photo removed successfully.", "success");
+    } catch (err) {
+      showAlert(
+        "profileAlert",
+        "Failed to remove profile photo. Please try again.",
+        "danger",
+      );
+      showToast(
+        "Failed to remove profile photo. Please try again.",
+        "danger",
+      );
+    } finally {
+      confirmRemovePhotoBtn.disabled = false;
+      removePhotoModal?.hide();
+    }
   });
 
   /* ═══════════════════════════════════════════════════════

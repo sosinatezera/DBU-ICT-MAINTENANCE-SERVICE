@@ -9,6 +9,7 @@ yarn-error.log*
 .env.local
 .env.development
 .env.production
+/backend/.env
 
 # Logs
 logs/

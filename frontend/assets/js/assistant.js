@@ -1,7 +1,7 @@
 /* ============================================================
    assistant.js — Dedicated Smart ICT AI Assistant page
-  Talks to the configured Ollama backend via /api/assistant/chat
-   (SSE streaming with a non-stream JSON fallback).
+   Talks to the backend Gemini AI service via /api/ai/chat (SSE streaming
+   with a non-stream JSON fallback).
    ============================================================ */
 
 (() => {
@@ -26,6 +26,26 @@
     } finally {
       window.clearTimeout(timeoutId);
     }
+  };
+
+  const chatRequestError = (error, timedOut) => {
+    if (error?.name === "AbortError") {
+      return timedOut
+        ? "The AI request timed out. Please try again."
+        : "Generation stopped. You can try again.";
+    }
+    if (error instanceof TypeError || error?.name === "NetworkError") {
+      let backend = API_BASE_RESOLVED;
+      try {
+        backend = new URL(API_BASE_RESOLVED).origin;
+      } catch (_) {}
+      console.error(
+        `[assistant] Chat request could not reach ${backend}. The backend may be unavailable or the browser may have blocked the request (CORS/network).`,
+        error,
+      );
+      return `Cannot reach the Master AI backend at ${backend}. The service may be unavailable or the browser may have blocked the request (CORS/network). Please try again later.`;
+    }
+    return error?.message || "Sorry, I couldn't process that request.";
   };
 
   /* ── DOM refs ────────────────────────────────────────────── */
@@ -265,10 +285,10 @@
     if (!notice) return;
     if (authUser) {
       notice.hidden = false;
-      notice.innerHTML = `<i class="bi bi-shield-check me-1" aria-hidden="true"></i>Signed in as <strong>${escapeHtml(authUser.name || "user")}</strong> — answers are personalised to your ${escapeHtml(authUser.role || "role")} account.`;
+      notice.innerHTML = `<i class="bi bi-shield-check me-1" aria-hidden="true"></i>Signed in as <strong>${escapeHtml(authUser.name || "user")}</strong> — live records are limited to data available for your ${escapeHtml(authUser.role || "role")} role.`;
     } else {
       notice.hidden = false;
-      notice.innerHTML = `<i class="bi bi-info-circle me-1" aria-hidden="true"></i>Signed-out preview — <a href="/views/login.html">sign in</a> to get answers about your own maintenance requests and assets.`;
+      notice.innerHTML = `<i class="bi bi-info-circle me-1" aria-hidden="true"></i>Signed-out preview — <a href="/views/login.html">sign in</a> for answers based on records made available to your role.`;
     }
   };
 
@@ -280,9 +300,9 @@
       ? "What is the current status of my tickets?"
       : "How can I track the status of my request?",
     authUser
-      ? "Which ICT assets are currently under maintenance?"
+      ? "Which asset records can Master AI access for my role?"
       : "What ICT services does the platform offer?",
-    "How often should printers be serviced preventively?",
+    "Which system actions are restricted to ICT Admins?",
   ].filter(Boolean);
 
   let welcomeEl = null;
@@ -305,7 +325,7 @@
     );
     const userBox = create("div", "assistant-welcome-user");
     userBox.innerHTML =
-      '<i class="bi bi-stars me-1" aria-hidden="true"></i>Ask a general question or choose a suggestion below.';
+      '<i class="bi bi-stars me-1" aria-hidden="true"></i>Ask about this system or choose a suggestion below.';
     const chips = create("div", "assistant-suggestions");
     suggestedQuestions.forEach((q) => {
       const chip = create("button", "assistant-suggestion", q);
@@ -534,7 +554,7 @@
       const attachmentPayloads = await Promise.all(
         selectedFiles.map(readFileAsAttachment),
       );
-      const response = await fetch(`${API_BASE_RESOLVED}/assistant/chat`, {
+      const response = await fetch(`${API_BASE_RESOLVED}/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -622,7 +642,6 @@
         const result = await response.json().catch(() => ({}));
         if (!response.ok) {
           const msg = result && result.message;
-          if (msg && /ollama|model/i.test(String(msg))) throw new Error(msg);
           throw new Error(
             msg || "AI Assistant request failed. Please try again.",
           );
@@ -647,12 +666,7 @@
     } catch (error) {
       thinking.remove();
       session.conversation.pop();
-      const msg =
-        error?.name === "AbortError"
-          ? timedOut
-            ? "The AI request timed out. Please try again."
-            : "Generation stopped. You can try again."
-          : error?.message || "Sorry, I couldn't process that request.";
+      const msg = chatRequestError(error, timedOut);
       if (selectedFiles.length) setAttachmentStatus(msg);
       if (streamed) {
         streamed.row.classList.add("is-error");

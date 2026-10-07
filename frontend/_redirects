@@ -1,1 +1,7 @@
-/*  /views/index.html   200
+# Multi-page HTML app — file-based routing. Root redirect only.
+/ /views/index.html 200
+
+# SPA redirects removed — this is a multi-page HTML app with file-based routing.
+# The Express server (server.js) handles routing to views/*. Redirecting all
+# routes to /views/index.html would break every page in the application.
+# If a catch-all redirect is needed for some reason, restore the line above.

@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <link rel="stylesheet" href="/assets/css/theme.css" />
-  <script src="/assets/js/api-config.js?v=2"></script>
+  <script src="/assets/js/api-config.js?v=4"></script>
 </head>
 
 <body class="auth-body">
@@ -193,7 +193,12 @@
       let res;
       let data;
       const controller = new AbortController();
-      const timer = setTimeout( () => controller.abort(), 15000 );
+      /* Netlify -> Render is cross-origin (POST triggers a CORS preflight) and
+         Render's FREE tier cold-starts sleeping instances in 30-60s. 15s was
+         too short: a waking instance aborted here and the raw error was
+         indistinguishable from a CORS/network block. 30s still bounds the wait
+         without letting a hung request spin forever. */
+      const timer = setTimeout( () => controller.abort(), 30000 );
       try
       {
         res = await fetch( `${ API_BASE }/auth/login`, {
@@ -206,9 +211,20 @@
         const raw = await res.text();
         try { data = raw ? JSON.parse( raw ) : {}; }
         catch ( _ ) { data = {}; }
-      } catch
+      } catch ( err )
       {
-        showAlert( 'The server did not respond. Please retry.', 'warning' );
+        /* The ONLY abort source here is the timer above, so AbortError means
+           the request exceeded the budget (cold start / slow provider), not a
+           browser CORS block. Everything else is a transport failure — for
+           cross-origin requests that is almost always CORS (the deployment
+           does not allow Origin: https://simms-mau.netlify.app). */
+        if ( err && err.name === 'AbortError' )
+        {
+          showAlert( 'The server took too long to respond — the free-tier backend may still be waking up. Please try again in a moment.', 'warning' );
+        } else
+        {
+          showAlert( 'The server did not respond. This is usually a connection (CORS) problem — check the browser Network tab for the /api/auth/login request.', 'danger' );
+        }
         setLoading( false );
         return;
       } finally

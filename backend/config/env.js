@@ -21,23 +21,6 @@ require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 const stripCredentialWhitespace = (value) =>
   String(value || "").replace(/\s+/g, "");
 
-function normalizeOllamaBaseUrl(value) {
-  const configured = String(value || "").trim();
-  if (!configured) return "";
-  const withProtocol = /^https?:\/\//i.test(configured)
-    ? configured
-    : `http://${configured}`;
-  try {
-    const parsed = new URL(withProtocol);
-    if (!parsed.hostname || !["http:", "https:"].includes(parsed.protocol)) {
-      return "";
-    }
-    return parsed.toString().replace(/\/+$/, "");
-  } catch {
-    return "";
-  }
-}
-
 const smtpUser = String(process.env.SMTP_USER || "").trim();
 const smtpPassword = stripCredentialWhitespace(
   process.env.SMTP_PASSWORD || process.env.SMTP_PASS || "",
@@ -134,20 +117,28 @@ module.exports = {
   CONTACT_NOTIFICATION_CONFIGURED:
     smtpStatus.configured && adminEmailStatus.configured,
 
-  // AI support (server-side only; uses the local Ollama server. No OpenAI or
-  // any cloud AI is required anywhere in the AI Assistant flow.)
+  // AI support (server-side only; keys never leave the backend).
   AI_SUPPORT_ENABLED: process.env.AI_SUPPORT_ENABLED || "true",
   AI_MAX_FILE_SIZE_MB: Number(process.env.AI_MAX_FILE_SIZE_MB) || 10,
 
-  // Local AI (Ollama) — the only AI provider of the AI Assistant.
-  OLLAMA_BASE_URL: normalizeOllamaBaseUrl(
-    process.env.OLLAMA_BASE_URL ||
-      (process.env.NODE_ENV === "production" ? "" : "http://localhost:11434"),
-  ),
-  OLLAMA_MODEL: (process.env.OLLAMA_MODEL || "llama3.2").trim(),
-  OLLAMA_TIMEOUT_MS: Number(process.env.OLLAMA_TIMEOUT_MS) || 120000,
-  OLLAMA_PING_TIMEOUT_MS: Number(process.env.OLLAMA_PING_TIMEOUT_MS) || 3000,
-  OLLAMA_MAX_TOKENS: Number(process.env.OLLAMA_MAX_TOKENS) || 1500,
+  // Gemini AI Studio is the sole AI provider. The API key stays server-side.
+  AI_PROVIDER: "gemini",
+  GEMINI_API_KEY: String(process.env.GEMINI_API_KEY || "").trim(),
+  GEMINI_MODEL: (process.env.GEMINI_MODEL || "gemini-3.5-flash-lite").trim(),
+  GEMINI_BASE_URL: (() => {
+    const raw = String(
+      process.env.GEMINI_BASE_URL ||
+        "https://generativelanguage.googleapis.com/v1beta",
+    ).trim();
+    try {
+      return new URL(raw).toString().replace(/\/+$/, "");
+    } catch {
+      return "https://generativelanguage.googleapis.com/v1beta";
+    }
+  })(),
+  GEMINI_TIMEOUT_MS: Number(process.env.GEMINI_TIMEOUT_MS) || 120000,
+  GEMINI_PING_TIMEOUT_MS: Number(process.env.GEMINI_PING_TIMEOUT_MS) || 10000,
+  GEMINI_MAX_TOKENS: Number(process.env.GEMINI_MAX_TOKENS) || 1500,
 
   /* ── Rate limiting (see backend/middleware/rateLimiter.js) ────────
      Every authentication endpoint has its own isolated bucket, so unrelated

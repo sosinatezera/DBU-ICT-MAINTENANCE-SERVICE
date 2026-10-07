@@ -22,7 +22,7 @@
  *   /api/settings      — System settings (ICT Admin)
  *   /api/public        — Public stats (no auth)
  *   /api/ai            — Master AI (AI Assistant; public health + streaming chat;
- *                        admin status at /api/assistant/admin/status; configured Ollama)
+ *                        admin status at /api/assistant/admin/status)
  *   /api/assistant     — Master AI (same router: GET health + POST chat)
  */
 
@@ -35,6 +35,7 @@ const { MongoStore } = require("connect-mongo");
 const path = require("path");
 const connectDB = require("./config/db");
 const env = require("./config/env");
+const { geminiService } = require("./services/geminiService");
 
 /* Response compression. JSON payloads from this API are large and highly
    compressible (ticket lists, reports, notification feeds), so gzip cuts
@@ -76,7 +77,7 @@ if (process.env.NODE_ENV === "production") {
     console.warn(
       "  Set FRONTEND_ORIGINS to your deployed frontend origin(s), e.g.",
     );
-    console.warn("  https://smartcomputer-maintenance-system.netlify.app\n");
+    console.warn("  https://simms-mau.netlify.app\n");
   }
 }
 
@@ -97,13 +98,13 @@ const {
 } = require("./controllers/userController");
 const uploadDocuments = require("./config/multerDocuments");
 
-const activeAiModel = env.OLLAMA_MODEL || "llama3.2";
+const activeAiModel = geminiService.model;
 console.log(
-  `Master AI (AI Assistant): ${env.AI_SUPPORT_ENABLED !== "false" ? "Enabled" : "Disabled"} | Provider: ollama | Model: ${activeAiModel}`,
+  `Master AI (AI Assistant): ${geminiService.isEnabled() ? "Enabled" : "Disabled"} | Provider: gemini | Model: ${activeAiModel}`,
 );
 
 /* ── OpenAI residual guard (diagnostic only) ─────────────────
-   Master AI uses ONLY local Ollama — never OpenAI. This check is
+   Master AI uses Google Gemini AI Studio Free Tier — never OpenAI. This check is
    intentionally NON-FATAL and never changes behavior: it only prints
    an explicit PASS/WARN line at boot so any stale OpenAI artifact
    (an OPENAI_API_KEY env var, an installed 'openai' package, or an
@@ -142,13 +143,14 @@ try {
       `\n  [WARN] OpenAI residual detected: ${residuals.join("; ")}.`,
     );
     console.warn(
-      "         Master AI uses only local Ollama. Remove the residual (e.g. run\n" +
-        "         `npm prune` inside backend/ or unset OPENAI_API_KEY) and redeploy,\n" +
-        "         otherwise the deployed service may silently keep talking to OpenAI.\n",
+      "         Master AI uses a server-configured provider (no OpenAI). Remove the\n" +
+        "         residual (e.g. run `npm prune` inside backend/ or unset\n" +
+        "         OPENAI_API_KEY) and redeploy, otherwise the deployed service may\n" +
+        "         silently keep talking to OpenAI.\n",
     );
   } else {
     console.log(
-      "  Master AI provider check: PASS — no OpenAI code, dependency, or key found (Ollama only).",
+      "  Master AI provider check: PASS — no OpenAI code, dependency, or key found.",
     );
   }
 } catch {
@@ -175,9 +177,8 @@ app.set("trust proxy", env.TRUST_PROXY);
    included only outside production. Additional exact origins may be supplied
    through FRONTEND_ORIGINS; wildcard origins are never used. */
 const productionOrigins = [
+  "https://simms-mau.netlify.app",
   "https://simms-ict-maintenance-system.netlify.app",
-  "https://smartcomputer-maintenance-system.netlify.app",
-  "https://smartcomputermaintenanceservice.netlify.app",
 ];
 const localDevOrigins = ["localhost", "127.0.0.1", "::1"];
 const developmentOrigins = [
