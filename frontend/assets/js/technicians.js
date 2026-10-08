@@ -2343,31 +2343,32 @@ function filterTechCards() {
     document.getElementById("techSearchInput")?.value || ""
   ).toLowerCase();
   const avail = document.getElementById("techAvailFilter")?.value || "";
-  const filtered = _techAll.filter(
-    (t) =>
-      (!q ||
-        (t.fullName || "").toLowerCase().includes(q) ||
-        (t.specialization || "").toLowerCase().includes(q) ||
-        (t.email || "").toLowerCase().includes(q)) &&
-      (!avail || (avail === "available" ? t.available : !t.available)),
-  );
-  renderTechnicianCards(filtered, {});
+  const grid = document.getElementById("techniciansGrid");
+  if (!grid) return;
+
+  let visibleCount = 0;
+  grid.querySelectorAll(".tech-card").forEach((card) => {
+    const matchesSearch = !q || card.dataset.search.includes(q);
+    const matchesAvailability =
+      !avail ||
+      (avail === "available"
+        ? card.dataset.available === "true"
+        : card.dataset.available !== "true");
+    const visible = matchesSearch && matchesAvailability;
+    card.classList.toggle("d-none", !visible);
+    if (visible) visibleCount++;
+  });
+  const emptyState = grid.querySelector("[data-tech-empty]");
+  if (emptyState) emptyState.classList.toggle("d-none", visibleCount > 0);
+
   const count = document.getElementById("techCount");
   if (count)
-    count.textContent = `${filtered.length} technician${filtered.length !== 1 ? "s" : ""}`;
+    count.textContent = `${visibleCount} technician${visibleCount !== 1 ? "s" : ""}`;
 }
 
 function renderTechnicianCards(technicians, workloadMap) {
   const grid = document.getElementById("techniciansGrid");
   if (!grid) return;
-
-  if (!technicians.length) {
-    grid.innerHTML = `<div class="col-12 text-center py-5">
-      <i class="bi bi-wrench fs-2 text-muted d-block mb-2"></i>
-      <p class="text-muted">No technicians found.</p>
-    </div>`;
-    return;
-  }
 
   grid.innerHTML = technicians
     .map((t) => {
@@ -2379,7 +2380,9 @@ function renderTechnicianCards(technicians, workloadMap) {
       const barC = rate >= 80 ? "#198754" : rate >= 50 ? "#ffc107" : "#dc3545";
 
       return `
-    <div class="col-md-6 col-lg-4 tech-card">
+    <div class="col-md-6 col-lg-4 tech-card"
+         data-search="${escHtml(`${t.fullName || ""} ${t.specialization || ""} ${t.email || ""}`.toLowerCase())}"
+         data-available="${Boolean(t.available)}">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-body p-3">
           <div class="d-flex align-items-center gap-3 mb-3">
@@ -2437,7 +2440,11 @@ function renderTechnicianCards(technicians, workloadMap) {
       </div>
     </div>`;
     })
-    .join("");
+    .join("") +
+    `<div class="col-12 text-center py-5${technicians.length ? " d-none" : ""}" data-tech-empty>
+      <i class="bi bi-wrench fs-2 text-muted d-block mb-2"></i>
+      <p class="text-muted">No technicians found.</p>
+    </div>`;
 }
 
 function openAssignModal(techId) {

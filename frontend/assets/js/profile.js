@@ -278,23 +278,20 @@
         method: "PUT",
         body,
       });
-      _current = { ..._current, ...updated };
-
-      /* Sync the updated name/department to localStorage so the sidebar
-         topbar and welcome message reflect the change without a page reload. */
-      var localUser = Auth.getUser();
-      if (localUser) {
-        localUser.fullName = updated.fullName || localUser.fullName;
-        localUser.department =
-          updated.department !== undefined
-            ? updated.department
-            : localUser.department;
-        localUser.gender =
-          updated.gender !== undefined ? updated.gender : localUser.gender;
-        Auth.setUser(localUser);
-        populateUserInfo();
+      if (!updated) {
+        throw new Error("The server did not confirm the saved profile.");
       }
 
+      _current = await Auth.refresh();
+      if (
+        _current.fullName !== body.fullName ||
+        (_current.phone || null) !== body.phone ||
+        (_current.department || null) !== body.department ||
+        (_current.gender || null) !== body.gender
+      ) {
+        throw new Error("The saved profile could not be reloaded.");
+      }
+      populateUserInfo();
       showToast(t("profile.saved"), "success");
       renderProfile();
     } catch (err) {
@@ -391,8 +388,8 @@
         return;
       }
 
-      /* File size validation (5MB) */
-      if (file.size > 5 * 1024 * 1024) {
+      /* Keep client-side limits consistent with the server upload cap. */
+      if (file.size > 1.5 * 1024 * 1024) {
         showToast(t("profile.tooLarge"), "danger");
         _avatarUploadInProgress = false;
         return;
@@ -426,28 +423,18 @@
           isFormData: true,
         });
 
-        /* Revoke the local object URL - it's only a preview */
+        const freshUser = await Auth.refresh();
+        if (
+          data.profileImage !== freshUser.profileImage ||
+          !freshUser.profileImage
+        ) {
+          throw new Error("The saved profile photo could not be reloaded.");
+        }
         URL.revokeObjectURL(previewUrl);
-
-        showToast(t("profile.success"), "success");
-        _current = { ..._current, profileImage: data.profileImage };
-
-        /* Update localStorage prefs so avatar persists after page reload.
-           Store an absolute URL pointing to the backend origin so the image
-           loads correctly regardless of which port the frontend runs on. */
-        var absProfileUrl =
-          typeof profileUploadUrl === "function"
-            ? profileUploadUrl(data.profileImage)
-            : data.profileImage;
-        var prefsKey = "ict_profile_image_prefs";
-        var allPrefs = JSON.parse(localStorage.getItem(prefsKey) || "{}");
-        var userKey = String(
-          _current.email || _current.id || "default",
-        ).toLowerCase();
-        allPrefs[userKey] = { uploaded: absProfileUrl };
-        localStorage.setItem(prefsKey, JSON.stringify(allPrefs));
+        _current = freshUser;
 
         renderProfile();
+        showToast(t("profile.success"), "success");
       } catch (err) {
         /* Revoke the local object URL on error too */
         URL.revokeObjectURL(previewUrl);
@@ -472,16 +459,10 @@
       });
 
       showToast(t("profile.success"), "success");
-      _current = { ..._current, profileImage: null };
-
-      /* Clear localStorage prefs so avatar falls back to initials */
-      const prefsKey = "ict_profile_image_prefs";
-      let allPrefs = JSON.parse(localStorage.getItem(prefsKey) || "{}");
-      const userKey = String(
-        _current.email || _current.id || "default",
-      ).toLowerCase();
-      delete allPrefs[userKey];
-      localStorage.setItem(prefsKey, JSON.stringify(allPrefs));
+      _current = await Auth.refresh();
+      if (_current.profileImage) {
+        throw new Error("The saved profile photo could not be removed.");
+      }
 
       renderProfile();
     } catch (err) {

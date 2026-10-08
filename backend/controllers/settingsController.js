@@ -28,6 +28,7 @@ const NOTIF_FIELDS = [
   "notifStatusChange",
   "notifCompletion",
   "notifSystemSecurity",
+  "notificationSound",
   "emailNotifications",
 ];
 
@@ -171,9 +172,31 @@ const updateGeneral = async (req, res, next) => {
 /* ── PUT /api/settings/notifications — update notif prefs ─ */
 const updateNotifications = async (req, res, next) => {
   try {
+    const entries = Object.entries(req.body || {});
+    if (!entries.length) {
+      return res.status(400).json({
+        success: false,
+        message: "No notification preferences were provided.",
+      });
+    }
+    for (const [key, value] of entries) {
+      if (!NOTIF_FIELDS.includes(key)) {
+        return res.status(400).json({
+          success: false,
+          message: `Unknown notification preference "${key}".`,
+        });
+      }
+      if (typeof value !== "boolean") {
+        return res.status(400).json({
+          success: false,
+          message: `${key} must be true or false.`,
+        });
+      }
+    }
+
     const settings = await Settings.getInstance();
-    NOTIF_FIELDS.forEach((f) => {
-      if (req.body[f] !== undefined) settings[f] = !!req.body[f];
+    entries.forEach(([key, value]) => {
+      settings[key] = value;
     });
     settings.updatedBy = req.user.id;
     await settings.save();

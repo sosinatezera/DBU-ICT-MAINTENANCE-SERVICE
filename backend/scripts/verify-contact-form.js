@@ -11,7 +11,7 @@
  *
  * Stages reported (PASS / FAIL each, then a verdict):
  *   1. ADMIN_EMAIL configured      (the 503 cause: no recipient)
- *   2. SMTP provider configured     (the 503 cause: no transport)
+ *   2. Email provider configured    (the 503 cause: no transport)
  *   3. Frontend request             (endpoint reachable, correct method/fields)
  *   4. Backend response             (HTTP status + JSON success)
  *   5. Success message present      (a real string, not a fallback)
@@ -41,8 +41,8 @@ const { URL } = require('url');
 
 const env = require('../config/env');
 const {
-  smtpConfigured,
-  describeMissing,
+  emailConfigured,
+  describeEmailMissing,
   maskEmail,
   EMAIL_ERROR,
 } = require('../services/mailer');
@@ -157,13 +157,13 @@ async function main() {
   );
 
   /* Stage 2 — provider configured. */
-  const smtpOk = smtpConfigured();
+  const emailOk = emailConfigured();
   stage(
-    '2. SMTP provider configured (local .env)',
-    smtpOk,
-    smtpOk
-      ? `${env.SMTP_HOST}:${env.SMTP_PORT} as ${maskEmail(env.SMTP_USER)}`
-      : `missing: ${describeMissing()}`,
+    `2. ${env.EMAIL_PROVIDER} provider configured`,
+    emailOk,
+    emailOk
+      ? `${env.EMAIL_PROVIDER} is configured`
+      : `missing: ${describeEmailMissing()}`,
     remote,
   );
 
@@ -220,7 +220,7 @@ async function main() {
       );
     } else {
       console.log('  Cause: the provider refused or dropped the message (transient).');
-      console.log('  Run  npm run verify:smtp  for the failing stage (no secrets printed).');
+      console.log('  Run  npm run verify:email  for the failing stage (no secrets printed).');
     }
   }
 

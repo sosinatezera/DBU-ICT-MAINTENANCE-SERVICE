@@ -32,6 +32,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const session = require("express-session");
 const { MongoStore } = require("connect-mongo");
+const mongoose = require("mongoose");
 const path = require("path");
 const connectDB = require("./config/db");
 const env = require("./config/env");
@@ -85,9 +86,9 @@ const { logger } = require("./middleware/logger");
 const { errorHandler } = require("./middleware/errorHandler");
 const { authenticate } = require("./middleware/auth");
 const {
-  verifySmtp,
-  smtpConfigured,
-  describeMissing,
+  verifyEmailProvider,
+  emailConfigured,
+  describeEmailMissing,
 } = require("./services/mailer");
 const { initSocketIO } = require("./services/notificationService");
 const {
@@ -301,6 +302,21 @@ app.use(
 app.use(express.json({ limit: DEFAULT_JSON_LIMIT }));
 app.use(express.urlencoded({ extended: true, limit: DEFAULT_JSON_LIMIT }));
 
+/* Do not let Mongoose buffer every API request while Atlas is still
+   connecting or temporarily disconnected. Fail quickly so clients can show a
+   recoverable service error instead of waiting for the driver's selection
+   timeout. Health remains reachable and reports readiness below. */
+app.use("/api", (req, res, next) => {
+  if (req.path === "/health" || mongoose.connection.readyState === 1) {
+    return next();
+  }
+  res.set("Retry-After", "5");
+  return res.status(503).json({
+    success: false,
+    message: "Database is not ready. Please retry shortly.",
+  });
+});
+
 const isLocalDevelopmentFrontend = (() => {
   const configuredUrl = String(
     process.env.FRONTEND_URL ||
@@ -446,14 +462,15 @@ app.use("/api/audit", require("./routes/audit"));
 app.use("/api/public", require("./routes/public"));
 
 /* ── Health Check ───────────────────────────────────────── */
-app.get("/api/health", (req, res) =>
-  res.json({
-    status: "OK",
+app.get("/api/health", (req, res) => {
+  const dbReady = mongoose.connection.readyState === 1;
+  res.status(dbReady ? 200 : 503).json({
+    status: dbReady ? "OK" : "NOT_READY",
     system: "Smart ICT Maintenance Management System",
-    db: "MongoDB",
+    db: dbReady ? "MongoDB" : "disconnected",
     timestamp: new Date(),
-  }),
-);
+  });
+});
 
 /* ── 404 Handler ────────────────────────────────────────── */
 app.use((req, res) =>
@@ -484,31 +501,31 @@ const server = app.listen(PORT, () => {
   console.log("");
 
   try {
-    if (smtpConfigured()) {
-      verifySmtp()
+    if (emailConfigured()) {
+      verifyEmailProvider()
         .then((r) => {
           if (r.ok) console.log(`  Email : ${r.detail}`);
           else console.error(`  Email : ${r.detail}`);
         })
         .catch(() =>
           console.error(
-            "  Email : EMAIL_CONNECTION_ERROR - SMTP check failed (non-fatal).",
+            "  Email : EMAIL_CONNECTION_ERROR - provider check failed (non-fatal).",
           ),
         );
     } else {
       console.error(
         "  Email : EMAIL_CONFIGURATION_ERROR - PASSWORD RESET IS DISABLED in this deployment.",
       );
-      console.error(`          Missing or invalid: ${describeMissing()}.`);
+      console.error(`          Missing or invalid: ${describeEmailMissing()}.`);
       console.error(
         "          Set them in the hosting provider's environment variables",
       );
       console.error(
-        "          (backend/.env is not read in the cloud) and redeploy.\n",
+        "          (backend/.env is not read in the cloud) and restart.\n",
       );
     }
   } catch (err) {
-    console.error("  Email : SMTP status unavailable (non-fatal).");
+    console.error("  Email : provider status unavailable (non-fatal).");
   }
 
   try {

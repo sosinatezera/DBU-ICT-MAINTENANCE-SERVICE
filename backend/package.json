@@ -11,6 +11,7 @@
     "seed:categories": "node scripts/seedCategories.js",
     "seed:device-types": "node scripts/seedDeviceTypes.js",
     "verify:auth": "node scripts/testAuth.js",
+    "verify:email": "node scripts/verify-email-provider.js",
     "verify:smtp": "node scripts/verify-smtp.js",
     "verify:contact": "node scripts/verify-contact-form.js",
     "diagnose:forgot": "node scripts/diagnose-forgot-password.js",

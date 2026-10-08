@@ -52,7 +52,7 @@ const Validators = {
   password(value) {
     if (!value || typeof value !== 'string') return 'Password is required.';
     if (value.length < 8) return 'Password must be at least 8 characters, contain both letters and numbers, and may include special characters.';
-    if (!VAL.PASSWORD_REGEX.test(value)) return 'Password must be at least 8 characters (max 100), contain both letters and numbers, and may include special characters (no spaces).';
+    if (!VAL.PASSWORD_REGEX.test(value)) return 'Password must be 8–16 characters, contain at least one letter and one number, and have no spaces.';
     return null;
   },
 

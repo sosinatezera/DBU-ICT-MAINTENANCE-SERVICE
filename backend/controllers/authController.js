@@ -19,9 +19,9 @@ const {
 } = require("../middleware/validation");
 const {
   sendPasswordResetEmail,
-  smtpConfigured,
+  emailConfigured,
   EMAIL_ERROR,
-  describeMissing,
+  describeEmailMissing,
 } = require("../services/mailer");
 const {
   sendPasswordResetSms,
@@ -66,6 +66,9 @@ const REGISTRATION_CLOSED_MESSAGE =
   "Public registration is currently disabled. Please contact ICT support to have an account created.";
 
 async function isPublicRegistrationEnabled() {
+  const configured = require("../config/env").PUBLIC_REGISTRATION_ENABLED;
+  if (configured !== null) return configured;
+
   try {
     const Settings = require("../models/Settings");
     const settings = await Settings.getInstance();
@@ -103,6 +106,10 @@ const register = async (req, res, next) => {
         .json({ success: false, message: REGISTRATION_CLOSED_MESSAGE });
     }
 
+    const body =
+      req.body && typeof req.body === "object" && !Array.isArray(req.body)
+        ? req.body
+        : {};
     let {
       fullName,
       email,
@@ -112,7 +119,7 @@ const register = async (req, res, next) => {
       phone,
       gender,
       agreeTerms,
-    } = req.body;
+    } = body;
 
     /* Sanitize */
     fullName = fullName ? sanitizeString(fullName) : "";
@@ -154,24 +161,62 @@ const register = async (req, res, next) => {
         return res.status(400).json({ success: false, message: phoneErr });
     }
 
-    /* Validate gender if provided */
-    if (gender) {
-      const genderErr = validateEnum(gender, VALID_GENDERS, "gender");
-      if (genderErr)
-        return res.status(400).json({ success: false, message: genderErr });
+    /* Gender and department are required by the registration form. The
+       department list mirrors its predefined choices; custom department/user
+       labels are accepted only as letters and spaces, as the form requires. */
+    if (typeof gender !== "string" || !gender) {
+      return res
+        .status(422)
+        .json({ success: false, message: "Please select a gender." });
+    }
+    const genderErr = validateEnum(gender, VALID_GENDERS, "gender");
+    if (genderErr)
+      return res.status(422).json({ success: false, message: genderErr });
+
+    if (typeof department !== "string" || !department.trim()) {
+      return res
+        .status(422)
+        .json({ success: false, message: "Please select a department." });
+    }
+    const departmentValue = sanitizeString(department);
+    const allowedDepartments = [
+      "No Department / Not Assigned",
+      "Computer Maintenance",
+      "ICT Infrastructure and Security Services",
+      "Software Development",
+      "Network Administrations",
+      "Learning and Technology",
+      "System Administration",
+    ];
+
+    let normalizedDept = null;
+    if (departmentValue === "No Department / Not Assigned") {
+      normalizedDept = null;
+    } else if (allowedDepartments.includes(departmentValue)) {
+      normalizedDept = departmentValue;
+    } else if (
+      departmentValue.length <= 100 &&
+      /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/.test(departmentValue)
+    ) {
+      normalizedDept = departmentValue;
+    } else {
+      return res.status(422).json({
+        success: false,
+        message: "Please select a valid department.",
+      });
     }
 
-    /* Normalize department */
-    let normalizedDept = null;
-    if (department && typeof department === "string") {
-      const trimmed = department.trim();
-      if (trimmed !== "" && trimmed !== "No Department / Not Assigned") {
-        normalizedDept = trimmed;
-      }
+    if (phone !== undefined && phone !== null && typeof phone !== "string") {
+      return res
+        .status(422)
+        .json({ success: false, message: "Phone number must be text." });
     }
+    const normalizedPhone =
+      typeof phone === "string" && phone.trim() ? phone.trim() : null;
 
     /* Check duplicate email */
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const normalizedEmail = email.toLowerCase();
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       return res
         .status(409)
@@ -179,15 +224,26 @@ const register = async (req, res, next) => {
     }
 
     const hashed = await bcrypt.hash(password, 12);
-    await User.create({
-      fullName,
-      email: email.toLowerCase(),
-      password: hashed,
-      role: "Requester",
-      department: normalizedDept,
-      phone: phone || null,
-      gender: gender || null,
-    });
+    try {
+      await User.create({
+        fullName,
+        email: normalizedEmail,
+        password: hashed,
+        role: "Requester",
+        department: normalizedDept,
+        phone: normalizedPhone,
+        gender,
+      });
+    } catch (err) {
+      /* The unique email index is the final concurrency-safe duplicate guard;
+         two simultaneous submissions can both pass the lookup above. */
+      if (err && err.code === 11000) {
+        return res
+          .status(409)
+          .json({ success: false, message: "Email already registered." });
+      }
+      throw err;
+    }
 
     res.status(201).json({
       success: true,
@@ -341,7 +397,7 @@ const getMe = async (req, res, next) => {
      hashed, stored, emailed). For unknown/inactive addresses the identical
      generic success response is returned — status and body never differ in
      a way that reveals whether an account exists.
-   - Technical failures (SMTP down, delivery rejected) are logged on the
+   - Technical failures (provider unavailable, delivery rejected) are logged on the
      server only; the client gets a friendly, generic message plus a `code`
      naming the failing stage (EMAIL_CONFIGURATION_ERROR /
      EMAIL_CONNECTION_ERROR / EMAIL_SEND_ERROR, and the SMS equivalents).
@@ -368,7 +424,7 @@ const forgotPassword = async (req, res, next) => {
        address or credential — so the client can tell the user what to do next
        without learning anything about the deployment. */
     if (
-      (deliveryMethod === "email" && !smtpConfigured()) ||
+      (deliveryMethod === "email" && !emailConfigured()) ||
       (deliveryMethod === "sms" && !smsConfigured())
     ) {
       const unavailable =
@@ -379,7 +435,7 @@ const forgotPassword = async (req, res, next) => {
         `[auth/forgot-password] ${unavailable} - ${deliveryMethod} delivery is not usable in this deployment, ` +
           "so password reset cannot complete for any account. " +
           (deliveryMethod === "email"
-            ? `Missing or invalid: ${describeMissing()}.`
+            ? `Missing or invalid: ${describeEmailMissing()}.`
             : "Set the SMS provider variables in the deployment environment."),
       );
       return res.status(503).json({

@@ -4,34 +4,118 @@
    ============================================================ */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await Auth.load();
-  if (!requireAuth()) return;
   const p = window.location.pathname;
-  if (p.includes("admin/dashboard")) await initAdminDashboard();
-  if (p.includes("admin/reports")) await initReports();
+  const isDashboard = p.includes("admin/dashboard");
+  try {
+    await Auth.load();
+    if (!requireAuth()) {
+      if (isDashboard) {
+        settleDashboardLoadingSections(
+          "Your session could not be verified. Please sign in and retry.",
+        );
+      }
+      return;
+    }
+    if (isDashboard) await initAdminDashboard();
+    if (p.includes("admin/reports")) await initReports();
+  } catch (err) {
+    console.error("Report page initialization failed:", err);
+    if (isDashboard) {
+      settleDashboardLoadingSections(
+        err.message || "Dashboard initialization failed.",
+      );
+    } else if (err.message) {
+      showToast(err.message, "danger");
+    }
+  }
 });
+
+function settleDashboardLoadingSections(message) {
+  const sections = [
+    ["recentRequestsBody", "table", 7],
+    ["statusMiniChart", "block", 0],
+    ["recentActivityDash", "block", 0],
+    ["serviceFeedbackPanel", "block", 0],
+  ];
+  const retry =
+    '<button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="window.location.reload()">Retry</button>';
+
+  sections.forEach(([id, type, columns]) => {
+    const section = document.getElementById(id);
+    if (!section) return;
+    const hasLoadingText = /^loading\b[\s\S]{0,120}?(?:\.\.\.|…)?$/i.test(
+      (section.textContent || "").trim(),
+    );
+    if (
+      !hasLoadingText &&
+      !section.querySelector(".spinner-border, .spinner-grow")
+    ) {
+      return;
+    }
+
+    const content = `<div class="text-center text-danger py-3">
+      <p class="small mb-0">${escHtml(message || "This section could not be loaded.")}</p>
+      ${retry}
+    </div>`;
+    section.innerHTML =
+      type === "table"
+        ? `<tr><td colspan="${columns}">${content}</td></tr>`
+        : content;
+  });
+}
+
+function dashboardResponseData(response, expectedType, sectionName) {
+  const data = response?.data;
+  const valid =
+    response?.success === true &&
+    (expectedType === "array"
+      ? Array.isArray(data)
+      : data !== null && typeof data === "object" && !Array.isArray(data));
+  if (!valid) {
+    throw new Error(`${sectionName} returned an invalid response.`);
+  }
+  return data;
+}
 
 /* ═══════════════════════════════════════════════════════════
    ADMIN DASHBOARD
    ═══════════════════════════════════════════════════════════ */
+let _dashInitInFlight = false;
+
 async function initAdminDashboard() {
-  if (!requireRole("ICT Admin")) return;
+  if (_dashInitInFlight) return;
+  if (!requireRole("ICT Admin")) {
+    settleDashboardLoadingSections(
+      "You do not have access to dashboard data. Please sign in with an ICT Admin account.",
+    );
+    return;
+  }
+  _dashInitInFlight = true;
+  try {
   document.getElementById("dashErrorBanner")?.remove();
   showSkeletons();
 
-  // Start dashboard API requests in parallel.
-  const dashboardRequests = await Promise.allSettled([
-    apiRequest("/reports/dashboard"),
-    apiRequest("/tickets?limit=8&includeFeedback=true"),
-    apiRequest("/reports/requests-by-status"),
-    apiRequest("/maintenance/my"),
-  ]);
-
-  try {
-    /* ── KPI stats ── */
-    if (dashboardRequests[0].status === "rejected")
-      throw dashboardRequests[0].reason;
-    const { data: s } = dashboardRequests[0].value;
+  /* Render each section as its own request completes. A slow activity feed
+     or chart must not hold the KPI cards and recent-request table blank. */
+  const statsRequest = apiRequest("/reports/dashboard")
+    .then((response) => {
+    const s = dashboardResponseData(response, "object", "Dashboard statistics");
+    const requiredCounts = [
+      "total_users",
+      "total_assets",
+      "pending",
+      "completed",
+      "in_progress",
+      "total_technicians",
+      "network_total",
+      "network_pending",
+      "network_in_progress",
+      "network_resolved",
+      "overdue",
+    ];
+    if (requiredCounts.some((key) => !Number.isFinite(s[key]))) {
+      throw new Error("Dashboard statistics returned incomplete data.");
+    }
     animateCount("kpiUsers", s.total_users);
     animateCount("kpiAssets", s.total_assets);
     animateCount("kpiPending", s.pending);
@@ -52,7 +136,8 @@ async function initAdminDashboard() {
       pb.textContent = `${s.pending} Pending`;
       pb.className = `badge ${s.pending > 0 ? "bg-danger" : "bg-success"}`;
     }
-  } catch (err) {
+    })
+    .catch((err) => {
     [
       "kpiUsers",
       "kpiAssets",
@@ -79,13 +164,13 @@ async function initAdminDashboard() {
     } else {
       showToast("Could not load dashboard stats: " + err.message, "danger");
     }
-  }
+    });
 
-  /* ── Recent requests table ── */
-  try {
-    if (dashboardRequests[1].status === "rejected")
-      throw dashboardRequests[1].reason;
-    const { data: reqs } = dashboardRequests[1].value;
+  const requestsRequest = apiRequest(
+    "/tickets?limit=8&includeFeedback=true",
+  )
+    .then((response) => {
+    const reqs = dashboardResponseData(response, "array", "Recent requests");
     const tbody = document.getElementById("recentRequestsBody");
     /* A missing table must skip only the table. Returning here previously
        aborted the status chart, the activity feed and the auto-refresh setup,
@@ -100,7 +185,8 @@ async function initAdminDashboard() {
         ? reqs.slice(0, 8).map(recentRequestRow).join("")
         : emptyRow(7, "No requests yet.");
     }
-  } catch (err) {
+    })
+    .catch((err) => {
     const tbody = document.getElementById("recentRequestsBody");
     if (tbody) {
       tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">
@@ -117,13 +203,15 @@ async function initAdminDashboard() {
         <p class="small mb-0">Feedback unavailable.</p>
       </div>`;
     }
-  }
+    });
 
-  /* ── Status mini chart ── */
-  try {
-    if (dashboardRequests[2].status === "rejected")
-      throw dashboardRequests[2].reason;
-    const { data: byStatus } = dashboardRequests[2].value;
+  const statusRequest = apiRequest("/reports/requests-by-status")
+    .then((response) => {
+    const byStatus = dashboardResponseData(
+      response,
+      "array",
+      "Requests by status",
+    );
     renderMiniBars(
       "statusMiniChart",
       byStatus,
@@ -131,26 +219,46 @@ async function initAdminDashboard() {
       "total",
       statusColour,
     );
-  } catch (err) {
+    })
+    .catch((err) => {
     const el = document.getElementById("statusMiniChart");
     if (el)
-      el.innerHTML = `<p class="text-muted small text-center py-2">Chart unavailable. ${escHtml(err.message || "")}</p>`;
-  }
+      el.innerHTML = `<p class="text-danger small text-center py-2">Chart unavailable. ${escHtml(err.message || "")}</p>
+        <button type="button" class="btn btn-sm btn-outline-primary d-block mx-auto" onclick="initAdminDashboard()">Retry</button>`;
+    });
 
-  /* ── Recent maintenance activity ── */
-  try {
-    if (dashboardRequests[3].status === "rejected")
-      throw dashboardRequests[3].reason;
-    renderRecentActivityDash(dashboardRequests[3].value.data);
-  } catch (err) {
+  const activityRequest = apiRequest("/maintenance/my")
+    .then((response) => {
+      const activities = dashboardResponseData(
+        response,
+        "array",
+        "Recent maintenance activity",
+      );
+      renderRecentActivityDash(activities);
+    })
+    .catch((err) => {
     const panel = document.getElementById("recentActivityDash");
     if (panel)
-      panel.innerHTML = `<p class="text-muted small text-center py-2">Activity feed unavailable. ${escHtml(err.message || "")}</p>`;
-  }
+      panel.innerHTML = `<p class="text-danger small text-center py-2">Activity feed unavailable. ${escHtml(err.message || "")}</p>
+        <button type="button" class="btn btn-sm btn-outline-primary d-block mx-auto" onclick="initAdminDashboard()">Retry</button>`;
+    });
+
+  await Promise.all([
+    statsRequest,
+    requestsRequest,
+    statusRequest,
+    activityRequest,
+  ]);
 
   /* Lightweight auto-refresh so a newly submitted requester ticket appears in
      the dashboard without a full browser reload — single guarded interval. */
   startDashboardAutoRefresh();
+  } finally {
+    settleDashboardLoadingSections(
+      "This section could not be loaded. Please retry.",
+    );
+    _dashInitInFlight = false;
+  }
 }
 
 /* ── Render #recentActivityDash ────────────────────────────────
@@ -322,36 +430,10 @@ async function loadReportData() {
   const qs = currentReportParams();
   applyReportTypeFilter();
 
-  /* All six report endpoints are independent of each other, but were awaited
-     one after another. On a slow connection that is up to 6 sequential
-     round-trips (~90s worst case at the 15s request timeout) with no visible
-     progress. Fan them out in parallel instead: the wall time becomes that of
-     the slowest single request, and each section still gets its own error
-     state, so partial failures behave exactly as before. */
-  const [
-    summaryRes,
-    byStatusRes,
-    byCategoryRes,
-    techPerfRes,
-    byDeptRes,
-    byIssueTypeRes,
-    netRes,
-  ] = await Promise.allSettled([
-    apiRequest(`/reports/dashboard${qs}`),
-    apiRequest(`/reports/requests-by-status${qs}`),
-    apiRequest(`/reports/requests-by-equipment${qs}`),
-    apiRequest(`/reports/technician-performance${qs}`),
-    apiRequest(`/reports/requests-by-department${qs}`),
-    apiRequest(`/reports/requests-by-issue-type${qs}`),
-    apiRequest(`/reports/network${qs}`),
-  ]);
-  const settleError = (r) => (r.status === "rejected" ? r.reason : null);
-
-  /* ── Summary KPIs ── */
-  try {
-    const summaryErr = settleError(summaryRes);
-    if (summaryErr) throw summaryErr;
-    const { data: s } = summaryRes.value;
+  /* Requests remain parallel, but each report section renders as soon as its
+     own response arrives rather than waiting for the slowest endpoint. */
+  const summaryRequest = apiRequest(`/reports/dashboard${qs}`)
+    .then(({ data: s }) => {
     const total = (s.pending || 0) + (s.in_progress || 0) + (s.completed || 0);
     animateCount("rptTotal", total);
     animateCount("rptCompleted", s.completed);
@@ -366,19 +448,17 @@ async function loadReportData() {
       pending: s.pending,
       avgResHours: s.avg_resolution_hours,
     };
-  } catch (err) {
+    })
+    .catch((err) => {
     _reportCache.summary = null;
     setSectionError("rptTotal", err.message);
     setSectionError("rptCompleted", err.message);
     setSectionError("rptPending", err.message);
     setSectionError("rptAvgTime", err.message);
-  }
+    });
 
-  /* ── By Status ── */
-  try {
-    const err0 = settleError(byStatusRes);
-    if (err0) throw err0;
-    const { data } = byStatusRes.value;
+  const statusRequest = apiRequest(`/reports/requests-by-status${qs}`)
+    .then(({ data }) => {
     renderBarBreakdown(
       "statusBreakdown",
       data,
@@ -387,70 +467,77 @@ async function loadReportData() {
       statusColour,
     );
     _reportCache.byStatus = data;
-  } catch (err) {
+    })
+    .catch((err) => {
     _reportCache.byStatus = [];
     setSectionError("statusBreakdown", err.message);
-  }
+    });
 
-  /* ── By Category ── */
-  try {
-    const err0 = settleError(byCategoryRes);
-    if (err0) throw err0;
-    const { data } = byCategoryRes.value;
+  const categoryRequest = apiRequest(`/reports/requests-by-equipment${qs}`)
+    .then(({ data }) => {
     renderBarBreakdown("categoryBreakdown", data, "equipmentType", "total");
     _reportCache.byCategory = data;
-  } catch (err) {
+    })
+    .catch((err) => {
     _reportCache.byCategory = [];
     setSectionError("categoryBreakdown", err.message);
-  }
+    });
 
-  /* ── Technician performance ── */
-  try {
-    const err0 = settleError(techPerfRes);
-    if (err0) throw err0;
-    const { data } = techPerfRes.value;
+  const technicianRequest = apiRequest(
+    `/reports/technician-performance${qs}`,
+  )
+    .then(({ data }) => {
     renderTechPerformance(data);
     _reportCache.techPerf = data;
-  } catch (err) {
+    })
+    .catch((err) => {
     _reportCache.techPerf = [];
     setTableError("techPerformanceBody", 6, err.message);
-  }
+    });
 
-  /* ── By Department ── */
-  try {
-    const err0 = settleError(byDeptRes);
-    if (err0) throw err0;
-    const { data } = byDeptRes.value;
+  const departmentRequest = apiRequest(
+    `/reports/requests-by-department${qs}`,
+  )
+    .then(({ data }) => {
     renderDeptReport(data);
     _reportCache.byDept = data;
-  } catch (err) {
+    })
+    .catch((err) => {
     _reportCache.byDept = [];
     setTableError("deptReportBody", 5, err.message);
-  }
+    });
 
-  /* ── By Issue Type / Service Type ── */
-  try {
-    const err0 = settleError(byIssueTypeRes);
-    if (err0) throw err0;
-    const { data } = byIssueTypeRes.value;
+  const issueTypeRequest = apiRequest(
+    `/reports/requests-by-issue-type${qs}`,
+  )
+    .then(({ data }) => {
     renderIssueTypeReport(data);
     _reportCache.byIssueType = data;
-  } catch (err) {
+    })
+    .catch((err) => {
     _reportCache.byIssueType = [];
     setTableError("issueTypeReportBody", 4, err.message);
-  }
+    });
 
-  /* ── Network Maintenance ── */
-  try {
-    const err0 = settleError(netRes);
-    if (err0) throw err0;
-    const { data } = netRes.value;
+  const networkRequest = apiRequest(`/reports/network${qs}`)
+    .then(({ data }) => {
     renderNetworkReport(data);
     _reportCache.network = data;
-  } catch (err) {
+    })
+    .catch((err) => {
     _reportCache.network = null;
     renderNetworkError(err.message);
-  }
+    });
+
+  await Promise.all([
+    summaryRequest,
+    statusRequest,
+    categoryRequest,
+    technicianRequest,
+    departmentRequest,
+    issueTypeRequest,
+    networkRequest,
+  ]);
 }
 
 /* ── Bar chart breakdown ──────────────────────────────────── */

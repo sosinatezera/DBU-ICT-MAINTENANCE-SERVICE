@@ -34,7 +34,22 @@ const getDashboardStats = async (req, res, next) => {
     /* Overdue = still-open tickets older than the admin's SLA window
        (slResponseHours from the Settings singleton, default 24h). The date
        filter, when present, narrows the range to what the user selected. */
-    const settings = await Settings.getInstance();
+    const [settings, total_users, total_assets, total_technicians, avg_feedback] =
+      await Promise.all([
+        Settings.getInstance(),
+        User.countDocuments({ status: "active" }),
+        ICTAsset.countDocuments(),
+        Technician.countDocuments(),
+        Feedback.aggregate([
+          {
+            $group: {
+              _id: null,
+              avg: { $avg: "$rating" },
+              count: { $sum: 1 },
+            },
+          },
+        ]),
+      ]);
     const slaHours = Number(settings?.slaResponseHours) || 24;
     const overdueThreshold = new Date(Date.now() - slaHours * 3600 * 1000);
     const overdueCreated = { ...(ticketMatch.createdAt || {}) };
@@ -42,79 +57,127 @@ const getDashboardStats = async (req, res, next) => {
       overdueCreated.$lte = overdueThreshold;
     }
 
-    const [
-      total_users,
-      total_assets,
-      total_technicians,
-      submitted,
-      under_review,
-      in_progress,
-      resolved,
-      closed,
-      total_tickets,
-      avg_feedback,
-      network_total,
-      network_pending,
-      network_in_progress,
-      network_resolved,
-      overdue,
-      avg_resolution,
-    ] = await Promise.all([
-      User.countDocuments({ status: "active" }),
-      ICTAsset.countDocuments(),
-      Technician.countDocuments(),
-      Ticket.countDocuments({ ...ticketMatch, status: "submitted" }),
-      Ticket.countDocuments({ ...ticketMatch, status: "under_review" }),
-      Ticket.countDocuments({ ...ticketMatch, status: "in_progress" }),
-      Ticket.countDocuments({ ...ticketMatch, status: "resolved" }),
-      Ticket.countDocuments({ ...ticketMatch, status: "closed" }),
-      Ticket.countDocuments(ticketMatch),
-      Feedback.aggregate([
-        { $group: { _id: null, avg: { $avg: "$rating" }, count: { $sum: 1 } } },
-      ]),
-      Ticket.countDocuments({
-        ...ticketMatch,
-        category: "Network Maintenance",
-      }),
-      Ticket.countDocuments({
-        ...ticketMatch,
-        category: "Network Maintenance",
-        status: { $in: ["submitted", "under_review"] },
-      }),
-      Ticket.countDocuments({
-        ...ticketMatch,
-        category: "Network Maintenance",
-        status: "in_progress",
-      }),
-      Ticket.countDocuments({
-        ...ticketMatch,
-        category: "Network Maintenance",
-        status: { $in: ["resolved", "closed"] },
-      }),
-      Ticket.countDocuments({
-        ...ticketMatch,
-        status: { $nin: ["resolved", "closed"] },
-        createdAt: overdueCreated,
-      }),
-      Ticket.aggregate([
-        { $match: { ...ticketMatch, status: { $in: ["resolved", "closed"] } } },
-        {
-          $project: {
-            created: "$createdAt",
-            completed: {
-              $ifNull: ["$technicianFeedback.completionDate", "$updatedAt"],
+    const [ticketStats] = await Ticket.aggregate([
+      ...(Object.keys(ticketMatch).length ? [{ $match: ticketMatch }] : []),
+      {
+        $facet: {
+          counts: [
+            {
+              $group: {
+                _id: null,
+                total_tickets: { $sum: 1 },
+                submitted: {
+                  $sum: { $cond: [{ $eq: ["$status", "submitted"] }, 1, 0] },
+                },
+                under_review: {
+                  $sum: { $cond: [{ $eq: ["$status", "under_review"] }, 1, 0] },
+                },
+                in_progress: {
+                  $sum: { $cond: [{ $eq: ["$status", "in_progress"] }, 1, 0] },
+                },
+                resolved: {
+                  $sum: { $cond: [{ $eq: ["$status", "resolved"] }, 1, 0] },
+                },
+                closed: {
+                  $sum: { $cond: [{ $eq: ["$status", "closed"] }, 1, 0] },
+                },
+                network_total: {
+                  $sum: {
+                    $cond: [
+                      { $eq: ["$category", "Network Maintenance"] },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+                network_pending: {
+                  $sum: {
+                    $cond: [
+                      {
+                        $and: [
+                          { $eq: ["$category", "Network Maintenance"] },
+                          { $in: ["$status", ["submitted", "under_review"]] },
+                        ],
+                      },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+                network_in_progress: {
+                  $sum: {
+                    $cond: [
+                      {
+                        $and: [
+                          { $eq: ["$category", "Network Maintenance"] },
+                          { $eq: ["$status", "in_progress"] },
+                        ],
+                      },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+                network_resolved: {
+                  $sum: {
+                    $cond: [
+                      {
+                        $and: [
+                          { $eq: ["$category", "Network Maintenance"] },
+                          { $in: ["$status", ["resolved", "closed"]] },
+                        ],
+                      },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+              },
             },
-          },
+          ],
+          overdue: [
+            {
+              $match: {
+                status: { $nin: ["resolved", "closed"] },
+                createdAt: overdueCreated,
+              },
+            },
+            { $count: "count" },
+          ],
+          resolution: [
+            { $match: { status: { $in: ["resolved", "closed"] } } },
+            {
+              $project: {
+                created: "$createdAt",
+                completed: {
+                  $ifNull: ["$technicianFeedback.completionDate", "$updatedAt"],
+                },
+              },
+            },
+            { $match: { created: { $ne: null }, completed: { $ne: null } } },
+            {
+              $group: {
+                _id: null,
+                avgMs: { $avg: { $subtract: ["$completed", "$created"] } },
+              },
+            },
+          ],
         },
-        { $match: { created: { $ne: null }, completed: { $ne: null } } },
-        {
-          $group: {
-            _id: null,
-            avgMs: { $avg: { $subtract: ["$completed", "$created"] } },
-          },
-        },
-      ]),
+      },
     ]);
+    const counts = ticketStats?.counts?.[0] || {};
+    const submitted = counts.submitted || 0;
+    const under_review = counts.under_review || 0;
+    const in_progress = counts.in_progress || 0;
+    const resolved = counts.resolved || 0;
+    const closed = counts.closed || 0;
+    const total_tickets = counts.total_tickets || 0;
+    const network_total = counts.network_total || 0;
+    const network_pending = counts.network_pending || 0;
+    const network_in_progress = counts.network_in_progress || 0;
+    const network_resolved = counts.network_resolved || 0;
+    const overdue = ticketStats?.overdue?.[0]?.count || 0;
+    const avg_resolution = ticketStats?.resolution || [];
 
     const pending = (submitted || 0) + (under_review || 0);
     const completed = (resolved || 0) + (closed || 0);

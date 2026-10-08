@@ -47,6 +47,7 @@ const settingsSchema = new mongoose.Schema(
     notifStatusChange: { type: Boolean, default: true },
     notifCompletion: { type: Boolean, default: true },
     notifSystemSecurity: { type: Boolean, default: true },
+    notificationSound: { type: Boolean, default: true },
     emailNotifications: { type: Boolean, default: false },
 
     /* ── Operational / quick settings ─────────────────────── */

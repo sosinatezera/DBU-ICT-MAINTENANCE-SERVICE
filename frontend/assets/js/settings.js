@@ -26,14 +26,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   ["generalSettingsForm", "notifSettingsForm", "profileForm"].forEach((id) => {
     document.getElementById(id)?.addEventListener("reset", () => {
       document.getElementById("settingsAlert")?.classList.add("d-none");
+      document.getElementById("notifSettingsAlert")?.classList.add("d-none");
       document.getElementById("profileAlert")?.classList.add("d-none");
-      if (id === "profileForm") {
-        loadProfilePhotoState();
-        applyProfileAvatar(
-          currentUser,
-          document.getElementById("profileAvatar"),
-        );
-      }
     });
   });
 
@@ -98,24 +92,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     lockSettingsForms(true);
   }
 
-  /* ── Profile photo state (uploaded photo / image URL) ───── */
-  let profilePhoto = { uploaded: null, url: "" };
-
-  function loadProfilePhotoState() {
-    const prefs = getProfileImagePrefs(currentUser);
-    profilePhoto = { uploaded: prefs.uploaded || null, url: prefs.url || "" };
-    const urlInput = document.getElementById("profileImageUrl");
-    if (urlInput) urlInput.value = profilePhoto.url;
-  }
-
-  function persistProfilePhotoState() {
-    if (!currentUser) return;
-    setProfileImagePrefs(currentUser, profilePhoto);
-    applyProfileAvatar(currentUser, document.getElementById("profileAvatar"));
-  }
-
-  loadProfilePhotoState();
-
   /* ── Populate General Settings ────────────────────────── */
   if (currentSettings) {
     setVal("settingSystemName", currentSettings.systemName);
@@ -141,16 +117,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   /* ── Populate Notification Settings ───────────────────── */
   if (currentSettings) {
-    setCheck("notifNewRequest", currentSettings.notifNewRequest);
-    setCheck("notifAssignment", currentSettings.notifAssignment);
-    setCheck("notifStatusChange", currentSettings.notifStatusChange);
-    setCheck("notifCompletion", currentSettings.notifCompletion);
-    setCheck("notifSystemSecurity", currentSettings.notifSystemSecurity);
-    setCheck("emailNotifications", currentSettings.emailNotifications);
+    setCheck("notifNewRequest", currentSettings.notifNewRequest !== false);
+    setCheck("notifAssignment", currentSettings.notifAssignment !== false);
+    setCheck(
+      "notifStatusChange",
+      currentSettings.notifStatusChange !== false,
+    );
+    setCheck("notifCompletion", currentSettings.notifCompletion !== false);
+    setCheck(
+      "notifSystemSecurity",
+      currentSettings.notifSystemSecurity !== false,
+    );
+    setCheck("notificationSound", currentSettings.notificationSound !== false);
+    setCheck("emailNotifications", currentSettings.emailNotifications === true);
   }
   const notificationSound = document.getElementById("notificationSound");
-  if (notificationSound && window.NotificationSound) {
-    notificationSound.checked = window.NotificationSound.isEnabled();
+  if (settingsLoaded && notificationSound && window.NotificationSound) {
+    window.NotificationSound.setEnabled(notificationSound.checked);
   }
 
   /* ── Populate My Profile ──────────────────────────────── */
@@ -246,9 +229,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         notifStatusChange: getCheck("notifStatusChange"),
         notifCompletion: getCheck("notifCompletion"),
         notifSystemSecurity: getCheck("notifSystemSecurity"),
+        notificationSound: getCheck("notificationSound"),
         emailNotifications: getCheck("emailNotifications"),
       };
       try {
+        document.getElementById("notifSettingsAlert")?.classList.add("d-none");
         const response = await apiRequest("/settings/notifications", {
           method: "PUT",
           body: submittedPreferences,
@@ -269,8 +254,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           setCheck(key, response.data[key]),
         );
         if (notificationSound && window.NotificationSound) {
-          window.NotificationSound.setEnabled(notificationSound.checked);
+          window.NotificationSound.setEnabled(response.data.notificationSound);
         }
+        showAlert(
+          "notifSettingsAlert",
+          "Notification preferences saved successfully.",
+          "success",
+        );
         showToast(
           "Notification preferences saved successfully.",
           "success",
@@ -280,10 +270,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           "Failed to save notification preferences:",
           err?.message || err,
         );
-        showToast(
-          "Failed to save notification preferences. Please try again.",
-          "danger",
-        );
+        const message =
+          err?.message ||
+          "Failed to save notification preferences. Please try again.";
+        showAlert("notifSettingsAlert", message, "danger");
+        showToast(message, "danger");
       } finally {
         notificationSettingsSaving = false;
         setLoading("saveNotifBtn", "saveNotifSpinner", false);
@@ -468,28 +459,41 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (hasError) return;
 
+      const profilePayload = {
+        fullName: getVal("profileName"),
+        phone: getVal("profilePhone"),
+        department: getVal("profileDept"),
+      };
       profileSaving = true;
       setLoading("saveProfileBtn", "saveProfileSpinner", true);
       document.getElementById("saveProfileLabel").textContent = "Saving...";
       try {
         const res = await apiRequest("/users/profile", {
           method: "PUT",
-          body: {
-            fullName: getVal("profileName"),
-            phone: getVal("profilePhone"),
-            department: getVal("profileDept"),
-          },
+          body: profilePayload,
         });
 
-        /* Update local session */
-        const stored = Auth.getUser();
-        currentUser = { ...(stored || currentUser), ...res.data };
-        Auth.setUser(currentUser);
+        if (
+          res.success !== true ||
+          !res.data ||
+          res.data.fullName !== profilePayload.fullName ||
+          (res.data.phone || "") !== profilePayload.phone ||
+          (res.data.department || "") !== profilePayload.department
+        ) {
+          throw new Error("The server did not confirm the saved profile.");
+        }
 
-        /* Refresh the profile header */
+        currentUser = await Auth.refresh();
+        if (
+          currentUser.fullName !== profilePayload.fullName ||
+          (currentUser.phone || "") !== profilePayload.phone ||
+          (currentUser.department || "") !== profilePayload.department
+        ) {
+          throw new Error("The saved profile could not be reloaded.");
+        }
+
         populateProfile(currentUser);
         populateSecurity(currentUser);
-        persistProfilePhotoState();
 
         showAlert("profileAlert", "Profile updated successfully.", "success");
         showToast("Profile updated successfully.", "success");
@@ -539,7 +543,6 @@ document.addEventListener("DOMContentLoaded", async () => {
      Priority: upload > URL > default ADMIN image > initials
      ═══════════════════════════════════════════════════════ */
   const photoInput = document.getElementById("profilePhotoUpload");
-  const urlInput = document.getElementById("profileImageUrl");
   const uploadPhotoBtn = document.getElementById("uploadProfilePhotoBtn");
   const uploadPhotoLabel = document.getElementById("uploadProfilePhotoLabel");
   const removeBtn = document.getElementById("removeProfilePhotoBtn");
@@ -604,12 +607,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   if (photoInput) photoInput.disabled = false;
 
-  urlInput?.addEventListener("input", () => {
-    if (profilePhoto.uploaded) return; /* uploaded photo has priority */
-    profilePhoto.url = urlInput.value.trim();
-    persistProfilePhotoState();
-  });
-
   uploadPhotoBtn?.addEventListener("click", async () => {
     if (profilePhotoUploading) return;
     if (!selectedProfilePhoto) {
@@ -636,11 +633,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         throw new Error("Profile photo upload returned no saved image.");
       }
 
-      currentUser = { ...currentUser, profileImage: response.data.profileImage };
-      Auth.setUser(currentUser);
-      profilePhoto = { uploaded: null, url: "" };
-      setProfileImagePrefs(currentUser, profilePhoto);
-      if (urlInput) urlInput.value = "";
+      currentUser = await Auth.refresh();
+      if (currentUser.profileImage !== response.data.profileImage) {
+        throw new Error("The saved profile photo could not be reloaded.");
+      }
       selectedProfilePhoto = null;
       if (photoInput) photoInput.value = "";
       releaseProfilePhotoPreview();
@@ -689,13 +685,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (currentUser.profileImage) {
         await apiRequest("/users/profile-image", { method: "DELETE" });
       }
-      currentUser = { ...currentUser, profileImage: null };
-      Auth.setUser(currentUser);
-      profilePhoto = { uploaded: null, url: "" };
-      setProfileImagePrefs(currentUser, profilePhoto);
+      currentUser = await Auth.refresh();
+      if (currentUser.profileImage) {
+        throw new Error("The saved profile photo could not be removed.");
+      }
       selectedProfilePhoto = null;
       if (photoInput) photoInput.value = "";
-      if (urlInput) urlInput.value = "";
       releaseProfilePhotoPreview();
       applyProfileAvatar(currentUser, document.getElementById("profileAvatar"));
       if (typeof populateUserInfo === "function") populateUserInfo();
@@ -754,11 +749,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const avatar = document.getElementById("profileAvatar");
     if (avatar) applyProfileAvatar(u, avatar);
 
-    /* Image URL field reflects the saved Image URL preference */
-    const urlInput = document.getElementById("profileImageUrl");
-    if (urlInput && !getProfileImagePrefs(u).uploaded) {
-      urlInput.value = getProfileImagePrefs(u).url || "";
-    }
     setText("profileDisplayName", u.fullName);
     setText("profileDisplayEmail", u.email);
 
@@ -998,11 +988,11 @@ async function initPersonalSettings(user) {
       );
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 1.5 * 1024 * 1024) {
       resetPhotoSelection();
       showUploadAlert(
         "profilePhotoAlert",
-        "The selected photo exceeds the 5 MB limit.",
+        "The selected photo exceeds the 1.5 MB limit.",
       );
       return;
     }
@@ -1045,11 +1035,13 @@ async function initPersonalSettings(user) {
         body: formData,
         isFormData: true,
       });
-      const updatedUser = {
-        ...Auth.getUser(),
-        profileImage: data.profileImage,
-      };
-      Auth.setUser(updatedUser);
+      if (!data?.profileImage) {
+        throw new Error("Profile photo upload returned no saved image.");
+      }
+      const updatedUser = await Auth.refresh();
+      if (updatedUser.profileImage !== data.profileImage) {
+        throw new Error("The saved profile photo could not be reloaded.");
+      }
       if (typeof populateUserInfo === "function") populateUserInfo();
       if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
       photoPreviewUrl = null;
@@ -1312,6 +1304,7 @@ async function initPersonalSettings(user) {
   profileForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!validateProfile()) return;
+    const submittedProfile = readProfile();
     const saveButton = document.getElementById("saveProfileBtn");
     const spinner = document.getElementById("profileSpinner");
     saveButton.disabled = true;
@@ -1320,10 +1313,20 @@ async function initPersonalSettings(user) {
     try {
       const result = await apiRequest("/users/profile", {
         method: "PUT",
-        body: readProfile(),
+        body: submittedProfile,
       });
-      const updatedUser = result.data;
-      Auth.setUser({ ...Auth.getUser(), ...updatedUser });
+      if (result.success !== true || !result.data) {
+        throw new Error("The server did not confirm the saved profile.");
+      }
+      const updatedUser = await Auth.refresh();
+      if (
+        updatedUser.fullName !== submittedProfile.fullName ||
+        (updatedUser.phone || "") !== submittedProfile.phone ||
+        (updatedUser.department || "") !== submittedProfile.department ||
+        (updatedUser.gender || "") !== submittedProfile.gender
+      ) {
+        throw new Error("The saved profile could not be reloaded.");
+      }
       fillProfile(updatedUser);
       originalProfile = readProfile();
       /* Optional: the shared profile dropdown removes the topbar
@@ -1335,7 +1338,6 @@ async function initPersonalSettings(user) {
       document.getElementById("sidebarUserName").textContent =
         updatedUser.fullName || "User";
       showFormAlert("profileAlert", "Profile updated successfully.", "success");
-      window.setTimeout(() => window.location.reload(), 600);
     } catch (error) {
       showFormAlert("profileAlert", error.message, "danger");
     } finally {
@@ -1693,7 +1695,6 @@ async function initPersonalSettings(user) {
         }
       }
       showAlert("Settings saved successfully.", "success");
-      window.setTimeout(() => window.location.reload(), 600);
     } catch (err) {
       showAlert(err.message || "Could not save your settings.", "danger");
     } finally {

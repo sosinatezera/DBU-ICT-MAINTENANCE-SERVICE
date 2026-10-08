@@ -129,7 +129,7 @@ const submitInquiry = async (req, res, next) => {
          instead — 201 with `notified:false` — so the caller can tell "stored
          and emailed" from "stored, notification failed" without ever claiming
          an email went out. Failures are reported on the server by variable
-         name and SMTP code only: never an address, a password or a stack. */
+         name and provider code only: never an address, a password or a stack. */
       if (!env.ADMIN_EMAIL_STATUS.configured) {
         console.error(
           `[inquiries] ${EMAIL_ERROR.CONFIGURATION} - the contact form cannot notify the ICT Admin because ADMIN_EMAIL is not set to a valid address. ` +

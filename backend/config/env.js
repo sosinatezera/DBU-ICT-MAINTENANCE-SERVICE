@@ -2,22 +2,19 @@
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
-/* ── SMTP readiness ──────────────────────────────────────────
-   Outbound email has no fallback channel: if this is unusable, "forgot password"
-   is broken for every user. So the readiness of the mail provider must be
-   diagnosable, and it is reported here using variable NAMES only — never a
-   host, mailbox or app-password value — which lets the boot banner, the
-   forgot-password error path and `npm run verify:smtp` all name the exact
-   variable an operator forgot without ever exposing a credential to a log,
-   a terminal or an API response. */
-/* Gmail App Passwords are always displayed in groups of four
-   ("xxxx xxxx xxxx xxxx"). Copy-pasting that straight from the Google page
-   leaves the spaces inside the value, and they are then sent verbatim in the
-   SMTP AUTH payload, which Gmail rejects with 535 / EAUTH. Every variable then
-   reads as correctly "present", so nothing looks misconfigured while every
-   send fails. Stripping whitespace here — once, at the single point every
-   caller reads — keeps the credential usable however it was pasted, both in
-   backend/.env and in the hosting provider's dashboard. */
+const publicRegistrationEnabled = (() => {
+  const raw = process.env.PUBLIC_REGISTRATION_ENABLED;
+  if (raw === undefined || raw.trim() === "") return null;
+  if (/^(true|1|yes)$/i.test(raw.trim())) return true;
+  if (/^(false|0|no)$/i.test(raw.trim())) return false;
+  throw new Error(
+    "PUBLIC_REGISTRATION_ENABLED must be true, false, 1, 0, yes, or no.",
+  );
+})();
+
+/* Production is pinned to Resend over HTTPS because Render's free instances
+   block outbound SMTP. Local development defaults to SMTP to preserve the
+   existing workflow; EMAIL_PROVIDER=resend opts into the API locally. */
 const stripCredentialWhitespace = (value) =>
   String(value || "").replace(/\s+/g, "");
 
@@ -42,6 +39,44 @@ const smtpStatus = (() => {
     missing.push("placeholder value still present in SMTP_USER/SMTP_PASSWORD");
   }
   return { configured: missing.length === 0, missing };
+})();
+
+const emailProvider =
+  process.env.NODE_ENV === "production"
+    ? "resend"
+    : String(process.env.EMAIL_PROVIDER || "smtp")
+        .trim()
+        .toLowerCase();
+const resendApiKey = String(process.env.RESEND_API_KEY || "").trim();
+const resendFromEmail = String(
+  process.env.EMAIL_FROM || process.env.MAIL_FROM || "",
+).trim();
+
+const resendStatus = (() => {
+  const missing = [];
+  if (
+    !/^re_[A-Za-z0-9_-]{8,}$/.test(resendApiKey) ||
+    /^(re_[xX]+|your[-_ ]|replace)/i.test(resendApiKey)
+  ) {
+    missing.push("RESEND_API_KEY");
+  }
+  if (
+    !resendFromEmail ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resendFromEmail) ||
+    /example\.com|your[-_. ]|replace/i.test(resendFromEmail)
+  ) {
+    missing.push("EMAIL_FROM (verified sender address)");
+  }
+  return { configured: missing.length === 0, missing };
+})();
+
+const emailStatus = (() => {
+  if (emailProvider === "smtp") return smtpStatus;
+  if (emailProvider === "resend") return resendStatus;
+  return {
+    configured: false,
+    missing: ["EMAIL_PROVIDER (must be smtp or resend)"],
+  };
 })();
 
 /* ── Contact-form notification readiness ──────────────────────
@@ -82,24 +117,32 @@ module.exports = {
   FRONTEND_URL:
     process.env.FRONTEND_URL ||
     (process.env.NODE_ENV === "production" ? "" : "http://localhost:3000"),
+  /* Explicit environment value overrides the Admin Settings switch.
+     null preserves the existing database-controlled behavior. */
+  PUBLIC_REGISTRATION_ENABLED: publicRegistrationEnabled,
 
-  // Email (Gmail SMTP — SMTP_HOST/SMTP_USER/SMTP_PASSWORD are REQUIRED for
-  // password recovery. SMTP_PASSWORD must be a GOOGLE APP PASSWORD, NOT the
-  // normal Gmail password — see .env.example for step-by-step instructions.)
+  // Production uses Resend over HTTPS; local development defaults to SMTP.
+  EMAIL_PROVIDER: emailProvider,
+  EMAIL_CONFIGURED: emailStatus.configured,
+  EMAIL_STATUS: emailStatus,
+  RESEND_API_KEY: resendApiKey,
+  EMAIL_FROM: resendFromEmail,
+  RESEND_TIMEOUT_MS: Math.min(
+    30000,
+    Math.max(1000, Number(process.env.RESEND_TIMEOUT_MS) || 10000),
+  ),
   SMTP_HOST: process.env.SMTP_HOST || "",
   SMTP_PORT: process.env.SMTP_PORT || 587, // 587 → STARTTLS; 465 → implicit TLS
   SMTP_USER: smtpUser, // your.account@gmail.com
   SMTP_PASSWORD: smtpPassword, // 16-char Google App Password, whitespace stripped
   SMTP_PASS: smtpPassword, // legacy alias for SMTP_PASSWORD
-  /* True only when the provider can actually be used. SMTP_STATUS.missing
-     explains *why* it is false, by variable name only. */
+  /* Retained for local SMTP diagnostics. Production readiness is EMAIL_STATUS. */
   SMTP_CONFIGURED: smtpStatus.configured,
   SMTP_STATUS: smtpStatus,
   SMTP_FROM_NAME:
     process.env.SMTP_FROM_NAME || "Smart ICT Maintenance Management System",
-  /* Optional independent From address for outbound mail. When unset the From
-     header falls back to SMTP_USER (with the SMTP_FROM_NAME display label). */
-  MAIL_FROM: process.env.MAIL_FROM || "",
+  /* Optional independent From address for local SMTP. */
+  MAIL_FROM: String(process.env.MAIL_FROM || "").trim(),
 
   // SMS (replaceable provider adapter; credentials stay server-side)
   SMS_PROVIDER: process.env.SMS_PROVIDER || "",
@@ -115,7 +158,7 @@ module.exports = {
   /* The contact form can only confirm a submission when BOTH a working
      provider and a recipient exist. */
   CONTACT_NOTIFICATION_CONFIGURED:
-    smtpStatus.configured && adminEmailStatus.configured,
+    emailStatus.configured && adminEmailStatus.configured,
 
   // AI support (server-side only; keys never leave the backend).
   AI_SUPPORT_ENABLED: process.env.AI_SUPPORT_ENABLED || "true",

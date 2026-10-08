@@ -42,7 +42,7 @@ const errorHandler = (err, req, res, next) => {
     const code =
       err.code === "LIMIT_FILE_SIZE"
         ? err.field === "profileImage"
-          ? "Uploaded photo exceeds the 5 MB limit."
+          ? "Uploaded photo exceeds the 1.5 MB limit."
           : "Uploaded file exceeds the 10 MB limit."
         : err.message || "File upload failed.";
     return res.status(400).json({ success: false, message: code });

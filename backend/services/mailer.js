@@ -2,16 +2,13 @@
  * services/mailer.js
  * Outbound email service for the Smart ICT Maintenance Management System.
  *
- * Uses the project's existing Nodemailer dependency and the SMTP_* settings
- * centralised in config/env.js. Email is REQUIRED for password recovery: there
- * is no second channel, so if SMTP_HOST / SMTP_USER / SMTP_PASSWORD are not
- * usable then "forgot password" is broken for every user. The rest of the system
- * (ticketing, notifications) still runs without it, which is why an unusable
- * configuration is reported loudly at boot instead of being treated as normal.
+ * Production uses Resend over HTTPS; local development retains the existing
+ * Nodemailer/SMTP transport. Email is REQUIRED for password recovery, so an
+ * unusable provider is reported loudly instead of being treated as normal.
  * Every send path therefore reports `delivered:false` plus a `code` naming the
  * failing stage (see EMAIL_ERROR) and never pretends a message was sent.
  *
- * ── Gmail configuration (see .env / .env.example) ─────────────────────────
+ * ── Local Gmail configuration (see .env.example) ──────────────────────────
  *   SMTP_HOST = smtp.gmail.com
  *   SMTP_PORT = 587   (STARTTLS — the default and recommended Gmail port)
  *   SMTP_USER = your.account@gmail.com
@@ -30,7 +27,7 @@
  *   - Credentials live ONLY in environment variables /.env — never hard-coded.
  *   - SMTP_PASS (and the full SMTP_USER) is never written to log files or the
  *     console. The helper `maskEmail()` is used wherever the account is shown.
- *   - On failure, nodemailer errors are re-wrapped so no credentials leak.
+ *   - Provider errors are re-wrapped so no credentials or raw response bodies leak.
  *
  * ── Honesty + non-blocking contract ────────────────────────────────────────
  *   - This module NEVER pretends an email was sent.
@@ -38,11 +35,11 @@
  *   - sendEmail()/sendPasswordResetEmail()/sendEventEmail() never reject;
  *     they resolve with `delivered:false` on any failure so callers — even
  *     awaited ones — can never crash the request/operation.
- *   - `verifySmtp()` performs a real Nodemailer transporter.verify() and can
- *     reject, so callers should .catch() it (see scripts/verify-smtp.js).
+ *   - `verifyEmailProvider()` performs a live provider check and never rejects.
  */
 
 const nodemailer = require("nodemailer");
+const https = require("https");
 const env = require("../config/env");
 const User = require("../models/User");
 
@@ -68,6 +65,15 @@ function maskConfig() {
    A server without any of them cannot deliver mail. */
 function smtpConfigured() {
   return env.SMTP_CONFIGURED;
+}
+
+function emailConfigured() {
+  return env.EMAIL_CONFIGURED;
+}
+
+function describeEmailMissing() {
+  const missing = (env.EMAIL_STATUS && env.EMAIL_STATUS.missing) || [];
+  return missing.length ? missing.join(", ") : "none reported";
 }
 
 /* ── Safe failure classification ────────────────────────────
@@ -211,6 +217,180 @@ function fromAddress() {
   return env.SMTP_USER ? `${display}<${env.SMTP_USER}>` : env.SMTP_USER;
 }
 
+function resendFromAddress() {
+  const display = env.SMTP_FROM_NAME.replace(/[\r\n"]/g, " ").trim();
+  return display
+    ? `${display} <${env.EMAIL_FROM}>`
+    : env.EMAIL_FROM;
+}
+
+/* Provider error messages are useful for diagnosing policy rejections, but
+   must not echo addresses, API credentials, or reset codes into application
+   logs. Keep only a short, redacted message from the response body. */
+function safeResendError(data) {
+  const name =
+    typeof data?.name === "string" ? data.name.replace(/[^A-Za-z0-9 _-]/g, "") : "";
+  const message = typeof data?.message === "string" ? data.message : "";
+  const safeMessage = message
+    .replace(/Bearer\s+\S+/gi, "Bearer [REDACTED]")
+    .replace(/\bre_[A-Za-z0-9_-]+\b/g, "[REDACTED_API_KEY]")
+    .replace(
+      /\b(api[_ -]?key|authorization|token|password|otp|code)\s*[:=]\s*\S+/gi,
+      "$1=[REDACTED]",
+    )
+    .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, (email) => maskEmail(email))
+    .replace(/\b\d{6}\b/g, "[REDACTED_CODE]")
+    .replace(/[A-Za-z0-9+/=_-]{32,}/g, "[REDACTED_TOKEN]")
+    .replace(/\s+/g, " ")
+    .trim();
+  const detail = [name, safeMessage].filter(Boolean).join(": ");
+  return detail ? detail.slice(0, 240) : "No provider error message returned.";
+}
+
+/* Resend is always called over TLS on HTTPS's standard port 443. The response
+   body is bounded; errors are parsed for safe, redacted diagnostics only. */
+function resendRequest(path, method, payload) {
+  const body = payload ? JSON.stringify(payload) : null;
+  return new Promise((resolve, reject) => {
+    const requestUrl = new URL(`https://api.resend.com${path}`);
+    const request = https.request(
+      requestUrl,
+      {
+        method,
+        port: 443,
+        headers: {
+          Authorization: `Bearer ${env.RESEND_API_KEY}`,
+          ...(body
+            ? {
+                "Content-Type": "application/json",
+                "Content-Length": Buffer.byteLength(body),
+              }
+            : {}),
+        },
+      },
+      (response) => {
+        let responseBody = "";
+        let tooLarge = false;
+        response.on("data", (chunk) => {
+          if (responseBody.length + chunk.length > 65536) {
+            tooLarge = true;
+            response.destroy(new Error("Resend API response exceeded its limit."));
+            return;
+          }
+          responseBody += chunk;
+        });
+        response.on("end", () => {
+          clearTimeout(timer);
+          let data = {};
+          if (!tooLarge) {
+            try {
+              data = responseBody ? JSON.parse(responseBody) : {};
+            } catch (_) {
+              data = {};
+            }
+          }
+          resolve({ statusCode: response.statusCode || 0, data });
+        });
+        response.on("error", finishError);
+      },
+    );
+    const timer = setTimeout(() => {
+      const error = new Error("Resend API request timed out.");
+      error.code = "ETIMEDOUT";
+      request.destroy(error);
+    }, env.RESEND_TIMEOUT_MS);
+    const finishError = (error) => {
+      clearTimeout(timer);
+      reject(error);
+    };
+    request.on("error", finishError);
+    if (body) request.write(body);
+    request.end();
+  });
+}
+
+function classifyResendFailure(statusCode) {
+  return statusCode === 401 || statusCode === 403
+    ? EMAIL_ERROR.CONFIGURATION
+    : EMAIL_ERROR.SEND;
+}
+
+async function sendWithResend({ to, replyTo, subject, text, html }) {
+  try {
+    const response = await resendRequest("/emails", "POST", {
+      from: resendFromAddress(),
+      to,
+      ...(replyTo ? { reply_to: replyTo } : {}),
+      subject,
+      ...(text ? { text } : {}),
+      ...(html ? { html } : {}),
+    });
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return {
+        delivered: true,
+        info: "Email accepted by Resend.",
+        ...(response.data.id ? { id: response.data.id } : {}),
+      };
+    }
+
+    const failureCode = classifyResendFailure(response.statusCode);
+    console.error(
+      `[mailer] ${failureCode} - Resend API returned HTTP ${response.statusCode}: ${safeResendError(response.data)} (recipient masked: ${maskEmail(String(to))})`,
+    );
+    return {
+      delivered: false,
+      code: failureCode,
+      info: `Resend API rejected the email (HTTP ${response.statusCode}).`,
+    };
+  } catch (err) {
+    const failureCode = CONNECTION_ERROR_CODES.has(err?.code)
+      ? EMAIL_ERROR.CONNECTION
+      : EMAIL_ERROR.SEND;
+    console.error(
+      `[mailer] ${failureCode} - Resend HTTPS request failed (${err?.code || "request error"}) (recipient masked: ${maskEmail(String(to))})`,
+    );
+    return {
+      delivered: false,
+      code: failureCode,
+      info:
+        failureCode === EMAIL_ERROR.CONNECTION
+          ? "Resend HTTPS connection failed or timed out."
+          : "Resend email request failed.",
+    };
+  }
+}
+
+async function verifyEmailProvider() {
+  if (!emailConfigured()) {
+    return {
+      ok: false,
+      code: EMAIL_ERROR.CONFIGURATION,
+      detail: `${env.EMAIL_PROVIDER} not configured; missing: ${describeEmailMissing()}.`,
+    };
+  }
+  if (env.EMAIL_PROVIDER === "smtp") return verifySmtp();
+
+  try {
+    const response = await resendRequest("/domains", "GET");
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return { ok: true, detail: "Resend HTTPS API verified." };
+    }
+    return {
+      ok: false,
+      code: classifyResendFailure(response.statusCode),
+      detail: `Resend HTTPS API check returned HTTP ${response.statusCode}.`,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      code: CONNECTION_ERROR_CODES.has(err?.code)
+        ? EMAIL_ERROR.CONNECTION
+        : EMAIL_ERROR.SEND,
+      detail: `Resend HTTPS API check failed (${err?.code || "request error"}).`,
+    };
+  }
+}
+
 /**
  * Verify the SMTP connection using Nodemailer's transporter.verify().
  * @returns {Promise<{ok:boolean, detail:string, code?:string}>} — never rejects, never leaks credentials.
@@ -259,11 +439,11 @@ async function verifySmtp() {
  * @returns {Promise<{delivered:boolean, info:string, code?:string}>}
  */
 async function sendEmail({ to, replyTo, subject, text, html }) {
-  if (!smtpConfigured()) {
+  if (!emailConfigured()) {
     return {
       delivered: false,
       code: EMAIL_ERROR.CONFIGURATION,
-      info: `SMTP not configured; email disabled (missing: ${describeMissing()}).`,
+      info: `${env.EMAIL_PROVIDER} not configured; email disabled (missing: ${describeEmailMissing()}).`,
     };
   }
   if (!to) {
@@ -276,6 +456,10 @@ async function sendEmail({ to, replyTo, subject, text, html }) {
       code: EMAIL_ERROR.CONFIGURATION,
       info: "No recipient provided.",
     };
+  }
+
+  if (env.EMAIL_PROVIDER === "resend") {
+    return sendWithResend({ to, replyTo, subject, text, html });
   }
 
   let transporter;
@@ -298,7 +482,7 @@ async function sendEmail({ to, replyTo, subject, text, html }) {
       text,
       html,
     });
-    return { delivered: true, info: "Email delivered to SMTP server." };
+    return { delivered: true, info: "Email accepted by SMTP server." };
   } catch (err) {
     const failure = describeMailFailure(err);
     console.error(
@@ -313,17 +497,17 @@ async function sendEmail({ to, replyTo, subject, text, html }) {
 }
 
 /**
- * Send an event/notification email. Gated by BOTH the SMTP configuration and
+ * Send an event/notification email. Gated by BOTH the email provider and
  * the admin "emailNotifications" toggle in Settings — so nothing is sent until
  * the admin enables it. Non-blocking: returns the same {delivered, info} shape
  * and never rejects.
  */
 async function sendEventEmail({ to, subject, text, html }) {
-  if (!smtpConfigured()) {
+  if (!emailConfigured()) {
     return {
       delivered: false,
       code: EMAIL_ERROR.CONFIGURATION,
-      info: `SMTP not configured; email disabled (missing: ${describeMissing()}).`,
+      info: `${env.EMAIL_PROVIDER} not configured; email disabled (missing: ${describeEmailMissing()}).`,
     };
   }
 
@@ -369,24 +553,24 @@ async function sendEventEmail({ to, subject, text, html }) {
 /**
  * Send a password reset verification code email.
  * @returns {Promise<{delivered:boolean, info:string, code?:string}>}
- *   - delivered:true  → the email was handed to the SMTP server.
- *   - delivered:false → SMTP is not configured or delivery failed; mail NOT sent.
+ *   - delivered:true  → the selected provider accepted the email.
+ *   - delivered:false → the provider is not configured or delivery failed.
  *     `code` is the EMAIL_ERROR category that lets the caller log the real cause.
  */
 async function sendPasswordResetEmail({ to, code, expiresMinutes = 10 }) {
-  /* ── SMTP unusable ─────────────────────────────────────────
+  /* ── Email provider unusable ───────────────────────────────
      Do not pretend delivery, and never log the code itself. The category plus the
      missing variable names are logged because this is the single reason password
      recovery can fail outright, and the names carry no secret. */
-  if (!smtpConfigured()) {
+  if (!emailConfigured()) {
     console.error(
       `[auth/password-reset] ${EMAIL_ERROR.CONFIGURATION} - verification email NOT sent to "${maskEmail(to)}". ` +
-        `Missing or invalid: ${describeMissing()}.`,
+        `Missing or invalid: ${describeEmailMissing()}.`,
     );
     return {
       delivered: false,
       code: EMAIL_ERROR.CONFIGURATION,
-      info: `SMTP not configured; email not delivered (missing: ${describeMissing()}).`,
+      info: `${env.EMAIL_PROVIDER} not configured; email not delivered (missing: ${describeEmailMissing()}).`,
     };
   }
 
@@ -416,6 +600,9 @@ async function sendPasswordResetEmail({ to, code, expiresMinutes = 10 }) {
 
 module.exports = {
   smtpConfigured,
+  emailConfigured,
+  describeEmailMissing,
+  verifyEmailProvider,
   createTransporter,
   verifySmtp,
   sendEmail,

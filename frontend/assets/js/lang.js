@@ -759,7 +759,7 @@
       "admin.settings.profile.photo": "Profile Photo",
       "admin.settings.profile.uploadPhoto": "Upload Photo",
       "admin.settings.profile.uploadHint":
-        "Recommended square image, 1.5 MB max. Stored privately in your browser.",
+        "Recommended square image, 1.5 MB max. Stored securely with your account.",
       "admin.settings.profile.imageUrl": "Image URL (optional)",
       "admin.settings.profile.imageUrl.placeholder":
         "https://example.com/photo.jpg",
@@ -1276,7 +1276,7 @@
       "pf.emailNoEdit": "Email cannot be changed.",
       "pf.ph.department": "e.g., Computer Science",
       "pf.uploadHint":
-        "Recommended square image, 1.5 MB max. Stored privately in your browser.",
+        "Recommended square image, 1.5 MB max. Stored securely with your account.",
       "pf.removeCustom": "Remove Custom Photo",
       "pf.fallbackHint":
         "Falls back to the default REQUESTER image when no custom photo is available.",
@@ -2271,7 +2271,7 @@
       "admin.settings.profile.photo": "የመገለጫ ፎቶ",
       "admin.settings.profile.uploadPhoto": "ፎቶ ይጫኑ",
       "admin.settings.profile.uploadHint":
-        "推薦 square image, 1.5 MB max. በመመስከሪያዎ ውስጥ በግል ይከ博览会።",
+        "ምስሉ ከመለያዎ ጋር በደህና ይቀመጣል። የሚመከር ካሬ ምስል፣ እስከ 1.5 MB።",
       "admin.settings.profile.imageUrl": "የምስል URL (ምርጫ)",
       "admin.settings.profile.imageUrl.placeholder":
         "https://example.com/photo.jpg",
@@ -2758,7 +2758,7 @@
       "pf.userName": "የተጠቃሚ ስም",
       "pf.emailNoEdit": "ኢሜይል ከዚህ ገጽ ሊለወጥ አይችልም።",
       "pf.ph.department": "ለምሳሌ ኮምፒውተር ሳይንስ",
-      "pf.uploadHint": "የተመከረ ካሬ ምስል፣ ከፍተኛ 1.5 ሜ.ባ. በአሳሽዎ ውስጥ በግል ይቀመጣል።",
+      "pf.uploadHint": "ምስሉ ከመለያዎ ጋር በደህና ይቀመጣል። የሚመከር ካሬ ምስል፣ እስከ 1.5 MB።",
       "pf.removeCustom": "ብጁ ፎቶ አስወግድ",
       "pf.fallbackHint": "ብጁ ፎቶ ከሌለ ወደ ነባሪው የጠያቂ ምስል ይመለሳል።",
       "pf.deleteAccount": "መለያን አጥፋ",
@@ -3371,7 +3371,7 @@
       "admin.settings.profile.photo": "Suuraa Piroofayilii",
       "admin.settings.profile.uploadPhoto": "Suuraa Gubachiisi",
       "admin.settings.profile.uploadHint":
-        "Suuraa iskuweerii filatamaa, guddoo 1.5 MB. Braawzara kee keessatti dhoksaan kuusama.",
+        "Suuraan akkaawuntii kee waliin nageenyaan kuufama. Suuraa iskuweerii filatamaa, hanga 1.5 MB.",
       "admin.settings.profile.imageUrl": "URL Suuraa (filannoo)",
       "admin.settings.profile.imageUrl.placeholder":
         "https://example.com/photo.jpg",
@@ -4034,7 +4034,7 @@
       "pf.emailNoEdit": "Iimeeiliin fuula kana irraa hin jijjiramu.",
       "pf.ph.department": "fkn. Saiinsii Kompiitaraa",
       "pf.uploadHint":
-        "Suuraa wareega dhakataa, galma 1.5 MB. Braawusarii keessan keessa dhuunfaatti kuusama.",
+        "Suuraan akkaawuntii kee waliin nageenyaan kuufama. Suuraa iskuweerii filatamaa, hanga 1.5 MB.",
       "pf.removeCustom": "Suuraa Ofii Baasi",
       "pf.fallbackHint":
         "Yoo suuraan ofii hin jiraatin, kan IYYATAA dursee argamesaatti deebi’a.",

@@ -7,16 +7,16 @@
  *   npm run diagnose:forgot -- you@example.com     <- also checks the user row
  *
  * Produces the entire evidence chain in a single run:
- *   1. SMTP variable presence   — names + yes/no only, never values
+ *   1. Email provider presence — names + yes/no only, never values
  *   2. MongoDB connection       — connected / failed (+ safe reason)
  *   3. User lookup              — found yes/no + status only
- *   4. transporter.verify()     — failure category + SMTP response code
+ *   4. Provider check            — failure category + HTTP/error code
  *   5. Live POST to the endpoint— HTTP status + `code` + message
  *
  * Step 5 is the decisive one: both 503 sources in authController.js return a
  * distinct `code`, so the exact branch is identified without guessing.
  *
- * NOTHING sensitive is printed: no SMTP password, no Mongo URI, no JWT or
+ * NOTHING sensitive is printed: no API key, SMTP password, Mongo URI, JWT or
  * session secret, no verification code, no reset token, and no full address
  * (addresses are reduced to their masked form).
  */
@@ -27,10 +27,10 @@ const http = require('http');
 const mongoose = require('mongoose');
 const env = require('../config/env');
 const {
-  smtpConfigured,
-  verifySmtp,
+  emailConfigured,
+  verifyEmailProvider,
   maskEmail,
-  describeMissing,
+  describeEmailMissing,
 } = require('../services/mailer');
 
 const line = (t) =>
@@ -84,23 +84,20 @@ async function main() {
   console.log('   Forgot Password (503) — diagnostic');
   console.log('  ═══════════════════════════════════════════════════════');
 
-  /* ── 1. SMTP configuration: presence only ───────────────────── */
-  line('1. SMTP CONFIGURATION');
+  /* ── 1. Email provider configuration: presence only ─────────── */
+  line('1. EMAIL PROVIDER CONFIGURATION');
   info(`NODE_ENV              : ${env.NODE_ENV}`);
-  info(`SMTP_HOST             : ${yesNo(env.SMTP_HOST)}`);
-  info(`SMTP_PORT             : ${env.SMTP_PORT} (${Number(env.SMTP_PORT) === 465 ? 'implicit TLS' : 'STARTTLS'})`);
-  info(`SMTP_USER             : ${yesNo(env.SMTP_USER)}`);
-  info(`SMTP_PASSWORD         : ${yesNo(env.SMTP_PASSWORD)}`);
-  info(`SMTP_PASS (alias)     : ${yesNo(env.SMTP_PASS)}`);
-  info(`MAIL_FROM             : ${yesNo(env.MAIL_FROM)} (optional)`);
+  info(`EMAIL_PROVIDER        : ${env.EMAIL_PROVIDER}`);
+  info(`RESEND_API_KEY        : ${yesNo(process.env.RESEND_API_KEY)}`);
+  info(`EMAIL_FROM            : ${yesNo(env.EMAIL_FROM)}`);
+  info(`EMAIL_CONFIGURED      : ${emailConfigured()}`);
   info(`SESSION_SECRET        : ${yesNo(process.env.SESSION_SECRET)}`);
   info(`MONGO_URI             : ${yesNo(process.env.MONGO_URI)}`);
-  info(`smtpConfigured()      : ${smtpConfigured()}`);
-  if (smtpConfigured()) {
-    pass('SMTP configuration is complete for this process.');
+  if (emailConfigured()) {
+    pass(`${env.EMAIL_PROVIDER} configuration is complete for this process.`);
   } else {
     fail(
-      `EMAIL_CONFIGURATION_ERROR — this process cannot send mail. Missing: ${describeMissing()}.`,
+      `EMAIL_CONFIGURATION_ERROR — this process cannot send mail. Missing: ${describeEmailMissing()}.`,
     );
     info('If the variables ARE set in backend/.env, this process is STALE:');
     info('env.js reads the file ONCE at boot, so the backend must be restarted.');
@@ -139,17 +136,17 @@ async function main() {
     }
   }
 
-  /* ── 4. Real SMTP handshake ─────────────────────────────────── */
-  line('4. SMTP TRANSPORTER (transporter.verify)');
-  if (!smtpConfigured()) {
+  /* ── 4. Real email-provider check ───────────────────────────── */
+  line('4. EMAIL PROVIDER CONNECTIVITY');
+  if (!emailConfigured()) {
     fail('skipped — EMAIL_CONFIGURATION_ERROR (nothing to verify).');
   } else {
     try {
-      const result = await verifySmtp();
+      const result = await verifyEmailProvider();
       if (result.ok) {
-        pass(`SMTP verification: success — ${result.detail}`);
+        pass(`${env.EMAIL_PROVIDER} verification: success — ${result.detail}`);
       } else {
-        fail(`SMTP verification: failure — ${result.code}`);
+        fail(`${env.EMAIL_PROVIDER} verification: failure — ${result.code}`);
         info(result.detail);
       }
     } catch (err) {
@@ -182,31 +179,31 @@ async function main() {
       info('');
       info('VERDICT — exact 503 branch:');
       if (res.data.code === 'EMAIL_CONFIGURATION_ERROR') {
-        info('  authController.js:323 — availability gate.');
-        info('  The running process answered smtpConfigured() === false.');
+        info('  authController.js — provider availability gate.');
+        info('  The running process answered emailConfigured() === false.');
         info('');
         /* Compare what THIS process reads from backend/.env against what the
            server answered. The two disagreeing is the stale-process proof:
            env.js loads the file once at boot, so a server started before the
-           SMTP variables were added keeps reporting false forever. */
-        const localConfigured = smtpConfigured();
-        info(`  this diagnostic reads smtpConfigured() = ${localConfigured}`);
+           provider variables were added keeps reporting false forever. */
+        const localConfigured = emailConfigured();
+        info(`  this diagnostic reads emailConfigured() = ${localConfigured}`);
         info(`  the running server answered      = false`);
         info('');
         if (localConfigured) {
           info('  >> STALE PROCESS DETECTED.');
           info('     backend/.env is complete, but the running server was');
-          info('     started before the SMTP variables were present.');
+          info('     started before the provider variables were present.');
           info('     FIX: stop node, then `npm start` again. No code change needed.');
         } else {
           info('  >> CONFIGURATION GENUINELY INCOMPLETE on this machine.');
-          info(`     Missing: ${describeMissing()}`);
+          info(`     Missing: ${describeEmailMissing()}`);
         }
       } else {
-        info('  authController.js:410 — delivery attempt failed.');
+        info('  Forgot-password delivery attempt failed.');
         info('  The code was generated and stored, then the send failed.');
         info('  The stored code is rolled back automatically.');
-        info('  FIX: see the SMTP response code in section 4 above.');
+        info('  FIX: see the provider failure category in section 4 above.');
       }
     } else if (res.status === 200) {
       pass('endpoint answered 200 — no 503. Check the mailbox next.');

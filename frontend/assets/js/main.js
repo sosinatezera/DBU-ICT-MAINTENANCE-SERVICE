@@ -32,6 +32,45 @@ const Auth = {
     _sessionResolved = true;
   },
   getUser: () => _sessionUser,
+  refresh: async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () => controller.abort(),
+      API_REQUEST_TIMEOUT_MS,
+    );
+    try {
+      const response = await fetch(resolveApiBase() + "/auth/me", {
+        credentials: "include",
+        signal: controller.signal,
+      });
+      _sessionStatus = response.status;
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("The server returned an invalid profile response.");
+      }
+      if (response.status === 401) {
+        Auth.clear();
+        const error = new Error("Session expired. Please log in again.");
+        error.status = 401;
+        throw error;
+      }
+      if (!response.ok || data.success !== true || !data.user) {
+        const error = new Error(
+          data.message || "Could not reload your saved profile.",
+        );
+        error.status = response.status;
+        throw error;
+      }
+      _sessionUser = data.user;
+      _sessionLoaded = true;
+      _sessionResolved = true;
+      return _sessionUser;
+    } finally {
+      clearTimeout(timer);
+    }
+  },
   /* "known"   — the server answered (200 or 401); _sessionUser is trustworthy.
      "unknown" — the request never completed, so we have no evidence either way. */
   getStatus: () => (_sessionResolved ? "known" : "unknown"),
@@ -975,35 +1014,6 @@ function requireRole(...roles) {
 /* ── Profile Image (Avatar) ────────────────────────────────── */
 const DEFAULT_ADMIN_IMAGE = "/assets/images/admin.jpg";
 const DEFAULT_REQUESTER_IMAGE = "/assets/images/user.jpg";
-const PROFILE_IMAGE_PREFS_KEY = "ict_profile_image_prefs";
-
-function getProfileImagePrefs(user) {
-  if (!user) return {};
-  try {
-    const all = JSON.parse(
-      localStorage.getItem(PROFILE_IMAGE_PREFS_KEY) || "{}",
-    );
-    const key = String(user.email || user.id || "default").toLowerCase();
-    return all[key] || {};
-  } catch (_) {
-    return {};
-  }
-}
-
-function setProfileImagePrefs(user, prefs) {
-  if (!user) return false;
-  try {
-    const all = JSON.parse(
-      localStorage.getItem(PROFILE_IMAGE_PREFS_KEY) || "{}",
-    );
-    const key = String(user.email || user.id || "default").toLowerCase();
-    all[key] = prefs || {};
-    localStorage.setItem(PROFILE_IMAGE_PREFS_KEY, JSON.stringify(all));
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
 
 /* Build an absolute uploads URL that always points to the backend origin,
    regardless of which port the frontend is served from. */
@@ -1013,18 +1023,18 @@ function profileUploadUrl(filename) {
     typeof apiOrigin === "function"
       ? apiOrigin()
       : resolveApiBase().replace(/\/api\/?$/, "");
+  if (filename.indexOf("/api/users/profile-image/") === 0) {
+    return base + filename;
+  }
   /* filename may already contain '/uploads/' prefix from the backend response. */
   if (filename.indexOf("/uploads/") === 0) return base + filename;
   return base + "/uploads/" + encodeURIComponent(String(filename));
 }
 
-/* Priority: DB profileImage > legacy localStorage photo > default image > initials */
+/* Priority: persisted backend profile image > role default > initials */
 function resolveProfileAvatar(user) {
   if (!user) return null;
   if (user.profileImage) return profileUploadUrl(user.profileImage);
-  var prefs = getProfileImagePrefs(user);
-  if (prefs.uploaded) return prefs.uploaded;
-  if (prefs.url) return prefs.url;
   if (user.role === "ICT Admin") return DEFAULT_ADMIN_IMAGE;
   if (user.role === "Requester") return DEFAULT_REQUESTER_IMAGE;
   return null;
@@ -1066,6 +1076,15 @@ function applyProfileAvatar(user, container) {
       typeof apiOrigin === "function" ? apiOrigin() : window.location.origin,
     ).href;
   } catch (_) {}
+  try {
+    if (new URL(abs).origin !== window.location.origin) {
+      img.crossOrigin = "use-credentials";
+    } else {
+      img.removeAttribute("crossorigin");
+    }
+  } catch (_) {
+    img.removeAttribute("crossorigin");
+  }
   if (img.src !== abs) {
     img.hidden = true;
     img.src = src;
@@ -1247,8 +1266,10 @@ function notificationStorageKey(baseKey) {
 
 const NotificationSound = (() => {
   let audioContext = null;
+  let audioContextUnavailable = false;
   let unlocked = false;
   let pendingSound = false;
+  let audioUnlockPromise = null;
   let currentOscillator = null;
   let currentGain = null;
   let lastPlayAt = 0;
@@ -1276,43 +1297,78 @@ const NotificationSound = (() => {
   }
 
   function unlock() {
-    if (unlocked) return Promise.resolve(true);
+    if (unlocked && !pendingSound) return Promise.resolve(true);
+    if (audioContextUnavailable) {
+      unlocked = true;
+      pendingSound = false;
+      return Promise.resolve(true);
+    }
+    if (!pendingSound || !isEnabled()) return Promise.resolve(false);
+    if (audioUnlockPromise) return audioUnlockPromise;
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) {
+      audioContextUnavailable = true;
+      unlocked = true;
+      pendingSound = false;
+      return Promise.resolve(true);
+    }
+
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) {
+      audioContext ||= new AudioContext();
+      if (audioContext.state === "closed") {
+        audioContextUnavailable = true;
         unlocked = true;
+        pendingSound = false;
         return Promise.resolve(true);
       }
-      audioContext ||= new AudioContext();
       const resume =
-        audioContext.state === "suspended"
-          ? audioContext.resume()
-          : Promise.resolve();
-      return resume
+        audioContext.state === "running"
+          ? Promise.resolve()
+          : audioContext.resume();
+      audioUnlockPromise = Promise.resolve(resume)
         .then(() => {
-          unlocked = audioContext.state === "running";
-          if (unlocked && pendingSound) {
+          if (audioContext.state !== "running") {
+            audioContextUnavailable = true;
+            unlocked = true;
             pendingSound = false;
-            playTone();
+            return true;
           }
-          return unlocked;
+          unlocked = true;
+          if (!pendingSound || !isEnabled()) return true;
+          pendingSound = false;
+          if (!playTone()) audioContextUnavailable = true;
+          return true;
         })
-        .catch(() => false);
+        .catch(() => {
+          audioContextUnavailable = true;
+          unlocked = true;
+          pendingSound = false;
+          return true;
+        })
+        .finally(() => {
+          audioUnlockPromise = null;
+        });
+      return audioUnlockPromise;
     } catch (_) {
+      audioContextUnavailable = true;
       unlocked = true;
+      pendingSound = false;
       return Promise.resolve(true);
     }
   }
 
   function playTone() {
-    if (!isEnabled()) return false;
+    if (
+      !isEnabled() ||
+      audioContextUnavailable ||
+      !unlocked ||
+      !audioContext ||
+      audioContext.state !== "running"
+    ) {
+      return false;
+    }
     try {
-      if (!audioContext) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return false;
-        audioContext = new AudioContext();
-      }
-      if (audioContext.state !== "running") return false;
       /* Keep the synthesized fallback at the same comfortable loudness as
         the normalized MP3 while still following the global app volume. */
       const volume = getVolume() * 0.2;
@@ -1333,6 +1389,7 @@ const NotificationSound = (() => {
       currentOscillator.stop(now + 0.17);
       return true;
     } catch (_) {
+      audioContextUnavailable = true;
       return false;
     }
   }
@@ -1384,7 +1441,6 @@ const NotificationSound = (() => {
           /* fallback to oscillator tone if the browser blocks the HTML audio */
           if (!playTone()) {
             pendingSound = true;
-            unlock();
           }
         });
       }
@@ -1392,7 +1448,6 @@ const NotificationSound = (() => {
     } catch (_) {
       if (!playTone()) {
         pendingSound = true;
-        unlock();
       }
       return false;
     }
@@ -1405,7 +1460,10 @@ const NotificationSound = (() => {
         enabled ? "on" : "off",
       );
     } catch (_) {}
-    if (!enabled) stopSound();
+    if (!enabled) {
+      pendingSound = false;
+      stopSound();
+    }
   }
 
   return {
@@ -1570,11 +1628,20 @@ function initGlobalNotificationMonitor() {
   _playedNotificationSounds.clear();
 
   _notificationAudioUnlockHandler = () => {
-    void NotificationSound.unlock();
-    ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
-      document.removeEventListener(eventName, _notificationAudioUnlockHandler);
-    });
-    _notificationAudioUnlockHandler = null;
+    NotificationSound.unlock()
+      .then((handled) => {
+        if (!handled) return;
+        ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
+          document.removeEventListener(
+            eventName,
+            _notificationAudioUnlockHandler,
+          );
+        });
+        _notificationAudioUnlockHandler = null;
+      })
+      .catch(() => {
+        /* Audio unlock failures must not affect dashboard interactions. */
+      });
   };
   ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
     document.addEventListener(eventName, _notificationAudioUnlockHandler, {
@@ -2056,10 +2123,53 @@ function removeSidebarAccountLinks() {
 }
 
 /* ── DOM Ready ────────────────────────────────────────────── */
+function enableNavigationPrefetch() {
+  if (navigator.connection?.saveData) return;
+
+  const prefetched = new Set();
+  const prefetchFromEvent = (event) => {
+    const link = event.target.closest(
+      ".sidebar a[href], .topbar a[href], .navbar a[href]",
+    );
+    if (
+      !link ||
+      link.target === "_blank" ||
+      link.hasAttribute("download") ||
+      link.getAttribute("aria-disabled") === "true"
+    ) {
+      return;
+    }
+
+    const url = new URL(link.href, window.location.href);
+    if (
+      url.origin !== window.location.origin ||
+      !/\.html$/i.test(url.pathname) ||
+      url.pathname === window.location.pathname ||
+      prefetched.has(url.href)
+    ) {
+      return;
+    }
+
+    prefetched.add(url.href);
+    const hint = document.createElement("link");
+    hint.rel = "prefetch";
+    hint.as = "document";
+    hint.href = url.href;
+    document.head.appendChild(hint);
+  };
+
+  document.addEventListener("pointerover", prefetchFromEvent, {
+    capture: true,
+    passive: true,
+  });
+  document.addEventListener("focusin", prefetchFromEvent, true);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   /* Auth.load() was already started at script-parse time, so this await almost
      always resolves from cache instead of opening a fresh round-trip. */
   const user = await Auth.load();
+  if (user) enableNavigationPrefetch();
   await ensureSharedProfileMenu();
   void loadAccountPreferences(user);
   removeSidebarAccountLinks();

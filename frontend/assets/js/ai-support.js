@@ -6,7 +6,7 @@
       "DOMContentLoaded",
       () => {
         const script = document.createElement("script");
-        script.src = "/assets/js/ai-support.js?v=29";
+        script.src = "/assets/js/ai-support.js?v=30";
         document.head.appendChild(script);
       },
       { once: true },
@@ -85,7 +85,9 @@
       .replace(/\n{2,}/g, "</p><p>")
       .replace(/\n/g, "<br>");
 
-  const button = create("button", "ai-support-launcher");
+  const button =
+    document.querySelector(".ai-support-launcher") ||
+    create("button", "ai-support-launcher");
   button.type = "button";
   button.setAttribute("aria-label", "Open Master AI chat");
   button.setAttribute("aria-expanded", "false");
@@ -122,7 +124,8 @@
       </div>
     </form>`;
 
-  document.body.append(button, panel);
+  if (!button.isConnected) document.body.append(button);
+  document.body.append(panel);
   const messages = panel.querySelector(".ai-support-messages");
   const form = panel.querySelector(".ai-support-form");
   const input = panel.querySelector("#aiSupportInput");

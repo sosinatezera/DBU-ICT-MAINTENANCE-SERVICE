@@ -19,6 +19,7 @@ const Feedback = require("../models/Feedback");
 const AuditLog = require("../models/AuditLog");
 const Settings = require("../models/Settings");
 const ProfileFile = require("../models/ProfileFile");
+const ProfileImage = require("../models/ProfileImage");
 const path = require("path");
 const fs = require("fs");
 const {
@@ -453,6 +454,7 @@ const permanentDeleteUser = async (req, res, next) => {
         }
       }
 
+      await ProfileImage.deleteMany({ user: id }, { session });
       await User.deleteOne({ _id: id }, { session });
     });
   } catch (err) {
@@ -471,15 +473,7 @@ const permanentDeleteUser = async (req, res, next) => {
   }
 
   if (profileImage) {
-    const imagePath = path.join(__dirname, "..", "uploads", profileImage);
-    try {
-      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
-    } catch (err) {
-      console.warn(
-        "Could not remove deleted user's profile image:",
-        err.message,
-      );
-    }
+    await unlinkProfileImage(profileImage);
   }
 
   res.json({
@@ -781,16 +775,19 @@ const profileImageSignatures = {
     header.toString("ascii", 8, 12) === "WEBP",
 };
 
-const hasProfileImageSignature = (filePath, mimeType) => {
-  const descriptor = fs.openSync(filePath, "r");
-  const header = Buffer.alloc(12);
-  let bytesRead;
-  try {
-    bytesRead = fs.readSync(descriptor, header, 0, header.length, 0);
-  } finally {
-    fs.closeSync(descriptor);
-  }
-  return !!profileImageSignatures[mimeType]?.(header.subarray(0, bytesRead));
+const PROFILE_IMAGE_PATH_PREFIX = "/api/users/profile-image/";
+const MAX_PROFILE_IMAGE_SIZE = 1.5 * 1024 * 1024;
+
+const profileImageIdFromPath = (value) => {
+  const match = /^\/api\/users\/profile-image\/([a-f\d]{24})$/i.exec(
+    String(value || ""),
+  );
+  return match ? match[1] : null;
+};
+
+const hasProfileImageSignature = (buffer, mimeType) => {
+  if (!Buffer.isBuffer(buffer)) return false;
+  return !!profileImageSignatures[mimeType]?.(buffer.subarray(0, 12));
 };
 
 const unlinkProfileImage = async (filename) => {
@@ -804,8 +801,11 @@ const unlinkProfileImage = async (filename) => {
 };
 
 const uploadProfileImage = async (req, res, next) => {
+  let storedImage = null;
+  let user = null;
+  let previousImage = null;
   try {
-    if (!req.file) {
+    if (!req.file || !Buffer.isBuffer(req.file.buffer)) {
       return res
         .status(422)
         .json({ success: false, message: "No image file provided." });
@@ -820,49 +820,100 @@ const uploadProfileImage = async (req, res, next) => {
     const extension = path.extname(req.file.originalname).toLowerCase();
     if (
       extensionMimeTypes[extension] !== req.file.mimetype ||
-      !hasProfileImageSignature(req.file.path, req.file.mimetype)
+      req.file.size > MAX_PROFILE_IMAGE_SIZE ||
+      !hasProfileImageSignature(req.file.buffer, req.file.mimetype)
     ) {
-      await unlinkProfileImage(req.file.filename);
       return res.status(400).json({
         success: false,
         message: "The selected file is not a valid JPG, PNG, or WEBP image.",
       });
     }
 
-    const user = await User.findById(req.user.id);
+    user = await User.findById(req.user.id);
     if (!user) {
-      await unlinkProfileImage(req.file.filename);
       return res
         .status(404)
         .json({ success: false, message: "User not found." });
     }
 
-    const oldFilename = user.profileImage;
+    previousImage = user.profileImage;
+    storedImage = await ProfileImage.create({
+      user: user._id,
+      contentType: req.file.mimetype,
+      data: req.file.buffer,
+      size: req.file.size,
+    });
 
-    // Save new profile image filename first
-    user.profileImage = req.file.filename;
+    user.profileImage = `${PROFILE_IMAGE_PATH_PREFIX}${storedImage._id}`;
+    await user.save();
+  } catch (err) {
+    if (storedImage) {
+      try {
+        await ProfileImage.deleteOne({ _id: storedImage._id, user: req.user.id });
+      } catch (cleanupError) {
+        console.error(
+          "Could not remove an unreferenced profile image:",
+          cleanupError.message,
+        );
+      }
+    }
+    return next(err);
+  }
 
-    // Update database before deleting old file
-    await user.save({ validateBeforeSave: false });
+  if (previousImage) {
+    const previousImageId = profileImageIdFromPath(previousImage);
+    if (previousImageId) {
+      try {
+        await ProfileImage.deleteOne({
+          _id: previousImageId,
+          user: user._id,
+        });
+      } catch (cleanupError) {
+        console.error(
+          "Could not remove the replaced profile image:",
+          cleanupError.message,
+        );
+      }
+    } else {
+      await unlinkProfileImage(previousImage);
+    }
+  }
 
-    // Remove the old image only after the new reference has been committed.
-    if (oldFilename && oldFilename !== req.file.filename) {
-      await unlinkProfileImage(oldFilename);
+  res.json({
+    success: true,
+    message: "Profile photo updated successfully.",
+    data: {
+      profileImage: user.profileImage,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        department: user.department,
+        role: user.role,
+        profileImage: user.profileImage,
+      },
+    },
+  });
+};
+
+/* ── GET /api/users/profile-image/:id — authenticated image bytes ── */
+const getProfileImage = async (req, res, next) => {
+  try {
+    const idErr = validateObjectId(req.params.id, "ProfileImage");
+    if (idErr) return res.status(400).json({ success: false, message: idErr });
+
+    const image = await ProfileImage.findById(req.params.id);
+    if (!image) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Profile image not found." });
     }
 
-    // Return the image URL for immediate frontend display
-    const imageUrl = `/uploads/${req.file.filename}`;
-    res.json({
-      success: true,
-      message: "Profile photo updated successfully.",
-      data: { profileImage: imageUrl },
-    });
+    res.set("Cache-Control", "private, max-age=300");
+    res.set("X-Content-Type-Options", "nosniff");
+    res.type(image.contentType).send(image.data);
   } catch (err) {
-    // CRITICAL: If DB update failed, the old image is still intact.
-    // The new file on disk will be orphaned; clean it up so the user
-    // is not left with a phantom file, but the old image is preserved.
-    if (req.file && req.file.filename)
-      await unlinkProfileImage(req.file.filename);
     next(err);
   }
 };
@@ -877,18 +928,7 @@ const deleteMyAccount = async (req, res, next) => {
         .json({ success: false, message: "User not found." });
     }
 
-    /* Delete profile image from disk if present */
-    if (user.profileImage) {
-      const imagePath = path.join(
-        __dirname,
-        "..",
-        "uploads",
-        user.profileImage,
-      );
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
-    }
+    const oldProfileImage = user.profileImage;
 
     /* Soft-delete: set status to inactive rather than hard delete to preserve
        referential integrity with tickets and other collections. */
@@ -901,6 +941,8 @@ const deleteMyAccount = async (req, res, next) => {
     );
     user.profileImage = null;
     await user.save({ validateBeforeSave: false });
+    await ProfileImage.deleteMany({ user: user._id });
+    await unlinkProfileImage(oldProfileImage);
 
     res.json({ success: true, message: "Account deleted successfully." });
   } catch (err) {
@@ -924,10 +966,15 @@ const removeProfileImage = async (req, res, next) => {
         .json({ success: false, message: "No profile image to remove." });
     }
 
-    const oldFilename = user.profileImage;
+    const oldProfileImage = user.profileImage;
     user.profileImage = null;
     await user.save({ validateBeforeSave: false });
-    await unlinkProfileImage(oldFilename);
+    const oldImageId = profileImageIdFromPath(oldProfileImage);
+    if (oldImageId) {
+      await ProfileImage.deleteOne({ _id: oldImageId, user: user._id });
+    } else {
+      await unlinkProfileImage(oldProfileImage);
+    }
 
     res.json({
       success: true,
@@ -1194,6 +1241,7 @@ module.exports = {
   updateMyPreferences,
   changeMyPassword,
   uploadProfileImage,
+  getProfileImage,
   removeProfileImage,
   deleteMyAccount,
   uploadProfileFile,

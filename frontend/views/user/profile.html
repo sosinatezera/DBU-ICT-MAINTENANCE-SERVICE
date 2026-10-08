@@ -377,7 +377,7 @@
                         <i class="bi bi-trash me-1"></i><span data-i18n="profile.removePhoto">Remove Photo</span>
                       </button>
                     </div>
-                    <div class="form-text mt-2" id="profilePhotoHint">JPG, JPEG, PNG, or WEBP. Maximum 5 MB.</div>
+                    <div class="form-text mt-2" id="profilePhotoHint">JPG, JPEG, PNG, or WEBP. Maximum 1.5 MB.</div>
                   </div>
                 </div>
 
@@ -516,10 +516,10 @@
   <!-- Bootstrap JS (must be before inline script) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Shared utilities (must be before inline script that uses them) -->
-  <script src="/assets/js/api-config.js?v=4"></script>
+  <script src="/assets/js/api-config.js?v=5"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/validation.js?v=7"></script>
-  <script src="/assets/js/main.js?v=17"></script>
+  <script src="/assets/js/main.js?v=19"></script>
   <script src="/assets/js/notifications.js?v=8"></script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/lang.js?v=16"></script>
@@ -986,13 +986,23 @@
              document. A non-2xx throws, so the success toast below can never
              appear for a failed database update. */
           const res = await apiRequest( '/users/profile', { method: 'PUT', body } );
-          const updated = ( res && res.data ) || ( res && res.user ) || {};
+          if ( res?.success !== true || !res.data ) {
+            throw new Error( 'The server did not confirm the saved profile.' );
+          }
+          const updated = await Auth.refresh();
+          if (
+            updated.fullName !== body.fullName ||
+            ( updated.phone || null ) !== body.phone ||
+            ( updated.department || null ) !== body.department ||
+            ( updated.gender || null ) !== body.gender
+          ) {
+            throw new Error( 'The saved profile could not be reloaded.' );
+          }
 
-          /* Keep the fields showing exactly what the server now holds. */
-          if ( typeof updated.fullName === 'string' ) document.getElementById( 'fullName' ).value = updated.fullName;
-          if ( updated.phone !== undefined ) document.getElementById( 'phone' ).value = updated.phone || '';
-          if ( updated.department !== undefined ) document.getElementById( 'department' ).value = updated.department || '';
-          if ( updated.gender !== undefined ) document.getElementById( 'gender' ).value = updated.gender || '';
+          document.getElementById( 'fullName' ).value = updated.fullName || '';
+          document.getElementById( 'phone' ).value = updated.phone || '';
+          document.getElementById( 'department' ).value = updated.department || '';
+          document.getElementById( 'gender' ).value = updated.gender || '';
 
           const newFullName = updated.fullName || body.fullName;
           document.getElementById( 'profileFullName' ).textContent = newFullName;
@@ -1004,21 +1014,11 @@
           document.getElementById( 'topAvatarInitials' ).textContent = newFullName.charAt( 0 ).toUpperCase();
 
           _originalValues = {
-            fullName: body.fullName,
-            phone: body.phone || '',
-            department: body.department || '',
-            gender: body.gender || '',
+            fullName: updated.fullName || '',
+            phone: updated.phone || '',
+            department: updated.department || '',
+            gender: updated.gender || '',
           };
-
-          const localUser = Auth.getUser();
-          if ( localUser )
-          {
-            localUser.fullName = newFullName;
-            localUser.phone = body.phone;
-            localUser.department = body.department;
-            localUser.gender = body.gender;
-            Auth.setUser( localUser );
-          }
           if ( typeof populateUserInfo === 'function' ) populateUserInfo();
 
           showToast( t( 'profile.savedChanges' ) || 'Changes saved successfully.', 'success' );
@@ -1141,7 +1141,7 @@
         ['.jpg', 'image/jpeg'], ['.jpeg', 'image/jpeg'],
         ['.png', 'image/png'], ['.webp', 'image/webp'],
       ] );
-      const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+      const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024;
       const photoInput = document.getElementById( 'profilePhotoUpload' );
 
       function showPhotoAlert ( message, type )
@@ -1163,18 +1163,6 @@
       {
         if ( !photoUser ) return;
         document.querySelectorAll( '[data-avatar]' ).forEach( el => applyProfileAvatar( photoUser, el ) );
-      }
-
-      function clearLegacyPhotoPreference ()
-      {
-        if ( !photoUser ) return;
-        try
-        {
-          const key = String( photoUser.email || photoUser.id || 'default' ).toLowerCase();
-          const prefs = JSON.parse( localStorage.getItem( 'ict_profile_image_prefs' ) || '{}' );
-          delete prefs[key];
-          localStorage.setItem( 'ict_profile_image_prefs', JSON.stringify( prefs ) );
-        } catch ( _ ) { }
       }
 
       function syncRemoveButton ()
@@ -1249,7 +1237,7 @@
         if ( !ALLOWED_PHOTO_TYPES.has( extension ) || ALLOWED_PHOTO_TYPES.get( extension ) !== file.type || file.size > MAX_PHOTO_BYTES )
         {
           resetPhotoSelection();
-          showPhotoAlert( 'Please select a JPG, JPEG, PNG, or WebP image smaller than 5 MB.' );
+          showPhotoAlert( 'Please select a JPG, JPEG, PNG, or WebP image no larger than 1.5 MB.' );
           return;
         }
 
@@ -1295,8 +1283,14 @@
           const res = await apiUploadWithProgress(
             '/users/profile-image', formData, updatePhotoUploadProgress,
           );
-          photoUser = { ...photoUser, profileImage: res.data.profileImage };
-          clearLegacyPhotoPreference();
+          const savedUser = await Auth.refresh();
+          if (
+            !res.data?.profileImage ||
+            savedUser.profileImage !== res.data.profileImage
+          ) {
+            throw new Error( 'The saved profile photo could not be reloaded.' );
+          }
+          photoUser = savedUser;
           const choosePhotoLabel = document.getElementById( 'chooseProfilePhotoLabel' );
           if ( choosePhotoLabel ) choosePhotoLabel.textContent = 'Change Photo';
           refreshAvatars();
@@ -1320,8 +1314,10 @@
         try
         {
           await apiRequest( '/users/profile-image', { method: 'DELETE' } );
-          photoUser = { ...photoUser, profileImage: null };
-          clearLegacyPhotoPreference();
+          photoUser = await Auth.refresh();
+          if ( photoUser.profileImage ) {
+            throw new Error( 'The saved profile photo could not be removed.' );
+          }
           const choosePhotoLabel = document.getElementById( 'chooseProfilePhotoLabel' );
           if ( choosePhotoLabel ) choosePhotoLabel.textContent = 'Upload Photo';
           resetPhotoSelection();

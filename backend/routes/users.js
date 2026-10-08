@@ -13,6 +13,7 @@ const {
   updateMyPreferences,
   changeMyPassword,
   uploadProfileImage,
+  getProfileImage,
   removeProfileImage,
   deleteMyAccount,
   uploadProfileFile,
@@ -40,6 +41,7 @@ router.put(
   updateMyPreferences,
 );
 router.put("/change-password", authenticate, changeMyPassword);
+router.get("/profile-image/:id", authenticate, getProfileImage);
 router.post(
   "/profile-image",
   authenticate,

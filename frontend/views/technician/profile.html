@@ -323,7 +323,7 @@
                       <i class="bi bi-trash me-1"></i><span data-i18n="profile.removePhoto">Remove Photo</span>
                     </button>
                   </div>
-                  <div class="form-text mt-2" id="profilePhotoHint">JPG, JPEG, PNG, or WEBP. Maximum 5 MB.</div>
+                  <div class="form-text mt-2" id="profilePhotoHint">JPG, JPEG, PNG, or WEBP. Maximum 1.5 MB.</div>
                 </div>
               </div>
 
@@ -526,9 +526,9 @@
   <!-- Shared libraries must load BEFORE the page logic so apiRequest,
        showToast, profileUploadUrl, Validators, Auth, etc. are defined. -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/js/api-config.js?v=4"></script>
+  <script src="/assets/js/api-config.js?v=5"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="/assets/js/main.js?v=17"></script>
+  <script src="/assets/js/main.js?v=19"></script>
   <script src="/assets/js/notifications.js?v=8"></script>
   <script src="/assets/js/validation.js?v=7"></script>
   <script src="/assets/js/theme.js"></script>
@@ -646,6 +646,7 @@
               container.appendChild( img );
             }
             img.onerror = () => { img.remove(); big.hidden = false; };
+            img.crossOrigin = 'use-credentials';
             img.src = src;
             big.hidden = true;
           } else
@@ -673,8 +674,8 @@
       {
         try
         {
-          const { user } = await apiRequest( '/auth/me' );
-          if ( !user ) return;
+          const user = await Auth.refresh();
+          if ( !user ) return false;
           _current = user;
 
           // Technician fields (best effort — may 404 if no tech record exists)
@@ -732,21 +733,13 @@
 
           setAvatarSource();
 
-          // Sync sidebar/topbar via shared helper
-          const localUser = Auth.getUser();
-          if ( localUser )
-          {
-            localUser.fullName = user.fullName;
-            localUser.email = user.email;
-            localUser.role = user.role;
-            localUser.profileImage = user.profileImage || null;
-            Auth.setUser( localUser );
-          }
+          // Sync sidebar/topbar from the freshly loaded backend profile.
           if ( typeof populateUserInfo === 'function' ) populateUserInfo();
           syncRemovePhotoButton();
+          return true;
         } catch ( err )
         {
-          if ( err && err.redirected ) return;
+          if ( err && err.redirected ) return false;
           console.error( 'Failed to load profile:', err );
           const main = document.getElementById( 'profileSection' );
           if ( main )
@@ -756,6 +749,7 @@
             alert.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i>${ escHtml( err.message || 'Failed to load profile.' ) } <button class="btn btn-sm btn-outline-danger ms-2" onclick="window.location.reload()">Retry</button>`;
             main.prepend( alert );
           }
+          return false;
         }
       }
 
@@ -862,8 +856,23 @@
         try
         {
           const res = await apiRequest( '/technicians/me', { method: 'PUT', body } );
+          if ( res?.success !== true || !res.data ) {
+            throw new Error( 'The server did not confirm the saved profile.' );
+          }
+          if ( !await loadProfileData() ) {
+            throw new Error( 'The saved profile could not be reloaded.' );
+          }
+          if (
+            _current.fullName !== body.fullName ||
+            ( _current.phone || null ) !== body.phone ||
+            ( _current.department || null ) !== body.department ||
+            ( _current.gender || null ) !== body.gender ||
+            _tech?.specialization !== body.specialization ||
+            _tech?.available !== body.available
+          ) {
+            throw new Error( 'The saved profile could not be reloaded.' );
+          }
           showToast( t( 'profile.saved' ) || 'Profile updated successfully.', 'success' );
-          await loadProfileData();
           exitEditMode( false );
         } catch ( err )
         {
@@ -1010,7 +1019,7 @@
         ['.jpg', 'image/jpeg'], ['.jpeg', 'image/jpeg'],
         ['.png', 'image/png'], ['.webp', 'image/webp'],
       ] );
-      const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+      const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024;
       const photoInput = document.getElementById( 'profilePhotoUpload' );
       let photoPreviewUrl = null;
       let photoSaving = false;
@@ -1028,18 +1037,6 @@
       {
         const alert = document.getElementById( 'photoAlert' );
         if ( alert ) { alert.classList.add( 'd-none' ); alert.textContent = ''; }
-      }
-
-      function clearLegacyPhotoPreference ()
-      {
-        if ( !_current ) return;
-        try
-        {
-          const key = String( _current.email || _current.id || 'default' ).toLowerCase();
-          const prefs = JSON.parse( localStorage.getItem( 'ict_profile_image_prefs' ) || '{}' );
-          delete prefs[key];
-          localStorage.setItem( 'ict_profile_image_prefs', JSON.stringify( prefs ) );
-        } catch ( _ ) { }
       }
 
       function syncRemovePhotoButton ()
@@ -1113,7 +1110,7 @@
         if ( !PHOTO_TYPES.has( extension ) || PHOTO_TYPES.get( extension ) !== file.type || file.size > MAX_PHOTO_BYTES )
         {
           resetPhotoSelection();
-          showPhotoAlert( 'Please select a JPG, JPEG, PNG, or WebP image smaller than 5 MB.' );
+          showPhotoAlert( 'Please select a JPG, JPEG, PNG, or WebP image no larger than 1.5 MB.' );
           return;
         }
 
@@ -1158,8 +1155,14 @@
           const res = await apiUploadWithProgress(
             '/users/profile-image', formData, updatePhotoUploadProgress,
           );
-          _current.profileImage = res.data.profileImage;
-          clearLegacyPhotoPreference();
+          const savedUser = await Auth.refresh();
+          if (
+            !res.data?.profileImage ||
+            savedUser.profileImage !== res.data.profileImage
+          ) {
+            throw new Error( 'The saved profile photo could not be reloaded.' );
+          }
+          _current = savedUser;
           setAvatarSource();
           syncHeaderProfilePhoto();
           resetPhotoSelection();
@@ -1182,8 +1185,10 @@
         try
         {
           await apiRequest( '/users/profile-image', { method: 'DELETE' } );
-          _current.profileImage = null;
-          clearLegacyPhotoPreference();
+          _current = await Auth.refresh();
+          if ( _current.profileImage ) {
+            throw new Error( 'The saved profile photo could not be removed.' );
+          }
           resetPhotoSelection();
           setAvatarSource();
           syncHeaderProfilePhoto();

@@ -16,12 +16,12 @@
  *       SKIP_RATE_LIMIT_TEST=1, because it deliberately exhausts the
  *       per-IP bucket for RATE_LIMIT_WINDOW_MS)
  *
- * Why direct DB seeding for the OTP: the real code is emailed via SMTP and is
+ * Why direct DB seeding for the OTP: the real code is emailed via the provider and is
  * deliberately never persisted in plaintext, so an automated run cannot read
  * it. To exercise the OTP logic we write the exact SAME fields the controller
  * writes after a successful send (hash = sha256 of a known code) and then call
- * the real endpoints. SMTP delivery itself is out of scope for this script
- * (see scripts/verify-smtp.js).
+ * the real endpoints. Live email delivery is checked separately with
+ * scripts/verify-email-provider.js.
  *
  * Run from backend/:   node scripts/verify-password-reset.js
  * Requires the backend server to be RUNNING (npm start first).

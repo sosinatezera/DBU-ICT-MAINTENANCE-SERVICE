@@ -2,10 +2,9 @@
    api-config.js — Single canonical API base for ALL frontend pages
    Smart ICT Maintenance Management System
 
-   This file ONLY defines the API origin/base and related helpers.
-   It intentionally contains NO auth guards, no page initialization,
-   and no DOM manipulation, so it is safe for public pages
-   (index, login, register) AND authenticated pages alike.
+   This file defines the API origin/base and related helpers, plus the
+   lightweight on-demand trigger for the optional AI widget. It is safe
+   for public pages (index, login, register) and authenticated pages.
 
    Exposes:  const API_BASE     (e.g. "http://localhost:5000/api")
              const API_UPLOAD_BASE  (the origin root for /uploads)
@@ -103,38 +102,51 @@ var API_UPLOAD_BASE = apiOrigin();
   });
 })();
 
-/* Load the shared advisory AI support widget on every application page that
-   already consumes the canonical API configuration.
-
-   Loaded during browser idle time rather than immediately. This file is
-   present on the public landing page and on login/register, where the widget
-   is not needed for the first interaction — fetching and executing ~330 lines
-   of widget JS during the initial parse competes with the page's own CSS and
-   hero content for bandwidth and main-thread time. Deferring to idle keeps the
-   first paint fast while still making the widget available essentially
-   immediately on every page. `requestIdleCallback` is used when available,
-   with a short timeout so the widget still appears promptly. */
+/* Keep the optional AI widget off the critical path. Load its larger script
+   only when the user clicks the launcher or deliberately hovers/focuses it. */
 (function loadAiSupportWidget() {
   if (window.__aiSupportLoaded || window.__aiSupportLoading) return;
   if (document.querySelector('script[src*="ai-support.js"]')) return;
-  function inject() {
-    if (window.__aiSupportLoaded || window.__aiSupportLoading) return;
-    window.__aiSupportLoading = true;
-    var script = document.createElement("script");
-    script.src = "/assets/js/ai-support.js?v=29";
-    script.defer = true;
-    script.onload = function () {
-      window.__aiSupportLoading = false;
-    };
-    script.onerror = function () {
-      window.__aiSupportLoading = false;
-      console.error("[api-config] Unable to load the AI support widget.");
-    };
-    document.head.appendChild(script);
+  function setupLauncher() {
+    var launcher = document.querySelector(".ai-support-launcher");
+    if (!launcher) {
+      launcher = document.createElement("button");
+      launcher.type = "button";
+      launcher.className = "ai-support-launcher";
+      launcher.setAttribute("aria-label", "Open Master AI chat");
+      launcher.setAttribute("aria-expanded", "false");
+      launcher.innerHTML =
+        '<span class="ai-support-sparkle" aria-hidden="true"><i class="bi bi-stars"></i></span><span>✨ Master AI</span>';
+      document.body.appendChild(launcher);
+    }
+
+    var openAfterLoad = false;
+    function inject() {
+      if (window.__aiSupportLoaded || window.__aiSupportLoading) return;
+      window.__aiSupportLoading = true;
+      var script = document.createElement("script");
+      script.src = "/assets/js/ai-support.js?v=30";
+      script.defer = true;
+      script.onload = function () {
+        window.__aiSupportLoading = false;
+        if (openAfterLoad) launcher.click();
+      };
+      script.onerror = function () {
+        window.__aiSupportLoading = false;
+        console.error("[api-config] Unable to load the AI support widget.");
+      };
+      document.head.appendChild(script);
+    }
+    launcher.addEventListener("click", function (event) {
+      if (window.__aiSupportLoaded) return;
+      event.preventDefault();
+      openAfterLoad = true;
+      inject();
+    });
+    launcher.addEventListener("pointerenter", inject, { once: true });
+    launcher.addEventListener("focus", inject, { once: true });
   }
-  if (typeof window.requestIdleCallback === "function") {
-    window.requestIdleCallback(inject, { timeout: 2000 });
-  } else {
-    window.setTimeout(inject, 200);
-  }
+
+  if (document.body) setupLauncher();
+  else document.addEventListener("DOMContentLoaded", setupLauncher, { once: true });
 })();

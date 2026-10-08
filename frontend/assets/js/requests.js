@@ -32,7 +32,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     /* NOTE: the document.visibilityState check that used to guard this call
        is gone. A tab backgrounded during page init would skip the safety net
        entirely and come back to permanently stuck "Loading..." placeholders. */
-    if (!window.__authRedirecting) {
+    /* The dashboard owns its recent-request placeholder in reports.js.
+       Running this unrelated script's safety net here races the dashboard's
+       requests and can replace the spinner before its API call has completed. */
+    if (!window.__authRedirecting && !p.includes("admin/dashboard")) {
       settleStoppedLoaders();
     }
   }
@@ -3664,6 +3667,9 @@ function renderAdminFeedbackTable() {
 
 /* Cached admin requests used by the search / status / priority filters. */
 let _allAdminRequests = [];
+let _filteredAdminRequests = [];
+let _adminRequestsPage = 1;
+const ADMIN_REQUESTS_PAGE_SIZE = 50;
 
 async function loadAdminRequests() {
   const tbody = document.getElementById("requestsTableBody");
@@ -3709,14 +3715,15 @@ async function initAdminRequests() {
     const dept = document.getElementById("departmentFilter")?.value || "";
     const dtFrom = document.getElementById("dateFromFilter")?.value || "";
     const dtTo = document.getElementById("dateToFilter")?.value || "";
+    const fromDate = dtFrom ? new Date(dtFrom) : null;
+    const toDate = dtTo ? new Date(dtTo + "T23:59:59") : null;
     renderAdminTable(
       _allAdminRequests.filter((r) => {
         /* Network Maintenance records are filtered by their own category value,
          so a technician-equipment match is never mistaken for category. */
-        const ifrom = dtFrom ? new Date(dtFrom) : null;
-        const ito = dtTo ? new Date(dtTo + "T23:59:59") : null;
         const created = new Date(r.created_at);
-        const okDate = (!ifrom || created >= ifrom) && (!ito || created <= ito);
+        const okDate =
+          (!fromDate || created >= fromDate) && (!toDate || created <= toDate);
         return (
           (!q ||
             (r.problemDescription || "").toLowerCase().includes(q) ||
@@ -3752,6 +3759,22 @@ async function initAdminRequests() {
     ?.addEventListener("change", doFilter);
   document.getElementById("dateToFilter")?.addEventListener("change", doFilter);
 
+  const previousPage = document.getElementById("adminRequestsPreviousPage");
+  const nextPage = document.getElementById("adminRequestsNextPage");
+  previousPage?.addEventListener("click", () => {
+    if (_adminRequestsPage <= 1) return;
+    _adminRequestsPage--;
+    renderAdminTable(_filteredAdminRequests, false);
+  });
+  nextPage?.addEventListener("click", () => {
+    const pageCount = Math.ceil(
+      _filteredAdminRequests.length / ADMIN_REQUESTS_PAGE_SIZE,
+    );
+    if (_adminRequestsPage >= pageCount) return;
+    _adminRequestsPage++;
+    renderAdminTable(_filteredAdminRequests, false);
+  });
+
   /* Event delegation for the dynamically rendered Actions buttons.
      Binds once on the tbody so it survives every table re-render. */
   const tbody = document.getElementById("requestsTableBody");
@@ -3781,12 +3804,12 @@ async function initAdminRequests() {
 function populateDepartmentFilter() {
   const sel = document.getElementById("departmentFilter");
   if (!sel) return;
-  const depts = [];
+  const departments = new Set();
   _allAdminRequests.forEach((r) => {
     const d = (r.department || "").trim();
-    if (d && !depts.includes(d)) depts.push(d);
+    if (d) departments.add(d);
   });
-  depts.sort((a, b) => a.localeCompare(b));
+  const depts = Array.from(departments).sort((a, b) => a.localeCompare(b));
   const cur = sel.value;
   sel.innerHTML =
     `<option value="">All Departments</option>` +
@@ -3796,16 +3819,50 @@ function populateDepartmentFilter() {
   sel.value = cur;
 }
 
-function renderAdminTable(requests) {
+function renderAdminTable(requests, resetPage = true) {
   const tbody = document.getElementById("requestsTableBody");
   if (!tbody) return;
-  if (!requests.length) {
+  _filteredAdminRequests = Array.isArray(requests) ? requests : [];
+  if (resetPage) _adminRequestsPage = 1;
+  const pagination = document.getElementById("adminRequestsPagination");
+  const pageInfo = document.getElementById("adminRequestsPageInfo");
+  const previousPage = document.getElementById("adminRequestsPreviousPage");
+  const nextPage = document.getElementById("adminRequestsNextPage");
+
+  if (!_filteredAdminRequests.length) {
     tbody.innerHTML = `<tr><td colspan="14"><div class="text-center py-5">
       <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i><p class="text-muted">No requests found.</p>
     </div></td></tr>`;
+    if (pagination) {
+      pagination.classList.add("d-none");
+      pagination.classList.remove("d-flex");
+    }
     return;
   }
-  tbody.innerHTML = requests
+
+  const pageCount = Math.ceil(
+    _filteredAdminRequests.length / ADMIN_REQUESTS_PAGE_SIZE,
+  );
+  _adminRequestsPage = Math.min(_adminRequestsPage, pageCount);
+  const start = (_adminRequestsPage - 1) * ADMIN_REQUESTS_PAGE_SIZE;
+  const page = _filteredAdminRequests.slice(
+    start,
+    start + ADMIN_REQUESTS_PAGE_SIZE,
+  );
+  if (pagination) {
+    pagination.classList.toggle("d-none", pageCount <= 1);
+    pagination.classList.toggle("d-flex", pageCount > 1);
+  }
+  if (pageInfo) {
+    pageInfo.textContent = `Showing ${start + 1}-${Math.min(
+      start + page.length,
+      _filteredAdminRequests.length,
+    )} of ${_filteredAdminRequests.length} requests`;
+  }
+  if (previousPage) previousPage.disabled = _adminRequestsPage <= 1;
+  if (nextPage) nextPage.disabled = _adminRequestsPage >= pageCount;
+
+  tbody.innerHTML = page
     .map(
       (r) => `
     <tr>
@@ -3979,7 +4036,7 @@ async function openAdminRequestModal(id) {
               method: "DELETE",
             });
             showToast("Assignment removed successfully.", "success");
-            setTimeout(() => window.location.reload(), 1000);
+            await openAdminRequestModal(id);
           } catch (err) {
             console.error("Remove assignment failed:", err);
             showAlert("assignAlert", err.message, "danger");
@@ -4021,7 +4078,7 @@ async function openAdminRequestModal(id) {
               : "Technician assigned successfully.",
             "success",
           );
-          setTimeout(() => window.location.reload(), 1200);
+          await openAdminRequestModal(id);
         } catch (err) {
           console.error("Assign technician failed:", err);
           showAlert("assignAlert", err.message, "danger");
@@ -4042,7 +4099,7 @@ async function openAdminRequestModal(id) {
             body: { status },
           });
           showToast(`Status updated to "${status}"`, "success");
-          setTimeout(() => window.location.reload(), 1000);
+          await openAdminRequestModal(id);
         } catch (err) {
           showAlert("assignAlert", err.message, "danger");
         }
@@ -4074,7 +4131,7 @@ async function openAdminRequestModal(id) {
             body: { priority },
           });
           showToast(`Priority updated to "${priority}"`, "success");
-          setTimeout(() => window.location.reload(), 1000);
+          await openAdminRequestModal(id);
         } catch (err) {
           showAlert("priorityAlert", err.message, "danger");
         }

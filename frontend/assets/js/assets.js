@@ -159,7 +159,7 @@ async function saveAsset() {
     else await apiRequest("/assets", { method: "POST", body });
     showToast(id ? "Asset updated." : "Asset added.", "success");
     bootstrap.Modal.getInstance(document.getElementById("assetModal"))?.hide();
-    setTimeout(() => window.location.reload(), 1000);
+    void initAssets();
   } catch (err) {
     let msg = err?.message || "Failed to save asset.";
     if (err?.data?.errors) {

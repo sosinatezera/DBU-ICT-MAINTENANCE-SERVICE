@@ -8,8 +8,8 @@
 #   - MONGO_URI        (MongoDB Atlas connection string)
 #   - SESSION_SECRET   (long random string, e.g. `openssl rand -hex 64`)
 #   - JWT_SECRET       (long random string, e.g. `openssl rand -hex 64`)
-#   - SMTP_USER        (Gmail address that sends the mail)
-#   - SMTP_PASSWORD    (16-char Google App Password for that address)
+#   - RESEND_API_KEY   (Resend API key; never commit it)
+#   - EMAIL_FROM        (sender address on a verified Resend domain)
 #   - GEMINI_API_KEY   (Google AI Studio free-tier key for the AI Assistant — no credit card)
 #
 # The `sync: false` entries below keep these keys in the blueprint WITHOUT
@@ -18,7 +18,7 @@
 #
 # WHY THE SECRETS MATTER — the two that break the login flow:
 #   * SESSION_SECRET missing  -> the service refuses to start at all.
-#   * SMTP_USER / SMTP_PASSWORD missing -> the service starts normally, logs
+#   * RESEND_API_KEY / EMAIL_FROM missing -> the service starts normally, logs
 #     "EMAIL_CONFIGURATION_ERROR - PASSWORD RESET IS DISABLED", and every
 #     forgot-password request answers 503. An empty value here is NOT the same
 #     as a working email service: set both in the Dashboard before deploying.
@@ -61,26 +61,22 @@ services:
       # "true" would let a client spoof X-Forwarded-For and escape a rate limit.
       - key: TRUST_PROXY
         value: "1"
-      # Email — Gmail SMTP. REQUIRED: password-reset verification codes are the
-      # only way a user can recover access, and this endpoint has no fallback
-      # channel. Credentials are secrets — set them in the Render Dashboard
-      # (service -> Environment); an empty value here disables password reset and
-      # is reported at boot as "EMAIL_CONFIGURATION_ERROR". SMTP_PASSWORD must be
-      # a Google App Password (see backend/.env.example).
-      - key: SMTP_HOST
-        value: smtp.gmail.com
-      - key: SMTP_PORT
-        value: "587"
-      - key: SMTP_USER
+      # Production email is sent through Resend's HTTPS API on port 443.
+      # The secret API key and verified sender must be set in Render's Dashboard.
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
         sync: false
         value: ""
-      - key: SMTP_PASSWORD
+      - key: EMAIL_FROM
         sync: false
         value: ""
+      - key: SMTP_FROM_NAME
+        value: Smart ICT Maintenance Management System
       # ADMIN_EMAIL — the ICT Admin inbox that receives every contact-form
       # submission. The controller emails it and treats a non-delivery as a
       # failed submission, so when it is blank the contact form answers 503 for
-      # every visitor even though SMTP is healthy. Reported at boot as
+      # every visitor even though the email provider is healthy. Reported at boot as
       # "CONTACT_FORM_NOTIFICATION_DISABLED". Not defaulted in code on purpose:
       # set the real inbox in the Render Dashboard (service -> Environment).
       - key: ADMIN_EMAIL
