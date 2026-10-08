@@ -55,27 +55,13 @@ function setResetCookie(res, value, maxAge) {
 }
 
 /* ── Public self-registration availability ──────────────────────
-   publicRegistration is an ICT Admin switch. When it is off, accounts are
-   created by an ICT Admin through the Users manager instead.
-
-   Fails CLOSED: if the Settings document cannot be read we report registration
-   as closed. That is the safe direction — the alternative would let anyone
-   create an account during a database incident. It costs nothing in practice
-   because User.create would fail on the same outage anyway. */
+   Public registration is enabled by configuration; this does not affect
+   admin-created accounts. */
 const REGISTRATION_CLOSED_MESSAGE =
   "Public registration is currently disabled. Please contact ICT support to have an account created.";
 
 async function isPublicRegistrationEnabled() {
-  const configured = require("../config/env").PUBLIC_REGISTRATION_ENABLED;
-  if (configured !== null) return configured;
-
-  try {
-    const Settings = require("../models/Settings");
-    const settings = await Settings.getInstance();
-    return settings.publicRegistration === true;
-  } catch (_) {
-    return false;
-  }
+  return require("../config/env").PUBLIC_REGISTRATION_ENABLED;
 }
 
 /* ── GET /api/auth/registration-status ─────────────────────────
@@ -247,7 +233,8 @@ const register = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: "Registration successful. You can now log in.",
+      message:
+        "Account created successfully. Your account has been registered as a Requester. You can now sign in.",
     });
   } catch (err) {
     next(err);

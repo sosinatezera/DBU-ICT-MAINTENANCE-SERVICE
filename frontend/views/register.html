@@ -566,7 +566,10 @@
           return;
         }
 
-        showAlert( 'registerAlert', data.message || 'Account created! You can now sign in.', 'success' );
+        showAlert( 'registerAlert',
+          'Account created successfully. Your account has been registered as a Requester. You can now sign in.',
+          'success'
+        );
         form.reset();
         document.getElementById( 'otherDepartmentContainer' ).classList.add( 'd-none' );
         setTimeout( () => { window.location.href = 'login.html'; }, 1200 );

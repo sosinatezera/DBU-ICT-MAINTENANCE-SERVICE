@@ -2,15 +2,7 @@
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
-const publicRegistrationEnabled = (() => {
-  const raw = process.env.PUBLIC_REGISTRATION_ENABLED;
-  if (raw === undefined || raw.trim() === "") return null;
-  if (/^(true|1|yes)$/i.test(raw.trim())) return true;
-  if (/^(false|0|no)$/i.test(raw.trim())) return false;
-  throw new Error(
-    "PUBLIC_REGISTRATION_ENABLED must be true, false, 1, 0, yes, or no.",
-  );
-})();
+const publicRegistrationEnabled = true;
 
 /* Production is pinned to Resend over HTTPS because Render's free instances
    block outbound SMTP. Local development defaults to SMTP to preserve the
@@ -117,8 +109,8 @@ module.exports = {
   FRONTEND_URL:
     process.env.FRONTEND_URL ||
     (process.env.NODE_ENV === "production" ? "" : "http://localhost:3000"),
-  /* Explicit environment value overrides the Admin Settings switch.
-     null preserves the existing database-controlled behavior. */
+  /* Public self-registration is intentionally enabled; the registration
+     endpoint still creates Requester accounts only. */
   PUBLIC_REGISTRATION_ENABLED: publicRegistrationEnabled,
 
   // Production uses Resend over HTTPS; local development defaults to SMTP.
