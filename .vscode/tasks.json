@@ -1,0 +1,185 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run backend dev server",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"backend",
+				"run",
+				"dev"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run frontend static server",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"frontend/server.js"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Probe local API and web",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"Promise.all(['http://localhost:5000/api/health','http://localhost:3000/views/login.html'].map(async u=>{try{let r=await fetch(u);let t=await r.text();console.log(u+' -> '+r.status+' '+t.slice(0,180).replace(/[\\r\\n]/g,' '))}catch(e){console.log(u+' -> '+e.message)}}))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check test account setup",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"require('dotenv').config({path:'backend/.env'}); for(const r of ['REQUESTER','TECHNICIAN','ADMIN']) console.log(r+': '+(process.env['VERIFY_'+r+'_EMAIL']&&process.env['VERIFY_'+r+'_PASSWORD']?'configured':'missing')); console.log('backend dependencies: '+(require('fs').existsSync('backend/node_modules')?'installed':'missing'))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Probe local servers",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"Promise.all([\"http://localhost:5000/api/health\",\"http://localhost:3000/views/login.html\"].map(async u=>{try{let r=await fetch(u);let t=await r.text();console.log(u+\" -> \"+r.status+\" \"+t.slice(0,180).replace(/[\\\\r\\\\n]/g,\" \"))}catch(e){console.log(u+\" -> \"+e.message)}}))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check safe test config",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"require(\"dotenv\").config({path:\"backend/.env\"}); for(const r of [\"REQUESTER\",\"TECHNICIAN\",\"ADMIN\"]) console.log(r+\": \"+(process.env[\"VERIFY_\"+r+\"_EMAIL\"]&&process.env[\"VERIFY_\"+r+\"_PASSWORD\"]?\"configured\":\"missing\")); console.log(\"backend dependencies: \"+(require(\"fs\").existsSync(\"backend/node_modules\")?\"installed\":\"missing\"))"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Identify local server listeners",
+			"type": "shell",
+			"command": "netstat",
+			"args": [
+				"-ano",
+				"-p",
+				"tcp"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check account config visibility",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"const fs=require(\"fs\");const s=fs.existsSync(\"backend/.env\")?fs.readFileSync(\"backend/.env\",\"utf8\"):\"\";for(const k of [\"VERIFY_REQUESTER_EMAIL\",\"VERIFY_REQUESTER_PASSWORD\",\"VERIFY_TECHNICIAN_EMAIL\",\"VERIFY_TECHNICIAN_PASSWORD\",\"VERIFY_ADMIN_EMAIL\",\"VERIFY_ADMIN_PASSWORD\"]){const m=s.match(new RegExp(\"^\\\\s*\"+k+\"\\\\s*=\\\\s*(.*)$\",\"m\"));const v=m&&m[1].trim();console.log(k+\": \"+(!m?\"unset\":!v?\"empty\":/^your_/i.test(v)?\"placeholder\":\"present\"))}"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Temporary auth syntax and diff checks",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"const cp=require(\"node:child_process\");const files=cp.execFileSync(\"git\",[\"diff\",\"--name-only\"],{encoding:\"utf8\"}).split(/\\r?\\n/).filter(f=>/\\.js$/.test(f));files.push(\"backend/scripts/googleIdToken.test.js\");for(const file of new Set(files)){cp.execFileSync(process.execPath,[\"--check\",file],{stdio:\"inherit\"});console.log(\"PASS node --check \"+file)}cp.execFileSync(\"git\",[\"diff\",\"--check\"],{stdio:\"inherit\"});console.log(\"PASS git diff --check\")"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Temporary Google verifier tests",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"backend",
+				"run",
+				"test:google"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Temporary git status check",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"status",
+				"--short"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Temporary bearer auth tests",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--test",
+				"backend/scripts/authToken.test.js"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Temporary git diff whitespace check",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"diff",
+				"--check"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Temporary auth route regression test",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--test",
+				"backend/scripts/authRoutes.test.js"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify production login API routing",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');const source=fs.readFileSync('frontend/assets/js/api-config.js','utf8');new vm.Script(source);(async()=>{for(const hostname of ['simms-mau.netlify.app','simms-ict-maintenance-system.netlify.app']){let outgoing;const window={location:{protocol:'https:',hostname,origin:'https://'+hostname,href:'https://'+hostname+'/views/login.html'},fetch:(url,init)=>{outgoing={url,headers:init.headers};return Promise.resolve({status:200})}};const document={body:{},head:{appendChild(){}},createElement:()=>({}),querySelector:()=>({})};const context={window,document,localStorage:{getItem:()=> 'test-token'},URL,Headers,Request,console,setTimeout,clearTimeout};vm.runInNewContext(source,context);assert.equal(context.API_BASE,'https://dbu-ict-maintenance-service.onrender.com/api');await window.fetch(context.API_BASE+'/auth/me');assert.equal(outgoing.url,'https://dbu-ict-maintenance-service.onrender.com/api/auth/me');assert.equal(outgoing.headers.get('Authorization'),'Bearer test-token')}console.log('PASS: production API URL, syntax, and bearer token for both Netlify hostnames')})().catch(error=>{console.error(error);process.exitCode=1})"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Temporary auth test backend port 5001",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"process.chdir('backend'); require('dotenv').config(); process.env.PORT='5001'; require('./server')"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

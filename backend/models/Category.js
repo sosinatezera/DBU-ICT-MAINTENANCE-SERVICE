@@ -13,7 +13,7 @@
  * BACKWARD COMPATIBILITY
  * `group`, `active` and `sortOrder` were added after the original two-field
  * model. Documents created before that simply have no `group`, and Mongoose
- * applies the default ("Other") when they are read, so nothing breaks and no
+ * applies the default ("ICT Support") when they are read, so nothing breaks and no
  * migration is required. `active` defaults to true, so every pre-existing
  * category stays selectable exactly as it was.
  */
@@ -34,7 +34,7 @@ const categorySchema = new mongoose.Schema(
     group: {
       type: String,
       trim: true,
-      default: "Other",
+      default: "ICT Support",
       enum: {
         values: CATEGORY_GROUPS,
         message: "{VALUE} is not a valid category group.",

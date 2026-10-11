@@ -6,18 +6,18 @@
 # Set the following secrets ONLY in the Render Dashboard
 # (service -> Environment). Do NOT commit them to the repository:
 #   - MONGO_URI        (MongoDB Atlas connection string)
-#   - SESSION_SECRET   (long random string, e.g. `openssl rand -hex 64`)
 #   - JWT_SECRET       (long random string, e.g. `openssl rand -hex 64`)
+#   - GOOGLE_CLIENT_ID (Google OAuth 2.0 Web application client ID)
 #   - RESEND_API_KEY   (Resend API key; never commit it)
 #   - EMAIL_FROM        (sender address on a verified Resend domain)
 #   - GEMINI_API_KEY   (Google AI Studio free-tier key for the AI Assistant — no credit card)
 #
 # The `sync: false` entries below keep these keys in the blueprint WITHOUT
 # a committed value, so deploys never overwrite the dashboard-set secrets.
-# Backend startup also fails fast in production if SESSION_SECRET is missing.
+# Backend startup also fails fast in production if JWT_SECRET is missing or weak.
 #
 # WHY THE SECRETS MATTER — the two that break the login flow:
-#   * SESSION_SECRET missing  -> the service refuses to start at all.
+#   * JWT_SECRET missing/weak -> the service refuses to start at all.
 #   * RESEND_API_KEY / EMAIL_FROM missing -> the service starts normally, logs
 #     "EMAIL_CONFIGURATION_ERROR - PASSWORD RESET IS DISABLED", and every
 #     forgot-password request answers 503. An empty value here is NOT the same
@@ -86,9 +86,9 @@ services:
       - key: MONGO_URI
         sync: false
         value: ""
-      # SESSION_SECRET backs express-session. The startup guard aborts the
-      # process in production when it is missing, so it must be declared here.
-      - key: SESSION_SECRET
+      # Public Google OAuth Web client ID; configure its JavaScript origins in
+      # Google Cloud Console and enter the value in Render's Environment page.
+      - key: GOOGLE_CLIENT_ID
         sync: false
         value: ""
       - key: JWT_SECRET

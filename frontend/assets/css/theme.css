@@ -84,11 +84,181 @@ nav.main-navbar.navbar,
 .main-navbar.main-navbar {
   position: fixed !important;
   top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
+  left: 0;
   width: 100% !important;
   z-index: 1200 !important;
 }
+
+:is(.main-navbar, #sidebar, .topbar) .nav-link:not([href="#home"]):not([href="/"]):not([href="/index.html"]),
+.main-navbar .btn-nav-login,
+.main-navbar .btn-nav-register,
+.main-navbar .lang-select-trigger,
+.main-navbar .lang-select-option,
+.main-navbar .app-theme-switch,
+.main-navbar .navbar-toggler,
+#sidebar .nav-link:not([href="#home"]):not([href="/"]):not([href="/index.html"]),
+#sidebar .app-theme-switch,
+.topbar a:not([href="#home"]):not([href="/"]):not([href="/index.html"]),
+.topbar button {
+  transform-origin: center;
+  animation: navbar-gentle-pulse 3.5s cubic-bezier(.4, 0, .2, 1) infinite;
+  animation-delay: var(--navbar-pulse-delay, 0s);
+}
+
+.main-navbar .navbar-nav > .nav-item:nth-child(2) {
+  --navbar-pulse-delay: .1s;
+}
+
+.main-navbar .navbar-nav > .nav-item:nth-child(3) {
+  --navbar-pulse-delay: .2s;
+}
+
+.main-navbar .navbar-nav > .nav-item:nth-child(4) {
+  --navbar-pulse-delay: .3s;
+}
+
+.main-navbar .navbar-nav > .nav-item:nth-child(5) {
+  --navbar-pulse-delay: .4s;
+}
+
+.main-navbar .navbar-collapse > .d-flex > :nth-child(2) {
+  --navbar-pulse-delay: .1s;
+}
+
+.main-navbar .navbar-collapse > .d-flex > :nth-child(3) {
+  --navbar-pulse-delay: .2s;
+}
+
+.main-navbar .navbar-collapse > .d-flex > :nth-child(4) {
+  --navbar-pulse-delay: .3s;
+}
+
+.main-navbar .navbar-toggler {
+  --navbar-pulse-delay: .4s;
+}
+
+.main-navbar .lang-select-menu > .lang-select-option:nth-child(1) {
+  --navbar-pulse-delay: 0s;
+}
+
+.main-navbar .lang-select-menu > .lang-select-option:nth-child(2) {
+  --navbar-pulse-delay: .1s;
+}
+
+#sidebar .nav > li:nth-child(2) {
+  --navbar-pulse-delay: .1s;
+}
+
+#sidebar .nav > li:nth-child(3) {
+  --navbar-pulse-delay: .2s;
+}
+
+#sidebar .nav > li:nth-child(4) {
+  --navbar-pulse-delay: .3s;
+}
+
+#sidebar .nav > li:nth-child(5) {
+  --navbar-pulse-delay: .4s;
+}
+
+#sidebar .nav > li:nth-child(6) {
+  --navbar-pulse-delay: .5s;
+}
+
+#sidebar .nav > li:nth-child(7) {
+  --navbar-pulse-delay: .6s;
+}
+
+#sidebar .nav > li:nth-child(8) {
+  --navbar-pulse-delay: .7s;
+}
+
+#sidebar .nav > li:nth-child(9) {
+  --navbar-pulse-delay: .8s;
+}
+
+#sidebar .nav > li:nth-child(10) {
+  --navbar-pulse-delay: .9s;
+}
+
+.navbar-animations-paused :is(.main-navbar, #sidebar, .topbar) * {
+  animation-play-state: paused !important;
+}
+
+.navbar-animations-paused .motion-reveal.is-visible {
+  animation-play-state: paused !important;
+}
+
+.motion-reveal.is-visible {
+  animation: content-reveal 350ms cubic-bezier(.2, .65, .3, 1) both;
+  animation-delay: var(--motion-reveal-delay, 0ms);
+}
+
+.motion-reveal.is-visible:focus-within,
+.motion-reveal.is-visible:active {
+  animation: none !important;
+  opacity: 1;
+  transform: none;
+}
+
+.motion-reveal:has(input:focus, textarea:focus, select:focus, [contenteditable="true"]:focus) {
+  animation: none !important;
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.main-navbar, #sidebar, .topbar) * {
+    animation: none !important;
+  }
+
+  .motion-reveal.is-visible {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media print {
+  .motion-reveal {
+    animation: none !important;
+    opacity: 1;
+    transform: none !important;
+  }
+}
+
+@keyframes navbar-gentle-pulse {
+  0%,
+  90% {
+    transform: translateY(0) scale(1);
+  }
+
+  95% {
+    transform: translateY(-1px) scale(1.03);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes content-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(1);
+  }
+
+  55% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.03);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .lang-select {
   position: relative;
   display: inline-flex;
@@ -1788,6 +1958,70 @@ body.dashboard-body .card,
 body.auth-body .card {
   background: var(--surface) !important;
   background-color: var(--surface) !important;
+}
+
+/* Keep legacy light-only component surfaces aligned with the shared theme. */
+html[data-theme="dark"] .activity-card,
+html[data-theme="dark"] .notif-item.unread,
+html[data-theme="dark"] .notif-item:hover,
+html[data-theme="dark"] .device-pick {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .device-pick img {
+  background: var(--surface-soft);
+}
+
+html[data-theme="dark"] .device-pick.is-selected {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+}
+
+html[data-theme="dark"] .device-pick.is-selected .device-pick-name {
+  color: #93c5fd;
+}
+
+html[data-theme="dark"] .device-type-optional,
+html[data-theme="dark"] .bg-light,
+html[data-theme="dark"] [style*="background:#f8f9fa"],
+html[data-theme="dark"] [style*="background: #f8f9fa"],
+html[data-theme="dark"] [style*="background:#f8fafc"],
+html[data-theme="dark"] [style*="background: #f8fafc"],
+html[data-theme="dark"] [style*="background:#f1f5f9"],
+html[data-theme="dark"] [style*="background: #f1f5f9"] {
+  background-color: var(--surface-soft) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="dark"] .dashboard-body .table .btn-outline-primary:active,
+html[data-theme="dark"] .dashboard-body .table .btn-outline-primary.active {
+  background-color: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: #bfdbfe !important;
+}
+
+html[data-theme="dark"] .certificate-page {
+  --paper: var(--surface);
+  --screen: var(--bg-body);
+  --ink: var(--text);
+  --muted: #94a3b8;
+  --navy: var(--surface-soft);
+  --blue: var(--accent);
+}
+
+@media print {
+  .app-theme-switch { display: none !important; }
+  html[data-theme="dark"] .certificate-page {
+    --paper: #fff;
+    --screen: #fff;
+    --ink: #17212b;
+    --muted: #6b7785;
+    --navy: #202b36;
+    --blue: #3B82F6;
+  }
 }
 
 @media (max-width: 575.98px) {

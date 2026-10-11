@@ -8,7 +8,10 @@ const { validateObjectId } = require("../middleware/validation");
 const { displayTicketId, displayTicketText } = require("../utils/ticketId");
 const {
   TECHNICIAN_MAINTENANCE_ALERT_TYPES,
+  getDisabledSystemNotificationTypes,
+  MANDATORY_NOTIFICATION_TYPES,
 } = require("../utils/notificationPreferences");
+const Settings = require("../models/Settings");
 
 // GET /api/notifications
 const getMyNotifications = async (req, res, next) => {
@@ -18,33 +21,45 @@ const getMyNotifications = async (req, res, next) => {
       .select("role notificationPreferences")
       .lean();
     const preferences = user?.notificationPreferences || {};
-    if (preferences.inAppNotifications === false) {
-      return res.json({ success: true, data: [], unread: 0, total: 0 });
-    }
+    const settings = await Settings.getInstance();
+    const disabledTypes = getDisabledSystemNotificationTypes(settings);
+    const mandatoryTypes = Array.from(MANDATORY_NOTIFICATION_TYPES);
+    const excludedTypes = [
+      ...disabledTypes,
+      ...(user?.role === "Technician" &&
+      preferences.maintenanceAlerts === false
+        ? Array.from(TECHNICIAN_MAINTENANCE_ALERT_TYPES)
+        : []),
+    ];
     const filter = { user: req.user.id };
     const unreadFilter = { user: req.user.id, is_read: false };
-
-    if (
-      user?.role === "Technician" &&
-      preferences.maintenanceAlerts === false
-    ) {
-      filter.notificationType = {
-        $nin: Array.from(TECHNICIAN_MAINTENANCE_ALERT_TYPES),
+    if (preferences.inAppNotifications === false) {
+      filter.notificationType = { $in: mandatoryTypes };
+      unreadFilter.notificationType = { $in: mandatoryTypes };
+    } else if (excludedTypes.length) {
+      const notExcludedOrMandatory = {
+        $or: [
+          { notificationType: { $nin: excludedTypes } },
+          { notificationType: { $in: mandatoryTypes } },
+        ],
       };
-      unreadFilter.notificationType = {
-        $nin: Array.from(TECHNICIAN_MAINTENANCE_ALERT_TYPES),
-      };
+      filter.$and = [notExcludedOrMandatory];
+      unreadFilter.$and = [notExcludedOrMandatory];
     }
 
     if (type) {
       if (
-        user?.role === "Technician" &&
-        preferences.maintenanceAlerts === false &&
-        TECHNICIAN_MAINTENANCE_ALERT_TYPES.has(type)
+        (preferences.inAppNotifications === false ||
+          disabledTypes.includes(type) ||
+          (user?.role === "Technician" &&
+            preferences.maintenanceAlerts === false &&
+            TECHNICIAN_MAINTENANCE_ALERT_TYPES.has(type))) &&
+        !MANDATORY_NOTIFICATION_TYPES.has(type)
       ) {
-        return res.json({ success: true, data: [], unread: 0, total: 0 });
+        filter.notificationType = { $in: [] };
+      } else {
+        filter.notificationType = type;
       }
-      filter.notificationType = type;
     }
     if (unreadOnly === "true") filter.is_read = false;
 
@@ -61,6 +76,7 @@ const getMyNotifications = async (req, res, next) => {
           select: "ticketId requester equipmentType",
           populate: { path: "requester", select: "fullName" },
         })
+        .populate("feedbackSubmission", "feedbackNumber")
         .lean(),
     ]);
 
@@ -78,6 +94,8 @@ const getMyNotifications = async (req, res, next) => {
       return {
         id: n._id,
         ticket_id: n.ticket?._id || null,
+        feedback_id: n.feedbackSubmission?._id || null,
+        feedbackNumber: n.feedbackSubmission?.feedbackNumber || null,
         ticketId,
         requester_name: n.ticket?.requester?.fullName || null,
         title: displayTicketText(n.title),
@@ -102,16 +120,25 @@ const getUnreadCount = async (req, res, next) => {
       .select("role notificationPreferences")
       .lean();
     const preferences = user?.notificationPreferences || {};
-    if (preferences.inAppNotifications === false)
-      return res.json({ success: true, unread: 0 });
+    const settings = await Settings.getInstance();
     const filter = { user: req.user.id, is_read: false };
-    if (
-      user?.role === "Technician" &&
+    const mandatoryTypes = Array.from(MANDATORY_NOTIFICATION_TYPES);
+    if (preferences.inAppNotifications === false) {
+      filter.notificationType = { $in: mandatoryTypes };
+    }
+    const disabledTypes = getDisabledSystemNotificationTypes(settings);
+    const excludedTypes = [
+      ...disabledTypes,
+      ...(user?.role === "Technician" &&
       preferences.maintenanceAlerts === false
-    ) {
-      filter.notificationType = {
-        $nin: Array.from(TECHNICIAN_MAINTENANCE_ALERT_TYPES),
-      };
+        ? Array.from(TECHNICIAN_MAINTENANCE_ALERT_TYPES)
+        : []),
+    ];
+    if (excludedTypes.length && preferences.inAppNotifications !== false) {
+      filter.$or = [
+        { notificationType: { $nin: excludedTypes } },
+        { notificationType: { $in: mandatoryTypes } },
+      ];
     }
     const unread = await Notification.countDocuments(filter);
     res.json({ success: true, unread });

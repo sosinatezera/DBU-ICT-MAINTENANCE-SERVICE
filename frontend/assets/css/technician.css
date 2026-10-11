@@ -26,17 +26,24 @@
   color: #fff !important;
 }
 
-#sidebar .sidebar-brand i { color: var(--primary-border); }
-
-/* Sidebar availability toggle */
-#availabilityToggle:checked + .form-check-label { color: var(--accent) !important; }
-#availabilityToggle + .form-check-label         { color: rgba(226,232,240,.62); }
-
-#availabilityToggle.form-check-input:checked {
-  background-color: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 .2rem rgba(96,165,250,.2);
+#sidebar.technician-work-sidebar .technician-sidebar-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.2) transparent;
 }
+
+#sidebar.technician-work-sidebar .technician-sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+#sidebar.technician-work-sidebar .technician-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.2);
+  border-radius: 4px;
+}
+
+#sidebar .sidebar-brand i { color: var(--primary-border); }
 
 /* ── Task Cards ────────────────────────────────────────────── */
 .task-card {
@@ -143,11 +150,6 @@
 
 .request-detail-value { font-size: 1rem; color: #111827; }
 
-/* ── Technician Profile Avatar ─────────────────────────────── */
-#sidebar .rounded-circle.bg-warning {
-  box-shadow: 0 2px 8px rgba(0,0,0,.28);
-}
-
 /* Technician work surfaces use the same quiet elevation as admin views. */
 .task-card,
 .assigned-card,
@@ -169,4 +171,76 @@
 
 #sidebar.sidebar {
   background: linear-gradient(180deg, #0b1f3a 0%, #071426 100%) !important;
+}
+
+/* Keep the profile cards at the full width left by the fixed sidebar. */
+#profileSection,
+#profileSection .profile-details-layout,
+#profileSection .profile-details-layout > .w-100 {
+  width: 100%;
+  max-width: none;
+}
+
+#profileSection .profile-header-content > .flex-grow-1 {
+  min-width: 0;
+}
+
+#profileSection .profile-header-content h4 {
+  overflow-wrap: anywhere;
+}
+
+#profileSection #editProfileBtn {
+  flex-shrink: 0;
+}
+
+#profileSection .profile-photo-actions {
+  align-items: center;
+  gap: 12px;
+}
+
+#profileSection .profile-summary-divider {
+  margin: 1.25rem 0;
+  border-color: var(--border);
+  opacity: 1;
+}
+
+#profileSection .profile-header-content {
+  min-width: 0;
+}
+
+#profileSection .profile-photo-edit-actions {
+  align-items: center;
+  gap: 0.75rem;
+}
+
+#profileSection .profile-avatar-image {
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+}
+
+@media (max-width: 575.98px) {
+  #profileSection .profile-header-content {
+    flex-wrap: nowrap;
+  }
+
+  #profileSection .profile-header-content > .flex-grow-1 {
+    flex: 1 1 auto;
+  }
+
+  #profileSection .profile-photo-actions .btn {
+    padding-right: 0.35rem;
+    padding-left: 0.35rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  #profileSection #profilePhotoSettings > .card-body {
+    padding: 1rem !important;
+  }
+
+  #profileSection .profile-summary-divider {
+    margin: 1rem 0;
+  }
+
 }

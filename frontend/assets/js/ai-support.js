@@ -203,7 +203,7 @@
     try {
       await fetchWithTimeout(
         `${API_BASE_RESOLVED}/ai/conversation/${encodeURIComponent(id)}`,
-        { method: "DELETE", credentials: "include" },
+        { method: "DELETE" },
       );
     } catch (_) {}
   };
@@ -239,7 +239,6 @@
       const response = await fetch(`${API_BASE_RESOLVED}/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           message,
           conversationId,
@@ -502,7 +501,7 @@
     try {
       const response = await fetchWithTimeout(
         `${API_BASE_RESOLVED}/ai/conversation/${encodeURIComponent(conversationId)}`,
-        { credentials: "include" },
+        {},
       );
       if (!response.ok) {
         saveConversationId(null);
@@ -610,7 +609,6 @@
       const response = await fetch(`${API_BASE_RESOLVED}/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           message,
           conversationId,

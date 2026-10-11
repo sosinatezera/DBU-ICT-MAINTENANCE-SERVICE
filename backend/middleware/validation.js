@@ -5,6 +5,9 @@
  */
 
 const mongoose = require('mongoose');
+const {
+  ICT_CATEGORY_GROUPS,
+} = require('../utils/ictCategoryHierarchy');
 
 /* ── Constants ──────────────────────────────────────────── */
 const PASSWORD_REGEX = /^(?=.{8,16}$)(?=.*[A-Za-z])(?=.*\d)(?!.*\s)[\x21-\x7E]+$/;
@@ -41,7 +44,7 @@ const VALID_MAINT_STATUS = ['accepted', 'in_progress', 'resolved'];
 const VALID_ASSET_STATUSES = ['active', 'under_maintenance', 'decommissioned'];
 const VALID_ASSIGN_STATUSES = ['assigned', 'accepted', 'in_progress', 'completed', 'reassigned'];
 const VALID_INQUIRY_TYPES = ['Hardware Problem', 'Software Problem', 'Internet Connectivity', 'Printer Problem', 'Account / Access Problem', 'ICT Service Request', 'Other'];
-const VALID_REQUEST_CATEGORIES = [
+const LEGACY_REQUEST_CATEGORIES = [
   'Hardware Problem',
   'Software Problem',
   'Internet Connectivity',
@@ -61,6 +64,12 @@ const VALID_REQUEST_CATEGORIES = [
   'Firewall',
   'Network Cable',
   'Other'
+];
+const VALID_REQUEST_CATEGORIES = [
+  ...new Set([
+    ...ICT_CATEGORY_GROUPS.flatMap(({ categories }) => categories),
+    ...LEGACY_REQUEST_CATEGORIES,
+  ]),
 ];
 /* Devices a requester can pick (the "Device / Equipment" field). The networking
    subset is offered only when the request category is "Networking" so a
@@ -129,6 +138,21 @@ function validateEmail(email) {
   if (trimmed.length === 0) return 'Email is required.';
   if (trimmed.length > 254) return 'Email is too long.';
   if (!EMAIL_REGEX.test(trimmed)) return 'Please enter a valid Gmail address ending with @gmail.com.';
+  return null;
+}
+
+function validateMauId(id) {
+  if (
+    id === undefined ||
+    id === null ||
+    (typeof id === 'string' && !id.trim())
+  ) {
+    return 'ID is required.';
+  }
+  if (typeof id !== 'string') return 'ID must be text.';
+  if (!/^MAU\d{1,5}$/.test(id)) {
+    return 'ID must start with MAU and be followed by 1 to 5 digits (for example, MAU12345).';
+  }
   return null;
 }
 
@@ -276,6 +300,7 @@ module.exports = {
   validateObjectId,
   validateRequired,
   validateEmail,
+  validateMauId,
   validateGenericEmail,
   validatePassword,
   validatePasswordMatch,

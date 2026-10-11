@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address."],
     },
+    mauId: {
+      type: String,
+      match: [/^MAU\d{1,5}$/, "ID must start with MAU and be followed by 1 to 5 digits."],
+    },
     phone: {
       type: String,
       trim: true,
@@ -62,7 +66,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    /* Password reset verification state. Raw codes and reset-session tokens
+    /* Password reset verification state. Raw codes and reset authorization tokens
        are never persisted; only their SHA-256 hashes are stored. */
     resetPasswordCodeHash: {
       type: String,
@@ -139,6 +143,7 @@ userSchema.index({ role: 1, status: 1 });
 userSchema.index({ role: 1, status: 1, createdAt: -1 });
 userSchema.index({ fullName: 1 });
 userSchema.index({ department: 1, createdAt: -1 });
+userSchema.index({ mauId: 1 }, { unique: true, sparse: true });
 
 /* The public landing page counts active users on every load. `{ role, status }`
    has status as a trailing field, so it cannot serve that query — this does. */

@@ -77,6 +77,7 @@ const NOTIFICATION_VISUALS = {
   request_reassigned_admin: { icon: "bi-arrow-left-right", colour: "#D97706" },
   new_comment: { icon: "bi-chat-left-text", colour: "#2563EB" },
   feedback_available: { icon: "bi-star", colour: "#D97706" },
+  feedback_update: { icon: "bi-chat-square-text", colour: "#2563EB" },
   priority_changed: { icon: "bi-flag", colour: "#D97706" },
   high_priority_request: { icon: "bi-exclamation-triangle", colour: "#EA580C" },
   critical_request: { icon: "bi-exclamation-octagon", colour: "#DC2626" },
@@ -195,6 +196,14 @@ function initNotificationBell(refreshCount = true) {
             </a>
           </div>
         </div>
+        <div class="d-flex align-items-center gap-2 px-3 py-2 border-bottom bg-white">
+          <label for="notifSoundVolume" class="small text-muted mb-0 text-nowrap">
+            Notification volume
+          </label>
+          <input class="form-range mb-0" type="range" id="notifSoundVolume"
+                 min="0" max="100" step="1" aria-describedby="notifSoundVolumeValue" />
+          <output class="small text-muted" id="notifSoundVolumeValue" for="notifSoundVolume">10%</output>
+        </div>
         <!-- List -->
         <div id="notifDropList" style="max-height:360px;overflow-y:auto;">
           <div class="text-center text-muted py-4 small">
@@ -211,6 +220,21 @@ function initNotificationBell(refreshCount = true) {
       event.stopPropagation();
       window.NotificationSound.setEnabled(soundToggle.checked);
     });
+  }
+
+  const soundVolume = document.getElementById("notifSoundVolume");
+  const soundVolumeValue = document.getElementById("notifSoundVolumeValue");
+  if (soundVolume && window.NotificationSound) {
+    const initialVolume = Math.round(window.NotificationSound.getVolume() * 100);
+    soundVolume.value = String(initialVolume);
+    soundVolumeValue.textContent = `${initialVolume}%`;
+    soundVolume.addEventListener("input", (event) => {
+      event.stopPropagation();
+      const volume = Number(soundVolume.value);
+      const normalizedVolume = window.NotificationSound.setVolume(volume / 100);
+      soundVolumeValue.textContent = `${Math.round(normalizedVolume * 100)}%`;
+    });
+    soundVolume.addEventListener("click", (event) => event.stopPropagation());
   }
 
   if (refreshCount) refreshBellBadge();
@@ -247,6 +271,24 @@ function updateSidebarBadge(unread) {
 }
 
 function renderNotificationDetailsButton(notification) {
+  const feedbackId = String(notification.feedback_id || "").trim();
+  if (/^[0-9a-f]{24}$/i.test(feedbackId)) {
+    const role = Auth.getUser()?.role;
+    const page =
+      role === "ICT Admin"
+        ? "../admin/admin-feedback.html"
+        : role === "Technician"
+          ? "../technician/technician-feedback.html"
+          : role === "Requester"
+            ? "../user/feedback.html"
+            : "";
+    if (!page) return "";
+    return `<div class="notif-view-actions">
+      <a class="btn btn-sm btn-outline-primary" href="${page}?feedback=${encodeURIComponent(feedbackId)}">
+        <i class="bi bi-eye me-1" aria-hidden="true"></i>View Feedback
+      </a>
+    </div>`;
+  }
   if (Auth.getUser()?.role !== "ICT Admin") return "";
 
   const ticketId = String(notification.ticket_id || "").trim();
@@ -565,12 +607,12 @@ function openNotificationTicket(ticketId) {
   }
 
   const path = window.location.pathname;
-  const sessionUser =
+  const currentUser =
     (typeof Auth !== "undefined" && Auth.getUser && Auth.getUser()) || null;
-  /* Normalize so a stale/non-canonical role in the session never falls through
+  /* Normalize so a stale/non-canonical role in the saved user never falls through
      to the wrong role branch (which would silently do nothing or open the wrong
      modal). Roles in main.js are canonical: Requester / Technician / ICT Admin. */
-  const role = normalizeRole(sessionUser?.role) || "";
+  const role = normalizeRole(currentUser?.role) || "";
 
   /* Technician — use the view-ticket modal when present on this page. */
   if (role === "Technician") {

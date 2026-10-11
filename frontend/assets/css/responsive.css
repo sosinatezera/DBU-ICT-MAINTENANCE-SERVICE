@@ -149,8 +149,13 @@ html, body { overflow-x: hidden; }
 }
 
 /* ── Print Styles ──────────────────────────────────────────── */
+.report-print-header { display: none; }
+
 @media print {
   .sidebar, .topbar, .btn, .modal, .navbar, .footer, .offcanvas { display: none !important; }
+  .report-print-header { display: block !important; }
+  .report-print-header h1 { font-size: 20pt; font-weight: 700; margin-bottom: .35rem; }
+  .report-print-header p { font-size: 10pt; color: #495057; }
   body { background: #fff !important; font-size: 12pt; }
   .dashboard-body { background: #fff !important; }
   .main-content { width: 100% !important; }

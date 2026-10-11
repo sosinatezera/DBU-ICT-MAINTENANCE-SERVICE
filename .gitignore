@@ -37,6 +37,9 @@ build/
 backend/uploads/*
 !backend/uploads/.gitkeep
 
+# Protected database backups
+backend/private_backups/
+
 # Coverage
 coverage/
 

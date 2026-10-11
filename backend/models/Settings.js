@@ -30,10 +30,20 @@ const settingsSchema = new mongoose.Schema(
       enum: ["en", "am", "om"],
       default: "en",
     },
+    defaultTheme: {
+      type: String,
+      enum: ["light", "dark"],
+      default: "light",
+    },
     timezone: {
       type: String,
       default: "Africa/Addis_Ababa",
       trim: true,
+    },
+    timeFormat: {
+      type: String,
+      enum: ["24h", "12h"],
+      default: "24h",
     },
     dateFormat: {
       type: String,
@@ -47,17 +57,34 @@ const settingsSchema = new mongoose.Schema(
     notifStatusChange: { type: Boolean, default: true },
     notifCompletion: { type: Boolean, default: true },
     notifSystemSecurity: { type: Boolean, default: true },
+    notifUserFeedback: { type: Boolean, default: true },
+    notifTechnicianFeedback: { type: Boolean, default: true },
+    notifFeedbackReplies: { type: Boolean, default: true },
     notificationSound: { type: Boolean, default: true },
     emailNotifications: { type: Boolean, default: false },
 
     /* ── Operational / quick settings ─────────────────────── */
-    publicRegistration: { type: Boolean, default: false },
+    publicRegistration: { type: Boolean, default: true },
     techAutoNotify: { type: Boolean, default: true },
     slaResponseHours: { type: Number, default: 24, min: 1, max: 720 },
     defaultPriority: {
       type: String,
       enum: ["low", "medium", "high", "critical"],
       default: "medium",
+    },
+    maintenanceMode: { type: Boolean, default: false },
+    maintenanceNotice: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default:
+        "The system is temporarily unavailable while scheduled maintenance is in progress. Please try again later.",
+    },
+    maintenanceUpdatedAt: { type: Date, default: null },
+    maintenanceUpdatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
 
     /* ── Home page image layout ──────────────────────────── */

@@ -425,7 +425,7 @@
 
         const freshUser = await Auth.refresh();
         if (
-          data.profileImage !== freshUser.profileImage ||
+          data.data.profileImage !== freshUser.profileImage ||
           !freshUser.profileImage
         ) {
           throw new Error("The saved profile photo could not be reloaded.");

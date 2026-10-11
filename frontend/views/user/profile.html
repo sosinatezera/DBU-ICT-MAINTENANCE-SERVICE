@@ -516,11 +516,11 @@
   <!-- Bootstrap JS (must be before inline script) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Shared utilities (must be before inline script that uses them) -->
-  <script src="/assets/js/api-config.js?v=5"></script>
+  <script src="/assets/js/api-config.js?v=16"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/validation.js?v=7"></script>
-  <script src="/assets/js/main.js?v=19"></script>
-  <script src="/assets/js/notifications.js?v=8"></script>
+  <script src="/assets/js/main.js?v=25"></script>
+  <script src="/assets/js/notifications.js?v=10"></script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/lang.js?v=16"></script>
 
@@ -602,7 +602,7 @@
       function profileErrorMessage ( err )
       {
         const status = err && err.status;
-        if ( status === 401 ) return 'Your session has expired. Please sign in again to view your profile.';
+        if ( status === 401 ) return 'Your access token has expired. Please sign in again to view your profile.';
         if ( status === 403 ) return 'Your account does not have permission to view this profile. Please contact your administrator.';
         if ( err && err.network ) return 'Cannot reach the server. Please check your connection and try again.';
         return ( err && err.message ) || 'Failed to load profile. Please try again.';
@@ -642,7 +642,7 @@
         if ( status === 400 || status === 422 )
           return ( err && err.message ) || 'Please check the details you entered and try again.';
         if ( status === 401 )
-          return 'Your session has expired. Please sign in again to save your changes.';
+          return 'Your access token has expired. Please sign in again to save your changes.';
         if ( status === 403 )
           return 'Your account does not have permission to update this profile.';
         if ( status === 404 )
@@ -655,8 +655,7 @@
       }
 
       /* ── Authentication ────────────────────────────────────────────
-         The session is a cookie that apiRequest() sends automatically via
-         credentials: "include" — no token is built or hardcoded here.
+         api-config.js automatically adds the saved bearer token to API calls.
          requireAuth() deliberately declines to redirect when the server
          could not be reached and simply returns null; that must NOT strand
          the page on the spinner, so we let the real request decide. A
@@ -1623,7 +1622,6 @@
                 const base = ( typeof API_BASE === 'string' && API_BASE ) ? API_BASE : '/api';
                 const res = await fetch( base + '/users/profile/files/' + fileId, {
                   method: 'GET',
-                  credentials: 'include',
                 } );
                 if ( !res.ok ) throw new Error( res.statusText || 'Download failed' );
                 const blob = await res.blob();
@@ -1679,7 +1677,7 @@
           if ( err && err.redirected ) return;
           if ( err.status === 401 || err.status === 403 )
           {
-            showToast( 'Session expired. Please log in again.', 'danger' );
+            showToast( 'Access token expired. Please log in again.', 'danger' );
           } else
           {
             emptyEl?.classList.remove( 'd-none' );

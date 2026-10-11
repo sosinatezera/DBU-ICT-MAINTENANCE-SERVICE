@@ -9,15 +9,13 @@
    ============================================================ */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await Auth.load();
   const adminSettingsPage = window.location.pathname.endsWith(
     "/admin/settings.html",
   );
-  const user = adminSettingsPage
-    ? requireRole("ICT Admin")
-    : requireRole("Requester", "Technician");
-  if (!user) return;
   if (!adminSettingsPage) {
+    await Auth.load();
+    const user = requireRole("Requester", "Technician");
+    if (!user) return;
     await initPersonalSettings(user);
     return;
   }
@@ -31,10 +29,318 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  /* ── Load all data on init ────────────────────────────── */
-  let currentUser = Auth.getUser();
-  let currentSettings = null;
+  const changePasswordForm = document.getElementById("changePasswordForm");
+  const currentPasswordInput = document.getElementById("currentPassword");
+  const newPasswordInput = document.getElementById("newPassword");
+  const confirmPasswordInput = document.getElementById("confirmPassword");
+  const passwordMatchText = document.getElementById("passwordMatchText");
+  let passwordUpdating = false;
+  let passwordFormAuthorized = false;
+
+  function resetPasswordVisibility() {
+    changePasswordForm
+      ?.querySelectorAll("[data-toggle-password]")
+      .forEach((button) => {
+        const target = document.getElementById(
+          button.getAttribute("data-toggle-password"),
+        );
+        if (target) target.type = "password";
+        button.setAttribute("aria-pressed", "false");
+        const targetName =
+          target?.id === "currentPassword"
+            ? "current"
+            : target?.id === "newPassword"
+              ? "new"
+              : "confirmation";
+        button.setAttribute("aria-label", `Show ${targetName} password`);
+        const icon = button.querySelector("i");
+        if (icon) icon.className = "bi bi-eye";
+      });
+  }
+
+  changePasswordForm
+    ?.querySelectorAll("[data-toggle-password]")
+    .forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = document.getElementById(
+          button.getAttribute("data-toggle-password"),
+        );
+        if (!target) return;
+
+        const visible = target.type === "password";
+        target.type = visible ? "text" : "password";
+        button.setAttribute("aria-pressed", String(visible));
+        const targetName =
+          target.id === "currentPassword"
+            ? "current"
+            : target.id === "newPassword"
+              ? "new"
+              : "confirmation";
+        button.setAttribute(
+          "aria-label",
+          `${visible ? "Hide" : "Show"} ${targetName} password`,
+        );
+        const icon = button.querySelector("i");
+        if (icon) icon.className = visible ? "bi bi-eye-slash" : "bi bi-eye";
+      });
+    });
+
+  function checkPasswordMatch() {
+    if (!confirmPasswordInput || !newPasswordInput || !passwordMatchText) {
+      return;
+    }
+    const confirmation = confirmPasswordInput.value;
+    if (!confirmation) {
+      passwordMatchText.textContent = "";
+      passwordMatchText.className = "form-text";
+    } else if (newPasswordInput.value === confirmation) {
+      passwordMatchText.textContent = "Passwords match.";
+      passwordMatchText.className = "form-text text-success";
+      clearFieldValidation("confirmPassword");
+    } else {
+      passwordMatchText.textContent =
+        "New password and confirmation password do not match.";
+      passwordMatchText.className = "form-text text-danger";
+    }
+  }
+  newPasswordInput?.addEventListener("input", checkPasswordMatch);
+  confirmPasswordInput?.addEventListener("input", checkPasswordMatch);
+  changePasswordForm?.addEventListener("reset", () => {
+    resetPasswordVisibility();
+    if (passwordMatchText) {
+      passwordMatchText.textContent = "";
+      passwordMatchText.className = "form-text";
+    }
+    document.getElementById("passwordAlert")?.classList.add("d-none");
+  });
+
+  changePasswordForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!passwordFormAuthorized) {
+      showAlert(
+        "passwordAlert",
+        "Please wait for administrator authentication to complete.",
+        "warning",
+      );
+      return;
+    }
+    if (passwordUpdating) return;
+
+    const current = currentPasswordInput?.value || "";
+    const newPassword = newPasswordInput?.value || "";
+    const confirmation = confirmPasswordInput?.value || "";
+    document.getElementById("passwordAlert")?.classList.add("d-none");
+
+    let valid = true;
+    if (!current) {
+      showFieldError("currentPassword", "Current password is required.");
+      valid = false;
+    } else {
+      clearFieldValidation("currentPassword");
+    }
+
+    const passwordError = Validators.password(newPassword);
+    if (passwordError) {
+      showFieldError("newPassword", passwordError);
+      valid = false;
+    } else {
+      clearFieldValidation("newPassword");
+    }
+
+    const confirmationError = Validators.passwordMatch(
+      newPassword,
+      confirmation,
+    );
+    if (confirmationError) {
+      showFieldError("confirmPassword", confirmationError);
+      valid = false;
+    } else {
+      clearFieldValidation("confirmPassword");
+    }
+
+    if (newPassword && newPassword === current) {
+      showFieldError(
+        "newPassword",
+        "New password must be different from the current password.",
+      );
+      valid = false;
+    }
+    if (!valid) return;
+
+    passwordUpdating = true;
+    setLoading("savePasswordBtn", "savePasswordSpinner", true);
+    const savePasswordLabel = document.getElementById("savePasswordLabel");
+    if (savePasswordLabel) savePasswordLabel.textContent = "Updating...";
+    try {
+      const response = await apiRequest("/users/change-password", {
+        method: "PUT",
+        body: { currentPassword: current, newPassword },
+      });
+      if (response?.success !== true) {
+        throw new Error("Password update was not confirmed by the server.");
+      }
+
+      changePasswordForm.reset();
+      ["currentPassword", "newPassword", "confirmPassword"].forEach((id) =>
+        clearFieldValidation(id),
+      );
+      const successMessage = "Password updated successfully!";
+      showAlert("passwordAlert", successMessage, "success");
+      showToast(successMessage, "success");
+    } catch (error) {
+      let message = "Unable to update password. Please try again.";
+      if (error?.status === 401 || error?.redirected) {
+        message = "Access token expired; sign in again.";
+      } else if (error?.status === 400 || error?.status === 422) {
+        message =
+          error.message || "Password does not meet security requirements.";
+        if (message === "Current password is incorrect.") {
+          showFieldError("currentPassword", message);
+        } else if (
+          message !== "Current password and new password are required."
+        ) {
+          showFieldError("newPassword", message);
+        }
+      }
+      showAlert("passwordAlert", message, "danger");
+      showToast(message, "danger");
+    } finally {
+      passwordUpdating = false;
+      setLoading("savePasswordBtn", "savePasswordSpinner", false);
+      if (savePasswordLabel) {
+        savePasswordLabel.textContent = "Update Password";
+      }
+    }
+  });
+
+  const profileForm = document.getElementById("profileForm");
   let profileSaving = false;
+  let profileFormAuthorized = false;
+  let currentUser = null;
+  let profileAlertTimeout = null;
+
+  profileForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!profileFormAuthorized || !currentUser) {
+      showAlert(
+        "profileAlert",
+        "Please wait for administrator authentication to complete.",
+        "warning",
+      );
+      return;
+    }
+    if (profileSaving) return;
+
+    const profilePayload = {
+      fullName: getVal("profileName"),
+      phone: getVal("profilePhone"),
+      department: getVal("profileDept"),
+    };
+    let valid = true;
+    const nameError = Validators.name(profilePayload.fullName, "Full name");
+    if (nameError) {
+      showFieldError("profileName", nameError);
+      valid = false;
+    } else {
+      clearFieldValidation("profileName");
+    }
+
+    const phoneError = Validators.phone(profilePayload.phone);
+    if (phoneError) {
+      showFieldError("profilePhone", phoneError);
+      valid = false;
+    } else {
+      clearFieldValidation("profilePhone");
+    }
+
+    if (profilePayload.fullName.length > 100) {
+      showFieldError("profileName", "Full name must be 100 characters or fewer.");
+      valid = false;
+    }
+    if (profilePayload.department.length > 120) {
+      showFieldError(
+        "profileDept",
+        "Department must be 120 characters or fewer.",
+      );
+      valid = false;
+    } else {
+      clearFieldValidation("profileDept");
+    }
+    if (!valid) return;
+
+    profileSaving = true;
+    const saveLabel = document.getElementById("saveProfileLabel");
+    setLoading("saveProfileBtn", "saveProfileSpinner", true);
+    if (saveLabel) saveLabel.textContent = "Saving...";
+    document.getElementById("profileAlert")?.classList.add("d-none");
+
+    try {
+      const response = await apiRequest("/users/profile", {
+        method: "PUT",
+        body: profilePayload,
+      });
+      if (
+        response?.success !== true ||
+        !response.data ||
+        response.data.fullName !== profilePayload.fullName ||
+        (response.data.phone || "") !== profilePayload.phone ||
+        (response.data.department || "") !== profilePayload.department
+      ) {
+        throw new Error("The server did not confirm the saved profile.");
+      }
+
+      const refreshedUser = await Auth.refresh();
+      if (
+        !refreshedUser ||
+        refreshedUser.fullName !== profilePayload.fullName ||
+        (refreshedUser.phone || "") !== profilePayload.phone ||
+        (refreshedUser.department || "") !== profilePayload.department
+      ) {
+        throw new Error("The saved profile could not be reloaded.");
+      }
+
+      currentUser = refreshedUser;
+      populateProfile(currentUser);
+      populateSecurity(currentUser);
+      const successMessage = "Profile updated successfully!";
+      showAlert("profileAlert", successMessage, "success");
+      showToast(successMessage, "success");
+      if (profileAlertTimeout) window.clearTimeout(profileAlertTimeout);
+      profileAlertTimeout = window.setTimeout(() => {
+        document.getElementById("profileAlert")?.classList.add("d-none");
+      }, 4000);
+    } catch (error) {
+      const message =
+        error?.status === 401 || error?.redirected
+          ? "Access token expired; please sign in again."
+          : error?.message || "Unable to save profile. Please try again.";
+      showAlert("profileAlert", message, "danger");
+      showToast(message, "danger");
+    } finally {
+      profileSaving = false;
+      setLoading("saveProfileBtn", "saveProfileSpinner", false);
+      if (saveLabel) saveLabel.textContent = "Save Profile";
+    }
+  });
+
+  profileForm?.addEventListener("reset", (event) => {
+    event.preventDefault();
+    if (currentUser) populateProfile(currentUser);
+    ["profileName", "profilePhone", "profileDept"].forEach(
+      clearFieldValidation,
+    );
+    document.getElementById("profileAlert")?.classList.add("d-none");
+    const cancelPhotoButton = document.getElementById(
+      "cancelProfilePhotoBtn",
+    );
+    if (cancelPhotoButton && !cancelPhotoButton.disabled) {
+      cancelPhotoButton.click();
+    }
+  });
+
+  /* ── Load all data on init ────────────────────────────── */
+  let currentSettings = null;
   let notificationSettingsSaving = false;
   /* Guards against the data-loss case below: if /settings could not be read,
      the form fields keep their HTML defaults (empty strings, unchecked
@@ -43,6 +349,174 @@ document.addEventListener("DOMContentLoaded", async () => {
      forms are inert. */
   let settingsLoaded = false;
   let generalSettingsSaving = false;
+  const generalSettingsForm = document.getElementById("generalSettingsForm");
+
+  function populateGeneralSettings(settings) {
+    setVal("settingSystemName", settings.systemName);
+    setVal("settingOrgName", settings.organizationName);
+    setVal("settingSystemDesc", settings.systemDescription);
+    setVal(
+      "settingLanguage",
+      ["en", "am", "om"].includes(settings.defaultLanguage)
+        ? settings.defaultLanguage
+        : "en",
+    );
+    setVal("settingDefaultTheme", settings.defaultTheme || "light");
+    setVal("settingTimezone", settings.timezone);
+    setVal("settingDateFormat", settings.dateFormat);
+    setVal("settingTimeFormat", settings.timeFormat || "24h");
+  }
+
+  function validateGeneralSettings(settings) {
+    if (!settings.systemName) return "System name is required.";
+    if (settings.systemName.length < 2) {
+      return "System name must be at least 2 characters.";
+    }
+    if (settings.systemName.length > 100) {
+      return "System name must be no more than 100 characters.";
+    }
+    if (!settings.organizationName) return "Organization name is required.";
+    if (settings.organizationName.length < 2) {
+      return "Organization name must be at least 2 characters.";
+    }
+    if (settings.organizationName.length > 100) {
+      return "Organization name must be no more than 100 characters.";
+    }
+    if (settings.systemDescription.length > 500) {
+      return "System description must be no more than 500 characters.";
+    }
+    if (!["en", "am", "om"].includes(settings.defaultLanguage)) {
+      return "Select a valid default language.";
+    }
+    if (!["light", "dark"].includes(settings.defaultTheme)) {
+      return "Select a valid default theme.";
+    }
+    if (!["12h", "24h"].includes(settings.timeFormat)) {
+      return "Select a valid time format.";
+    }
+    if (
+      !["Africa/Addis_Ababa", "Africa/Nairobi", "UTC"].includes(
+        settings.timezone,
+      )
+    ) {
+      return "Select a valid time zone.";
+    }
+    if (
+      !["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY", "DD-MM-YYYY", "EC"].includes(
+        settings.dateFormat,
+      )
+    ) {
+      return "Select a valid date format.";
+    }
+    return null;
+  }
+
+  function setGeneralSettingsLoading(loading) {
+    const button = document.getElementById("saveGeneralBtn");
+    const spinner = document.getElementById("saveGeneralSpinner");
+    const label = document.getElementById("saveGeneralLabel");
+    if (button) {
+      button.disabled = loading;
+      button.setAttribute("aria-busy", loading ? "true" : "false");
+    }
+    spinner?.classList.toggle("d-none", !loading);
+    if (label) {
+      if (loading) {
+        label.textContent = "Saving...";
+      } else {
+        label.textContent = label.dataset.savedLabel || "Save Changes";
+      }
+    }
+  }
+
+  const saveGeneralLabel = generalSettingsForm?.querySelector("#saveGeneralLabel");
+  if (saveGeneralLabel) {
+    saveGeneralLabel.dataset.savedLabel = saveGeneralLabel.textContent.trim();
+  }
+
+  /* Register the primary settings handler before initializing profile, photo,
+     and other admin-page features so an unrelated initialization error cannot
+     leave Save Changes without a submit listener. */
+  generalSettingsForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!settingsLoaded || !currentSettings) {
+      return settingsNotLoaded("settingsAlert");
+    }
+    if (generalSettingsSaving) return;
+
+    const submittedSettings = {
+      systemName: getVal("settingSystemName").replace(/\s+/g, " "),
+      organizationName: getVal("settingOrgName").replace(/\s+/g, " "),
+      systemDescription: getVal("settingSystemDesc").replace(/\s+/g, " "),
+      defaultLanguage: getVal("settingLanguage"),
+      defaultTheme: getVal("settingDefaultTheme"),
+      timezone: getVal("settingTimezone"),
+      dateFormat: getVal("settingDateFormat"),
+      timeFormat: getVal("settingTimeFormat"),
+    };
+    const validationError = validateGeneralSettings(submittedSettings);
+    if (validationError) {
+      showAlert("settingsAlert", validationError, "danger");
+      return;
+    }
+
+    generalSettingsSaving = true;
+    setGeneralSettingsLoading(true);
+    try {
+      const response = await apiRequest("/settings/general", {
+        method: "PUT",
+        body: submittedSettings,
+      });
+      if (response.success !== true || !response.data) {
+        throw new Error("The server did not confirm that settings were saved.");
+      }
+
+      /* Read back from the protected endpoint after the successful write. The
+         API client invalidates its GET cache on mutations, so this confirms
+         the values currently persisted by the backend before showing success. */
+      const persistedResponse = await apiRequest("/settings");
+      const persistedSettings = persistedResponse.data;
+      const matchesSavedValues =
+        persistedResponse.success === true &&
+        persistedSettings &&
+        Object.entries(submittedSettings).every(
+          ([key, value]) => persistedSettings[key] === value,
+        );
+      if (!matchesSavedValues) {
+        throw new Error(
+          "The server did not return the saved settings. Please reload and try again.",
+        );
+      }
+
+      currentSettings = persistedSettings;
+      showAlert("settingsAlert", "Settings saved successfully!", "success");
+      showToast("Settings saved successfully!", "success");
+      if (window.__ictPrefs) {
+        try {
+          window.__ictPrefs.refresh();
+        } catch (err) {
+          console.warn("Could not refresh system preferences:", err);
+        }
+      }
+    } catch (err) {
+      const message =
+        err?.message || "Failed to save settings. Please try again.";
+      showAlert("settingsAlert", message, "danger");
+      showToast(message, "danger");
+    } finally {
+      generalSettingsSaving = false;
+      setGeneralSettingsLoading(false);
+    }
+  });
+
+  generalSettingsForm?.addEventListener("reset", (event) => {
+    if (!currentSettings) return;
+    event.preventDefault();
+    populateGeneralSettings(currentSettings);
+    if (window.setLang) {
+      window.setLang(currentSettings.defaultLanguage || "en", false);
+    }
+  });
 
   function settingsNotLoaded(alertId) {
     showAlert(
@@ -54,7 +528,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function lockSettingsForms(locked) {
-    ["generalSettingsForm", "notifSettingsForm"].forEach((formId) => {
+    [
+      "generalSettingsForm",
+      "notifSettingsForm",
+      "userSettingsForm",
+      "technicianSettingsForm",
+    ].forEach((formId) => {
       const form = document.getElementById(formId);
       if (!form) return;
       form.querySelectorAll("input, select, textarea, button").forEach((el) => {
@@ -63,48 +542,556 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  lockSettingsForms(true);
+  const notifSettingsForm = document.getElementById("notifSettingsForm");
 
-  /* Attach real-time validation to profile form */
+  function populateNotificationSettings(settings) {
+    setCheck("notifNewRequest", settings.notifNewRequest !== false);
+    setCheck("notifAssignment", settings.notifAssignment !== false);
+    setCheck("notifStatusChange", settings.notifStatusChange !== false);
+    setCheck("notifCompletion", settings.notifCompletion !== false);
+    setCheck("notifSystemSecurity", settings.notifSystemSecurity !== false);
+    setCheck("notifUserFeedback", settings.notifUserFeedback !== false);
+    setCheck("notifTechnicianFeedback", settings.notifTechnicianFeedback !== false);
+    setCheck("notifFeedbackReplies", settings.notifFeedbackReplies !== false);
+    setCheck("notificationSound", settings.notificationSound !== false);
+    setCheck("emailNotifications", settings.emailNotifications === true);
+  }
+
+  /* As with the general settings form, bind before authentication/settings
+     requests so an unrelated initialization failure cannot leave an active
+     submit button with no handler. The form remains disabled until loaded. */
+  lockSettingsForms(true);
+  notifSettingsForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!settingsLoaded || !currentSettings) {
+      return settingsNotLoaded("notifSettingsAlert");
+    }
+    if (notificationSettingsSaving) return;
+
+    notificationSettingsSaving = true;
+    const saveLabel = document.getElementById("saveNotifLabel");
+    const originalSaveLabel =
+      saveLabel?.textContent || "Save Notification Preferences";
+    if (saveLabel) saveLabel.textContent = "Saving...";
+    setLoading("saveNotifBtn", "saveNotifSpinner", true);
+
+    const submittedPreferences = {
+      notifNewRequest: getCheck("notifNewRequest"),
+      notifAssignment: getCheck("notifAssignment"),
+      notifStatusChange: getCheck("notifStatusChange"),
+      notifCompletion: getCheck("notifCompletion"),
+      notifSystemSecurity: getCheck("notifSystemSecurity"),
+      notifUserFeedback: getCheck("notifUserFeedback"),
+      notifTechnicianFeedback: getCheck("notifTechnicianFeedback"),
+      notifFeedbackReplies: getCheck("notifFeedbackReplies"),
+      notificationSound: getCheck("notificationSound"),
+      emailNotifications: getCheck("emailNotifications"),
+    };
+
+    try {
+      document.getElementById("notifSettingsAlert")?.classList.add("d-none");
+      const response = await apiRequest("/settings/notifications", {
+        method: "PUT",
+        body: submittedPreferences,
+      });
+      if (response?.success !== true || !response.data) {
+        throw new Error(
+          "The server did not confirm that notification preferences were saved.",
+        );
+      }
+
+      /* Confirm the persisted values with a fresh, authenticated backend read
+         before reporting success. Successful mutations invalidate apiRequest's
+         GET cache, so this read is not served from a stale response. */
+      const persistedResponse = await apiRequest("/settings");
+      const persistedSettings = persistedResponse?.data;
+      const preferencesConfirmed =
+        persistedResponse?.success === true &&
+        persistedSettings &&
+        Object.entries(submittedPreferences).every(
+          ([key, value]) => persistedSettings[key] === value,
+        );
+      if (!preferencesConfirmed) {
+        throw new Error(
+          "The server did not return the saved notification preferences. Please reload and try again.",
+        );
+      }
+
+      currentSettings = persistedSettings;
+      populateNotificationSettings(currentSettings);
+      const notificationSound =
+        document.getElementById("notificationSound");
+      if (notificationSound && window.NotificationSound) {
+        window.NotificationSound.setEnabled(currentSettings.notificationSound);
+      }
+      const successMessage = "Notification preferences saved successfully!";
+      showAlert("notifSettingsAlert", successMessage, "success");
+      showToast(successMessage, "success");
+      window.setTimeout(() => {
+        document.getElementById("notifSettingsAlert")?.classList.add("d-none");
+      }, 4000);
+    } catch (err) {
+      console.error(
+        "Failed to save notification preferences:",
+        err?.message || err,
+      );
+      const message =
+        err?.message ||
+        "Failed to save notification preferences. Please try again.";
+      showAlert("notifSettingsAlert", message, "danger");
+      showToast(message, "danger");
+    } finally {
+      notificationSettingsSaving = false;
+      setLoading("saveNotifBtn", "saveNotifSpinner", false);
+      if (saveLabel) saveLabel.textContent = originalSaveLabel;
+    }
+  });
+
+  notifSettingsForm?.addEventListener("reset", (event) => {
+    if (!currentSettings) return;
+    event.preventDefault();
+    populateNotificationSettings(currentSettings);
+    const notificationSound = document.getElementById("notificationSound");
+    if (notificationSound && window.NotificationSound) {
+      window.NotificationSound.setEnabled(currentSettings.notificationSound);
+    }
+  });
+
+  function populateUserSettings(settings) {
+    setCheck("settingPublicRegistration", settings.publicRegistration !== false);
+  }
+
+  function populateTechnicianSettings(settings) {
+    setCheck("settingTechAutoNotify", settings.techAutoNotify !== false);
+    setVal("settingSlaResponseHours", settings.slaResponseHours ?? 24);
+    setVal("settingDefaultPriority", settings.defaultPriority || "medium");
+  }
+
+  async function savePolicyForm({ form, fields, alertId, buttonId, spinnerId }) {
+    if (!settingsLoaded || !currentSettings) return settingsNotLoaded(alertId);
+    if (form.dataset.saving === "true") return;
+    const payload = fields();
+    if (payload.slaResponseHours !== undefined &&
+      (!Number.isInteger(payload.slaResponseHours) ||
+        payload.slaResponseHours < 1 ||
+        payload.slaResponseHours > 720)) {
+      showAlert(alertId, "Response target must be a whole number from 1 to 720 hours.", "danger");
+      return;
+    }
+    if (
+      Object.hasOwn(payload, "publicRegistration") &&
+      currentSettings.publicRegistration !== payload.publicRegistration &&
+      !window.confirm(
+        payload.publicRegistration
+          ? "Allow people to create accounts through public registration?"
+          : "Disable public registration? Existing accounts will remain active.",
+      )
+    ) return;
+
+    form.dataset.saving = "true";
+    setLoading(buttonId, spinnerId, true);
+    try {
+      const response = await apiRequest("/settings/general", {
+        method: "PUT",
+        body: payload,
+      });
+      if (response?.success !== true) throw new Error("The server did not confirm the settings update.");
+      const persisted = await apiRequest("/settings");
+      if (persisted?.success !== true || !persisted.data ||
+        Object.entries(payload).some(([key, value]) => persisted.data[key] !== value)) {
+        throw new Error("Saved settings could not be verified. Reload the page before making another change.");
+      }
+      currentSettings = persisted.data;
+      populateUserSettings(currentSettings);
+      populateTechnicianSettings(currentSettings);
+      showAlert(alertId, "Settings saved and verified.", "success");
+      showToast("Settings saved and verified.", "success");
+      window.__ictPrefs?.refresh?.();
+    } catch (error) {
+      const message = error?.message || "Unable to save these settings.";
+      showAlert(alertId, message, "danger");
+      showToast(message, "danger");
+    } finally {
+      form.dataset.saving = "false";
+      setLoading(buttonId, spinnerId, false);
+    }
+  }
+
+  const userSettingsForm = document.getElementById("userSettingsForm");
+  userSettingsForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    void savePolicyForm({
+      form: userSettingsForm,
+      fields: () => ({ publicRegistration: getCheck("settingPublicRegistration") }),
+      alertId: "userSettingsAlert",
+      buttonId: "saveUserSettingsBtn",
+      spinnerId: "saveUserSettingsSpinner",
+    });
+  });
+  userSettingsForm?.addEventListener("reset", (event) => {
+    if (!currentSettings) return;
+    event.preventDefault();
+    populateUserSettings(currentSettings);
+  });
+
+  const technicianSettingsForm = document.getElementById("technicianSettingsForm");
+  technicianSettingsForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    void savePolicyForm({
+      form: technicianSettingsForm,
+      fields: () => ({
+        techAutoNotify: getCheck("settingTechAutoNotify"),
+        defaultPriority: getVal("settingDefaultPriority"),
+        slaResponseHours: Number(getVal("settingSlaResponseHours")),
+      }),
+      alertId: "technicianSettingsAlert",
+      buttonId: "saveTechnicianSettingsBtn",
+      spinnerId: "saveTechnicianSettingsSpinner",
+    });
+  });
+  technicianSettingsForm?.addEventListener("reset", (event) => {
+    if (!currentSettings) return;
+    event.preventDefault();
+    populateTechnicianSettings(currentSettings);
+  });
+
+  const auditBody = document.getElementById("settingsAuditLogBody");
+  let auditPage = 1;
+  let auditPages = 1;
+  const escapeAuditText = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[char]);
+  const formatBackupSize = (bytes) => {
+    if (!Number.isFinite(Number(bytes)) || Number(bytes) < 0) return "—";
+    const value = Number(bytes);
+    if (value < 1024) return `${value} B`;
+    const units = ["KB", "MB", "GB", "TB"];
+    let size = value / 1024;
+    let unit = 0;
+    while (size >= 1024 && unit < units.length - 1) {
+      size /= 1024;
+      unit += 1;
+    }
+    return `${size.toFixed(1)} ${units[unit]}`;
+  };
+  let backupRefreshTimer = null;
+  let backupCreatePending = false;
+  let maintenanceLoaded = false;
+
+  function setBackupCreateBusy(busy) {
+    backupCreatePending = busy;
+    const button = document.getElementById("createBackupBtn");
+    const spinner = document.getElementById("createBackupSpinner");
+    const icon = document.getElementById("createBackupIcon");
+    const label = document.getElementById("createBackupLabel");
+    if (button) button.disabled = busy || button.dataset.ready !== "true";
+    spinner?.classList.toggle("d-none", !busy);
+    icon?.classList.toggle("d-none", busy);
+    if (label) label.textContent = busy ? "Starting..." : "Create Backup";
+  }
+
+  async function loadBackupOperations() {
+    const tableBody = document.getElementById("backupHistoryBody");
+    const readiness = document.getElementById("backupReadiness");
+    const latestSuccessful = document.getElementById("latestSuccessfulBackup");
+    if (!tableBody || !readiness || !latestSuccessful) return;
+    if (backupRefreshTimer) clearTimeout(backupRefreshTimer);
+    document.getElementById("backupOperationsAlert")?.classList.add("d-none");
+    tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Loading backups...</td></tr>';
+    try {
+      const [operations, backupResponse] = await Promise.all([
+        apiRequest("/settings/operations"),
+        apiRequest("/settings/backups?limit=50"),
+      ]);
+      if (operations?.success !== true || !operations.data) {
+        throw new Error("Backup readiness could not be checked.");
+      }
+      if (backupResponse?.success !== true || !Array.isArray(backupResponse.data)) {
+        throw new Error("Backup history could not be loaded.");
+      }
+      const canCreate = operations.data.backupReady === true;
+      const backups = backupResponse.data;
+      const latestBackup = backupResponse.latestSuccessful;
+      const operationRunning = operations.data.backupInProgress === true ||
+        backups.some((backup) => backup.status === "in_progress");
+      const createButton = document.getElementById("createBackupBtn");
+      if (createButton) createButton.dataset.ready = String(canCreate && !operationRunning);
+      const backupTools = Array.isArray(operations.data.tools) ? operations.data.tools : [];
+      const toolSummary = backupTools
+        .map((tool) => tool.available
+          ? `${tool.name} ${tool.version || "available"}`
+          : `${tool.name}: ${tool.message || "unavailable"}`)
+        .join(", ");
+      const readinessProblems = [];
+      if (operations.data.databaseConnected !== true) {
+        readinessProblems.push(`MongoDB connection is ${operations.data.databaseState || "unavailable"}.`);
+      }
+      if (operations.data.backupDirectoryWritable !== true) {
+        readinessProblems.push(operations.data.backupDirectoryError || "Protected backup storage is not writable.");
+      }
+      readinessProblems.push(...backupTools
+        .filter((tool) => !tool.available)
+        .map((tool) => `${tool.name}: ${tool.message || "unavailable"}.`));
+      readiness.textContent = canCreate
+        ? `MongoDB is connected. Protected backup storage is writable. Required tools: ${toolSummary}.`
+        : readinessProblems.join(" ") || "Backup creation is unavailable because the database, protected storage, or MongoDB backup tools are not ready.";
+      latestSuccessful.textContent = latestBackup
+        ? `Latest successful backup: ${new Date(latestBackup.completedAt || latestBackup.createdAt).toLocaleString()} (${formatBackupSize(latestBackup.fileSizeBytes)}).`
+        : "No successful database backup has been recorded.";
+      setBackupCreateBusy(backupCreatePending);
+      tableBody.innerHTML = backups.length
+        ? backups.map((backup) => {
+            const statusBadge = {
+              in_progress: '<span class="badge text-bg-primary"><span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>In progress</span>',
+              completed: '<span class="badge text-bg-success">Completed</span>',
+              failed: '<span class="badge text-bg-danger">Failed</span>',
+            }[backup.status] || '<span class="badge text-bg-secondary">Unknown</span>';
+            const completed = backup.status === "completed" && backup.integrityVerified === true;
+            return `<tr>
+              <td class="font-monospace small text-break">${escapeAuditText(backup.id || "—")}</td>
+              <td>${statusBadge}${backup.errorMessage ? `<div class="small text-danger mt-1">${escapeAuditText(backup.errorMessage)}</div>` : ""}</td>
+              <td>${backup.backupType === "mongodump-archive" ? "Compressed MongoDB archive" : escapeAuditText(backup.backupType || "—")}</td>
+              <td class="text-nowrap">${escapeAuditText(backup.createdAt ? new Date(backup.createdAt).toLocaleString() : "—")}</td>
+              <td>${formatBackupSize(backup.fileSizeBytes)}</td>
+              <td>${completed ? '<span class="text-success"><i class="bi bi-shield-check me-1"></i>Verified</span>' : backup.status === "in_progress" ? "Pending" : "Not verified"}</td>
+              <td>${escapeAuditText(backup.createdBy || "Administrator")}</td>
+              <td>${completed
+                ? `<button type="button" class="btn btn-sm btn-outline-primary" data-download-backup="${escapeAuditText(backup.id)}"><i class="bi bi-download me-1"></i>Download</button>`
+                : "—"}</td>
+            </tr>`;
+          }).join("")
+        : '<tr><td colspan="8" class="text-center text-muted py-4">No database backups have been created.</td></tr>';
+      tableBody.querySelectorAll("[data-download-backup]").forEach((button) => {
+        button.addEventListener("click", () => void downloadBackup(button.dataset.downloadBackup, button));
+      });
+      if (backups.some((backup) => backup.status === "in_progress") || operations.data.backupInProgress) {
+        backupRefreshTimer = setTimeout(() => void loadBackupOperations(), 2000);
+      }
+    } catch (error) {
+      tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Backup history could not be loaded. See the error message above.</td></tr>';
+      readiness.textContent = "Backup readiness could not be verified.";
+      latestSuccessful.textContent = "Latest successful backup could not be checked.";
+      showAlert("backupOperationsAlert", error.message || "Backup operations are unavailable.", "danger");
+      const button = document.getElementById("createBackupBtn");
+      if (button) button.disabled = true;
+    }
+  }
+
+  async function downloadBackup(id, button) {
+    if (!/^[a-f\d]{24}$/i.test(String(id || ""))) return;
+    const original = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Downloading';
+    try {
+      const response = await fetch(`${resolveApiBase()}/settings/backups/${encodeURIComponent(id)}/download`, {
+        headers: { Accept: "application/octet-stream, application/json" },
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.message || `Backup download failed (${response.status}).`);
+      }
+      const blob = await response.blob();
+      if (!blob.size) throw new Error("The server returned an empty backup file.");
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `database-backup-${id}.archive.gz`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showAlert("backupOperationsAlert", "Verified backup downloaded.", "success");
+    } catch (error) {
+      showAlert("backupOperationsAlert", error.message || "The backup could not be downloaded.", "danger");
+    } finally {
+      button.disabled = false;
+      button.innerHTML = original;
+    }
+  }
+
+  document.getElementById("createBackupBtn")?.addEventListener("click", async () => {
+    if (backupCreatePending) return;
+    const confirmed = window.confirm("Create a compressed database backup now? This may use significant disk space and database resources.");
+    if (!confirmed) return;
+    setBackupCreateBusy(true);
+    document.getElementById("backupOperationsAlert")?.classList.add("d-none");
+    try {
+      const response = await apiRequest("/settings/backups", { method: "POST", body: {} });
+      if (response?.success !== true || response.data?.status !== "in_progress") {
+        throw new Error(response?.message || "The server did not confirm that a backup started.");
+      }
+      showAlert("backupOperationsAlert", response.message || "Backup started.", "info");
+      await loadBackupOperations();
+      setBackupCreateBusy(false);
+    } catch (error) {
+      showAlert("backupOperationsAlert", error.message || "Could not start the backup.", "danger");
+      setBackupCreateBusy(false);
+    }
+  });
+
+  async function loadMaintenanceSettings() {
+    const form = document.getElementById("maintenanceSettingsForm");
+    if (!form) return;
+    try {
+      const response = await apiRequest("/settings/maintenance");
+      if (response?.success !== true || !response.data) {
+        throw new Error("Maintenance settings could not be loaded.");
+      }
+      document.getElementById("maintenanceModeEnabled").checked = response.data.enabled === true;
+      document.getElementById("maintenanceNoticeInput").value = response.data.notice || "";
+      const badge = document.getElementById("maintenanceStatusBadge");
+      badge.textContent = response.data.enabled ? "Enabled" : "Disabled";
+      badge.className = `badge ${response.data.enabled ? "text-bg-warning" : "text-bg-success"}`;
+      const lastUpdated = document.getElementById("maintenanceLastUpdated");
+      if (lastUpdated) {
+        lastUpdated.textContent = response.data.updatedAt
+          ? `Last changed: ${new Date(response.data.updatedAt).toLocaleString()}`
+          : "No maintenance mode changes recorded.";
+      }
+      maintenanceLoaded = true;
+      document.getElementById("saveMaintenanceBtn").disabled = false;
+    } catch (error) {
+      showAlert("maintenanceOperationsAlert", error.message || "Maintenance settings are unavailable.", "danger");
+      document.getElementById("saveMaintenanceBtn").disabled = true;
+    }
+  }
+
+  document.getElementById("maintenanceSettingsForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!maintenanceLoaded) return;
+    const enabled = document.getElementById("maintenanceModeEnabled").checked;
+    const notice = document.getElementById("maintenanceNoticeInput").value.trim();
+    if (notice.length < 10 || notice.length > 500) {
+      showAlert("maintenanceOperationsAlert", "The maintenance notice must be between 10 and 500 characters.", "warning");
+      return;
+    }
+    const currentEnabled = document.getElementById("maintenanceStatusBadge").textContent === "Enabled";
+    if (enabled !== currentEnabled && !window.confirm(`${enabled ? "Enable" : "Disable"} maintenance mode? ${enabled ? "Non-admin users will be blocked from using the system." : "Normal system access will be restored."}`)) {
+      document.getElementById("maintenanceModeEnabled").checked = currentEnabled;
+      return;
+    }
+    const button = document.getElementById("saveMaintenanceBtn");
+    button.disabled = true;
+    setLoading("saveMaintenanceBtn", "saveMaintenanceSpinner", true);
+    document.getElementById("saveMaintenanceLabel").textContent = "Saving...";
+    try {
+      const response = await apiRequest("/settings/maintenance", {
+        method: "PUT",
+        body: { enabled, notice },
+      });
+      if (response?.success !== true || response.data?.enabled !== enabled) {
+        throw new Error(response?.message || "Maintenance settings were not confirmed by the server.");
+      }
+      showAlert("maintenanceOperationsAlert", response.message || "Maintenance settings saved.", "success");
+      await loadMaintenanceSettings();
+    } catch (error) {
+      showAlert("maintenanceOperationsAlert", error.message || "Could not save maintenance settings.", "danger");
+      button.disabled = false;
+    } finally {
+      setLoading("saveMaintenanceBtn", "saveMaintenanceSpinner", false);
+      document.getElementById("saveMaintenanceLabel").textContent = "Save Maintenance Settings";
+      button.disabled = !maintenanceLoaded;
+    }
+  });
+
+  async function loadSystemOverview() {
+    const cards = document.getElementById("systemOverviewCards");
+    if (!cards) return;
+    cards.innerHTML = '<div class="col-12 text-muted" role="status">Loading system overview...</div>';
+    try {
+      const response = await apiRequest("/settings/overview");
+      if (response?.success !== true || !response.data) throw new Error("System status is unavailable.");
+      const info = response.data;
+      cards.innerHTML = [
+        ["Application version", info.version],
+        ["Environment", info.environment],
+        ["Database", info.database],
+        ["Access token lifetime", `${info.authTokenLifetimeHours} hours`],
+        ["Password requirements", info.passwordPolicy],
+        ["Multi-factor authentication", info.multiFactorAuthentication],
+      ].map(([label, value]) => `<div class="col-sm-6 col-xl-4"><div class="border rounded p-3 h-100"><div class="small text-muted mb-1">${escapeAuditText(label)}</div><div class="fw-semibold">${escapeAuditText(value)}</div></div></div>`).join("");
+      const alert = document.getElementById("systemOverviewAlert");
+      alert?.classList.add("d-none");
+    } catch (error) {
+      cards.innerHTML = "";
+      showAlert("systemOverviewAlert", error.message || "Could not load system status.", "danger");
+    }
+  }
+
+  async function loadSettingsAuditLog() {
+    if (!auditBody) return;
+    auditBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Loading audit records...</td></tr>';
+    try {
+      const response = await apiRequest(`/audit?page=${auditPage}&limit=20&entity=settings`);
+      if (response?.success !== true || !Array.isArray(response.data)) {
+        throw new Error("Audit records could not be loaded.");
+      }
+      auditPages = Math.max(1, Number(response.meta?.pages) || 1);
+      auditBody.innerHTML = response.data.length
+        ? response.data.map((entry) => `<tr>
+            <td class="text-nowrap">${escapeAuditText(entry.createdAt ? new Date(entry.createdAt).toLocaleString() : "—")}</td>
+            <td>${escapeAuditText(entry.user?.fullName || entry.user?.email || "Unknown")}</td>
+            <td>${escapeAuditText(entry.action)}</td>
+            <td class="small text-break">${escapeAuditText(entry.details || "—")}</td>
+            <td><span class="badge ${entry.success ? "bg-success" : "bg-danger"}">${entry.success ? "Success" : "Failed"}</span></td>
+          </tr>`).join("")
+        : '<tr><td colspan="5" class="text-center text-muted py-4">No settings audit records yet.</td></tr>';
+      document.getElementById("settingsAuditPageInfo").textContent =
+        `Page ${auditPage} of ${auditPages} · ${response.meta?.total || 0} records`;
+      document.getElementById("settingsAuditPrevBtn").disabled = auditPage <= 1;
+      document.getElementById("settingsAuditNextBtn").disabled = auditPage >= auditPages;
+    } catch (error) {
+      auditBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">${escapeAuditText(error.message || "Could not load audit records.")}</td></tr>`;
+    }
+  }
+
+  document.getElementById("refreshSystemOverviewBtn")?.addEventListener("click", () => void loadSystemOverview());
+  document.getElementById("refreshAuditLogBtn")?.addEventListener("click", () => void loadSettingsAuditLog());
+  document.getElementById("settingsAuditPrevBtn")?.addEventListener("click", () => {
+    if (auditPage > 1) { auditPage -= 1; void loadSettingsAuditLog(); }
+  });
+  document.getElementById("settingsAuditNextBtn")?.addEventListener("click", () => {
+    if (auditPage < auditPages) { auditPage += 1; void loadSettingsAuditLog(); }
+  });
+
+  /* Bind both settings forms before waiting on auth resolution. The route
+     and controller still enforce ICT Admin authorization before any write. */
+  await Auth.load();
+  const user = requireRole("ICT Admin");
+  if (!user) return;
+  passwordFormAuthorized = true;
+  currentUser = Auth.getUser() || user;
+  initAdminProfilePhoto();
+  populateProfile(currentUser);
+  populateSecurity(currentUser);
+  profileFormAuthorized = true;
+
   attachRealTimeValidation("profileForm", [
     {
       fieldId: "profileName",
-      checks: [(v) => Validators.name(v, "Full name")],
+      checks: [(value) => Validators.name(value, "Full name")],
     },
     { fieldId: "profilePhone", checks: [Validators.phone] },
   ]);
+
+  try {
+    const settingsRes = await apiRequest("/settings");
+    if (settingsRes.success !== true || !settingsRes.data) {
+      throw new Error("The server did not return system settings.");
+    }
+    currentSettings = settingsRes.data;
+    populateGeneralSettings(currentSettings);
+    settingsLoaded = true;
+    lockSettingsForms(false);
+  } catch (err) {
+    showToast(err?.message || "Failed to load system settings.", "danger");
+    lockSettingsForms(true);
+  }
 
   /* Attach real-time validation to password form */
   attachRealTimeValidation("changePasswordForm", [
     { fieldId: "newPassword", checks: [Validators.password] },
   ]);
-
-  /* The notification checkboxes below are driven by this load, so it must
-     settle before population — but the profile/security sections can render
-     from the already-loaded session user in the meantime. */
-  try {
-    const settingsRes = await apiRequest("/settings");
-    currentSettings = settingsRes.data;
-    settingsLoaded = true;
-    lockSettingsForms(false);
-  } catch (err) {
-    showToast("Failed to load system settings.", "danger");
-    lockSettingsForms(true);
-  }
-
-  /* ── Populate General Settings ────────────────────────── */
-  if (currentSettings) {
-    setVal("settingSystemName", currentSettings.systemName);
-    setVal("settingOrgName", currentSettings.organizationName);
-    setVal("settingSystemDesc", currentSettings.systemDescription);
-    const defaultLang =
-      ["en", "am", "om"].includes(currentSettings.defaultLanguage)
-        ? currentSettings.defaultLanguage
-        : "en";
-    setVal("settingLanguage", defaultLang);
-    setVal("settingTimezone", currentSettings.timezone);
-    setVal("settingDateFormat", currentSettings.dateFormat);
-  }
 
   /* ── Apply chosen language immediately (shared i18n) ──── */
   const langSel = document.getElementById("settingLanguage");
@@ -117,30 +1104,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   /* ── Populate Notification Settings ───────────────────── */
   if (currentSettings) {
-    setCheck("notifNewRequest", currentSettings.notifNewRequest !== false);
-    setCheck("notifAssignment", currentSettings.notifAssignment !== false);
-    setCheck(
-      "notifStatusChange",
-      currentSettings.notifStatusChange !== false,
-    );
-    setCheck("notifCompletion", currentSettings.notifCompletion !== false);
-    setCheck(
-      "notifSystemSecurity",
-      currentSettings.notifSystemSecurity !== false,
-    );
-    setCheck("notificationSound", currentSettings.notificationSound !== false);
-    setCheck("emailNotifications", currentSettings.emailNotifications === true);
+    populateNotificationSettings(currentSettings);
+    populateUserSettings(currentSettings);
+    populateTechnicianSettings(currentSettings);
   }
   const notificationSound = document.getElementById("notificationSound");
   if (settingsLoaded && notificationSound && window.NotificationSound) {
     window.NotificationSound.setEnabled(notificationSound.checked);
   }
-
-  /* ── Populate My Profile ──────────────────────────────── */
-  populateProfile(currentUser);
-
-  /* ── Populate Security Info ───────────────────────────── */
-  populateSecurity(currentUser);
+  void loadSystemOverview();
+  void loadSettingsAuditLog();
+  void loadBackupOperations();
+  void loadMaintenanceSettings();
 
   /* ── Deep link to a tab ─────────────────────────────────
      The admin profile dropdown links here as #profileTab. Bootstrap
@@ -168,383 +1143,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* ═══════════════════════════════════════════════════════
      GENERAL SETTINGS — Save
      ═══════════════════════════════════════════════════════ */
-  document
-    .getElementById("generalSettingsForm")
-    ?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (!settingsLoaded) return settingsNotLoaded("settingsAlert");
-      if (generalSettingsSaving) return;
-      generalSettingsSaving = true;
-      setLoading("saveGeneralBtn", "saveGeneralSpinner", true);
-      try {
-        const response = await apiRequest("/settings/general", {
-          method: "PUT",
-          body: {
-            systemName: getVal("settingSystemName"),
-            organizationName: getVal("settingOrgName"),
-            systemDescription: getVal("settingSystemDesc"),
-            defaultLanguage: getVal("settingLanguage"),
-            timezone: getVal("settingTimezone"),
-            dateFormat: getVal("settingDateFormat"),
-          },
-        });
-        if (response.success !== true || !response.data) {
-          throw new Error("Settings update was not confirmed by the server.");
-        }
-        currentSettings = response.data;
-        showAlert(
-          "settingsAlert",
-          "General settings saved successfully.",
-          "success",
-        );
-        showToast("General settings saved successfully.", "success");
-        if (window.__ictPrefs) window.__ictPrefs.refresh();
-      } catch (err) {
-        showAlert("settingsAlert", err.message, "danger");
-        showToast(err.message || "Failed to save general settings.", "danger");
-      } finally {
-        generalSettingsSaving = false;
-        setLoading("saveGeneralBtn", "saveGeneralSpinner", false);
-      }
-    });
-
-  /* ═══════════════════════════════════════════════════════
-     NOTIFICATION SETTINGS — Save
-     ═══════════════════════════════════════════════════════ */
-  document
-    .getElementById("notifSettingsForm")
-    ?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (!settingsLoaded) return settingsNotLoaded("settingsAlert");
-      if (notificationSettingsSaving) return;
-      notificationSettingsSaving = true;
-      const saveLabel = document.getElementById("saveNotifLabel");
-      const originalSaveLabel =
-        saveLabel?.textContent || "Save Notification Preferences";
-      if (saveLabel) saveLabel.textContent = "Saving...";
-      setLoading("saveNotifBtn", "saveNotifSpinner", true);
-      const submittedPreferences = {
-        notifNewRequest: getCheck("notifNewRequest"),
-        notifAssignment: getCheck("notifAssignment"),
-        notifStatusChange: getCheck("notifStatusChange"),
-        notifCompletion: getCheck("notifCompletion"),
-        notifSystemSecurity: getCheck("notifSystemSecurity"),
-        notificationSound: getCheck("notificationSound"),
-        emailNotifications: getCheck("emailNotifications"),
-      };
-      try {
-        document.getElementById("notifSettingsAlert")?.classList.add("d-none");
-        const response = await apiRequest("/settings/notifications", {
-          method: "PUT",
-          body: submittedPreferences,
-        });
-        const preferencesConfirmed =
-          response?.success === true &&
-          response.data &&
-          Object.entries(submittedPreferences).every(
-            ([key, value]) => response.data[key] === value,
-          );
-        if (!preferencesConfirmed) {
-          throw new Error(
-            "Server response did not confirm all notification preferences.",
-          );
-        }
-        currentSettings = response.data;
-        Object.entries(submittedPreferences).forEach(([key, value]) =>
-          setCheck(key, response.data[key]),
-        );
-        if (notificationSound && window.NotificationSound) {
-          window.NotificationSound.setEnabled(response.data.notificationSound);
-        }
-        showAlert(
-          "notifSettingsAlert",
-          "Notification preferences saved successfully.",
-          "success",
-        );
-        showToast(
-          "Notification preferences saved successfully.",
-          "success",
-        );
-      } catch (err) {
-        console.error(
-          "Failed to save notification preferences:",
-          err?.message || err,
-        );
-        const message =
-          err?.message ||
-          "Failed to save notification preferences. Please try again.";
-        showAlert("notifSettingsAlert", message, "danger");
-        showToast(message, "danger");
-      } finally {
-        notificationSettingsSaving = false;
-        setLoading("saveNotifBtn", "saveNotifSpinner", false);
-        if (saveLabel) {
-          saveLabel.textContent = originalSaveLabel;
-        }
-      }
-    });
-
-  /* ═══════════════════════════════════════════════════════
-     CHANGE PASSWORD
-     ═══════════════════════════════════════════════════════ */
-  let passwordUpdating = false;
-  document
-    .getElementById("changePasswordForm")
-    ?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (passwordUpdating) return;
-
-      const current = document.getElementById("currentPassword").value;
-      const newPw = document.getElementById("newPassword").value;
-      const confirm = document.getElementById("confirmPassword").value;
-      document.getElementById("passwordAlert")?.classList.add("d-none");
-
-      /* Validate fields */
-      let hasError = false;
-
-      if (!current) {
-        showFieldError("currentPassword", "Current password is required.");
-        hasError = true;
-      } else {
-        clearFieldValidation("currentPassword");
-      }
-
-      const pwErr = Validators.password(newPw);
-      if (pwErr) {
-        showFieldError("newPassword", pwErr);
-        hasError = true;
-      } else {
-        clearFieldValidation("newPassword");
-      }
-
-      if (!confirm) {
-        showFieldError("confirmPassword", "Please confirm your password.");
-        hasError = true;
-      } else if (newPw !== confirm) {
-        showFieldError(
-          "confirmPassword",
-          "New password and confirmation password do not match.",
-        );
-        hasError = true;
-      } else {
-        clearFieldValidation("confirmPassword");
-      }
-
-      if (newPw === current) {
-        showFieldError(
-          "newPassword",
-          "New password must be different from the current password.",
-        );
-        hasError = true;
-      }
-
-      if (hasError) return;
-
-      passwordUpdating = true;
-      setLoading("savePasswordBtn", "savePasswordSpinner", true);
-      document.getElementById("savePasswordLabel").textContent = "Updating...";
-      try {
-        const response = await apiRequest("/users/change-password", {
-          method: "PUT",
-          body: { currentPassword: current, newPassword: newPw },
-        });
-        if (response.success !== true) {
-          throw new Error("Password update was not confirmed by the server.");
-        }
-
-        showAlert("passwordAlert", "Password updated successfully.", "success");
-        showToast("Password updated successfully.", "success");
-        document.getElementById("changePasswordForm").reset();
-        ["currentPassword", "newPassword", "confirmPassword"].forEach((id) =>
-          clearFieldValidation(id),
-        );
-        document
-          .querySelectorAll("#changePasswordForm [data-toggle-password]")
-          .forEach((button) => {
-            const target = document.getElementById(
-              button.getAttribute("data-toggle-password"),
-            );
-            if (target) target.type = "password";
-            button.setAttribute("aria-pressed", "false");
-            button.setAttribute(
-              "aria-label",
-              `Show ${target?.id === "currentPassword" ? "current" : target?.id === "newPassword" ? "new" : "confirmation"} password`,
-            );
-            const icon = button.querySelector("i");
-            if (icon) icon.className = "bi bi-eye";
-          });
-        document.getElementById("passwordMatchText").textContent = "";
-      } catch (err) {
-        let message = "Failed to update password. Please try again.";
-        if (err.status === 400 || err.status === 422) {
-          message = err.message;
-          if (message === "Current password is incorrect.") {
-            showFieldError("currentPassword", message);
-          } else if (message) {
-            showFieldError("newPassword", message);
-          }
-        }
-        showAlert("passwordAlert", message, "danger");
-        showToast(message, "danger");
-      } finally {
-        passwordUpdating = false;
-        setLoading("savePasswordBtn", "savePasswordSpinner", false);
-        document.getElementById("savePasswordLabel").textContent =
-          "Update Password";
-      }
-    });
-
-  /* ── Password confirmation live check ─────────────────── */
-  const newPwInput = document.getElementById("newPassword");
-  const confirmInput = document.getElementById("confirmPassword");
-  const matchText = document.getElementById("passwordMatchText");
-
-  function checkPasswordMatch() {
-    const a = newPwInput.value;
-    const b = confirmInput.value;
-    if (!b) {
-      matchText.textContent = "";
-      matchText.className = "form-text";
-      return;
-    }
-    if (a === b) {
-      matchText.textContent = "Passwords match.";
-      matchText.className = "form-text text-success";
-      clearFieldValidation("confirmPassword");
-    } else {
-      matchText.textContent =
-        "New password and confirmation password do not match.";
-      matchText.className = "form-text text-danger";
-    }
-  }
-  newPwInput?.addEventListener("input", checkPasswordMatch);
-  confirmInput?.addEventListener("input", checkPasswordMatch);
-
-  /* Clear match text on form reset */
-  document
-    .getElementById("changePasswordForm")
-    ?.addEventListener("reset", () => {
-      matchText.textContent = "";
-      matchText.className = "form-text";
-      document.getElementById("passwordAlert")?.classList.add("d-none");
-    });
-
-  /* ═══════════════════════════════════════════════════════
-     MY PROFILE — Save
-     ═══════════════════════════════════════════════════════ */
-  document
-    .getElementById("profileForm")
-    ?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (profileSaving) return;
-
-      /* Validate fields */
-      let hasError = false;
-
-      const nameErr = Validators.name(getVal("profileName"), "Full name");
-      if (nameErr) {
-        showFieldError("profileName", nameErr);
-        hasError = true;
-      } else {
-        showFieldValid("profileName");
-      }
-
-      const phoneErr = Validators.phone(getVal("profilePhone"));
-      if (phoneErr) {
-        showFieldError("profilePhone", phoneErr);
-        hasError = true;
-      } else {
-        clearFieldValidation("profilePhone");
-      }
-
-      if (hasError) return;
-
-      const profilePayload = {
-        fullName: getVal("profileName"),
-        phone: getVal("profilePhone"),
-        department: getVal("profileDept"),
-      };
-      profileSaving = true;
-      setLoading("saveProfileBtn", "saveProfileSpinner", true);
-      document.getElementById("saveProfileLabel").textContent = "Saving...";
-      try {
-        const res = await apiRequest("/users/profile", {
-          method: "PUT",
-          body: profilePayload,
-        });
-
-        if (
-          res.success !== true ||
-          !res.data ||
-          res.data.fullName !== profilePayload.fullName ||
-          (res.data.phone || "") !== profilePayload.phone ||
-          (res.data.department || "") !== profilePayload.department
-        ) {
-          throw new Error("The server did not confirm the saved profile.");
-        }
-
-        currentUser = await Auth.refresh();
-        if (
-          currentUser.fullName !== profilePayload.fullName ||
-          (currentUser.phone || "") !== profilePayload.phone ||
-          (currentUser.department || "") !== profilePayload.department
-        ) {
-          throw new Error("The saved profile could not be reloaded.");
-        }
-
-        populateProfile(currentUser);
-        populateSecurity(currentUser);
-
-        showAlert("profileAlert", "Profile updated successfully.", "success");
-        showToast("Profile updated successfully.", "success");
-      } catch (err) {
-        showAlert(
-          "profileAlert",
-          "Failed to update profile. Please try again.",
-          "danger",
-        );
-        showToast("Failed to update profile. Please try again.", "danger");
-      } finally {
-        profileSaving = false;
-        setLoading("saveProfileBtn", "saveProfileSpinner", false);
-        document.getElementById("saveProfileLabel").textContent =
-          "Save Profile";
-      }
-    });
-
-  /* ═══════════════════════════════════════════════════════
-     PASSWORD TOGGLE
-     ═══════════════════════════════════════════════════════ */
-  document
-    .querySelectorAll("#changePasswordForm [data-toggle-password]")
-    .forEach((button) => {
-      button.addEventListener("click", (e) => {
-        e.preventDefault();
-        const targetId = button.getAttribute("data-toggle-password");
-        const target = document.getElementById(targetId);
-        if (!target) return;
-
-        const isPassword = target.type === "password";
-        target.type = isPassword ? "text" : "password";
-        button.setAttribute("aria-pressed", String(isPassword));
-        button.setAttribute(
-          "aria-label",
-          `${isPassword ? "Hide" : "Show"} ${targetId === "currentPassword" ? "current" : targetId === "newPassword" ? "new" : "confirmation"} password`,
-        );
-        const icon = button.querySelector("i");
-        if (icon) {
-          icon.className = isPassword ? "bi bi-eye-slash" : "bi bi-eye";
-        }
-      });
-    });
-
   /* ═══════════════════════════════════════════════════════
      PROFILE PHOTO — upload / image URL / remove
      Priority: upload > URL > default ADMIN image > initials
      ═══════════════════════════════════════════════════════ */
+  function initAdminProfilePhoto() {
   const photoInput = document.getElementById("profilePhotoUpload");
   const uploadPhotoBtn = document.getElementById("uploadProfilePhotoBtn");
   const uploadPhotoLabel = document.getElementById("uploadProfilePhotoLabel");
+  const uploadPhotoSpinner = document.getElementById(
+    "uploadProfilePhotoSpinner",
+  );
+  const uploadPhotoIcon = document.getElementById("uploadProfilePhotoIcon");
+  const cancelPhotoBtn = document.getElementById("cancelProfilePhotoBtn");
+  const changePhotoBtn = document.getElementById("changeProfilePhotoBtn");
+  const profilePhotoAlert = document.getElementById("profilePhotoAlert");
+  const profilePhotoSelectionStatus = document.getElementById(
+    "profilePhotoSelectionStatus",
+  );
   const removeBtn = document.getElementById("removeProfilePhotoBtn");
   const profilePhotoMimeTypes = {
     ".jpg": "image/jpeg",
@@ -556,6 +1172,31 @@ document.addEventListener("DOMContentLoaded", async () => {
   let selectedProfilePhoto = null;
   let profilePhotoPreviewUrl = null;
   let profilePhotoUploading = false;
+  let profilePhotoSelectionId = 0;
+
+  function syncProfilePhotoControls() {
+    const busy = profilePhotoUploading;
+    if (photoInput) photoInput.disabled = busy;
+    if (changePhotoBtn) changePhotoBtn.disabled = busy;
+    if (removeBtn) {
+      removeBtn.disabled = busy || !currentUser?.profileImage;
+    }
+    if (uploadPhotoBtn) {
+      uploadPhotoBtn.disabled = busy || !selectedProfilePhoto;
+    }
+    if (cancelPhotoBtn) cancelPhotoBtn.disabled = busy;
+  }
+
+  function showProfilePhotoAlert(message, type = "danger") {
+    if (!profilePhotoAlert) return;
+    profilePhotoAlert.className = `alert alert-${type} mt-2 mb-0`;
+    profilePhotoAlert.textContent = message;
+    profilePhotoAlert.classList.remove("d-none");
+  }
+
+  function clearProfilePhotoAlert() {
+    profilePhotoAlert?.classList.add("d-none");
+  }
 
   function releaseProfilePhotoPreview() {
     if (profilePhotoPreviewUrl) {
@@ -564,7 +1205,52 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  photoInput?.addEventListener("change", () => {
+  window.addEventListener("pagehide", releaseProfilePhotoPreview, {
+    once: true,
+  });
+
+  function resetProfilePhotoSelection() {
+    profilePhotoSelectionId += 1;
+    selectedProfilePhoto = null;
+    if (photoInput) photoInput.value = "";
+    releaseProfilePhotoPreview();
+    cancelPhotoBtn?.classList.add("d-none");
+    if (profilePhotoSelectionStatus) {
+      profilePhotoSelectionStatus.hidden = true;
+      profilePhotoSelectionStatus.textContent = "";
+    }
+    applyProfileAvatar(currentUser, document.getElementById("profileAvatar"));
+    syncProfilePhotoControls();
+  }
+
+  function hasProfilePhotoSignature(bytes, mimeType) {
+    if (mimeType === "image/jpeg") {
+      return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 &&
+        bytes[2] === 0xff;
+    }
+    if (mimeType === "image/png") {
+      return (
+        bytes.length >= 8 &&
+        [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every(
+          (byte, index) => bytes[index] === byte,
+        )
+      );
+    }
+    if (mimeType === "image/webp") {
+      return (
+        bytes.length >= 12 &&
+        String.fromCharCode(...bytes.subarray(0, 4)) === "RIFF" &&
+        String.fromCharCode(...bytes.subarray(8, 12)) === "WEBP"
+      );
+    }
+    return false;
+  }
+
+  changePhotoBtn?.addEventListener("click", () => {
+    if (!profilePhotoUploading) photoInput?.click();
+  });
+
+  photoInput?.addEventListener("change", async () => {
     const file = photoInput.files && photoInput.files[0];
     if (!file) return;
 
@@ -572,21 +1258,42 @@ document.addEventListener("DOMContentLoaded", async () => {
       .slice(file.name.lastIndexOf("."))
       .toLowerCase();
     if (profilePhotoMimeTypes[extension] !== file.type) {
-      selectedProfilePhoto = null;
-      photoInput.value = "";
-      releaseProfilePhotoPreview();
-      applyProfileAvatar(currentUser, document.getElementById("profileAvatar"));
-      showAlert("profileAlert", "Please select a valid image file.", "warning");
+      resetProfilePhotoSelection();
+      showProfilePhotoAlert("Choose a JPG, JPEG, PNG, or WEBP image.", "warning");
       return;
     }
     if (file.size > maxProfilePhotoSize) {
-      selectedProfilePhoto = null;
-      photoInput.value = "";
-      releaseProfilePhotoPreview();
-      applyProfileAvatar(currentUser, document.getElementById("profileAvatar"));
-      showAlert(
-        "profileAlert",
-        "Profile photo must be 1.5 MB or smaller.",
+      resetProfilePhotoSelection();
+      showProfilePhotoAlert("Profile photo must be 1.5 MB or smaller.", "warning");
+      return;
+    }
+
+    selectedProfilePhoto = null;
+    syncProfilePhotoControls();
+    const selectionId = ++profilePhotoSelectionId;
+    clearProfilePhotoAlert();
+    let signatureValid = false;
+    try {
+      const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+      signatureValid = hasProfilePhotoSignature(
+        bytes,
+        profilePhotoMimeTypes[extension],
+      );
+    } catch (error) {
+      resetProfilePhotoSelection();
+      showProfilePhotoAlert("Could not validate the selected image file.");
+      return;
+    }
+    if (
+      selectionId !== profilePhotoSelectionId ||
+      photoInput.files?.[0] !== file
+    ) {
+      return;
+    }
+    if (!signatureValid) {
+      resetProfilePhotoSelection();
+      showProfilePhotoAlert(
+        "The selected file does not contain a valid image signature.",
         "warning",
       );
       return;
@@ -603,24 +1310,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       avatarImage.hidden = false;
       avatarInitials.hidden = true;
     }
-    document.getElementById("profileAlert")?.classList.add("d-none");
+    if (profilePhotoSelectionStatus) {
+      profilePhotoSelectionStatus.textContent = `${file.name} selected. Preview is not saved until you choose Save Photo.`;
+      profilePhotoSelectionStatus.hidden = false;
+    }
+    cancelPhotoBtn?.classList.remove("d-none");
+    syncProfilePhotoControls();
   });
-  if (photoInput) photoInput.disabled = false;
 
   uploadPhotoBtn?.addEventListener("click", async () => {
     if (profilePhotoUploading) return;
     if (!selectedProfilePhoto) {
-      showAlert(
-        "profileAlert",
-        "Please choose a profile photo first.",
-        "warning",
-      );
+      showProfilePhotoAlert("Choose a profile photo before saving.", "warning");
       return;
     }
 
     profilePhotoUploading = true;
-    uploadPhotoBtn.disabled = true;
-    uploadPhotoLabel.textContent = "Uploading...";
+    uploadPhotoBtn.setAttribute("aria-busy", "true");
+    syncProfilePhotoControls();
+    if (uploadPhotoLabel) uploadPhotoLabel.textContent = "Saving photo...";
+    uploadPhotoSpinner?.classList.remove("d-none");
+    uploadPhotoIcon?.classList.add("d-none");
+    clearProfilePhotoAlert();
     try {
       const formData = new FormData();
       formData.append("profileImage", selectedProfilePhoto);
@@ -629,39 +1340,45 @@ document.addEventListener("DOMContentLoaded", async () => {
         body: formData,
         isFormData: true,
       });
-      if (!response.data?.profileImage) {
-        throw new Error("Profile photo upload returned no saved image.");
+      const savedProfileImage = response.data?.profileImage;
+      if (
+        response.success !== true ||
+        typeof savedProfileImage !== "string" ||
+        !savedProfileImage
+      ) {
+        throw new Error("The server did not confirm the profile photo upload.");
       }
 
-      currentUser = await Auth.refresh();
-      if (currentUser.profileImage !== response.data.profileImage) {
-        throw new Error("The saved profile photo could not be reloaded.");
-      }
-      selectedProfilePhoto = null;
-      if (photoInput) photoInput.value = "";
-      releaseProfilePhotoPreview();
+      currentUser = {
+        ...currentUser,
+        ...(response.data.user || {}),
+        profileImage: savedProfileImage,
+      };
+      Auth.setUser(currentUser);
       applyProfileAvatar(currentUser, document.getElementById("profileAvatar"));
-      if (typeof populateUserInfo === "function") populateUserInfo();
-      showAlert(
-        "profileAlert",
-        "Profile photo uploaded successfully.",
-        "success",
-      );
-      showToast("Profile photo uploaded successfully.", "success");
+      populateUserInfo();
+      resetProfilePhotoSelection();
+      showProfilePhotoAlert("Profile photo updated successfully!", "success");
+      showToast("Profile photo updated successfully!", "success");
     } catch (err) {
-      showAlert(
-        "profileAlert",
-        "Failed to upload profile photo. Please try again.",
-        "danger",
-      );
-      showToast("Failed to upload profile photo. Please try again.", "danger");
+      const message =
+        err?.message || "Could not save the profile photo. Please try again.";
+      showProfilePhotoAlert(message);
+      showToast(message, "danger");
     } finally {
       profilePhotoUploading = false;
-      uploadPhotoBtn.disabled = false;
-      uploadPhotoLabel.textContent = "Upload Profile Photo";
+      uploadPhotoBtn.setAttribute("aria-busy", "false");
+      syncProfilePhotoControls();
+      if (uploadPhotoLabel) uploadPhotoLabel.textContent = "Save Photo";
+      uploadPhotoSpinner?.classList.add("d-none");
+      uploadPhotoIcon?.classList.remove("d-none");
     }
   });
-  if (uploadPhotoBtn) uploadPhotoBtn.disabled = false;
+
+  cancelPhotoBtn?.addEventListener("click", () => {
+    resetProfilePhotoSelection();
+    clearProfilePhotoAlert();
+  });
 
   const removePhotoModalElement = document.getElementById(
     "removeProfilePhotoModal",
@@ -673,48 +1390,82 @@ document.addEventListener("DOMContentLoaded", async () => {
   const confirmRemovePhotoBtn = document.getElementById(
     "confirmRemoveProfilePhotoBtn",
   );
+  const removePhotoSpinner = document.getElementById(
+    "removeProfilePhotoSpinner",
+  );
+  const removePhotoLabel = document.getElementById("removeProfilePhotoLabel");
+  const closeRemovePhotoBtn = document.getElementById(
+    "closeRemoveProfilePhotoModalBtn",
+  );
+  const cancelRemovePhotoBtn = document.getElementById(
+    "cancelRemoveProfilePhotoBtn",
+  );
+
+  syncProfilePhotoControls();
 
   removeBtn?.addEventListener("click", () => {
-    removePhotoModal?.show();
+    if (profilePhotoUploading || !currentUser?.profileImage) return;
+    if (removePhotoModal) {
+      removePhotoModal.show();
+      return;
+    }
+    if (
+      window.confirm(
+        "Remove your custom profile photo and restore the default ADMIN image?",
+      )
+    ) {
+      confirmRemovePhotoBtn?.click();
+    }
   });
 
   confirmRemovePhotoBtn?.addEventListener("click", async () => {
-    if (profilePhotoUploading) return;
+    if (profilePhotoUploading || !currentUser?.profileImage) return;
+    profilePhotoUploading = true;
+    syncProfilePhotoControls();
     confirmRemovePhotoBtn.disabled = true;
+    confirmRemovePhotoBtn.setAttribute("aria-busy", "true");
+    if (closeRemovePhotoBtn) closeRemovePhotoBtn.disabled = true;
+    if (cancelRemovePhotoBtn) cancelRemovePhotoBtn.disabled = true;
+    removePhotoSpinner?.classList.remove("d-none");
+    if (removePhotoLabel) removePhotoLabel.textContent = "Removing photo...";
+    clearProfilePhotoAlert();
     try {
-      if (currentUser.profileImage) {
-        await apiRequest("/users/profile-image", { method: "DELETE" });
+      const response = await apiRequest("/users/profile-image", {
+        method: "DELETE",
+      });
+      if (response.success !== true || response.data?.profileImage !== null) {
+        throw new Error("The server did not confirm profile photo removal.");
       }
-      currentUser = await Auth.refresh();
-      if (currentUser.profileImage) {
-        throw new Error("The saved profile photo could not be removed.");
-      }
+
+      currentUser = { ...currentUser, profileImage: null };
+      Auth.setUser(currentUser);
       selectedProfilePhoto = null;
-      if (photoInput) photoInput.value = "";
-      releaseProfilePhotoPreview();
+      resetProfilePhotoSelection();
       applyProfileAvatar(currentUser, document.getElementById("profileAvatar"));
-      if (typeof populateUserInfo === "function") populateUserInfo();
-      showAlert(
-        "profileAlert",
-        "Profile photo removed successfully.",
+      populateUserInfo();
+      showProfilePhotoAlert(
+        "Custom profile photo removed. The default ADMIN photo is now in use.",
         "success",
       );
-      showToast("Profile photo removed successfully.", "success");
+      showToast("Custom profile photo removed successfully.", "success");
     } catch (err) {
-      showAlert(
-        "profileAlert",
-        "Failed to remove profile photo. Please try again.",
-        "danger",
-      );
-      showToast(
-        "Failed to remove profile photo. Please try again.",
-        "danger",
-      );
+      const message =
+        err?.message || "Failed to remove profile photo. Please try again.";
+      showProfilePhotoAlert(message);
+      showToast(message, "danger");
     } finally {
+      profilePhotoUploading = false;
       confirmRemovePhotoBtn.disabled = false;
+      confirmRemovePhotoBtn.setAttribute("aria-busy", "false");
+      if (closeRemovePhotoBtn) closeRemovePhotoBtn.disabled = false;
+      if (cancelRemovePhotoBtn) cancelRemovePhotoBtn.disabled = false;
+      removePhotoSpinner?.classList.add("d-none");
+      if (removePhotoLabel) removePhotoLabel.textContent = "Remove Photo";
+      syncProfilePhotoControls();
       removePhotoModal?.hide();
     }
   });
+  }
 
   /* ═══════════════════════════════════════════════════════
      HELPERS
@@ -1039,9 +1790,10 @@ async function initPersonalSettings(user) {
         throw new Error("Profile photo upload returned no saved image.");
       }
       const updatedUser = await Auth.refresh();
-      if (updatedUser.profileImage !== data.profileImage) {
+      if (updatedUser.profileImage !== data.data.profileImage) {
         throw new Error("The saved profile photo could not be reloaded.");
       }
+      applyProfileAvatar(updatedUser, photoAvatar);
       if (typeof populateUserInfo === "function") populateUserInfo();
       if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
       photoPreviewUrl = null;
@@ -1173,7 +1925,6 @@ async function initPersonalSettings(user) {
       const response = await fetch(
         `${resolveApiBase()}/users/profile/files/${encodeURIComponent(file.id)}`,
         {
-          credentials: "include",
         },
       );
       if (!response.ok) {
@@ -1500,7 +2251,7 @@ async function initPersonalSettings(user) {
           : "Save Changes";
   };
 
-  /* Identity fields depend only on the already-loaded session user, never on a
+  /* Identity fields depend only on the already-loaded authenticated user, never on a
      network response, so they are populated before the fetch below. Otherwise a
      /users/preferences failure would blank the profile and account panels while
      the page reports an error. */
@@ -1620,32 +2371,8 @@ async function initPersonalSettings(user) {
   });
   document
     .getElementById("logoutSettingsBtn")
-    ?.addEventListener("click", async (event) => {
-      const btn = event.currentTarget;
-      /* logout() navigates away, so a double click would fire two
-         /auth/logout requests at a session the first one is already
-         destroying. Disable the control for the duration. */
-      if (btn.disabled) return;
-      btn.disabled = true;
-      showAlert("Signing you out…", "info");
-      /* logout() swallows fetch errors and only redirects once the request
-         settles. If the server never answers it would never settle, leaving a
-         permanently disabled button — so re-enable and report after a wait. */
-      let signedOut = false;
-      const recover = setTimeout(() => {
-        if (signedOut || !document.body.contains(btn)) return;
-        btn.disabled = false;
-        showAlert(
-          "Could not reach the server to sign you out. Please try again.",
-          "danger",
-        );
-      }, 6000);
-      try {
-        await logout();
-        signedOut = true;
-      } finally {
-        clearTimeout(recover);
-      }
+    ?.addEventListener("click", () => {
+      void logout();
     });
 
   form.addEventListener("submit", async (event) => {

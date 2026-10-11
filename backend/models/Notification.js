@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const notificationSchema = new mongoose.Schema({
   user:     { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   ticket:   { type: mongoose.Schema.Types.ObjectId, ref: 'Ticket', default: null },
+  feedbackSubmission: { type: mongoose.Schema.Types.ObjectId, ref: 'FeedbackSubmission', default: null },
   title:    { type: String, required: true },
   message:  { type: String, required: true },
   type:     { type: String, enum: ['info','success','warning','danger'], default: 'info' },
@@ -22,6 +23,10 @@ const notificationSchema = new mongoose.Schema({
       'request_reopened',
       'new_comment',
       'feedback_available',
+      'feedback_update',
+      'feedback_submission_user',
+      'feedback_submission_technician',
+      'feedback_reply',
       // Technician notifications
       'new_request_assigned',
       'request_reassigned',

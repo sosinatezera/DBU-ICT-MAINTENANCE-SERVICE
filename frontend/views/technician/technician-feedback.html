@@ -15,189 +15,6 @@
   <link rel="stylesheet" href="/assets/css/theme.css" />
   <style>
     /* ── Technician Feedback Page Styles ───────────────────────── */
-    .feedback-card {
-      background: #FFFFFF;
-      border: 1px solid #D9E2EC;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(15, 42, 67, 0.06);
-      overflow: hidden;
-      transition: box-shadow 0.2s ease, transform 0.2s ease;
-    }
-
-    .feedback-card:hover {
-      box-shadow: 0 8px 24px rgba(15, 42, 67, 0.1);
-      transform: translateY(-2px);
-    }
-
-    .feedback-card-header {
-      background: #F7FAFC;
-      border-bottom: 1px solid #E2E8F0;
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .feedback-card-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: #102A43;
-      margin: 0;
-      flex: 1;
-    }
-
-    .feedback-card-body {
-      padding: 20px;
-    }
-
-    .feedback-message {
-      font-size: 14px;
-      color: #52667A;
-      line-height: 1.6;
-      margin-bottom: 16px;
-      white-space: pre-wrap;
-    }
-
-    .feedback-meta {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 12px;
-      font-size: 12px;
-      color: #64748B;
-    }
-
-    .feedback-meta-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .feedback-meta-item i {
-      font-size: 13px;
-      color: #94A3B8;
-    }
-
-    .feedback-detail-list {
-      border-top: 1px solid #E2E8F0;
-      padding-top: 12px;
-      display: grid;
-      gap: 8px;
-      font-size: 13px;
-    }
-
-    .feedback-detail-list>div {
-      display: grid;
-      grid-template-columns: minmax(120px, 0.35fr) 1fr;
-      gap: 12px;
-    }
-
-    .feedback-detail-list strong {
-      color: #16324F;
-    }
-
-    .feedback-detail-list span {
-      color: #52667A;
-      white-space: pre-wrap;
-    }
-
-    .status-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 999px;
-    }
-
-    .status-badge-fixed {
-      background: #ECFDF3;
-      color: #15803D;
-      border: 1px solid #BBF7D0;
-    }
-
-    .status-badge-inprogress {
-      background: #EFF6FF;
-      color: #1E40AF;
-      border: 1px solid #BFDBFE;
-    }
-
-    .status-badge-notfixed {
-      background: #FEF2F2;
-      color: #B91C1C;
-      border: 1px solid #FECACA;
-    }
-
-    .status-badge-pending {
-      background: #F1F5F9;
-      color: #475569;
-      border: 1px solid #E2E8F0;
-    }
-
-    .priority-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 6px;
-      text-transform: capitalize;
-    }
-
-    .priority-low {
-      background: #F0FDF4;
-      color: #15803D;
-    }
-
-    .priority-medium {
-      background: #EFF6FF;
-      color: #1E40AF;
-    }
-
-    .priority-high {
-      background: #FFF7ED;
-      color: #C2410C;
-    }
-
-    .priority-critical {
-      background: #FEF2F2;
-      color: #B91C1C;
-    }
-
-    .feedback-form-section {
-      background: #FFFFFF;
-      border: 1px solid #D9E2EC;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(15, 42, 67, 0.04);
-    }
-
-    .feedback-form-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #E2E8F0;
-    }
-
-    .feedback-form-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      background: #EFF6FF;
-      color: #146EF5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-    }
-
-    .feedback-form-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #102A43;
-      margin: 0;
-    }
-
     .form-label {
       font-size: 13.5px;
       font-weight: 600;
@@ -229,6 +46,207 @@
       outline: none;
     }
 
+    main.p-4 {
+      min-width: 0;
+      overflow-x: clip;
+    }
+
+    .dashboard-body > .d-flex > .flex-grow-1 {
+      min-width: 0;
+    }
+
+    .technician-feedback-page {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .technician-feedback-page-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .technician-feedback-page-header p {
+      max-width: 62ch;
+      color: #64748B;
+    }
+
+    .technician-feedback-page-header .feedback-form-icon {
+      display: inline-flex;
+      flex: 0 0 2.75rem;
+      align-items: center;
+      justify-content: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 0.75rem;
+      background: #EFF6FF;
+      color: #146EF5;
+      font-size: 1.25rem;
+    }
+
+    .technician-feedback-workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+      gap: 1.25rem;
+      min-width: 0;
+    }
+
+    .technician-feedback-panel {
+      min-width: 0;
+      border: 1px solid #D9E2EC;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(15, 42, 67, 0.06);
+      overflow: hidden;
+    }
+
+    .technician-feedback-panel > .card-header {
+      padding: 1rem 1.25rem;
+    }
+
+    .technician-feedback-panel > .card-body {
+      padding: clamp(1rem, 3vw, 1.5rem);
+    }
+
+    .technician-feedback-history,
+    .technician-feedback-history .card-body {
+      min-width: 0;
+    }
+
+    .technician-feedback-history .card-body {
+      overflow: visible;
+    }
+
+    .technician-feedback-record {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      border: 1px solid #D9E2EC;
+      border-radius: 10px;
+      padding: clamp(1rem, 2.5vw, 1.25rem);
+      background: linear-gradient(180deg, #fff 0%, #FBFDFF 100%);
+      box-shadow: 0 2px 8px rgba(15, 42, 67, 0.04);
+    }
+
+    .technician-feedback-record + .technician-feedback-record {
+      margin-top: 0.85rem;
+    }
+
+    .technician-feedback-record p,
+    .technician-feedback-record dd {
+      margin-bottom: 0;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      word-break: normal;
+    }
+
+    .technician-feedback-record .feedback-reference {
+      overflow-wrap: anywhere;
+    }
+
+    .technician-feedback-record .feedback-record-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .technician-feedback-record .feedback-record-meta > div {
+      min-width: 0;
+      padding: 0.75rem;
+      border-radius: 8px;
+      background: #F7FAFC;
+    }
+
+    .technician-feedback-details {
+      margin-top: 1rem;
+      border-top: 1px solid #E2E8F0;
+      padding-top: 0.85rem;
+    }
+
+    .technician-feedback-details summary {
+      width: fit-content;
+      color: #146EF5;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .technician-feedback-details[open] summary {
+      margin-bottom: 0.75rem;
+    }
+
+    .technician-feedback-message-full {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      line-height: 1.65;
+    }
+
+    .technician-feedback-char-count {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .technician-feedback-char-count.is-near-limit {
+      color: #B45309;
+      font-weight: 600;
+    }
+
+    .technician-feedback-rating-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 0.15rem;
+      min-height: 2.25rem;
+    }
+
+    .technician-feedback-star {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      font-size: 1.35rem;
+    }
+
+    #technicianFeedbackForm .form-select,
+    #technicianFeedbackForm .form-control {
+      width: 100%;
+      min-width: 0;
+    }
+
+    #submitTechnicianFeedbackBtn {
+      min-width: 10rem;
+    }
+
+    #submitTechnicianFeedbackBtn:hover:not(:disabled) {
+      background-color: #0f5ed7;
+      border-color: #0f5ed7;
+    }
+
+    @media (max-width: 575.98px) {
+      main.p-4 {
+        padding: 1rem !important;
+      }
+
+      .technician-feedback-record {
+        padding: 0.85rem;
+      }
+
+      #submitTechnicianFeedbackBtn {
+        width: 100%;
+      }
+    }
+
+    #technicianFeedbackCategory.form-select,
+    #technicianFeedbackCategory.form-select:focus,
+    #technicianFeedbackCategory.form-select:valid,
+    #technicianFeedbackCategory.form-select:invalid,
+    #technicianFeedbackCategory.form-select.is-valid,
+    #technicianFeedbackCategory.form-select.is-invalid {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 1rem;
+    }
+
     .form-text {
       color: #64748B;
       font-size: 12.5px;
@@ -254,82 +272,22 @@
       box-shadow: 0 6px 16px rgba(20, 110, 245, 0.3);
     }
 
-    .btn-outline-secondary {
-      border-radius: 8px;
-      font-weight: 600;
-      padding: 0.65rem 1.25rem;
-      min-height: 46px;
-      font-size: 14px;
-      border-width: 1.5px;
-      color: #475569;
-      border-color: #CBD5E1;
+    .technician-feedback-star {
+      color: #adb5bd;
+      cursor: pointer;
+      font-size: 1.75rem;
+      line-height: 1;
+      padding: 0.15rem;
     }
 
-    .btn-outline-secondary:hover {
-      background: #F8FAFC;
-      border-color: #146EF5;
-      color: #146EF5;
+    .technician-feedback-star.is-selected {
+      color: #f0ad00;
     }
 
-    .empty-state {
-      padding: 48px 24px;
-      text-align: center;
-      color: #64748B;
-    }
-
-    .empty-state i {
-      font-size: 48px;
-      color: #CBD5E1;
-      margin-bottom: 16px;
-    }
-
-    .empty-state h6 {
-      font-size: 17px;
-      font-weight: 600;
-      color: #102A43;
-      margin-bottom: 8px;
-    }
-
-    .empty-state p {
-      font-size: 14px;
-      margin-bottom: 0;
-    }
-
-    .list-section-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: #102A43;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .list-section-title i {
-      color: #146EF5;
-      font-size: 18px;
-    }
-
-    .feedback-preview {
-      background: #F7FAFC;
-      border: 1px solid #E2E8F0;
-      border-radius: 8px;
-      padding: 12px 16px;
-      margin-top: 12px;
-      font-size: 13px;
-      color: #52667A;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      min-height: 60px;
-    }
-
-    .feedback-preview-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #94A3B8;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
+    .technician-feedback-rating-input:focus-visible + .technician-feedback-star {
+      border-radius: 0.25rem;
+      outline: 2px solid #0d6efd;
+      outline-offset: 2px;
     }
   </style>
 </head>
@@ -380,117 +338,199 @@
       </header>
 
       <main class="p-4">
-        <div class="alert alert-info d-flex align-items-center py-2 small mb-4">
-          <i class="bi bi-info-circle me-2"></i>
-          Add or view short ticket feedback covering the diagnosis, action taken, and current result.
-        </div>
-
-        <!-- Feedback Cards -->
-        <div class="row g-3" id="techFeedbackList">
-          <div class="col-12 text-center text-muted py-5" data-i18n="tech.loadingAssignments">
-            <i class="bi bi-chat-dots fs-1 d-block mb-2"></i>Loading assigned requests...
+        <div class="technician-feedback-page">
+        <header class="technician-feedback-page-header">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <span class="feedback-form-icon" aria-hidden="true"><i class="bi bi-chat-square-text"></i></span>
+            <div>
+              <h1 class="h3 fw-bold mb-1">Technician Feedback</h1>
+              <p class="mb-0">Share suggestions, report concerns, and communicate improvement ideas to the ICT Administration team.</p>
+            </div>
           </div>
+        </header>
+
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Total</div><strong class="fs-4" data-own-feedback-stat="total">0</strong></div></div>
+          <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Pending</div><strong class="fs-4" data-own-feedback-stat="pending">0</strong></div></div>
+          <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">In Progress</div><strong class="fs-4" data-own-feedback-stat="inProgress">0</strong></div></div>
+          <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Replied</div><strong class="fs-4" data-own-feedback-stat="replied">0</strong></div></div>
+          <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Closed</div><strong class="fs-4" data-own-feedback-stat="closed">0</strong></div></div>
         </div>
 
-        <!-- Technician Feedback Modal (Add / Edit) -->
-        <div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="feedbackModalLabel" data-i18n="techfb.addFeedback">Add Technician
-                  Feedback</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body" style="max-height:90vh;overflow-y:auto;">
-                <div id="feedbackTaskInfo" class="mb-3 p-3 bg-light rounded"></div>
-                <div id="feedbackAlert" class="alert d-none"></div>
-                <input type="hidden" id="feedbackRequestId" />
-
-                <div class="feedback-form-section">
-                  <div class="feedback-form-header">
-                    <div class="feedback-form-icon"><i class="bi bi-chat-left-text"></i></div>
-                    <h6 class="feedback-form-title" data-i18n="techfb.formTitle">Technician Feedback</h6>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label" data-i18n="techfb.diagnosis"><span
-                        data-i18n="techfb.diagnosisLabel">Diagnosis / Identified Problem</span> <span
-                        class="text-danger">*</span></label>
-                    <textarea class="form-control" id="fbDiagnosis" rows="3" maxlength="2000"
-                      placeholder="What was the root cause of the issue?"
-                      data-i18n-placeholder="techfb.ph.diagnosis"></textarea>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label" data-i18n="techfb.actionTaken"><span
-                        data-i18n="techfb.actionTakenLabel">Action Taken</span> <span
-                        class="text-danger">*</span></label>
-                    <textarea class="form-control" id="fbWorkPerformed" rows="3" maxlength="2000"
-                      placeholder="Describe the steps you took to resolve the issue..."
-                      data-i18n-placeholder="techfb.ph.actionTaken"></textarea>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label" data-i18n="techfb.resultStatus"><span
-                        data-i18n="techfb.resultStatusLabel">Current Result / Status</span> <span
-                        class="text-danger">*</span></label>
-                    <select class="form-select" id="fbResultStatus">
-                      <option value="" data-i18n="techfb.selectStatus">-- Select Result --</option>
-                      <option value="Fixed" data-i18n="techfb.resultFixed">Fixed — Issue resolved</option>
-                      <option value="In Progress" data-i18n="techfb.resultInProgress">In Progress — Work ongoing
-                      </option>
-                      <option value="Not Fixed" data-i18n="techfb.resultNotFixed">Not Fixed — Could not resolve</option>
-                    </select>
-                    <textarea class="form-control mt-2" id="fbResolution" rows="2" maxlength="1000"
-                      placeholder="Describe the current result, for example: Internet is working normally."></textarea>
-                  </div>
-
-                  <div class="mb-3 d-none" id="fbReasonWrap">
-                    <label class="form-label" for="fbReasonNotFixed">Reason Not Fixed <span
-                        class="text-danger">*</span></label>
-                    <textarea class="form-control" id="fbReasonNotFixed" rows="2" maxlength="1000"
-                      placeholder="Explain why the issue could not be fixed..."></textarea>
-                  </div>
-
-                  <div class="mb-3">
-                    <div class="feedback-preview-label">Feedback Preview</div>
-                    <div class="feedback-preview" id="feedbackPreview" aria-live="polite"></div>
-                  </div>
-
-                </div>
-
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
-                  data-i18n="common.cancel">Cancel</button>
-                <button type="button" class="btn btn-primary px-4" id="saveFeedbackBtn">
-                  <span class="spinner-border spinner-border-sm me-2 d-none" id="saveFeedbackSpinner"></span>
-                  <i class="bi bi-send me-1"></i><span data-i18n="techfb.submitFeedback">Submit Feedback</span>
-                </button>
+        <div class="technician-feedback-workspace mb-4">
+        <section class="card technician-feedback-panel" aria-labelledby="submitTechnicianFeedbackTitle">
+          <div class="card-header bg-white border-bottom py-3">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-send-plus text-primary fs-5" aria-hidden="true"></i>
+              <div>
+                <h2 class="h6 fw-bold mb-0" id="submitTechnicianFeedbackTitle">Share feedback</h2>
+                <p class="small text-muted mb-0 mt-1">Your message will be reviewed by ICT Administration.</p>
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- View Feedback Modal -->
-        <div class="modal fade" id="viewReportModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title fw-bold" data-i18n="techfb.viewFeedback">Technician Feedback</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body" id="viewReportBody">
-                <div class="text-center py-4">
-                  <div class="spinner-border text-primary" role="status"></div>
+          <div class="card-body">
+            <div id="technicianFeedbackNotice" class="alert d-none" role="status" aria-live="polite"></div>
+            <form id="technicianFeedbackForm" novalidate>
+              <div class="row g-3">
+                <div class="col-12 col-md-6"><label class="form-label" for="technicianFeedbackUser">Technician name</label>
+                  <input class="form-control" id="technicianFeedbackUser" readonly aria-readonly="true"></div>
+                <div class="col-12 col-md-6"><label class="form-label" for="technicianFeedbackDepartment">Department</label>
+                  <input class="form-control" id="technicianFeedbackDepartment" readonly aria-readonly="true"
+                    placeholder="Not provided in your profile"></div>
+                <div class="col-12">
+                  <label class="form-label" for="technicianFeedbackCategory">Feedback category <span
+                      class="text-danger">*</span></label>
+                  <select class="form-select" id="technicianFeedbackCategory" required>
+                    <option value="">Choose a feedback category</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="technicianFeedbackPriority">Priority <span class="text-danger">*</span></label>
+                  <select class="form-select" id="technicianFeedbackPriority" required>
+                    <option value="Low">Low</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="technicianFeedbackRelatedRequest">Related Service Request ID <span class="text-muted fw-normal">(optional)</span></label>
+                  <input class="form-control" id="technicianFeedbackRelatedRequest" maxlength="32"
+                    placeholder="For example, MAU-1001" aria-describedby="technicianFeedbackRelatedRequestHelp">
+                  <div class="form-text" id="technicianFeedbackRelatedRequestHelp">Link an existing request assigned to you. This does not create a service request.</div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="technicianFeedbackSubject">Subject <span class="text-danger">*</span></label>
+                  <input class="form-control" id="technicianFeedbackSubject" maxlength="160" required />
+                  <div class="form-text">Maximum 160 characters.</div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="technicianFeedbackAttachment">Attachment <span class="text-muted fw-normal">(optional, max 5 MB)</span></label>
+                  <input class="form-control" type="file" id="technicianFeedbackAttachment"
+                    accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt">
+                  <div class="form-text">Images, PDF, Office documents, or plain text files only.</div>
+                </div>
+                <fieldset class="col-12 border-0 p-0 m-0">
+                  <legend class="form-label">Optional rating</legend>
+                  <div class="technician-feedback-rating-row" role="radiogroup"
+                    aria-describedby="technicianFeedbackRatingDescription">
+                    <input class="visually-hidden technician-feedback-rating-input" type="radio"
+                      name="technicianFeedbackRating" id="technicianFeedbackRating1" value="1"
+                      aria-label="1 star: Very Poor">
+                    <label class="technician-feedback-star" for="technicianFeedbackRating1" title="1 star: Very Poor">
+                      <i class="bi bi-star-fill" aria-hidden="true"></i><span class="visually-hidden">1 star: Very Poor</span>
+                    </label>
+                    <input class="visually-hidden technician-feedback-rating-input" type="radio"
+                      name="technicianFeedbackRating" id="technicianFeedbackRating2" value="2"
+                      aria-label="2 stars: Poor">
+                    <label class="technician-feedback-star" for="technicianFeedbackRating2" title="2 stars: Poor">
+                      <i class="bi bi-star-fill" aria-hidden="true"></i><span class="visually-hidden">2 stars: Poor</span>
+                    </label>
+                    <input class="visually-hidden technician-feedback-rating-input" type="radio"
+                      name="technicianFeedbackRating" id="technicianFeedbackRating3" value="3"
+                      aria-label="3 stars: Average">
+                    <label class="technician-feedback-star" for="technicianFeedbackRating3" title="3 stars: Average">
+                      <i class="bi bi-star-fill" aria-hidden="true"></i><span class="visually-hidden">3 stars: Average</span>
+                    </label>
+                    <input class="visually-hidden technician-feedback-rating-input" type="radio"
+                      name="technicianFeedbackRating" id="technicianFeedbackRating4" value="4"
+                      aria-label="4 stars: Good">
+                    <label class="technician-feedback-star" for="technicianFeedbackRating4" title="4 stars: Good">
+                      <i class="bi bi-star-fill" aria-hidden="true"></i><span class="visually-hidden">4 stars: Good</span>
+                    </label>
+                    <input class="visually-hidden technician-feedback-rating-input" type="radio"
+                      name="technicianFeedbackRating" id="technicianFeedbackRating5" value="5"
+                      aria-label="5 stars: Excellent">
+                    <label class="technician-feedback-star" for="technicianFeedbackRating5" title="5 stars: Excellent">
+                      <i class="bi bi-star-fill" aria-hidden="true"></i><span class="visually-hidden">5 stars: Excellent</span>
+                    </label>
+                  </div>
+                  <div class="form-text" id="technicianFeedbackRatingDescription" aria-live="polite">
+                    No rating selected. Rating is optional.
+                  </div>
+                  <button class="btn btn-sm btn-link px-0" type="button"
+                    id="clearTechnicianFeedbackRating">Clear rating</button>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="technicianFeedbackMessage">Description <span
+                      class="text-danger">*</span></label>
+                  <textarea class="form-control" id="technicianFeedbackMessage" rows="5" maxlength="5000"
+                    required aria-describedby="technicianFeedbackMessageHelp"
+                    placeholder="Describe your concern, suggestion, or technical feedback for the ICT Admin team."></textarea>
+                  <div class="d-flex justify-content-between align-items-start gap-2 mt-1">
+                    <div class="form-text" id="technicianFeedbackMessageHelp">Required. Please do not include passwords or other sensitive credentials.</div>
+                    <span class="form-text technician-feedback-char-count text-nowrap" id="technicianFeedbackCharacterCount" aria-live="polite">0 / 5,000</span>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <button class="btn btn-primary" id="submitTechnicianFeedbackBtn" type="submit">
+                    <i class="bi bi-send me-1" aria-hidden="true"></i>Submit Feedback
+                  </button>
                 </div>
               </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
-                  data-i18n="common.close">Close</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="card technician-feedback-panel technician-feedback-history" aria-labelledby="technicianFeedbackHistoryTitle">
+          <div class="card-header bg-white border-bottom py-3">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-clock-history text-primary fs-5" aria-hidden="true"></i>
+              <div>
+                <h2 class="h6 fw-bold mb-0" id="technicianFeedbackHistoryTitle">My Feedback History</h2>
+                <p class="small text-muted mb-0 mt-1">Track your feedback and read replies from ICT Administration.</p>
               </div>
             </div>
           </div>
+          <div class="card-body border-bottom">
+            <div class="row g-2">
+              <div class="col-md-3">
+                <label class="form-label small mb-1" for="technicianFeedbackHistorySearch">Search my feedback</label>
+                <input class="form-control form-control-sm" id="technicianFeedbackHistorySearch" type="search"
+                  placeholder="Feedback ID, subject, category, or description">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small mb-1" for="technicianFeedbackHistoryCategory">Category</label>
+                <select class="form-select form-select-sm" id="technicianFeedbackHistoryCategory">
+                  <option value="">All categories</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small mb-1" for="technicianFeedbackHistoryPriority">Priority</label>
+                <select class="form-select form-select-sm" id="technicianFeedbackHistoryPriority">
+                  <option value="">All priorities</option>
+                  <option>Low</option><option>Medium</option><option>High</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small mb-1" for="technicianFeedbackHistoryFrom">From</label>
+                <input class="form-control form-control-sm" id="technicianFeedbackHistoryFrom" type="date">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small mb-1" for="technicianFeedbackHistoryTo">To</label>
+                <input class="form-control form-control-sm" id="technicianFeedbackHistoryTo" type="date">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small mb-1" for="technicianFeedbackHistoryStatus">Filter by status</label>
+                <select class="form-select form-select-sm" id="technicianFeedbackHistoryStatus">
+                  <option value="">All statuses</option>
+                  <option>Pending</option><option>In Progress</option><option>Replied</option>
+                  <option>Resolved</option><option>Closed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer bg-white d-flex justify-content-between align-items-center gap-2">
+            <small id="technicianFeedbackHistoryPageInfo" class="text-muted"> </small>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-secondary" id="technicianFeedbackHistoryPrev" aria-label="Previous feedback page">&laquo;</button>
+              <button type="button" class="btn btn-outline-secondary" id="technicianFeedbackHistoryNext" aria-label="Next feedback page">&raquo;</button>
+            </div>
+          </div>
+          <div class="card-body" id="technicianFeedbackHistory" aria-live="polite" aria-busy="true">
+            <p class="text-muted mb-0">Loading your feedback history...</p>
+          </div>
+        </section>
+        </div>
         </div>
 
       </main>
@@ -499,11 +539,12 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="/assets/js/api-config.js?v=5"></script>
+  <script src="/assets/js/api-config.js?v=16"></script>
   <script src="/assets/js/lang.js?v=16"></script>
-  <script src="/assets/js/main.js?v=19"></script>
-  <script src="/assets/js/notifications.js?v=8"></script>
-  <script src="/assets/js/technicians.js?v=9"></script>
+  <script src="/assets/js/main.js?v=25"></script>
+  <script src="/assets/js/notifications.js?v=10"></script>
+  <script src="/assets/js/technicians.js?v=16"></script>
+  <script src="/assets/js/feedback.js?v=4"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

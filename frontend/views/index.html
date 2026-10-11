@@ -13,10 +13,11 @@
   <link rel="stylesheet" href="/assets/css/style.css?v=13" />
   <link rel="stylesheet" href="/assets/css/responsive.css?v=3" />
   <link rel="stylesheet" href="/assets/css/home-layout.css?v=1" />
-  <script src="/assets/js/api-config.js?v=5"></script>
+  <script src="/assets/js/api-config.js?v=16"></script>
   <style>
     :root {
       --nav-height: 68px;
+      --nav-base-height: 68px;
 
       /* ── Home Page — clean white/light SaaS theme ── */
       --home-bg: #f8fafc;
@@ -69,23 +70,23 @@
       margin: 0;
     }
 
-    [data-navbar-section][hidden] {
-      display: none !important;
+    body.public-home-page {
+      padding-top: var(--nav-base-height);
     }
 
-    body:not(.dashboard-body):not(.auth-body) {
-      padding-top: 0 !important;
+    [data-navbar-section][hidden] {
+      display: none !important;
     }
 
     .main-navbar {
       position: fixed !important;
       top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
+      left: 0;
       z-index: 1200 !important;
-      min-height: var(--nav-height);
+      min-height: var(--nav-base-height);
       width: 100% !important;
       box-sizing: border-box;
+      padding-block: 0;
       background: rgba(255, 255, 255, .96);
       border-bottom: 1px solid var(--home-border);
       box-shadow: 0 6px 24px -12px rgba(15, 23, 42, .18);
@@ -99,14 +100,37 @@
       width: 100%;
       max-width: 100%;
       min-width: 0;
-      min-height: var(--nav-height);
+      min-height: calc(var(--nav-base-height) - 1px);
+      padding-inline: clamp(.75rem, 2vw, 2rem);
       display: flex;
       align-items: center;
+      gap: clamp(.75rem, 1.5vw, 1.5rem);
     }
 
     .main-navbar .navbar-collapse {
       align-items: center;
       min-width: 0;
+    }
+
+    @media (min-width: 1200px) {
+      .main-navbar .navbar-collapse {
+        display: flex !important;
+        flex: 1 1 auto;
+      }
+
+      .main-navbar .navbar-nav {
+        flex: 1 1 auto;
+        justify-content: center;
+        min-width: 0;
+      }
+
+      .main-navbar #navMenu > .d-flex {
+        flex: 0 0 auto;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: .45rem !important;
+        margin: 0 0 0 clamp(.5rem, 1vw, 1rem);
+      }
     }
 
     .main-navbar .navbar-toggler {
@@ -315,13 +339,6 @@
         padding-left: .9rem !important;
         padding-right: .9rem !important;
       }
-    }
-
-    @media (min-width: 1200px) and (max-width: 1259.98px) {
-      .main-navbar {
-        padding-top: .35rem;
-        padding-bottom: .35rem;
-      }
 
       .main-navbar .navbar-nav {
         gap: 0;
@@ -385,8 +402,9 @@
 
     /* ===== Hero ===== */
     .hero-section {
-      min-height: 0;
-      padding: 8rem 0 7rem;
+      min-height: calc(100vh - var(--nav-height));
+      min-height: calc(100svh - var(--nav-height));
+      padding: clamp(3.5rem, 8vh, 6rem) 0 clamp(3rem, 7vh, 5rem);
       background:
         /* Base gradient */
         linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
@@ -394,6 +412,12 @@
       align-items: center;
       position: relative;
       overflow: hidden;
+    }
+
+    @media (max-width: 1199.98px) {
+      .hero-section {
+        padding: clamp(2.5rem, 7vh, 4rem) 0;
+      }
     }
 
     /* Hero slides — professional sliding carousel (home1 → home8).
@@ -606,8 +630,90 @@
     .hero-container {
       position: relative;
       z-index: 1;
-      max-width: 1400px;
       width: 100%;
+      max-width: none;
+      padding-inline: clamp(1rem, 5vw, 5rem);
+      display: flex;
+      align-items: stretch;
+      flex: 1 0 auto;
+    }
+
+    .hero-container > .row {
+      width: 100%;
+      margin-inline: 0;
+      align-items: stretch !important;
+    }
+
+    .hero-container > .row > .col-lg-6 {
+      display: flex;
+      flex: 0 1 58%;
+      flex-direction: column;
+      justify-content: space-between;
+      max-width: 780px;
+    }
+
+    .hero-copy {
+      max-width: 740px;
+    }
+
+    .hero-stats {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: clamp(.75rem, 2vw, 1.5rem) !important;
+      margin-top: 2rem;
+      padding-right: clamp(5.5rem, 13vw, 9rem);
+    }
+
+    .hero-stat {
+      min-width: max-content;
+    }
+
+    .hero-stat-divider {
+      align-self: stretch;
+      min-height: 2.5rem;
+    }
+
+    @media (max-width: 1199.98px) {
+      .hero-container {
+        padding-inline: clamp(1rem, 4vw, 2.5rem);
+      }
+
+      .hero-container > .row > .col-lg-6 {
+        flex-basis: 72%;
+      }
+
+      .hero-stats {
+        padding-right: 6.5rem;
+      }
+    }
+
+    @media (max-width: 767.98px) {
+      .hero-section {
+        padding-block: 3rem;
+      }
+
+      .hero-container > .row > .col-lg-6 {
+        flex-basis: 100%;
+        max-width: 100%;
+      }
+
+      .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: calc(100% - 7.5rem);
+        gap: .75rem !important;
+        margin-top: 1.5rem;
+        padding-right: 0;
+      }
+
+      .hero-stat {
+        min-width: 0;
+      }
+
+      .hero-stat-divider {
+        display: none;
+      }
     }
 
     .hero-badge {
@@ -1514,6 +1620,7 @@
 
     body:not(.dashboard-body):not(.auth-body) .main-navbar {
       background: #B8F5A8 !important;
+      background-color: #B8F5A8 !important;
       border-bottom-color: rgba(226, 232, 240, .9);
     }
 
@@ -1845,7 +1952,8 @@
       }
 
       .hero-section {
-        min-height: 78vh;
+        min-height: calc(100vh - var(--nav-height));
+        min-height: calc(100svh - var(--nav-height));
       }
 
       .hero-section .hero-title {
@@ -2436,7 +2544,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="/assets/css/theme.css?v=6" />
+  <link rel="stylesheet" href="/assets/css/theme.css?v=13" />
   <script src="/assets/js/lang.js?v=16"></script>
 </head>
 
@@ -2513,55 +2621,57 @@
     <button class="hero-arrow hero-arrow-next" id="heroNext" type="button" aria-label="Next slide">
       <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
     </button>
-    <div class="container position-relative" style="z-index:1;">
-      <div class="row align-items-center g-5">
+    <div class="hero-container position-relative">
+      <div class="row g-5">
         <div class="col-lg-6">
-          <div class="hero-badge">
-            <img class="hero-badge-logo" src="/assets/images/mau_logo.jpg" alt="Mekdela Amba University emblem"
-              loading="lazy" decoding="async">
-            <span data-i18n="hero.badge">MAU ICT Platform</span>
+          <div class="hero-copy">
+            <div class="hero-badge">
+              <img class="hero-badge-logo" src="/assets/images/mau_logo.jpg" alt="Mekdela Amba University emblem"
+                loading="lazy" decoding="async">
+              <span data-i18n="hero.badge">MAU ICT Platform</span>
+            </div>
+            <h1 class="hero-title text-white mb-4">
+              <span data-i18n="hero.title">Smart ICT Maintenance </span>
+              <span data-i18n="hero.title_span">Management System</span>
+            </h1>
+            <p class="hero-subtitle mb-4">
+              <span data-i18n="hero.subtitle">Fast, transparent, and reliable computer, printer, and software maintenance
+                support for
+                staff and students.</span>
+            </p>
+            <div class="hero-cta d-flex flex-wrap gap-2">
+              <a href="/views/register.html" class="btn btn-request btn-lg px-4 fw-semibold">
+                <i class="fa-solid fa-paper-plane me-2"></i><span data-i18n="hero.btn.request">Submit Request</span>
+              </a>
+              <a href="/views/login.html" class="btn btn-track btn-lg px-4">
+                <i class="fa-solid fa-magnifying-glass me-2"></i><span data-i18n="hero.btn.track">Track Status</span>
+              </a>
+              <a href="#services" class="btn btn-learn btn-lg px-4">
+                <i class="fa-solid fa-play me-2"></i><span data-i18n="hero.btn.learn">Learn More</span>
+              </a>
+            </div>
           </div>
-          <h1 class="hero-title text-white mb-4">
-            <span data-i18n="hero.title">Smart ICT Maintenance </span>
-            <span data-i18n="hero.title_span">Management System</span>
-          </h1>
-          <p class="hero-subtitle mb-4">
-            <span data-i18n="hero.subtitle">Fast, transparent, and reliable computer, printer, and software maintenance
-              support for
-              staff and students.</span>
-          </p>
-          <div class="hero-cta d-flex flex-wrap gap-2">
-            <a href="/views/register.html" class="btn btn-request btn-lg px-4 fw-semibold">
-              <i class="fa-solid fa-paper-plane me-2"></i><span data-i18n="hero.btn.request">Submit Request</span>
-            </a>
-            <a href="/views/login.html" class="btn btn-track btn-lg px-4">
-              <i class="fa-solid fa-magnifying-glass me-2"></i><span data-i18n="hero.btn.track">Track Status</span>
-            </a>
-            <a href="#services" class="btn btn-learn btn-lg px-4">
-              <i class="fa-solid fa-play me-2"></i><span data-i18n="hero.btn.learn">Learn More</span>
-            </a>
-          </div>
-          <div class="d-flex gap-4 mt-4 pt-2">
-            <div>
+          <div class="hero-stats">
+            <div class="hero-stat">
               <div class="fw-bold fs-5" id="heroActiveUsers">--</div>
               <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="stats.users">Active
                   Users</span>
               </div>
             </div>
-            <div style="width:1px;background:rgba(255,255,255,.2);"></div>
-            <div>
+            <div class="hero-stat-divider" style="width:1px;background:rgba(255,255,255,.2);"></div>
+            <div class="hero-stat">
               <div class="fw-bold fs-5" id="heroTotalRequests">--</div>
               <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="stats.requests">Requests
                   Logged</span></div>
             </div>
-            <div style="width:1px;background:rgba(255,255,255,.2);"></div>
-            <div>
+            <div class="hero-stat-divider" style="width:1px;background:rgba(255,255,255,.2);"></div>
+            <div class="hero-stat">
               <div class="fw-bold fs-5" id="heroTotalAssets">--</div>
               <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="stats.devices">Devices
                   Tracked</span></div>
             </div>
-            <div style="width:1px;background:rgba(255,255,255,.2);"></div>
-            <div>
+            <div class="hero-stat-divider" style="width:1px;background:rgba(255,255,255,.2);"></div>
+            <div class="hero-stat">
               <div class="fw-bold fs-5" id="heroTotalTechnicians">--</div>
               <div style="font-size:.78rem;color:rgba(255,255,255,.6);"><span data-i18n="stats.techs">Active
                   Technicians</span></div>
@@ -3550,6 +3660,27 @@
       document.getElementById( 'scrollTopBtn' ).classList.toggle( 'visible', window.scrollY > 300 );
     } );
 
+    ( function syncNavbarHeight ()
+    {
+      const navbar = document.getElementById( 'mainNavbar' );
+      if ( !navbar ) return;
+
+      const updateHeight = () =>
+      {
+        const height = Math.ceil( navbar.getBoundingClientRect().height );
+        document.documentElement.style.setProperty( '--nav-height', `${height}px` );
+      };
+
+      updateHeight();
+      window.addEventListener( 'resize', updateHeight );
+      const menu = document.getElementById( 'navMenu' );
+      if ( menu )
+      {
+        menu.addEventListener( 'shown.bs.collapse', updateHeight );
+        menu.addEventListener( 'hidden.bs.collapse', updateHeight );
+      }
+    } )();
+
     /* ===== Section Navigation (fast scroll + scroll spy) =====
        The Home page is ONE long scrolling document: every section stays
        visible and the navbar scrolls to the target. It used to be a
@@ -4003,7 +4134,6 @@
       try
       {
         const res = await fetch( API_BASE + '/auth/me', {
-          credentials: 'include',
           signal: controller.signal,
         } );
         const data = res.ok ? await res.json() : null;

@@ -164,10 +164,16 @@ const getMyAssignments = async (req, res, next) => {
         requester_name: a.ticket?.requester?.fullName,
         department: a.ticket?.requester?.department,
         assigned_at: a.createdAt,
-        has_feedback: !!(
-          a.ticket?.technicianFeedback &&
-          a.ticket.technicianFeedback.technicianConfirmed
-        ),
+        has_feedback: !!a.ticket?.technicianFeedback?.technicianConfirmed,
+        technician_report: a.ticket?.technicianFeedback?.technicianConfirmed
+          ? {
+              diagnosis: a.ticket.technicianFeedback.diagnosis,
+              workPerformed: a.ticket.technicianFeedback.workPerformed,
+              status: a.ticket.technicianFeedback.status,
+              resolution: a.ticket.technicianFeedback.resolution,
+              completionDate: a.ticket.technicianFeedback.completionDate,
+            }
+          : null,
       });
       return acc;
     }, []);
@@ -277,6 +283,11 @@ const updateMyTechnicianProfile = async (req, res, next) => {
       const nameErr = validateName(fullName, "Full name");
       if (nameErr)
         return res.status(400).json({ success: false, message: nameErr });
+      const nameLengthErr = validateLength(fullName, "Full name", {
+        max: 100,
+      });
+      if (nameLengthErr)
+        return res.status(400).json({ success: false, message: nameLengthErr });
     }
 
     if (phone !== undefined && phone !== null && phone !== "") {
@@ -297,6 +308,13 @@ const updateMyTechnicianProfile = async (req, res, next) => {
 
     if (department !== undefined) {
       department = department ? sanitizeString(department) : null;
+      const departmentErr = validateLength(department || "", "Department", {
+        max: 120,
+      });
+      if (departmentErr)
+        return res
+          .status(400)
+          .json({ success: false, message: departmentErr });
     }
 
     if (specialization !== undefined && specialization !== null) {

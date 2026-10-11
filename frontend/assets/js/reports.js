@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!requireAuth()) {
       if (isDashboard) {
         settleDashboardLoadingSections(
-          "Your session could not be verified. Please sign in and retry.",
+          "Your access token could not be verified. Please sign in and retry.",
         );
       }
       return;
@@ -77,6 +77,82 @@ function dashboardResponseData(response, expectedType, sectionName) {
   return data;
 }
 
+async function loadDashboardStats(response) {
+  const stats = {
+    ...dashboardResponseData(response, "object", "Dashboard statistics"),
+  };
+  const statusKeys = ["assigned", "accepted"];
+  const missingStatusKeys = statusKeys.filter(
+    (key) => !Number.isFinite(stats[key]),
+  );
+
+  if (missingStatusKeys.length) {
+    console.warn(
+      "[admin-dashboard] Dashboard status fields are absent; loading current status totals.",
+      { missingFields: missingStatusKeys },
+    );
+    const statusResponse = await apiRequest("/reports/requests-by-status");
+    const rows = dashboardResponseData(
+      statusResponse,
+      "array",
+      "Request status totals",
+    );
+    for (const key of missingStatusKeys) {
+      const row = rows.find((item) => item?.status === key);
+      const value = row ? row.total : 0;
+      if (!Number.isSafeInteger(value) || value < 0) {
+        throw new Error(`Request status totals returned an invalid ${key} count.`);
+      }
+      stats[key] = value;
+    }
+  }
+
+  const requiredCounts = [
+    "total_users",
+    "total_assets",
+    "total_tickets",
+    "pending",
+    "completed",
+    "assigned",
+    "accepted",
+    "in_progress",
+    "submitted",
+    "under_review",
+    "resolved",
+    "closed",
+    "total_technicians",
+    "network_total",
+    "network_pending",
+    "network_in_progress",
+    "network_resolved",
+    "overdue",
+  ];
+  const invalidFields = requiredCounts.filter(
+    (key) => !Number.isSafeInteger(stats[key]) || stats[key] < 0,
+  );
+  if (invalidFields.length) {
+    throw new Error(
+      `Dashboard statistics returned invalid counts: ${invalidFields.join(", ")}.`,
+    );
+  }
+
+  return stats;
+}
+
+function dashboardStatusRows(stats) {
+  return [
+    { status: "submitted", total: stats.submitted },
+    { status: "under_review", total: stats.under_review },
+    { status: "assigned", total: stats.assigned },
+    { status: "accepted", total: stats.accepted },
+    { status: "in_progress", total: stats.in_progress },
+    { status: "resolved", total: stats.resolved },
+    { status: "closed", total: stats.closed },
+  ]
+    .filter((row) => row.total > 0)
+    .sort((left, right) => right.total - left.total);
+}
+
 /* ═══════════════════════════════════════════════════════════
    ADMIN DASHBOARD
    ═══════════════════════════════════════════════════════════ */
@@ -98,24 +174,8 @@ async function initAdminDashboard() {
   /* Render each section as its own request completes. A slow activity feed
      or chart must not hold the KPI cards and recent-request table blank. */
   const statsRequest = apiRequest("/reports/dashboard")
-    .then((response) => {
-    const s = dashboardResponseData(response, "object", "Dashboard statistics");
-    const requiredCounts = [
-      "total_users",
-      "total_assets",
-      "pending",
-      "completed",
-      "in_progress",
-      "total_technicians",
-      "network_total",
-      "network_pending",
-      "network_in_progress",
-      "network_resolved",
-      "overdue",
-    ];
-    if (requiredCounts.some((key) => !Number.isFinite(s[key]))) {
-      throw new Error("Dashboard statistics returned incomplete data.");
-    }
+    .then(loadDashboardStats)
+    .then((s) => {
     animateCount("kpiUsers", s.total_users);
     animateCount("kpiAssets", s.total_assets);
     animateCount("kpiPending", s.pending);
@@ -127,9 +187,15 @@ async function initAdminDashboard() {
     animateCount("kpiNetInProgress", s.network_in_progress);
     animateCount("kpiNetResolved", s.network_resolved);
 
-    const total = (s.pending || 0) + (s.in_progress || 0) + (s.completed || 0);
-    animateCount("kpiTotal", total);
+    animateCount("kpiTotal", s.total_tickets);
     animateCount("kpiOverdue", s.overdue || 0);
+    renderMiniBars(
+      "statusMiniChart",
+      dashboardStatusRows(s),
+      "status",
+      "total",
+      statusColour,
+    );
 
     const pb = document.getElementById("pendingBadge");
     if (pb) {
@@ -152,6 +218,11 @@ async function initAdminDashboard() {
       "kpiNetInProgress",
       "kpiNetResolved",
     ].forEach((id) => setText(id, "—"));
+    const chart = document.getElementById("statusMiniChart");
+    if (chart) {
+      chart.innerHTML = `<p class="text-danger small text-center py-2">Chart unavailable. ${escHtml(err.message || "")}</p>
+        <button type="button" class="btn btn-sm btn-outline-primary d-block mx-auto" onclick="initAdminDashboard()">Retry</button>`;
+    }
     const holder = document.getElementById("kpiUsers")?.closest(".row");
     if (holder) {
       const banner = document.createElement("div");
@@ -205,28 +276,6 @@ async function initAdminDashboard() {
     }
     });
 
-  const statusRequest = apiRequest("/reports/requests-by-status")
-    .then((response) => {
-    const byStatus = dashboardResponseData(
-      response,
-      "array",
-      "Requests by status",
-    );
-    renderMiniBars(
-      "statusMiniChart",
-      byStatus,
-      "status",
-      "total",
-      statusColour,
-    );
-    })
-    .catch((err) => {
-    const el = document.getElementById("statusMiniChart");
-    if (el)
-      el.innerHTML = `<p class="text-danger small text-center py-2">Chart unavailable. ${escHtml(err.message || "")}</p>
-        <button type="button" class="btn btn-sm btn-outline-primary d-block mx-auto" onclick="initAdminDashboard()">Retry</button>`;
-    });
-
   const activityRequest = apiRequest("/maintenance/my")
     .then((response) => {
       const activities = dashboardResponseData(
@@ -246,7 +295,6 @@ async function initAdminDashboard() {
   await Promise.all([
     statsRequest,
     requestsRequest,
-    statusRequest,
     activityRequest,
   ]);
 
@@ -367,20 +415,230 @@ function renderServiceFeedbackPanel(tickets) {
    ═══════════════════════════════════════════════════════════ */
 
 // Cache of the most recently loaded report data (for CSV export)
+const REPORT_SYSTEM_NAME = "Smart ICT Maintenance Management System";
+const REPORT_MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 let _reportCache = {
   summary: null,
   byStatus: [],
   byCategory: [],
   techPerf: [],
   byDept: [],
+  byIssueType: [],
   network: null,
 };
-let _reportFilter = { dateFrom: "", dateTo: "", type: "all" };
+let _reportFilter = {
+  period: "all",
+  date: "",
+  month: "",
+  year: "",
+  dateFrom: "",
+  dateTo: "",
+  type: "all",
+  label: "All time",
+};
+let _reportLoadInFlight = false;
+let _reportExportInFlight = false;
+
+function reportPeriodPrefix() {
+  return (
+    (typeof t === "function" && t("admin.reports.periodLabel")) ||
+    "Report period"
+  );
+}
+
+function setReportPeriodLabel(label) {
+  const el = document.getElementById("reportPeriodLabel");
+  if (el) el.textContent = label ? `${reportPeriodPrefix()}: ${label}` : "";
+}
+
+/* Fill the month and year pickers once, so they never duplicate options when
+   the period selector is toggled repeatedly. */
+function populatePeriodSelects() {
+  const monthSelect = document.getElementById("reportMonth");
+  if (monthSelect && !monthSelect.options.length) {
+    monthSelect.insertAdjacentHTML(
+      "beforeend",
+      REPORT_MONTH_NAMES.map(
+        (name, idx) => `<option value="${idx + 1}">${name}</option>`,
+      ).join(""),
+    );
+  }
+
+  const currentYear = new Date().getFullYear();
+  const yearOptions = [];
+  for (let y = currentYear + 1; y >= currentYear - 5; y -= 1) {
+    yearOptions.push(`<option value="${y}">${y}</option>`);
+  }
+  ["reportYear", "reportYearOnly"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el && !el.options.length) {
+      el.insertAdjacentHTML("beforeend", yearOptions.join(""));
+    }
+  });
+}
+
+/* Show only the controls that belong to the selected reporting period. */
+function onReportPeriodChange() {
+  const period = document.getElementById("reportPeriod")?.value || "all";
+  _reportFilter.period = period;
+  const show = (id, visible) => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = !visible;
+  };
+  show("allTimeControls", period === "all");
+  show("dailyControls", period === "daily");
+  show("monthlyControls", period === "monthly");
+  show("yearlyControls", period === "yearly");
+  show("customControls", period === "custom");
+}
+
+/* Read the filter controls into _reportFilter. Returns true once the controls
+   are available (the page cannot render a report without them). */
+function collectReportFilter() {
+  const periodSelect = document.getElementById("reportPeriod");
+  if (!periodSelect) return false;
+
+  const period = periodSelect.value || "all";
+  _reportFilter.period = period;
+  _reportFilter.type = document.getElementById("reportType")?.value || "all";
+  _reportFilter.date =
+    document.getElementById("reportDailyDate")?.value || "";
+  _reportFilter.month = document.getElementById("reportMonth")?.value || "";
+  _reportFilter.year =
+    (period === "yearly"
+      ? document.getElementById("reportYearOnly")?.value
+      : document.getElementById("reportYear")?.value) || "";
+  _reportFilter.dateFrom =
+    document.getElementById("reportDateFrom")?.value || "";
+  _reportFilter.dateTo =
+    document.getElementById("reportDateTo")?.value || "";
+  _reportFilter.label = computePeriodLabel();
+  return true;
+}
+
+/* Inclusive calendar-date validation. Mirrors the backend so an impossible
+   range is rejected before a request is sent. */
+function validateReportFilter() {
+  const p = _reportFilter.period;
+  if (p === "daily" && !_reportFilter.date) {
+    showToast("Select a day for the daily report.", "warning");
+    return false;
+  }
+  if (p === "monthly" && (!_reportFilter.month || !_reportFilter.year)) {
+    showToast(
+      "Select both a month and a year for the monthly report.",
+      "warning",
+    );
+    return false;
+  }
+  if (p === "yearly" && !_reportFilter.year) {
+    showToast("Select a year for the yearly report.", "warning");
+    return false;
+  }
+  if (p === "custom") {
+    if (!_reportFilter.dateFrom || !_reportFilter.dateTo) {
+      showToast(
+        "Select both a start and an end date for the custom range.",
+        "warning",
+      );
+      return false;
+    }
+    if (_reportFilter.dateFrom > _reportFilter.dateTo) {
+      showToast("The start date must not be after the end date.", "warning");
+      return false;
+    }
+  }
+  return true;
+}
+
+function computePeriodLabel() {
+  const p = _reportFilter.period;
+  if (p === "daily") return `Daily: ${_reportFilter.date}`;
+  if (p === "monthly") {
+    const name =
+      REPORT_MONTH_NAMES[Number(_reportFilter.month) - 1] ||
+      _reportFilter.month;
+    return `Monthly: ${name} ${_reportFilter.year}`;
+  }
+  if (p === "yearly") return `Yearly: ${_reportFilter.year}`;
+  if (p === "custom") {
+    return `${_reportFilter.dateFrom} → ${_reportFilter.dateTo}`;
+  }
+  return "All time";
+}
+
+/* The query string shared by every report endpoint AND the Excel export, so
+   the exported figures always describe the same period as the screen. */
+function reportQueryObject() {
+  const p = _reportFilter.period;
+  const params = {};
+  if (p === "daily") {
+    params.period = "daily";
+    params.date = _reportFilter.date;
+  } else if (p === "monthly") {
+    params.period = "monthly";
+    params.year = _reportFilter.year;
+    params.month = _reportFilter.month;
+  } else if (p === "yearly") {
+    params.period = "yearly";
+    params.year = _reportFilter.year;
+  } else if (p === "custom") {
+    params.period = "custom";
+    params.dateFrom = _reportFilter.dateFrom;
+    params.dateTo = _reportFilter.dateTo;
+  }
+  return params;
+}
+
+function currentReportParams() {
+  const qs = new URLSearchParams(reportQueryObject()).toString();
+  return qs ? `?${qs}` : "";
+}
+
+function reportFilename(ext) {
+  const p = _reportFilter.period;
+  let tail = "all";
+  if (p === "daily") tail = _reportFilter.date;
+  else if (p === "monthly")
+    tail = `${_reportFilter.year}-${String(_reportFilter.month).padStart(2, "0")}`;
+  else if (p === "yearly") tail = String(_reportFilter.year);
+  else if (p === "custom")
+    tail = `${_reportFilter.dateFrom}_${_reportFilter.dateTo}`;
+  return `maintenance-report-${p}-${tail}.${ext}`;
+}
+
+function setReportLoading(loading) {
+  const busy = !!loading;
+  const btn = document.getElementById("generateReportBtn");
+  const spinner = document.getElementById("generateReportSpinner");
+  const icon = document.getElementById("generateReportIcon");
+  if (btn) btn.disabled = busy;
+  if (spinner) spinner.classList.toggle("d-none", !busy);
+  if (icon) icon.classList.toggle("d-none", busy);
+}
 
 async function initReports() {
   /* Bind the buttons BEFORE awaiting the data. A user who clicks "Generate"
      while the first load is still running used to have the click ignored
      entirely, because the listener was not attached yet. */
+  populatePeriodSelects();
+  onReportPeriodChange();
+  document
+    .getElementById("reportPeriod")
+    ?.addEventListener("change", onReportPeriodChange);
   document
     .getElementById("generateReportBtn")
     ?.addEventListener("click", loadReportData);
@@ -388,23 +646,34 @@ async function initReports() {
     .getElementById("exportReportBtn")
     ?.addEventListener("click", exportReportCSV);
   document
+    .getElementById("exportExcelBtn")
+    ?.addEventListener("click", exportReportExcel);
+  document
     .getElementById("printReportBtn")
-    ?.addEventListener("click", () => window.print());
+    ?.addEventListener("click", printReport);
 
   await loadReportData();
 }
 
-function currentReportParams() {
-  _reportFilter.dateFrom =
-    document.getElementById("reportDateFrom")?.value || "";
-  _reportFilter.dateTo = document.getElementById("reportDateTo")?.value || "";
-  _reportFilter.type = document.getElementById("reportType")?.value || "all";
+function printReport() {
+  const heading = document.getElementById("reportPrintHeading");
+  const previousTitle = document.title;
+  const rangeLabel = _reportFilter.label || "All time";
 
-  const params = new URLSearchParams();
-  if (_reportFilter.dateFrom) params.set("dateFrom", _reportFilter.dateFrom);
-  if (_reportFilter.dateTo) params.set("dateTo", _reportFilter.dateTo);
-  const qs = params.toString();
-  return qs ? `?${qs}` : "";
+  if (heading) {
+    heading.textContent = REPORT_SYSTEM_NAME;
+    const range = document.getElementById("reportPrintDateRange");
+    if (range) range.textContent = `${reportPeriodPrefix()}: ${rangeLabel}`;
+  }
+  document.title = REPORT_SYSTEM_NAME;
+  window.addEventListener(
+    "afterprint",
+    () => {
+      document.title = previousTitle;
+    },
+    { once: true },
+  );
+  window.print();
 }
 
 function applyReportTypeFilter() {
@@ -427,14 +696,25 @@ function applyReportTypeFilter() {
 }
 
 async function loadReportData() {
+  /* Never let two overlapping loads race each other, and never leave the
+     Generate button stuck disabled. */
+  if (_reportLoadInFlight) return false;
+  if (!collectReportFilter() || !validateReportFilter()) return false;
+
   const qs = currentReportParams();
   applyReportTypeFilter();
+  setReportPeriodLabel(_reportFilter.label);
+  _reportLoadInFlight = true;
+  setReportLoading(true);
 
   /* Requests remain parallel, but each report section renders as soon as its
      own response arrives rather than waiting for the slowest endpoint. */
   const summaryRequest = apiRequest(`/reports/dashboard${qs}`)
     .then(({ data: s }) => {
-    const total = (s.pending || 0) + (s.in_progress || 0) + (s.completed || 0);
+    /* Total = EVERY request created in the selected period, not pending +
+       in-progress + completed, which silently dropped the assigned and
+       accepted states. */
+    const total = Number(s.total_tickets) || 0;
     animateCount("rptTotal", total);
     animateCount("rptCompleted", s.completed);
     animateCount("rptPending", s.pending);
@@ -473,9 +753,9 @@ async function loadReportData() {
     setSectionError("statusBreakdown", err.message);
     });
 
-  const categoryRequest = apiRequest(`/reports/requests-by-equipment${qs}`)
+  const categoryRequest = apiRequest(`/reports/requests-by-category${qs}`)
     .then(({ data }) => {
-    renderBarBreakdown("categoryBreakdown", data, "equipmentType", "total");
+    renderBarBreakdown("categoryBreakdown", data, "name", "total");
     _reportCache.byCategory = data;
     })
     .catch((err) => {
@@ -529,15 +809,24 @@ async function loadReportData() {
     renderNetworkError(err.message);
     });
 
-  await Promise.all([
-    summaryRequest,
-    statusRequest,
-    categoryRequest,
-    technicianRequest,
-    departmentRequest,
-    issueTypeRequest,
-    networkRequest,
-  ]);
+  try {
+    await Promise.all([
+      summaryRequest,
+      statusRequest,
+      categoryRequest,
+      technicianRequest,
+      departmentRequest,
+      issueTypeRequest,
+      networkRequest,
+    ]);
+  } catch (err) {
+    /* Every request already renders its own failure state; this only guards
+       an unexpected rejection so the loading state can never hang. */
+    console.error("[reports] Report load failed unexpectedly.", err);
+  } finally {
+    _reportLoadInFlight = false;
+    setReportLoading(false);
+  }
 }
 
 /* ── Bar chart breakdown ──────────────────────────────────── */
@@ -549,17 +838,21 @@ function renderBarBreakdown(id, data, labelKey, valueKey, colourFn) {
         '<p class="text-muted small text-center py-2">No data in the selected range.</p>';
     return;
   }
-  const max = Math.max(...data.map((d) => Number(d[valueKey]) || 0), 1);
+  const total = data.reduce((sum, d) => sum + (Number(d[valueKey]) || 0), 0);
   el.innerHTML = data
     .map((item) => {
-      const pct = Math.round((Number(item[valueKey]) / max) * 100);
+      const value = Number(item[valueKey]) || 0;
+      /* Percentages are shares of the CORRECT total (every request in the
+         selected period), never of the largest slice, and never NaN when a
+         count is missing. */
+      const pct = total > 0 ? Math.round((value / total) * 100) : 0;
       const colour = colourFn ? colourFn(item[labelKey]) : "#2563eb";
       const label = String(item[labelKey]).replace(/_/g, " ");
       return `
       <div class="mb-3">
         <div class="d-flex justify-content-between mb-1">
           <span class="small text-capitalize fw-semibold">${escHtml(label)}</span>
-          <span class="small fw-bold">${item[valueKey]}</span>
+          <span class="small fw-bold">${value} <span class="text-muted fw-normal">(${pct}%)</span></span>
         </div>
         <div class="rounded-pill overflow-hidden" style="height:10px;background:#e9ecef;">
           <div class="rounded-pill" style="height:100%;width:${pct}%;background:${colour};transition:width .8s ease;"></div>
@@ -787,16 +1080,20 @@ function renderNetworkError(msg) {
 
 /* ── CSV Export ───────────────────────────────────────────── */
 function exportReportCSV() {
-  const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  if (!collectReportFilter() || !validateReportFilter()) return;
+  /* Escape quotes AND neutralise formula injection: a cell beginning with
+     = + - @ (or a tab/CR) would otherwise execute when the CSV is opened. */
+  const esc = (v) => {
+    let s = String(v ?? "");
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+    return `"${s.replace(/"/g, '""')}"`;
+  };
   const rows = [];
-  const rangeLabel =
-    _reportFilter.dateFrom || _reportFilter.dateTo
-      ? `${_reportFilter.dateFrom || "start"} → ${_reportFilter.dateTo || "now"}`
-      : "All time";
+  const rangeLabel = _reportFilter.label || "All time";
 
-  rows.push(["Smart Computer Maintenance Service — Report"]);
+  rows.push([`${REPORT_SYSTEM_NAME} — Report`]);
   rows.push(["Generated", formatDateTime(new Date())]);
-  rows.push(["Date Range", rangeLabel]);
+  rows.push([reportPeriodPrefix(), rangeLabel]);
   rows.push([""]);
 
   if (_reportCache.summary) {
@@ -822,7 +1119,7 @@ function exportReportCSV() {
     rows.push(["Requests by Category"]);
     rows.push(["Category", "Total"]);
     _reportCache.byCategory.forEach((r) =>
-      rows.push([r.equipmentType, r.total]),
+      rows.push([r.name, r.total]),
     );
     rows.push([""]);
   }
@@ -913,11 +1210,70 @@ function exportReportCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `maintenance-report-${_reportFilter.dateFrom || "all"}-${_reportFilter.dateTo || "all"}.csv`;
+  a.download = reportFilename("csv");
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/* ── Excel Export ──────────────────────────────────────────
+   Downloads a server-generated .xlsx for the SAME period currently displayed.
+   Uses a raw fetch (not apiRequest) because the response is a binary blob,
+   not JSON, and disables the button for the duration so a double click can
+   never start two downloads. */
+async function exportReportExcel() {
+  if (_reportExportInFlight) return;
+  if (!collectReportFilter() || !validateReportFilter()) return;
+
+  const btn = document.getElementById("exportExcelBtn");
+  const originalHtml = btn ? btn.innerHTML : "";
+  _reportExportInFlight = true;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML =
+      '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span><span>…</span>';
+  }
+
+  try {
+    const qs = new URLSearchParams(reportQueryObject()).toString();
+    const url = `${resolveApiBase()}/reports/export${qs ? `?${qs}` : ""}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+      signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined,
+    });
+
+    if (!response.ok) {
+      let message = "Excel export failed.";
+      try {
+        const payload = await response.json();
+        if (payload && payload.message) message = payload.message;
+      } catch (_) {
+        /* Non-JSON error body — keep the generic message. */
+      }
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = reportFilename("xlsx");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(href);
+    showToast("Excel report downloaded.", "success");
+  } catch (err) {
+    showToast(err.message || "Excel export failed.", "danger");
+  } finally {
+    _reportExportInFlight = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  }
 }
 
 /* ── Helpers ──────────────────────────────────────────────── */
@@ -1079,40 +1435,57 @@ function startDashboardAutoRefresh() {
 }
 
 async function refreshAdminDashboard() {
-  /* These four are independent — fetch them concurrently instead of
+  /* These three are independent — fetch them concurrently instead of
      serially, and mirror the ?limit=8 the initial load uses. The old
      unbounded GET /tickets pulled the entire ticket table over the wire every
-     minute just to render eight rows. */
-  const [dashRes, ticketsRes, byStatusRes, maintRes] = await Promise.allSettled([
+     minute just to render eight rows. Status counts come from the dashboard
+     stats aggregation, avoiding a second full ticket scan. */
+  const [dashRes, ticketsRes, maintRes] = await Promise.allSettled([
     apiRequest("/reports/dashboard"),
     apiRequest("/tickets?limit=8&includeFeedback=true"),
-    apiRequest("/reports/requests-by-status"),
     apiRequest("/maintenance/my"),
   ]);
 
   /* ── KPI stats + pending badge ── */
   if (dashRes.status === "fulfilled") {
-    const { data: s } = dashRes.value;
-    /* setCount, not animateCount: re-running the count-up from zero every
-       60s made settled KPIs visibly re-roll, which reads as a loading state
-       even though nothing was loading. */
-    setCount("kpiUsers", s.total_users);
-    setCount("kpiAssets", s.total_assets);
-    setCount("kpiPending", s.pending);
-    setCount("kpiCompleted", s.completed);
-    setCount("kpiInProgress", s.in_progress);
-    setCount("kpiTechnicians", s.total_technicians);
-    const total = (s.pending || 0) + (s.in_progress || 0) + (s.completed || 0);
-    setCount("kpiTotal", total);
-    setCount("kpiOverdue", s.overdue || 0);
-    setCount("kpiNetTotal", s.network_total);
-    setCount("kpiNetPending", s.network_pending);
-    setCount("kpiNetInProgress", s.network_in_progress);
-    setCount("kpiNetResolved", s.network_resolved);
-    const pb = document.getElementById("pendingBadge");
-    if (pb) {
-      pb.textContent = `${s.pending} Pending`;
-      pb.className = `badge ${s.pending > 0 ? "bg-danger" : "bg-success"}`;
+    try {
+      const s = await loadDashboardStats(dashRes.value);
+      /* setCount, not animateCount: re-running the count-up from zero every
+         60s made settled KPIs visibly re-roll, which reads as a loading state
+         even though nothing was loading. */
+      setCount("kpiUsers", s.total_users);
+      setCount("kpiAssets", s.total_assets);
+      setCount("kpiPending", s.pending);
+      setCount("kpiCompleted", s.completed);
+      setCount("kpiInProgress", s.in_progress);
+      setCount("kpiTechnicians", s.total_technicians);
+      setCount("kpiTotal", s.total_tickets);
+      setCount("kpiOverdue", s.overdue);
+      setCount("kpiNetTotal", s.network_total);
+      setCount("kpiNetPending", s.network_pending);
+      setCount("kpiNetInProgress", s.network_in_progress);
+      setCount("kpiNetResolved", s.network_resolved);
+      const pb = document.getElementById("pendingBadge");
+      if (pb) {
+        pb.textContent = `${s.pending} Pending`;
+        pb.className = `badge ${s.pending > 0 ? "bg-danger" : "bg-success"}`;
+      }
+      renderMiniBars(
+        "statusMiniChart",
+        dashboardStatusRows(s),
+        "status",
+        "total",
+        statusColour,
+      );
+    } catch (err) {
+      console.error("[admin-dashboard] Statistics refresh failed.", {
+        message: err?.message || "Unknown statistics refresh error.",
+      });
+      const chart = document.getElementById("statusMiniChart");
+      if (chart) {
+        chart.innerHTML = `<p class="text-danger small text-center py-2">Statistics could not be refreshed. ${escHtml(err.message || "")}</p>
+          <button type="button" class="btn btn-sm btn-outline-primary d-block mx-auto" onclick="initAdminDashboard()">Retry</button>`;
+      }
     }
   }
 
@@ -1126,12 +1499,6 @@ async function refreshAdminDashboard() {
         ? reqs.slice(0, 8).map(recentRequestRow).join("")
         : emptyRow(7, "No requests yet.");
     }
-  }
-
-  /* ── Status mini chart ── */
-  if (byStatusRes.status === "fulfilled") {
-    const { data: byStatus } = byStatusRes.value;
-    renderMiniBars("statusMiniChart", byStatus, "status", "total", statusColour);
   }
 
   /* ── Recent maintenance activity ──

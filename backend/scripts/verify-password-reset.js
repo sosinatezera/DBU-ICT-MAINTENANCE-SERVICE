@@ -9,7 +9,7 @@
  *   [C] OTP attempt budget (brute-force lockout, even for the correct code)
  *   [D] OTP expiration (server-enforced; client timers are irrelevant)
  *   [E] single-use reset authorization (token cannot be replayed)
- *   [F] reset-session expiry
+ *   [F] reset-token expiry
  *   [G] password updated securely + role preserved + login with new password
  *   [H] rate limiting: a legitimate request is never blocked, and the limit
  *       eventually engages with a usable Retry-After (skipped with
@@ -49,7 +49,7 @@ const TEST_EMAILS = {
   happy: `pwdreset.happy.${RUN_ID}@gmail.com`,
   expiredCode: `pwdreset.expcode.${RUN_ID}@gmail.com`,
   lockout: `pwdreset.lockout.${RUN_ID}@gmail.com`,
-  expiredSession: `pwdreset.expsess.${RUN_ID}@gmail.com`,
+  expiredToken: `pwdreset.exptoken.${RUN_ID}@gmail.com`,
   rateLimit: `pwdreset.ratelimit.${RUN_ID}@gmail.com`,
 };
 const SKIP_RATE_LIMIT_TEST = process.env.SKIP_RATE_LIMIT_TEST === '1';
@@ -58,7 +58,7 @@ const NEW_PASSWORD = 'NewPass456!';
 const HAPPY_CODE = '123456';
 const EXPIRED_CODE = '654321';
 const LOCK_CODE = '111111';
-const SESSION_CODE = '222222';
+const EXPIRED_TOKEN_CODE = '222222';
 
 let failCount = 0, passCount = 0;
 const ok = (msg) => { passCount++; console.log(`  ✔  ${msg}`); };
@@ -274,25 +274,25 @@ async function main() {
       else ok('weak password rejected by backend policy');
     }
 
-    /* ── [F] Expired reset session ────────────────────────────────── */
-    console.log('\n  [F] RESET-SESSION EXPIRY\n');
-    const sessUser = await seedUser(TEST_EMAILS.expiredSession, SESSION_CODE);
-    created.push(sessUser._id);
-    const sessVerify = await postJson('/verify-reset-code', { email: TEST_EMAILS.expiredSession, code: SESSION_CODE });
-    if (sessVerify.status === 200 && /^[a-f0-9]{64}$/i.test(sessVerify.json.resetToken || '')) {
+    /* ── [F] Expired reset authorization token ────────────────────── */
+    console.log('\n  [F] RESET-TOKEN EXPIRY\n');
+    const expiredTokenUser = await seedUser(TEST_EMAILS.expiredToken, EXPIRED_TOKEN_CODE);
+    created.push(expiredTokenUser._id);
+    const tokenVerify = await postJson('/verify-reset-code', { email: TEST_EMAILS.expiredToken, code: EXPIRED_TOKEN_CODE });
+    if (tokenVerify.status === 200 && /^[a-f0-9]{64}$/i.test(tokenVerify.json.resetToken || '')) {
       await User.updateOne(
-        { email: TEST_EMAILS.expiredSession },
+        { email: TEST_EMAILS.expiredToken },
         { resetPasswordVerifiedExpires: new Date(Date.now() - 60 * 1000) },
       );
-      const sessReset = await postJson('/reset-password', {
-        resetToken: sessVerify.json.resetToken,
+      const expiredTokenReset = await postJson('/reset-password', {
+        resetToken: tokenVerify.json.resetToken,
         password: NEW_PASSWORD,
       });
-      if (sessReset.status !== 400 || !/expired/i.test(sessReset.json.message || ''))
-        bad(`expired reset session → expected 400/expired, got ${sessReset.status} "${sessReset.json.message}"`);
+      if (expiredTokenReset.status !== 400 || !/expired/i.test(expiredTokenReset.json.message || ''))
+        bad(`expired reset token → expected 400/expired, got ${expiredTokenReset.status} "${expiredTokenReset.json.message}"`);
       else ok('expired reset authorization rejected by the server');
     } else {
-      bad('could not establish a reset session for the expiry test');
+      bad('could not establish a reset authorization token for the expiry test');
     }
 
     /* ── [G] Login with the new password ─────────────────────────── */

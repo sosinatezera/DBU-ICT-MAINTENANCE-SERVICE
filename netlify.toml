@@ -2,7 +2,22 @@
   base = "frontend"
   publish = "."
 
+# Keep the browser on the Netlify origin so the HttpOnly session cookie stays
+# first-party, while forwarding API calls to the Render backend.
 [[redirects]]
-  from = "/*"
-  to = "/views/index.html"
+  from = "/api/*"
+  to = "https://dbu-ict-maintenance-service.onrender.com/api/:splat"
   status = 200
+  force = true
+
+[[redirects]]
+  from = "/uploads/*"
+  to = "https://dbu-ict-maintenance-service.onrender.com/uploads/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/socket.io/*"
+  to = "https://dbu-ict-maintenance-service.onrender.com/socket.io/:splat"
+  status = 200
+  force = true

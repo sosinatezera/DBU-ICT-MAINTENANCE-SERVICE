@@ -177,15 +177,102 @@ function bindThemeSwitchers() {
   });
 }
 
+function pauseNavbarAnimationsWhenHidden() {
+  const syncVisibility = () => {
+    document.documentElement.classList.toggle(
+      "navbar-animations-paused",
+      document.hidden,
+    );
+  };
+
+  syncVisibility();
+  document.addEventListener("visibilitychange", syncVisibility);
+}
+
+function initContentRevealAnimations() {
+  if (
+    document.body.classList.contains("public-home-page") ||
+    !("IntersectionObserver" in window)
+  ) {
+    return;
+  }
+
+  const candidates = document.querySelectorAll(
+    "main > section, main .card, main .alert, " +
+      ".auth-body .card, .auth-body .auth-footer, .auth-body img, .auth-body i, " +
+      ".auth-body svg, .auth-body .btn, .auth-body button:not(.btn-close), " +
+      ".assistant-page .assistant-header, .assistant-page .assistant-notice, " +
+      ".assistant-page .assistant-messages, .assistant-page .assistant-composer-wrap, " +
+      ".assistant-page .assistant-welcome, .assistant-page img, .assistant-page i, " +
+      ".assistant-page svg, .assistant-page button:not(.btn-close), " +
+      ".certificate-page .toolbar button, .certificate-page .masthead, " +
+      ".certificate-page .document-heading, .certificate-page .body-copy, " +
+      ".certificate-page .info-section, .certificate-page .approval-section, " +
+      ".certificate-page .approval-block, .certificate-page .footer-note, " +
+      "main img, main i, main svg, main .btn, main button:not(.btn-close)",
+  );
+  const siblingIndexes = new Map();
+
+  candidates.forEach((element) => {
+    if (element.closest(".main-navbar, #sidebar, .topbar")) return;
+    if (element.matches("i, svg") && element.closest("a, button")) return;
+
+    const parent = element.parentElement;
+    const index = siblingIndexes.get(parent) || 0;
+    siblingIndexes.set(parent, index + 1);
+    element.style.setProperty(
+      "--motion-reveal-delay",
+      `${Math.min(index, 5) * 45}ms`,
+    );
+    element.classList.add("motion-reveal");
+  });
+
+  const observer = new IntersectionObserver(
+    (entries, activeObserver) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+
+        entry.target.classList.add("is-visible");
+        activeObserver.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.12, rootMargin: "0px 0px -32px 0px" },
+  );
+
+  document.querySelectorAll(".motion-reveal").forEach((element) => {
+    observer.observe(element);
+  });
+}
+
 /* Initialise: apply the persisted theme and set up controls. */
 function initTheme() {
-  const theme = getTheme();
+  let savedTheme = null;
+  try {
+    savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+  } catch (_) {}
+  const theme = savedTheme || "light";
   applyTheme(theme, false);
   injectThemeSwitch();
   syncThemeSwitchers(
     theme,
   ); /* sync freshly-injected switch icons to saved theme */
   bindThemeSwitchers();
+  pauseNavbarAnimationsWhenHidden();
+  initContentRevealAnimations();
+  if (!savedTheme && typeof apiRequest === "function") {
+    apiRequest("/public/settings")
+      .then((response) => {
+        if (
+          response?.data?.defaultTheme &&
+          !localStorage.getItem(THEME_STORAGE_KEY)
+        ) {
+          applyTheme(response.data.defaultTheme, false);
+        }
+      })
+      .catch((error) => {
+        console.warn("[Theme] Could not load the system default theme.", error.message);
+      });
+  }
 }
 
 if (typeof window !== "undefined") {

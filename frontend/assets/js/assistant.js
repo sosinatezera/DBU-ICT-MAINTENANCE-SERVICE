@@ -222,7 +222,6 @@
         `${API_BASE_RESOLVED}/assistant/conversation/${encodeURIComponent(id)}`,
         {
           method: "DELETE",
-          credentials: "include",
         },
       );
     } catch (_) {}
@@ -463,7 +462,7 @@
     try {
       const response = await fetchWithTimeout(
         `${API_BASE_RESOLVED}/assistant/conversation/${encodeURIComponent(session.conversationId)}`,
-        { credentials: "include" },
+        {},
       );
       if (!response.ok) {
         saveConversationId(null);
@@ -557,7 +556,6 @@
       const response = await fetch(`${API_BASE_RESOLVED}/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           message,
           conversationId: session.conversationId,
@@ -704,7 +702,6 @@
   async function initialize() {
     try {
       const response = await fetchWithTimeout(`${API_BASE_RESOLVED}/auth/me`, {
-        credentials: "include",
         headers: { Accept: "application/json" },
       });
       if (response.ok) {

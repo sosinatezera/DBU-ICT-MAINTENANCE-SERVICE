@@ -8,6 +8,7 @@ const {
   getDashboardStats, getRequestsByStatus, getRequestsByEquipment,
   getTechnicianPerformance, getRequestsByDepartment, getRequestsByCategory,
   getRequestsByIssueType, getRecentFeedback, getNetworkReports,
+  getReportExport,
 } = require('../controllers/reportController');
 const { authenticate } = require('../middleware/auth');
 const { authorize }    = require('../middleware/authorize');
@@ -21,5 +22,6 @@ router.get('/requests-by-category',   authenticate, authorize('ICT Admin'), getR
 router.get('/requests-by-issue-type', authenticate, authorize('ICT Admin'), getRequestsByIssueType);
 router.get('/recent-feedback',        authenticate, authorize('ICT Admin'), getRecentFeedback);
 router.get('/network',                authenticate, authorize('ICT Admin'), getNetworkReports);
+router.get('/export',                 authenticate, authorize('ICT Admin'), getReportExport);
 
 module.exports = router;

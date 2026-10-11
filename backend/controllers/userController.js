@@ -551,9 +551,17 @@ const updateMyProfile = async (req, res, next) => {
     }
 
     if (department !== undefined) {
-      update.department = department
-        ? sanitizeString(String(department)).slice(0, 120)
-        : null;
+      const normalizedDepartment = department
+        ? sanitizeString(String(department))
+        : "";
+      const departmentErr = validateLength(normalizedDepartment, "Department", {
+        max: 120,
+      });
+      if (departmentErr)
+        return res
+          .status(400)
+          .json({ success: false, message: departmentErr });
+      update.department = normalizedDepartment || null;
     }
 
     if (gender !== undefined) {
@@ -740,9 +748,9 @@ const changeMyPassword = async (req, res, next) => {
 
     const match = await bcrypt.compare(currentPassword, user.password);
     if (!match) {
-      /* 400, not 401: the session is still perfectly valid — only the
+      /* 400, not 401: the access token is still valid — only the
          submitted value is wrong. The shared frontend apiRequest() treats ANY
-         401 as an expired session and force-redirects to the login page, so a
+         401 as an expired token and force-redirects to the login page, so a
          401 here would log the user out for simply mistyping their password. */
       return res
         .status(400)

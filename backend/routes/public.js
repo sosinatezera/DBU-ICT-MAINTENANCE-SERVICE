@@ -8,6 +8,48 @@ const User       = require('../models/User');
 const ICTAsset   = require('../models/ICTAsset');
 const Technician = require('../models/Technician');
 const Ticket     = require('../models/Ticket');
+const Settings   = require('../models/Settings');
+
+router.get('/settings', async (_req, res, next) => {
+  try {
+    const settings = await Settings.getInstance();
+    res.set('Cache-Control', 'public, max-age=30');
+    res.json({
+      success: true,
+      data: {
+        systemName: settings.systemName,
+        organizationName: settings.organizationName,
+        defaultLanguage: settings.defaultLanguage,
+        defaultTheme: settings.defaultTheme,
+        timezone: settings.timezone,
+        dateFormat: settings.dateFormat,
+        timeFormat: settings.timeFormat,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/maintenance-mode', async (_req, res, next) => {
+  try {
+    const settings = await Settings.findOne()
+      .select('maintenanceMode maintenanceNotice')
+      .lean();
+    res.set('Cache-Control', 'no-store');
+    res.json({
+      success: true,
+      data: {
+        enabled: settings?.maintenanceMode === true,
+        notice:
+          settings?.maintenanceNotice ||
+          'The system is temporarily unavailable while maintenance is in progress.',
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /* GET /api/public/stats — aggregate counts only (no PII) */
 

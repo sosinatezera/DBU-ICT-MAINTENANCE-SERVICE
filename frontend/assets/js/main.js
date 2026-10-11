@@ -12,26 +12,75 @@ function resolveApiBase() {
 }
 
 /* ── Auth Helpers ─────────────────────────────────────────── */
-let _sessionUser = null;
-let _sessionLoaded = false;
-/* A session is only "resolved" once the server actually answered. Until then
-   the state is UNKNOWN — which is not the same as signed out. */
-let _sessionResolved = false;
-/* HTTP status of the last /auth/me response, or null if the request never
-   completed. Lets apiRequest('/auth/me') tell a definitive 401 (session gone)
-   apart from a network fault, so the redirect-to-login behaviour is preserved
-   instead of degrading into a generic empty result. */
-let _sessionStatus = null;
-let _sessionPromise = null;
+let _authUser = null;
+let _authLoaded = false;
+let _authResolved = false;
+let _authStatus = null;
+let _authPromise = null;
 const API_REQUEST_TIMEOUT_MS = 15000;
+
+function dashboardForRole(role) {
+  const dashboards = {
+    Requester: "/views/user/dashboard.html",
+    Technician: "/views/technician/dashboard.html",
+    "ICT Admin": "/views/admin/dashboard.html",
+  };
+  return Object.prototype.hasOwnProperty.call(dashboards, role)
+    ? dashboards[role]
+    : null;
+}
+
+function enforceRolePage(user) {
+  if (!user || isPublicPagePath(window.location.pathname)) return;
+
+  const match = window.location.pathname.match(
+    /^\/views\/(admin|technician|user)\//,
+  );
+  if (!match) return;
+
+  const expectedRole = {
+    admin: "ICT Admin",
+    technician: "Technician",
+    user: "Requester",
+  }[match[1]];
+  const actualRole = user.role;
+  if (!dashboardForRole(actualRole)) {
+    Auth.clear();
+    if (!window.__authRedirecting) {
+      window.__authRedirecting = true;
+      window.location.replace("/views/login.html");
+    }
+    return;
+  }
+  if (actualRole !== expectedRole) {
+    const dashboard = dashboardForRole(actualRole);
+    if (dashboard && window.location.pathname !== dashboard) {
+      window.location.replace(dashboard);
+    }
+  }
+}
+
 const Auth = {
-  setToken: () => {},
-  getToken: () => null,
-  setUser: (u) => {
-    _sessionUser = u || null;
-    _sessionResolved = true;
+  setToken: (token) => {
+    if (typeof token !== "string" || !token) {
+      throw new Error("A valid access token is required.");
+    }
+    localStorage.setItem(window.__AUTH_TOKEN_STORAGE_KEY, token);
   },
-  getUser: () => _sessionUser,
+  getToken: () => {
+    try {
+      return localStorage.getItem(window.__AUTH_TOKEN_STORAGE_KEY);
+    } catch (error) {
+      console.error("[Auth] Could not read the saved access token.", error);
+      return null;
+    }
+  },
+  setUser: (u) => {
+    _authUser = u || null;
+    _authResolved = true;
+    if (_authUser) applyProfileAvatars(_authUser);
+  },
+  getUser: () => _authUser,
   refresh: async () => {
     const controller = new AbortController();
     const timer = setTimeout(
@@ -40,10 +89,9 @@ const Auth = {
     );
     try {
       const response = await fetch(resolveApiBase() + "/auth/me", {
-        credentials: "include",
         signal: controller.signal,
       });
-      _sessionStatus = response.status;
+      _authStatus = response.status;
       let data;
       try {
         data = await response.json();
@@ -52,7 +100,7 @@ const Auth = {
       }
       if (response.status === 401) {
         Auth.clear();
-        const error = new Error("Session expired. Please log in again.");
+        const error = new Error("Access token expired. Please log in again.");
         error.status = 401;
         throw error;
       }
@@ -63,84 +111,119 @@ const Auth = {
         error.status = response.status;
         throw error;
       }
-      _sessionUser = data.user;
-      _sessionLoaded = true;
-      _sessionResolved = true;
-      return _sessionUser;
+      _authUser = data.user;
+      _authLoaded = true;
+      _authResolved = true;
+      enforceRolePage(_authUser);
+      applyProfileAvatars(_authUser);
+      return _authUser;
     } finally {
       clearTimeout(timer);
     }
   },
-  /* "known"   — the server answered (200 or 401); _sessionUser is trustworthy.
+  /* "known"   — the server answered (200 or 401); _authUser is trustworthy.
      "unknown" — the request never completed, so we have no evidence either way. */
-  getStatus: () => (_sessionResolved ? "known" : "unknown"),
+  getStatus: () => (_authResolved ? "known" : "unknown"),
+  getHttpStatus: () => _authStatus,
   clear: () => {
     if (typeof stopGlobalNotificationMonitor === "function") {
       stopGlobalNotificationMonitor();
     }
-    _sessionUser = null;
-    _sessionLoaded = true;
-    _sessionResolved = true;
+    invalidateGetCache();
+    try {
+      localStorage.removeItem(window.__AUTH_TOKEN_STORAGE_KEY);
+    } catch (error) {
+      console.error("[Auth] Could not clear the saved access token.", error);
+    }
+    _authUser = null;
+    _authLoaded = true;
+    _authResolved = true;
   },
-  isLoggedIn: () => !!_sessionUser,
+  isLoggedIn: () => !!_authUser,
   load: async () => {
-    if (_sessionLoaded) return _sessionUser;
-    if (_sessionPromise) return _sessionPromise;
+    if (_authLoaded) return _authUser;
+    if (_authPromise) return _authPromise;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
-    _sessionPromise = fetch(resolveApiBase() + "/auth/me", {
-      credentials: "include",
+    _authPromise = fetch(resolveApiBase() + "/auth/me", {
       signal: controller.signal,
     })
       .then(async (res) => {
-        _sessionStatus = res.status;
-        /* 401 is the ONLY authoritative proof that the session is gone. */
+        _authStatus = res.status;
         if (res.status === 401) {
-          _sessionUser = null;
-          _sessionLoaded = true;
-          _sessionResolved = true;
+          Auth.clear();
           return null;
         }
-        /* Reachable but unusable (5xx, bad gateway, 403): not proof of logout.
-           Leave the current state alone and stay retryable. */
-        if (!res.ok) return _sessionUser;
+        /* Reachable but unavailable: preserve the token and allow retry. */
+        if (!res.ok) {
+          if (res.status >= 500) {
+            showOfflineBanner(
+              "The service is temporarily unavailable. Your access token has not been cleared.",
+            );
+          } else if (res.status === 429) {
+            showOfflineBanner(
+              "Access-token verification is temporarily rate limited. Wait briefly and retry.",
+            );
+          } else if (res.status === 403) {
+            showOfflineBanner(
+              "This account is not currently permitted to access the service.",
+            );
+          }
+          return _authUser;
+        }
         const text = await res.text();
         let data = {};
         try {
           data = text ? JSON.parse(text) : {};
         } catch (_) {}
-        _sessionUser = data.user || null;
-        _sessionLoaded = true;
-        _sessionResolved = true;
-        return _sessionUser;
+        if (data.success !== true || !data.user) {
+          _authLoaded = true;
+          _authResolved = false;
+          _authStatus = null;
+          console.warn(
+            "[Auth] Access-token endpoint returned an invalid response; preserving authentication state.",
+          );
+          return _authUser;
+        }
+        _authUser = data.user;
+        _authLoaded = true;
+        _authResolved = true;
+        enforceRolePage(_authUser);
+        applyProfileAvatars(_authUser);
+        return _authUser;
       })
       .catch(() => {
         /* No response at all — DNS failure, connection refused, a blocked CORS
            preflight/response, offline, or an abort. This is NOT evidence that
-           the session ended. Treating it as "logged out" is what bounced a
+           the token expired. Treating it as "logged out" would bounce a
            correctly authenticated user straight back to the login page, so the
            last known state is preserved and the lookup stays retryable. */
-        return _sessionUser;
+        showOfflineBanner(
+          "Unable to verify your access token because the service could not be reached. The token has not been cleared.",
+        );
+        return _authUser;
       })
       .finally(() => {
         clearTimeout(timer);
-        _sessionPromise = null;
+        _authPromise = null;
       });
-    return _sessionPromise;
+    return _authPromise;
   },
 };
 
+window.addEventListener("ict:auth-expired", () => Auth.clear());
+
 /* Public pages (index, login, register, password reset) never mount an app
-   shell, so nothing ever calls Auth.load() there and the session request is
-   pure overhead. Warm it up only for pages that actually need a session. */
+   shell, so nothing ever calls Auth.load() there and the auth request is
+   pure overhead. Warm it up only for pages that actually need authentication. */
 function isPublicPagePath(pathname) {
   return /\/(index|login|register|forgot-password|reset-password)\.html$/.test(
     pathname,
   );
 }
 
-/* Start the session lookup as early as possible.
-   Auth.load() is already idempotent and de-duplicated (_sessionPromise), so
+/* Start the auth lookup as early as possible.
+   Auth.load() is already idempotent and de-duplicated (_authPromise), so
    calling it here means the request is in flight while the rest of the page is
    still parsing. Every page init chain awaits Auth.load(); issuing the request
    at parse time removes one full HTTP round-trip from the critical path and
@@ -166,7 +249,7 @@ const _inFlightRequests = new Map();
 /* Short-lived successful-GET cache.
    Re-hydrating shared reference data (the current user, system settings,
    category lists) on every page and every modal-open costs a full HTTP +
-   MongoDB round-trip for data that virtually never changes within a session.
+   MongoDB round-trip for data that virtually never changes within one page view.
    Entries live for a few seconds only, so a mutation immediately followed by a
    refetch still sees fresh data — the cache only absorbs bursts of identical
    concurrent/rapid reads, which is exactly the wasteful pattern.
@@ -208,7 +291,7 @@ async function _apiRequestInner(
 ) {
   const headers = {};
   if (!isFormData) headers["Content-Type"] = "application/json";
-  const opts = { method, headers, credentials: "include" };
+  const opts = { method, headers };
   if (body) opts.body = isFormData ? body : JSON.stringify(body);
 
   /* Abort requests that never settle so the UI can never be stuck on an
@@ -262,7 +345,7 @@ async function _apiRequestInner(
       window.location.href = "/views/login.html";
     }
     const e = new Error(
-      data.message || "Session expired. Please log in again.",
+      data.message || "Access token expired. Please log in again.",
     );
     e.status = res.status;
     e.data = data;
@@ -277,8 +360,22 @@ async function _apiRequestInner(
       422: data.message || "The submitted data is invalid.",
       500: data.message || "A server error occurred. Please try again.",
     };
+    const routeNotRegistered =
+      res.status === 404 && data.message === "Route not found.";
+    const routePath = String(endpoint).split("?")[0];
+    if (
+      routeNotRegistered &&
+      (["localhost", "127.0.0.1"].includes(window.location.hostname) ||
+        window.__DEBUG_API__ === true)
+    ) {
+      console.error(
+        `[apiRequest] Backend route not registered: ${method} ${routePath}. Check the API base URL and backend deployment.`,
+      );
+    }
     const e = new Error(
-      data.message || friendly[res.status] || `Error ${res.status}`,
+      routeNotRegistered
+        ? `The backend does not have ${method} ${routePath} registered. Check that the API base URL points to the expected backend and deploy or restart the backend with the current routes.`
+        : data.message || friendly[res.status] || `Error ${res.status}`,
     );
     e.status = res.status;
     e.data = data;
@@ -292,30 +389,29 @@ async function _apiRequestInner(
 async function apiRequest(endpoint, opts = {}) {
   const method = opts.method || "GET";
 
-  /* The session lookup gets its own path. Auth.load() already de-duplicates
-     itself (_sessionPromise) and is fired at parse time for every non-public
+  /* The auth lookup gets its own path. Auth.load() already de-duplicates
+     itself (_authPromise) and is fired at parse time for every non-public
      page, so routing apiRequest('/auth/me') through it turns the duplicate
      calls in admin/dashboard.html, technician/profile.html and user/profile.html
      into zero extra requests — those pages were issuing two /auth/me round
      trips on every load.
 
-     Deliberately placed BEFORE the GET cache: session state must never be
+     Deliberately placed BEFORE the GET cache: auth state must never be
      served from the 4s read cache, and a mutation that calls
-     invalidateGetCache() must not be needed to observe a fresh session. */
+     invalidateGetCache() must not be needed to observe fresh auth state. */
   if (method === "GET" && endpoint === "/auth/me") {
     const user = await Auth.load();
-    /* Preserve the contract callers had before this path was shared: a 401
-       still throws with .status/.redirected set, so the existing redirect and
-       "session expired" handling in _apiRequestInner's callers is unchanged.
+    /* Preserve the API contract: a 401 still throws with .status/.redirected
+       set, so callers can distinguish an expired access token.
        A network fault (no status at all) resolves to a null user instead, which
        every call site already handles. */
-    if (_sessionStatus === 401) {
+    if (_authStatus === 401) {
       Auth.clear();
       if (!window.__authRedirecting) {
         window.__authRedirecting = true;
         window.location.href = "/views/login.html";
       }
-      const e = new Error("Session expired. Please log in again.");
+      const e = new Error("Access token expired. Please log in again.");
       e.status = 401;
       e.redirected = true;
       throw e;
@@ -358,8 +454,9 @@ function apiUploadWithProgress(endpoint, formData, onProgress = () => {}) {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open("POST", resolveApiBase() + endpoint);
-    request.withCredentials = true;
     request.timeout = API_REQUEST_TIMEOUT_MS;
+    const token = Auth.getToken();
+    if (token) request.setRequestHeader("Authorization", `Bearer ${token}`);
 
     request.upload.addEventListener("progress", (event) => {
       if (event.lengthComputable) {
@@ -383,7 +480,7 @@ function apiUploadWithProgress(endpoint, formData, onProgress = () => {}) {
           window.location.href = "/views/login.html";
         }
         const error = new Error(
-          data.message || "Session expired. Please log in again.",
+          data.message || "Access token expired. Please log in again.",
         );
         error.status = 401;
         error.data = data;
@@ -426,22 +523,38 @@ function apiUploadWithProgress(endpoint, formData, onProgress = () => {}) {
 }
 
 /* ── Offline Banner ───────────────────────────────────────── */
-function showOfflineBanner() {
+function showOfflineBanner(
+  message = "Cannot connect to the backend API. Your access token has not been cleared.",
+) {
   let banner = document.getElementById("offlineBanner");
   if (!banner) {
     banner = document.createElement("div");
     banner.id = "offlineBanner";
-    banner.innerHTML = `
-      <div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc3545;color:#fff;
-                  text-align:center;padding:10px 16px;font-size:.875rem;font-weight:500;">
-        <i class="bi bi-wifi-off me-2"></i>
-        Cannot connect to the backend API. 
-        Make sure the backend server is running and reachable.
-        <button onclick="document.getElementById('offlineBanner').remove()" 
-                style="background:none;border:none;color:#fff;margin-left:12px;font-size:1rem;cursor:pointer;">✕</button>
-      </div>`;
+    const content = document.createElement("div");
+    content.style.cssText =
+      "position:fixed;top:0;left:0;right:0;z-index:9999;background:#dc3545;color:#fff;text-align:center;padding:10px 16px;font-size:.875rem;font-weight:500;";
+    const messageElement = document.createElement("span");
+    messageElement.className = "offline-banner-message";
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.textContent = "Retry";
+    retry.setAttribute("aria-label", "Retry connecting to the backend");
+    retry.style.cssText =
+      "background:#fff;border:0;border-radius:4px;color:#842029;margin-left:12px;padding:3px 10px;font-weight:600;cursor:pointer;";
+    retry.addEventListener("click", () => window.location.reload());
+    const dismiss = document.createElement("button");
+    dismiss.type = "button";
+    dismiss.textContent = "✕";
+    dismiss.setAttribute("aria-label", "Dismiss connection message");
+    dismiss.style.cssText =
+      "background:none;border:0;color:#fff;margin-left:12px;font-size:1rem;cursor:pointer;";
+    dismiss.addEventListener("click", () => banner.remove());
+    content.append(messageElement, retry, dismiss);
+    banner.appendChild(content);
     document.body.prepend(banner);
   }
+  const messageElement = banner.querySelector(".offline-banner-message");
+  if (messageElement) messageElement.textContent = message;
 }
 function hideOfflineBanner() {
   /* Any API response proves the backend is reachable again. Failed requests
@@ -548,35 +661,82 @@ function priorityBadge(priority) {
   return `<span class="badge bg-${colour}">${label}</span>`;
 }
 
-/* ── System preferences (time zone + date format) ──────────
+/* ── System preferences (identity + regional formatting) ────
    The ICT Admin chooses Ethiopian Time (EAT) / Ethiopian Calendar (EC) in
    Settings → General → Regional & Format. The values are persisted in the
-   MongoDB Settings singleton, so after saving and refreshing the dashboard
-   the choice stays active. Non-admin pages cannot read /settings (admin-only
-   route → 403), so they keep the previous browser-local formatting, which for
-   Ethiopian users is already UTC+03:00. */
+   MongoDB Settings singleton. The public settings endpoint exposes only safe
+   display defaults; authenticated personal preferences take precedence. */
 let __sysTimezone = null; /* IANA zone, e.g. 'Africa/Addis_Ababa'          */
 let __sysDateFormat = null; /* e.g. 'EC' = Ethiopian Calendar               */
+let __sysTimeFormat = "24h";
+let __sysName = null;
 let __sysPrefsCached = false;
+
+function applySystemIdentity(systemName) {
+  if (!systemName) return;
+  const defaultName = "Smart ICT Maintenance Management System";
+  let titleBase = document.title.trim();
+  for (const knownName of [__sysName, defaultName].filter(Boolean)) {
+    if (titleBase === knownName) {
+      titleBase = "";
+      break;
+    }
+    for (const separator of [" — ", " - "]) {
+      const suffix = `${separator}${knownName}`;
+      if (titleBase.endsWith(suffix)) {
+        titleBase = titleBase.slice(0, -suffix.length).trim();
+        break;
+      }
+    }
+  }
+  __sysName = systemName;
+  document.title = titleBase ? `${titleBase} — ${systemName}` : systemName;
+
+  document.querySelectorAll("body *").forEach((element) => {
+    if (
+      element.children.length === 0 &&
+      element.textContent.trim() === "Smart ICT Maintenance Management System"
+    ) {
+      element.textContent = systemName;
+    }
+  });
+}
 
 function loadSystemPrefs() {
   if (__sysPrefsCached) return;
   __sysPrefsCached = true;
-  /* /settings is an admin-only route. Non-admins cannot read it (403), so
-     skip the request entirely instead of burning a round-trip on every page. */
-  const user = Auth.getUser();
-  if (!user || user.role !== "ICT Admin") return;
-  apiRequest("/settings")
+  apiRequest("/public/settings")
     .then((r) => {
       if (r && r.data) {
+        applySystemIdentity(r.data.systemName);
         __sysTimezone = r.data.timezone || null;
         __sysDateFormat = r.data.dateFormat || null;
+        __sysTimeFormat = r.data.timeFormat === "12h" ? "12h" : "24h";
+        if (
+          ["en", "am"].includes(r.data.defaultLanguage) &&
+          typeof window.setLang === "function"
+        ) {
+          let hasPersonalLanguage = false;
+          try {
+            hasPersonalLanguage = Boolean(localStorage.getItem("ict_lang"));
+          } catch (error) {
+            console.warn(
+              "[Preferences] Could not read the saved language preference.",
+              error.message,
+            );
+          }
+          if (!hasPersonalLanguage) window.setLang(r.data.defaultLanguage, false);
+        }
       }
     })
     .catch(() => {
-      /* non-admin (403) or offline → keep previous defaults */
+      /* Public preferences are optional; retain browser defaults if unavailable. */
     });
 }
+
+document.addEventListener("lang:changed", () => {
+  if (__sysName) applySystemIdentity(__sysName);
+});
 
 /* Restore the authenticated user's display preferences on every app page.
      localStorage gives an instant first paint; the saved account values remain
@@ -605,6 +765,7 @@ async function loadAccountPreferences(user) {
 window.__ictPrefs = {
   timezone: () => __sysTimezone,
   dateFormat: () => __sysDateFormat,
+  timeFormat: () => __sysTimeFormat,
   refresh: () => {
     __sysPrefsCached = false;
     loadSystemPrefs();
@@ -703,11 +864,29 @@ function formatEthiopianDate(parts) {
   return `${e.day} ${mo} ${e.year}`;
 }
 
+function formatSystemDate(parts) {
+  const day = String(parts.day).padStart(2, "0");
+  const month = String(parts.month).padStart(2, "0");
+  const year = String(parts.year);
+  switch (__sysDateFormat) {
+    case "YYYY-MM-DD": return `${year}-${month}-${day}`;
+    case "MM/DD/YYYY": return `${month}/${day}/${year}`;
+    case "DD-MM-YYYY": return `${day}-${month}-${year}`;
+    case "DD/MM/YYYY": return `${day}/${month}/${year}`;
+    default: return new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(Date.UTC(parts.year, parts.month - 1, parts.day)));
+  }
+}
+
 function formatDate(d) {
   if (!d) return "—";
   const c = wallClockParts(d, __sysTimezone);
   if (!c) return "—";
   if (__sysDateFormat === "EC") return formatEthiopianDate(c);
+  if (__sysDateFormat) return formatSystemDate(c);
   const opts = { day: "2-digit", month: "short", year: "numeric" };
   if (__sysTimezone) opts.timeZone = __sysTimezone;
   return new Intl.DateTimeFormat("en-GB", opts).format(new Date(d));
@@ -717,20 +896,24 @@ function formatDateTime(d) {
   if (!d) return "—";
   const c = wallClockParts(d, __sysTimezone);
   if (!c) return "—";
-  if (__sysDateFormat === "EC") {
-    const hh = String(c.hour).padStart(2, "0");
-    const mm = String(c.minute).padStart(2, "0");
-    return `${formatEthiopianDate(c)}, ${hh}:${mm}`;
-  }
-  const opts = {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
+  const time = new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
-  };
-  if (__sysTimezone) opts.timeZone = __sysTimezone;
-  return new Intl.DateTimeFormat("en-GB", opts).format(new Date(d));
+    hour12: __sysTimeFormat === "12h",
+    ...(__sysTimezone ? { timeZone: __sysTimezone } : {}),
+  }).format(new Date(d));
+  if (__sysDateFormat === "EC") {
+    return `${formatEthiopianDate(c)}, ${time}`;
+  }
+  const date = __sysDateFormat
+    ? formatSystemDate(c)
+    : new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      ...(__sysTimezone ? { timeZone: __sysTimezone } : {}),
+    }).format(new Date(d));
+  return `${date}, ${time}`;
 }
 
 /* Relative time is elapsed real time, so it is identical in every time zone —
@@ -791,26 +974,11 @@ function isValidRole(role) {
 /* ── Auth Guards ──────────────────────────────────────────── */
 async function logout() {
   stopGlobalNotificationMonitor();
-  try {
-    /* Bounded: a hung backend must never keep the user on a disabled button
-       forever. The session cookie is cleared client-side regardless, so an
-       aborted request still ends up logged out. */
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
-    try {
-      await fetch(resolveApiBase() + "/auth/logout", {
-        method: "POST",
-        credentials: "include",
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timer);
-    }
-  } catch (_) {}
   Auth.clear();
-  window.location.href = "/views/login.html";
+  window.location.replace("/views/login.html");
+  return true;
 }
-/* Shared by settleSessionLoaders() (auth-failure path) and the universal
+/* Shared by settleAuthLoaders() (auth-failure path) and the universal
    watchdog below, so both produce the same Retry affordance. The class name
    is parameterised so the two paths can never mark each other's output. */
 function addLoaderRetryButton(container, markerClass) {
@@ -824,9 +992,9 @@ function addLoaderRetryButton(container, markerClass) {
   container.appendChild(button);
 }
 
-function settleSessionLoaders() {
+function settleAuthLoaders() {
   const addRetryButton = (container) =>
-    addLoaderRetryButton(container, "session-load-retry");
+    addLoaderRetryButton(container, "auth-load-retry");
 
   const loadingText = /^loading\b[\s\S]{0,100}(?:\.\.\.|…)?$/i;
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -839,7 +1007,7 @@ function settleSessionLoaders() {
     if (!owner || owner.closest("button, [role='button'], .d-none, [hidden]"))
       return;
     node.nodeValue = "Data could not be loaded.";
-    owner.classList.add("text-danger", "session-load-message");
+    owner.classList.add("text-danger", "auth-load-message");
     addRetryButton(owner);
   });
 
@@ -855,9 +1023,9 @@ function settleSessionLoaders() {
       const container = spinner.parentElement;
       if (!container) return;
       spinner.remove();
-      if (!container.querySelector(".session-load-message")) {
+      if (!container.querySelector(".auth-load-message")) {
         const message = document.createElement("span");
-        message.className = "text-danger small session-load-message";
+        message.className = "text-danger small auth-load-message";
         message.textContent = "This section could not be loaded.";
         container.appendChild(message);
       }
@@ -960,17 +1128,15 @@ function installLoaderWatchdog() {
 
 function requireAuth() {
   if (!Auth.isLoggedIn()) {
-    /* If the session lookup never reached the server we have no evidence that
-       the user signed out. Bouncing to the login page here would destroy a
-       perfectly valid session over a network or CORS fault, so surface the
+    /* If token verification never reached the server, preserve the current
+       state and surface the
        connectivity problem instead and let the user retry. */
     if (Auth.getStatus() === "unknown") {
       console.warn(
-        "[Auth] Session could not be verified — the server did not respond. " +
-          "Not treating this as a logout; the session may still be valid.",
+        "[Auth] Access token could not be verified — the server did not respond.",
       );
       if (typeof showOfflineBanner === "function") showOfflineBanner();
-      settleSessionLoaders();
+      settleAuthLoaders();
       return null;
     }
     window.__authRedirecting = true;
@@ -978,9 +1144,9 @@ function requireAuth() {
     return null;
   }
   const user = Auth.getUser();
-  /* Validate role - if invalid/obsolete, clear session and force re-login */
+  /* Validate role - if invalid/obsolete, clear the token and force re-login. */
   if (!isValidRole(user.role)) {
-    console.warn("[Auth] Invalid/obsolete role in session:", user.role);
+    console.warn("[Auth] Invalid/obsolete role in authenticated user:", user.role);
     Auth.clear();
     window.__authRedirecting = true;
     window.location.href = "/views/login.html";
@@ -1014,6 +1180,66 @@ function requireRole(...roles) {
 /* ── Profile Image (Avatar) ────────────────────────────────── */
 const DEFAULT_ADMIN_IMAGE = "/assets/images/admin.jpg";
 const DEFAULT_REQUESTER_IMAGE = "/assets/images/user.jpg";
+const _profileImageRequests = new Map();
+const _profileAvatarLoads = new WeakMap();
+const _profileImageLoadErrors = new Set();
+
+function fetchProfileImageBlob(src) {
+  const existingRequest = _profileImageRequests.get(src);
+  if (existingRequest) return existingRequest;
+
+  const request = (async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
+    try {
+      const response = await fetch(src, {
+        headers: { Accept: "image/jpeg, image/png, image/webp" },
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        throw new Error(`Profile photo request failed (HTTP ${response.status}).`);
+      }
+
+      const image = await response.blob();
+      if (
+        !image.size ||
+        !["image/jpeg", "image/png", "image/webp"].includes(image.type)
+      ) {
+        throw new Error("The server returned an invalid profile photo.");
+      }
+      _profileImageLoadErrors.delete(src);
+      return image;
+    } finally {
+      clearTimeout(timer);
+    }
+  })()
+    .catch((error) => {
+      console.warn(
+        "[profile] Could not load the saved photo; showing the user's initial.",
+        error,
+      );
+      throw error;
+    })
+    .finally(() => {
+      _profileImageRequests.delete(src);
+    });
+
+  _profileImageRequests.set(src, request);
+  return request;
+}
+
+function revokeProfileAvatarImage(img) {
+  const objectUrl = img.dataset.profileImageObjectUrl;
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
+  delete img.dataset.profileImageObjectUrl;
+}
+
+function applyProfileAvatars(user) {
+  if (!user) return;
+  document
+    .querySelectorAll("[data-avatar]")
+    .forEach((container) => applyProfileAvatar(user, container));
+}
 
 /* Build an absolute uploads URL that always points to the backend origin,
    regardless of which port the frontend is served from. */
@@ -1052,10 +1278,110 @@ function applyProfileAvatar(user, container) {
 
   const src = resolveProfileAvatar(user);
   if (!src) {
+    revokeProfileAvatarImage(img);
+    delete img.dataset.profileImageSource;
+    delete img.dataset.profileImageLoading;
+    _profileAvatarLoads.delete(img);
+    img.removeAttribute("src");
     img.hidden = true;
     ini.hidden = false;
     return;
   }
+
+  if (user.profileImage) {
+    if (img.dataset.profileImageSource === src) {
+      const pendingLoad = _profileAvatarLoads.get(img);
+      if (pendingLoad) return pendingLoad;
+      if (
+        img.dataset.profileImageObjectUrl &&
+        img.src === img.dataset.profileImageObjectUrl &&
+        img.complete &&
+        img.naturalWidth > 0
+      ) {
+        return Promise.resolve(true);
+      }
+    }
+
+    revokeProfileAvatarImage(img);
+    img.hidden = true;
+    ini.hidden = false;
+    img.dataset.profileImageSource = src;
+    img.dataset.profileImageLoading = "true";
+
+    const load = fetchProfileImageBlob(src)
+      .then(
+        (image) =>
+          new Promise((resolve) => {
+            if (
+              !container.isConnected ||
+              img.dataset.profileImageSource !== src
+            ) {
+              resolve(false);
+              return;
+            }
+
+            const objectUrl = URL.createObjectURL(image);
+            img.dataset.profileImageObjectUrl = objectUrl;
+            img.onload = () => {
+              if (img.dataset.profileImageObjectUrl === objectUrl) {
+                img.hidden = false;
+                ini.hidden = true;
+              }
+              resolve(true);
+            };
+            img.onerror = () => {
+              if (img.dataset.profileImageObjectUrl === objectUrl) {
+                revokeProfileAvatarImage(img);
+                delete img.dataset.profileImageSource;
+                img.hidden = true;
+                ini.hidden = false;
+              }
+              resolve(false);
+            };
+            img.src = objectUrl;
+          }),
+      )
+      .catch(() => {
+        if (img.dataset.profileImageSource === src) {
+          delete img.dataset.profileImageSource;
+          img.hidden = true;
+          ini.hidden = false;
+        }
+        const signedInUser = Auth.getUser();
+        const userId = user.id || user._id;
+        const signedInUserId = signedInUser?.id || signedInUser?._id;
+        if (
+          userId &&
+          String(userId) === String(signedInUserId) &&
+          !_profileImageLoadErrors.has(src)
+        ) {
+          _profileImageLoadErrors.add(src);
+          if (typeof showToast === "function") {
+            showToast(
+              "Could not load your saved profile photo. Showing your initials instead.",
+              "warning",
+            );
+          }
+        }
+        return false;
+      })
+      .finally(() => {
+        if (img.dataset.profileImageSource === src) {
+          delete img.dataset.profileImageLoading;
+        }
+        if (_profileAvatarLoads.get(img) === load) {
+          _profileAvatarLoads.delete(img);
+        }
+      });
+
+    _profileAvatarLoads.set(img, load);
+    return load;
+  }
+
+  revokeProfileAvatarImage(img);
+  delete img.dataset.profileImageSource;
+  delete img.dataset.profileImageLoading;
+  _profileAvatarLoads.delete(img);
   img.loading = "eager";
 
   img.onload = () => {
@@ -1087,7 +1413,7 @@ function applyProfileAvatar(user, container) {
   }
   if (img.src !== abs) {
     img.hidden = true;
-    img.src = src;
+    img.src = abs;
   } else if (img.complete && img.naturalWidth > 0) {
     img.hidden = false;
     ini.hidden = true;
@@ -1121,9 +1447,7 @@ function populateUserInfo() {
   }
 
   /* Apply the profile photo to every avatar marked with [data-avatar] */
-  document
-    .querySelectorAll("[data-avatar]")
-    .forEach((el) => applyProfileAvatar(user, el));
+  applyProfileAvatars(user);
 }
 
 /* ── Sidebar Toggle (mobile) ──────────────────────────────── */
@@ -1244,9 +1568,10 @@ function initSidebarToggle() {
    Every alert on every dashboard is generated by the single
    NotificationSound utility below, so this is the ONLY place the level
    is defined. */
-const NOTIFICATION_SOUND_VOLUME = 1.0;
+const NOTIFICATION_SOUND_VOLUME = 0.1;
 const NOTIFICATION_SOUND_CONFIG = Object.freeze({
   enabledKey: "ict_notification_sound",
+  volumeKey: "ict_notification_volume",
   seenKey: "ict_seen_notifications",
   dedupeMs: 900,
   file: "/assets/sounds/notification.mp3",
@@ -1273,6 +1598,7 @@ const NotificationSound = (() => {
   let currentOscillator = null;
   let currentGain = null;
   let lastPlayAt = 0;
+  let currentVolume = NOTIFICATION_SOUND_VOLUME;
   const audio = new Audio(NOTIFICATION_SOUND_CONFIG.file);
 
   audio.preload = "auto";
@@ -1291,10 +1617,42 @@ const NotificationSound = (() => {
   }
 
   function getVolume() {
-    const value = Number(NOTIFICATION_SOUND_VOLUME);
-    if (!Number.isFinite(value)) return NOTIFICATION_SOUND_VOLUME;
-    return Math.min(1, Math.max(0, value));
+    try {
+      const storedValue = localStorage.getItem(
+        notificationStorageKey(NOTIFICATION_SOUND_CONFIG.volumeKey),
+      );
+      if (storedValue !== null) {
+        const value = Number(storedValue);
+        if (Number.isFinite(value)) {
+          currentVolume = Math.min(1, Math.max(0, value));
+        }
+      }
+    } catch (_) {}
+    return currentVolume;
   }
+
+  function setVolume(value) {
+    const volume = Number(value);
+    if (!Number.isFinite(volume)) {
+      throw new TypeError("Notification volume must be a finite number.");
+    }
+    const normalizedVolume = Math.min(1, Math.max(0, volume));
+    currentVolume = normalizedVolume;
+    try {
+      localStorage.setItem(
+        notificationStorageKey(NOTIFICATION_SOUND_CONFIG.volumeKey),
+        String(normalizedVolume),
+      );
+    } catch (_) {}
+    audio.volume = normalizedVolume;
+    if (normalizedVolume === 0) {
+      pendingSound = false;
+      stopSound();
+    }
+    return normalizedVolume;
+  }
+
+  audio.volume = getVolume();
 
   function unlock() {
     if (unlocked && !pendingSound) return Promise.resolve(true);
@@ -1369,9 +1727,7 @@ const NotificationSound = (() => {
       return false;
     }
     try {
-      /* Keep the synthesized fallback at the same comfortable loudness as
-        the normalized MP3 while still following the global app volume. */
-      const volume = getVolume() * 0.2;
+      const volume = getVolume();
       if (volume <= 0) return false;
       stopSound();
       const now = audioContext.currentTime;
@@ -1424,7 +1780,7 @@ const NotificationSound = (() => {
   }
 
   function play() {
-    if (!isEnabled()) return false;
+    if (!isEnabled() || getVolume() <= 0) return false;
     const now = Date.now();
     if (now - lastPlayAt < NOTIFICATION_SOUND_CONFIG.dedupeMs) {
       return false;
@@ -1433,7 +1789,7 @@ const NotificationSound = (() => {
 
     try {
       stopSound();
-      audio.volume = NOTIFICATION_SOUND_VOLUME;
+      audio.volume = getVolume();
       audio.currentTime = 0;
       const playback = audio.play();
       if (playback && typeof playback.catch === "function") {
@@ -1474,6 +1830,7 @@ const NotificationSound = (() => {
     unlock,
     play,
     setEnabled,
+    setVolume,
     stopSound,
     reset,
     getVolume,
@@ -1746,7 +2103,7 @@ function initSocketIONotifications() {
       : resolveApiBase().replace(/\/api\/?$/, "");
 
   _socket = io(apiOrigin, {
-    withCredentials: true,
+    auth: { token: Auth.getToken() },
     transports: ["websocket", "polling"],
     reconnectionAttempts: MAX_SOCKET_RECONNECT_ATTEMPTS,
     reconnectionDelay: 1000,
@@ -1888,7 +2245,7 @@ const PAGE_TOPBAR_SUBTITLES = {
   "technician/assigned-requests": "Requests awaiting your review and action.",
   "technician/maintenance": "Record and update maintenance activities.",
   "technician/history": "Completed requests and past maintenance work.",
-  "technician/technician-feedback": "Ratings and feedback left by requesters.",
+  "technician/technician-feedback": "Share feedback with ICT Admin and review your maintenance reports.",
   "technician/notifications": "Updates and alerts addressed to you.",
   "technician/profile": "Your profile, specialization and preferences.",
 
@@ -2122,6 +2479,26 @@ function removeSidebarAccountLinks() {
   });
 }
 
+function initTechnicianSidebarMenu(user) {
+  if (normalizeRole(user?.role) !== "Technician") return;
+
+  const sidebar = document.getElementById("sidebar");
+  const nav = sidebar?.querySelector("ul.nav");
+  const accountFooter = sidebar?.querySelector(".mt-auto");
+  if (!sidebar || !nav) return;
+  sidebar.classList.add("technician-work-sidebar");
+
+  let scrollArea = sidebar.querySelector(".technician-sidebar-scroll");
+  if (!scrollArea) {
+    scrollArea = document.createElement("div");
+    scrollArea.className = "technician-sidebar-scroll";
+    nav.before(scrollArea);
+    scrollArea.appendChild(nav);
+  }
+
+  accountFooter?.remove();
+}
+
 /* ── DOM Ready ────────────────────────────────────────────── */
 function enableNavigationPrefetch() {
   if (navigator.connection?.saveData) return;
@@ -2169,6 +2546,73 @@ document.addEventListener("DOMContentLoaded", async () => {
   /* Auth.load() was already started at script-parse time, so this await almost
      always resolves from cache instead of opening a fresh round-trip. */
   const user = await Auth.load();
+  const authEntryPage =
+    /\/(login|forgot-password|reset-password)\.html$/.test(
+      window.location.pathname,
+    );
+  if (
+    !authEntryPage &&
+    Auth.getStatus() === "known" &&
+    Auth.getHttpStatus() === 401 &&
+    !isPublicPagePath(window.location.pathname)
+  ) {
+    Auth.clear();
+    window.location.replace("/views/login.html");
+    return;
+  }
+  if (!authEntryPage) {
+    try {
+      const maintenance = await apiRequest("/public/maintenance-mode");
+      if (
+        maintenance?.success === true &&
+        maintenance.data?.enabled === true &&
+        Auth.getStatus() === "known" &&
+        user?.role !== "ICT Admin"
+      ) {
+        const page = document.createElement("main");
+        page.className =
+          "min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary p-3";
+        const card = document.createElement("section");
+        card.className = "card border-0 shadow-sm";
+        card.style.maxWidth = "36rem";
+        const body = document.createElement("div");
+        body.className = "card-body p-4 p-md-5 text-center";
+        const icon = document.createElement("div");
+        icon.className = "display-4 text-warning mb-3";
+        icon.innerHTML = '<i class="bi bi-cone-striped" aria-hidden="true"></i>';
+        const heading = document.createElement("h1");
+        heading.className = "h3 fw-bold";
+        heading.textContent = "System maintenance";
+        const notice = document.createElement("p");
+        notice.className = "text-body-secondary mb-4";
+        notice.textContent =
+          maintenance.data.notice ||
+          "The system is temporarily unavailable while maintenance is in progress.";
+        body.append(icon, heading, notice);
+        if (user) {
+          const signOut = document.createElement("button");
+          signOut.type = "button";
+          signOut.className = "btn btn-outline-secondary";
+          signOut.textContent = "Sign out";
+          signOut.addEventListener("click", () => void logout());
+          body.appendChild(signOut);
+        } else {
+          const signIn = document.createElement("a");
+          signIn.className = "btn btn-primary";
+          signIn.href = "/views/login.html";
+          signIn.textContent = "Administrator sign in";
+          body.appendChild(signIn);
+        }
+        card.appendChild(body);
+        page.appendChild(card);
+        document.body.replaceChildren(page);
+        document.title = "System maintenance";
+        return;
+      }
+    } catch (error) {
+      console.warn("[maintenance] Could not retrieve maintenance status.", error);
+    }
+  }
   if (user) enableNavigationPrefetch();
   await ensureSharedProfileMenu();
   void loadAccountPreferences(user);
@@ -2177,6 +2621,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   ensureTopbarHeaderStructure();
   injectAppFooter();
   populateUserInfo();
+  initTechnicianSidebarMenu(user);
   initSidebarToggle();
   loadSystemPrefs();
 

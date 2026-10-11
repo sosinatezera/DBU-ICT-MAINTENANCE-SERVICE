@@ -2,8 +2,8 @@
  * verify-issue-type.js — FUNCTIONAL end-to-end verification of the
  * independent Issue Type / Service Type catalogue.
  *
- * Boots the real Express server, talks to the real API over HTTP with a real
- * session cookie, and asserts against the real MongoDB document written.
+ * Boots the real Express server, authenticates with a bearer token, and
+ * asserts against the real MongoDB document written.
  * This is not a syntax check.
  *
  *   node scripts/verify-issue-type.js
@@ -18,6 +18,10 @@ const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 const hierarchy = require("../utils/ictCategoryHierarchy");
+const {
+  TECHNICIAN_FEEDBACK_CATEGORY_GROUPS,
+} = require("../utils/technicianFeedbackCategories");
+const TechnicianFeedback = require("../models/TechnicianFeedback");
 
 const PORT = Number(process.env.VERIFY_PORT || 5099);
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -34,9 +38,14 @@ const ADMIN = {
   password: "Test1234",
 };
 const TECH = { email: `catissue.tec.${STAMP}@gmail.com`, password: "Test1234" };
+const OTHER_TECH = {
+  email: `catissue.othertec.${STAMP}@gmail.com`,
+  password: "Test1234",
+};
 
 const CATS = hierarchy.ICT_CATEGORY_GROUPS[0].categories;
 const createdTicketIds = [];
+const createdCategoryTickets = [];
 let createdAsset = null;
 const createdUserIds = [];
 
@@ -55,10 +64,10 @@ function check(name, cond, detail) {
 }
 
 function makeClient() {
-  let cookie = "";
+  let token = "";
   return async function req(method, p, body, isForm) {
     const headers = { Accept: "application/json" };
-    if (cookie) headers.Cookie = cookie;
+    if (token) headers.Authorization = `Bearer ${token}`;
     let payload;
     if (isForm) payload = body;
     else if (body !== undefined) {
@@ -71,16 +80,13 @@ function makeClient() {
       body: payload,
       redirect: "manual",
     });
-    for (const c of res.headers.getSetCookie
-      ? res.headers.getSetCookie()
-      : []) {
-      const pair = c.split(";")[0];
-      if (pair.startsWith("session=") || !cookie) cookie = pair;
-    }
     let json = null;
     try {
       json = await res.json();
     } catch (_) {}
+    if (p === "/auth/login" && typeof json?.token === "string") {
+      token = json.token;
+    }
     return { status: res.status, body: json };
   };
 }
@@ -144,6 +150,7 @@ function waitForServer(url, timeoutMs = 60000) {
     const req = makeClient();
     const adm = makeClient();
     const tec = makeClient();
+    const otherTec = makeClient();
 
     /* ── accounts ── */
     console.log("\n[setup] requester, ICT admin, technician");
@@ -184,6 +191,7 @@ function waitForServer(url, timeoutMs = 60000) {
     };
     await mkUser(ADMIN.email, "ICT Admin");
     const techId = await mkUser(TECH.email, "Technician");
+    await mkUser(OTHER_TECH.email, "Technician");
     await db.collection("technicians").insertOne({
       user: techId,
       name: "Cat Tech",
@@ -208,6 +216,15 @@ function waitForServer(url, timeoutMs = 60000) {
         await tec("POST", "/auth/login", {
           email: TECH.email,
           password: TECH.password,
+        })
+      ).status === 200,
+    );
+    check(
+      "Second technician logs in",
+      (
+        await otherTec("POST", "/auth/login", {
+          email: OTHER_TECH.email,
+          password: OTHER_TECH.password,
         })
       ).status === 200,
     );
@@ -320,10 +337,30 @@ function waitForServer(url, timeoutMs = 60000) {
         title: `Cat ${category}`,
         description: `Checking the ${category} issue type is accepted by the API.`,
       }), true);
-      if (r.status === 201) createdTicketIds.push(r.body?.data?.id);
+      if (r.status === 201) {
+        createdTicketIds.push(r.body?.data?.id);
+        createdCategoryTickets.push({
+          id: r.body?.data?.id,
+          category: `ICT Support > ${category}`,
+        });
+      }
       if (r.status !== 201) rejected.push(`${category}+${first} -> ${r.status}`);
     }
     check(`TEST 1: all ${CATS.length} categories are accepted over HTTP`, rejected.length === 0, rejected.slice(0, 5).join(", "));
+    const categoryTicketPersistence = await Promise.all(
+      createdCategoryTickets.map(({ id, category }) =>
+        db.collection("tickets").findOne({
+          _id: new mongoose.Types.ObjectId(id),
+          category,
+        }),
+      ),
+    );
+    check(
+      "TEST 1: every selected ICT Support category persists verbatim",
+      categoryTicketPersistence.length === CATS.length &&
+        categoryTicketPersistence.every(Boolean),
+      `persisted=${categoryTicketPersistence.filter(Boolean).length}/${CATS.length}`,
+    );
 
     /* ═══ TEST 2 — Category remains required ═══ */
     check(
@@ -586,7 +623,7 @@ function waitForServer(url, timeoutMs = 60000) {
 
     /* ═══ TEST 9 — the category dropdown ═══ */
     console.log(
-      "\n[TEST 9] GET /api/categories/maintenance serves the 15 categories",
+      "\n[TEST 9] GET /api/categories/maintenance serves all canonical categories",
     );
     const cats = await req("GET", "/categories/maintenance");
     const served = [];
@@ -594,8 +631,8 @@ function waitForServer(url, timeoutMs = 60000) {
       for (const c of g.categories || []) served.push(c.label);
     const canonical = served.filter((c) => CATS.includes(c));
     check(
-      "TEST 9: the 15 canonical categories are served",
-      canonical.length === 15,
+      "TEST 9: all 16 canonical categories are served exactly once",
+      canonical.length === 16 && new Set(canonical).size === 16,
       `count=${canonical.length}`,
     );
     check(
@@ -624,7 +661,289 @@ function waitForServer(url, timeoutMs = 60000) {
       JSON.stringify(servedCounts),
     );
 
-    /* ═══ TEST 10 — issue type report ═══ */
+    /* ═══ TEST 10 — the category report understands grouped and legacy values ═══ */
+    const categoryReport = await adm("GET", "/reports/requests-by-category");
+    const categoryRows = categoryReport.body?.data || [];
+    const requestCategoryRow = categoryRows.find(
+      (row) => row.name === "Hardware",
+    );
+    check(
+      "TEST 10: the category report responds and includes canonical categories",
+      categoryReport.status === 200 &&
+        CATS.every((category) =>
+          categoryRows.some((row) => row.name === category),
+        ),
+      `status=${categoryReport.status}`,
+    );
+    check(
+      "TEST 10: grouped ticket values are counted under their category label",
+      requestCategoryRow?.total >= 1,
+      `Hardware total=${requestCategoryRow?.total}`,
+    );
+    check(
+      "TEST 10: requester cannot read the admin category report",
+      (await req("GET", "/reports/requests-by-category")).status === 403,
+    );
+
+    /* ═══ TEST 11 — technician feedback taxonomy and persistence ═══ */
+    console.log("\n[TEST 11] Technician feedback category validation and persistence");
+    const feedbackPairs = TECHNICIAN_FEEDBACK_CATEGORY_GROUPS.flatMap(
+      ({ group, categories }) => categories.map((category) => ({ group, category })),
+    );
+    check(
+      "TEST 11: the feedback category options are unique by group and label",
+      new Set(feedbackPairs.map(({ group, category }) => `${group}::${category}`))
+        .size === feedbackPairs.length,
+    );
+    const technicianSource = fs.readFileSync(
+      path.join(__dirname, "..", "..", "frontend", "assets", "js", "technicians.js"),
+      "utf8",
+    );
+    const feedbackGroupStart = technicianSource.indexOf(
+      "const TECHNICIAN_FEEDBACK_CATEGORY_GROUPS = [",
+    );
+    const feedbackGroupEnd = technicianSource.indexOf(
+      "\n];",
+      feedbackGroupStart,
+    );
+    const frontendFeedbackSource = technicianSource.slice(
+      feedbackGroupStart,
+      feedbackGroupEnd,
+    );
+    const frontendFeedbackGroups = [];
+    const groupPattern =
+      /group:\s*"([^"]+)",\s*categories:\s*\[([\s\S]*?)\]/g;
+    let frontendGroup;
+    while ((frontendGroup = groupPattern.exec(frontendFeedbackSource))) {
+      frontendFeedbackGroups.push({
+        group: frontendGroup[1],
+        categories: Array.from(
+          frontendGroup[2].matchAll(/"([^"]+)"/g),
+          (match) => match[1],
+        ),
+      });
+    }
+    check(
+      "TEST 11: technician form categories match the backend taxonomy",
+      JSON.stringify(frontendFeedbackGroups) ===
+        JSON.stringify(TECHNICIAN_FEEDBACK_CATEGORY_GROUPS),
+    );
+    await db.collection("tickets").updateOne(
+      { _id: new mongoose.Types.ObjectId(t5.body.data.id) },
+      { $set: { assignedTechnician: techId } },
+    );
+    const requesterRecord = await db
+      .collection("users")
+      .findOne({ email: REQUESTER.email });
+    const unassignedTicket = await db.collection("tickets").insertOne({
+      ticketId: `UNASSIGNED-${STAMP}`,
+      requester: requesterRecord._id,
+      title: "Unassigned request",
+      assignedTechnician: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    createdTicketIds.push(String(unassignedTicket.insertedId));
+    const feedbackResponses = [];
+    for (const [index, item] of feedbackPairs.entries()) {
+      feedbackResponses.push(
+        await tec("POST", "/feedback/technician", {
+          categoryGroup: item.group,
+          category: item.category,
+          message: `Verifying ${item.group} / ${item.category}.`,
+          ...(index === 0 ? { ticketId: t5.body.data.id } : {}),
+          ...(index === 0 ? { rating: 4 } : {}),
+          ...(index === 1 ? { rating: 2 } : {}),
+          ...(index === 2 ? { ticketId: t5.body.data.id } : {}),
+        }),
+      );
+    }
+    check(
+      `TEST 11: all ${feedbackPairs.length} feedback categories are accepted`,
+      feedbackResponses.every((response) => response.status === 201),
+      feedbackResponses
+        .map((response, index) =>
+          response.status === 201
+            ? null
+            : `${feedbackPairs[index].group}/${feedbackPairs[index].category}:${response.status}`,
+        )
+        .filter(Boolean)
+        .join(", "),
+    );
+    const persistedFeedback = await db
+      .collection(TechnicianFeedback.collection.collectionName)
+      .find({ technician: techId })
+      .toArray();
+    check(
+      "TEST 11: feedback category and group persist in MongoDB",
+      persistedFeedback.length === feedbackPairs.length &&
+        feedbackPairs.every((expected) =>
+          persistedFeedback.some(
+            (saved) =>
+              saved.categoryGroup === expected.group &&
+              saved.category === expected.category,
+          ),
+        ),
+      `saved=${persistedFeedback.length}`,
+    );
+    check(
+      "TEST 11: optional assigned-request reference persists",
+      String(persistedFeedback.find((saved) => saved.ticket)?.ticket) ===
+        t5.body.data.id,
+    );
+    check(
+      "TEST 11: optional star ratings persist as whole numbers",
+      persistedFeedback.find((saved) => saved.category === feedbackPairs[0].category)?.rating === 4 &&
+        persistedFeedback.find((saved) => saved.category === feedbackPairs[1].category)?.rating === 2 &&
+        persistedFeedback.find((saved) => saved.category === feedbackPairs[2].category)?.rating === null,
+    );
+    check(
+      "TEST 11: feedback submission works with neither optional field",
+      persistedFeedback.some(
+        (saved) =>
+          saved.category === feedbackPairs[3].category &&
+          !saved.ticket &&
+          saved.rating === null,
+      ),
+    );
+    const ownFeedback = await tec("GET", "/feedback/technician/mine");
+    check(
+      "TEST 11: technicians can read only their own feedback history",
+      ownFeedback.status === 200 &&
+        ownFeedback.body?.data?.length === feedbackPairs.length &&
+        ownFeedback.body.data.some((item) => item.ticket?.ticketId) &&
+        ownFeedback.body.data.some((item) => item.rating === 4),
+    );
+    const otherTechnicianHistory = await otherTec(
+      "GET",
+      "/feedback/technician/mine",
+    );
+    check(
+      "TEST 11: another technician receives an empty own-history result, not private records",
+      otherTechnicianHistory.status === 200 &&
+        Array.isArray(otherTechnicianHistory.body?.data) &&
+        otherTechnicianHistory.body.data.length === 0,
+    );
+    check(
+      "TEST 11: unauthenticated users cannot read technician feedback history",
+      (await makeClient()("GET", "/feedback/technician/mine")).status === 401,
+    );
+    const feedbackList = await adm("GET", "/feedback/technician");
+    check(
+      "TEST 11: ICT Admin can list feedback, linked request and ratings",
+      feedbackList.status === 200 &&
+        feedbackList.body?.data?.length === feedbackPairs.length &&
+        feedbackList.body.data.some((item) => item.ticket?.ticketId) &&
+        feedbackList.body.data.some((item) => item.rating === 4),
+    );
+    const feedbackToReview = feedbackList.body?.data?.find(
+      (item) => String(item.technician?._id) === String(techId),
+    );
+    const feedbackUpdate = feedbackToReview
+      ? await adm("PATCH", `/feedback/technician/${feedbackToReview._id}`, {
+          status: "Reviewed",
+          adminResponse: "Thank you for sharing this feedback.",
+        })
+      : { status: 0 };
+    check(
+      "TEST 11: ICT Admin can persist technician feedback status and response",
+      feedbackUpdate.status === 200 &&
+        feedbackUpdate.body?.data?.status === "Reviewed" &&
+        feedbackUpdate.body?.data?.adminResponse ===
+          "Thank you for sharing this feedback.",
+      `status=${feedbackUpdate.status}`,
+    );
+    const updatedOwnFeedback = await tec("GET", "/feedback/technician/mine");
+    check(
+      "TEST 11: technicians can see the saved Admin response in their own history",
+      updatedOwnFeedback.status === 200 &&
+        updatedOwnFeedback.body?.data?.some(
+          (item) =>
+            String(item._id) === String(feedbackToReview?._id) &&
+            item.status === "Reviewed" &&
+            item.adminResponse === "Thank you for sharing this feedback.",
+        ),
+    );
+    check(
+      "TEST 11: requesters cannot update technician feedback",
+      feedbackToReview
+        ? (
+            await req(
+              "PATCH",
+              `/feedback/technician/${feedbackToReview._id}`,
+              { status: "Reviewed", adminResponse: "Unauthorized update." },
+            )
+          ).status === 403
+        : false,
+    );
+    const invalidAdminResponse = feedbackToReview
+      ? await adm("PATCH", `/feedback/technician/${feedbackToReview._id}`, {
+          status: "Reviewed",
+          adminResponse: "x".repeat(2001),
+        })
+      : { status: 0 };
+    check(
+      "TEST 11: Admin responses longer than 2,000 characters are rejected",
+      invalidAdminResponse.status === 400,
+      `status=${invalidAdminResponse.status}`,
+    );
+    check(
+      "TEST 11: requester is denied technician feedback access",
+      (await req("GET", "/feedback/technician")).status === 403,
+    );
+    check(
+      "TEST 11: unauthenticated user is denied technician feedback access",
+      (await makeClient()("GET", "/feedback/technician")).status === 401,
+    );
+    const badFeedback = await tec("POST", "/feedback/technician", {
+      categoryGroup: "ICT Support",
+      category: "Not a supported category",
+      message: "This should be rejected.",
+    });
+    check(
+      "TEST 11: unsupported feedback categories are rejected",
+      badFeedback.status === 400,
+      `status=${badFeedback.status}`,
+    );
+    const invalidRating = await tec("POST", "/feedback/technician", {
+      categoryGroup: "Feedback",
+      category: "Suggestions for Improvement",
+      message: "Invalid rating test.",
+      rating: 5.5,
+    });
+    check(
+      "TEST 11: non-integer ratings are rejected",
+      invalidRating.status === 400,
+      `status=${invalidRating.status}`,
+    );
+    const invalidRequest = await tec("POST", "/feedback/technician", {
+      categoryGroup: "Feedback",
+      category: "Suggestions for Improvement",
+      message: "Invalid request reference test.",
+      ticketId: "not-a-mongodb-id",
+    });
+    check(
+      "TEST 11: malformed request references are rejected",
+      invalidRequest.status === 400,
+      `status=${invalidRequest.status}`,
+    );
+    const inaccessibleRequest = await tec("POST", "/feedback/technician", {
+      categoryGroup: "Feedback",
+      category: "Suggestions for Improvement",
+      message: "Unassigned request access test.",
+      ticketId: String(unassignedTicket.insertedId),
+    });
+    check(
+      "TEST 11: technicians cannot link requests not assigned to them",
+      inaccessibleRequest.status === 404,
+      `status=${inaccessibleRequest.status}`,
+    );
+    check(
+      "TEST 11: requesters cannot read technician feedback history",
+      (await req("GET", "/feedback/technician/mine")).status === 403,
+    );
+
+    /* ═══ TEST 12 — issue type report ═══ */
     const rep = await adm("GET", "/reports/requests-by-issue-type");
     check(
       "TEST 10: the issue-type report responds 200",
@@ -646,8 +965,8 @@ function waitForServer(url, timeoutMs = 60000) {
       (await req("GET", "/reports/requests-by-issue-type")).status === 403,
     );
 
-    /* ═══ TEST 11 — frontend/backend catalogue parity ═══ */
-    console.log("\n[TEST 11] Frontend and backend expose the identical 85-value catalogue");
+    /* ═══ TEST 13 — frontend/backend catalogue parity ═══ */
+    console.log("\n[TEST 13] Frontend and backend expose the identical 85-value catalogue");
     const src = fs.readFileSync(
       path.join(__dirname, "..", "..", "frontend", "assets", "js", "requests.js"),
       "utf8",
@@ -714,6 +1033,13 @@ function waitForServer(url, timeoutMs = 60000) {
       } catch (_) {}
     }
     await db.collection("technicians").deleteMany({ email: TECH.email });
+    await db.collection("notifications").deleteMany({
+      user: techId,
+      title: "Technician feedback reviewed",
+    });
+    await db
+      .collection(TechnicianFeedback.collection.collectionName)
+      .deleteMany({ technician: techId });
     if (createdAsset)
       await db.collection("ictassets").deleteOne({ _id: createdAsset });
     check(

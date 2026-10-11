@@ -30,8 +30,6 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
-const session = require("express-session");
-const { MongoStore } = require("connect-mongo");
 const mongoose = require("mongoose");
 const path = require("path");
 const connectDB = require("./config/db");
@@ -54,20 +52,16 @@ try {
 }
 
 /* ── Production configuration guard ─────────────────────────
-  Fail fast in production (never silently) when the session secret is
-  missing or still the placeholder — a weak secret breaks all auth.
+   Fail fast when production bearer tokens cannot be signed securely.
    Local development is left untouched. */
 if (process.env.NODE_ENV === "production") {
-  const sessionSecret = process.env.SESSION_SECRET || "";
-  if (!sessionSecret || sessionSecret === "change_this_session_secret") {
+  const jwtSecret = process.env.JWT_SECRET || "";
+  if (jwtSecret.length < 32) {
     console.error(
-      "\n  [ERROR] NODE_ENV=production requires a strong SESSION_SECRET.",
+      "\n  [ERROR] NODE_ENV=production requires a JWT_SECRET of at least 32 characters.",
     );
     console.error(
-      '  Generate one (e.g. "openssl rand -hex 64") and set it in the',
-    );
-    console.error(
-      "  hosting provider's environment variables. Aborting startup.\n",
+      "  Set it in the hosting provider's environment variables. Aborting startup.\n",
     );
     process.exit(1);
   }
@@ -214,7 +208,7 @@ const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
 app.use(
   cors({
     origin: allowedOrigins,
-    credentials: true,
+    maxAge: 600,
     /* Retry-After is NOT a CORS-safelisted response header, so a separate
        frontend origin could never read the cooldown after a 429 without this.
        X-RateLimit-* is exposed for the same reason. */
@@ -227,8 +221,7 @@ app.use(
   }),
 );
 
-/* SameSite=None is required for the direct Netlify-to-Render session cookie.
-   Reject browser-originated state changes from any other origin; requests
+/* Reject browser-originated state changes from any other origin; requests
    without an Origin header remain available for non-browser API clients. */
 const stateChangingMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 app.use((req, res, next) => {
@@ -317,57 +310,10 @@ app.use("/api", (req, res, next) => {
   });
 });
 
-const isLocalDevelopmentFrontend = (() => {
-  const configuredUrl = String(
-    process.env.FRONTEND_URL ||
-      env.FRONTEND_URL ||
-      (env.NODE_ENV === "production" ? "" : "http://localhost:3000"),
-  ).trim();
-  try {
-    return localDevOrigins.includes(new URL(configuredUrl).hostname);
-  } catch {
-    return env.NODE_ENV !== "production";
-  }
-})();
-const isSecureSessionCookie =
-  env.NODE_ENV === "production" && !isLocalDevelopmentFrontend;
-
-const sessionMiddleware = session({
-  name: "ict_session",
-  secret: env.SESSION_SECRET,
-  /* Activity-based expiry: with `rolling`, express-session re-issues the
-     cookie on EVERY response, so the client-side lifetime is pushed forward
-     each time the user does something. SESSION_TTL_MS (24h) therefore means
-     "24 hours of INACTIVITY" rather than "24 hours since login".
-
-     `resave: true` is required for the SERVER side to agree. With
-     resave:false + rolling:true the cookie is refreshed but an unmodified
-     session document is not re-written, so MongoStore's `expires` field would
-     still elapse on the original absolute schedule and the TTL monitor would
-     delete a session belonging to a user who is actively signed in. Resaving
-     keeps the store TTL, the cookie maxAge and SESSION_TTL_MS consistent.
-
-     saveUninitialized:false means anonymous visitors never get a session, so
-     rolling cannot be abused to mint sessions for unauthenticated traffic. */
-  resave: true,
-  rolling: true,
-  saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: env.MONGO_URI,
-    dbName: env.MONGO_DB_NAME,
-    collectionName: "sessions",
-    /* Matches cookie.maxAge / SESSION_TTL_MS exactly (ms → s). */
-    ttl: Math.floor(env.SESSION_TTL_MS / 1000),
-  }),
-  cookie: {
-    httpOnly: true,
-    sameSite: isSecureSessionCookie ? "none" : "lax",
-    secure: isSecureSessionCookie,
-    maxAge: env.SESSION_TTL_MS,
-  },
-});
-app.use(sessionMiddleware);
 app.use(logger);
+const { enforceMaintenanceMode } = require("./middleware/maintenanceMode");
+app.use("/api", enforceMaintenanceMode);
+app.use("/uploads", enforceMaintenanceMode);
 /* Uploaded attachments (screenshots, .docx evidence) are served with a long
    immutable cache. They are written under a timestamped filename, so the URL
    for a given file never changes and a cached copy can never go stale.
@@ -487,7 +433,7 @@ const server = app.listen(PORT, () => {
   /* Socket.IO is bound to the http.Server that owns the fixed API port, so
        the realtime channel and the REST API can never end up on different
        origins. */
-  initSocketIO(server, sessionMiddleware);
+  initSocketIO(server);
   console.log("");
   console.log("  ╔══════════════════════════════════════════════════════╗");
   console.log("  ║  Smart ICT Maintenance Management System             ║");

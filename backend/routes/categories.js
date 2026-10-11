@@ -59,7 +59,7 @@ router.get("/maintenance", authenticate, async (req, res, next) => {
     /* TWO LISTS, TWO SOURCES.
 
        Category — TAXONOMY-AUTHORITATIVE.
-       The requester's Category dropdown is the 15 high-level ICT areas defined
+       The requester's Category dropdown is the 16 high-level ICT areas defined
        in utils/ictCategoryHierarchy.js. Those two lists only work together: a
        Category with no matching Issue Type entry would leave a required,
        permanently unselectable field on the form. So Category is served from
@@ -82,7 +82,9 @@ router.get("/maintenance", authenticate, async (req, res, next) => {
        catalogue stays independent of Category: every Category is offered the
        same ordered list. */
     const canonical = new Set(
-      ICT_CATEGORY_GROUPS.flatMap(({ categories }) => categories),
+      ICT_CATEGORY_GROUPS.flatMap(({ categories }) =>
+        categories.map((name) => name.toLowerCase()),
+      ),
     );
     const extraDocs = await Category.find({ active: true })
       .sort({ sortOrder: 1, name: 1 })
@@ -96,7 +98,9 @@ router.get("/maintenance", authenticate, async (req, res, next) => {
       })),
     }));
 
-    const extras = extraDocs.filter((doc) => !canonical.has(doc.name));
+    const extras = extraDocs.filter(
+      (doc) => !canonical.has(String(doc.name || "").toLowerCase()),
+    );
     if (extras.length) {
       const byGroup = new Map();
       for (const doc of extras) {
@@ -117,7 +121,7 @@ router.get("/maintenance", authenticate, async (req, res, next) => {
     res.json({
       success: true,
       data: groups,
-      issueTypes: await resolveIssueTypeMap(),
+      issueTypes: await resolveIssueTypeMap(extras.map((doc) => doc.name)),
     });
   } catch (err) {
     next(err);
@@ -174,7 +178,11 @@ router.post(
           message: "A category with that name already exists.",
         });
 
-      const cat = await Category.create({ name, description });
+      const cat = await Category.create({
+        name,
+        description,
+        group: "ICT Support",
+      });
       res
         .status(201)
         .json({ success: true, message: "Category created.", id: cat._id });

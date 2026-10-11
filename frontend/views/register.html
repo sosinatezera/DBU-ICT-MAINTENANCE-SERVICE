@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
 <script>window.__hideLangSwitch = true; ( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <link rel="stylesheet" href="/assets/css/theme.css" />
-  <script src="/assets/js/api-config.js?v=5"></script>
+  <script src="/assets/js/api-config.js?v=16"></script>
 </head>
 
 <body class="auth-body">
@@ -68,9 +68,19 @@
                   <div class="invalid-feedback">Please enter a valid Gmail address ending with @gmail.com.</div>
                 </div>
 
-                <!-- ── Department & Phone ── -->
+                <!-- ── ID, Department & Phone ── -->
                 <div class="row g-3 mb-3">
-                  <div class="col-md-6">
+                  <div class="col-md-5">
+                    <label for="mauId" class="form-label fw-semibold small">ID <span
+                        class="text-danger">*</span></label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-person-vcard text-muted"></i></span>
+                      <input type="text" class="form-control" id="mauId" name="mauId" placeholder="12345"
+                        pattern="MAU[0-9]{1,5}" title="Enter MAU followed by 1 to 5 digits." autocomplete="off"
+                        required />
+                    </div>
+                  </div>
+                  <div class="col-md-7">
                     <label for="department" class="form-label fw-semibold small"><span
                         data-i18n="auth.register.ph.dept">Department</span></label>
                     <div class="input-group">
@@ -91,7 +101,7 @@
                     </div>
                     <div class="text-danger small mt-1 d-none" id="deptError">Please select a department.</div>
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-12">
                     <label for="phone" class="form-label fw-semibold small"><span
                         data-i18n="auth.register.ph.phone">Phone Number</span></label>
                     <div class="input-group">
@@ -126,8 +136,6 @@
                       <option value="" disabled selected><span data-i18n="auth.gender.ph">Select Gender</span></option>
                       <option value="Male"><span data-i18n="auth.gender.male">Male</span></option>
                       <option value="Female"><span data-i18n="auth.gender.female">Female</span></option>
-                      <option value="Other">Other</option>
-                      <option value="Prefer not to say">Prefer not to say</option>
                     </select>
                   </div>
                   <div class="text-danger small mt-1 d-none" id="genderError"><span data-i18n="auth.gender.ph">Select
@@ -321,6 +329,36 @@
       { fieldId: 'phone', checks: [Validators.phone] },
     ] );
 
+    const mauIdInput = document.getElementById( 'mauId' );
+    const mauIdPattern = /^MAU\d{1,5}$/;
+    const mauIdError = 'Use MAU followed by 1 to 5 digits (for example, MAU12345).';
+    function validateMauIdInput ()
+    {
+      const value = mauIdInput.value;
+      if ( !value )
+      {
+        showFieldError( 'mauId', 'ID is required.' );
+        return false;
+      }
+      if ( !mauIdPattern.test( value ) )
+      {
+        showFieldError( 'mauId', mauIdError );
+        return false;
+      }
+      clearFieldValidation( 'mauId' );
+      showFieldValid( 'mauId' );
+      return true;
+    }
+
+    mauIdInput.addEventListener( 'input', () =>
+    {
+      if ( mauIdInput.value || mauIdInput.classList.contains( 'is-invalid' ) )
+      {
+        if ( mauIdInput.value ) validateMauIdInput();
+        else clearFieldValidation( 'mauId' );
+      }
+    } );
+
     /* Phone: strip all non-digit characters and enforce a max of 10 digits for
        typing, pasting, autofill, and any other input method. */
     const phoneInput = document.getElementById( 'phone' );
@@ -448,6 +486,8 @@
       const nameErr = Validators.name( document.getElementById( 'name' ).value, 'Full name' );
       if ( nameErr ) { showFieldError( 'name', nameErr ); hasError = true; } else { showFieldValid( 'name' ); }
 
+      if ( !validateMauIdInput() ) hasError = true;
+
       const emailErr = Validators.email( document.getElementById( 'email' ).value );
       if ( emailErr ) { showFieldError( 'email', emailErr ); hasError = true; } else { showFieldValid( 'email' ); }
 
@@ -537,6 +577,7 @@
       const body = {
         fullName: document.getElementById( 'name' ).value.trim(),
         email: document.getElementById( 'email' ).value.trim(),
+        mauId: mauIdInput.value,
         password: document.getElementById( 'password' ).value,
         confirmPassword: document.getElementById( 'confirmPassword' ).value,
         department: department,
@@ -611,7 +652,6 @@
 
     loadRegistrationAvailability();
   </script>
-  <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/lang.js?v=16"></script>
 </body>
 

@@ -12,20 +12,16 @@
  * and the service can never disagree about what a category is.
  *
  * IDEMPOTENT / NON-DESTRUCTIVE
- *   $set         → group + sortOrder are backfilled/corrected, so a row created
- *                  by the previous two-field seed (which had no group) lands in
- *                  the right heading instead of defaulting to "Other".
- *   $setOnInsert → name + active only. `active` is therefore NEVER overwritten,
+ *   $set         → canonical name, group + sortOrder are backfilled/corrected,
+ *                  so case variants and older rows land in the right heading.
+ *   $setOnInsert → active only. `active` is therefore NEVER overwritten,
  *                  so an admin's deliberate deactivation survives every re-run.
  * Existing requests are never touched: Ticket.category stores the category
  * value as a string.
  *
  * PRE-EXISTING ROWS THAT ARE NOT IN THE TAXONOMY
- * The old seed created "Network Maintenance" and "Networking". Neither is in the
- * 13-group taxonomy, so this script deliberately leaves them alone (it only
- * upserts names it knows about). They keep working and keep grouping under
- * "Other"; deactivate them via the admin API if the dropdown should match the
- * taxonomy exactly.
+ * Legacy categories are left untouched; existing tickets retain their stored
+ * category strings while the request form displays the current taxonomy.
  */
 require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
 
@@ -49,15 +45,25 @@ const log = (msg) => console.log(`  ✔  ${msg}`);
       for (let index = 0; index < categories.length; index += 1) {
         const name = categories[index];
         const sortOrder = (index + 1) * 10;
+        const exactMatch = await Category.findOne({ name }).select("_id").lean();
+        const existing =
+          exactMatch ||
+          (await Category.findOne({
+            name: new RegExp(
+              `^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+              "i",
+            ),
+          })
+            .select("_id")
+            .lean());
         const result = await Category.updateOne(
-          { name },
+          existing ? { _id: existing._id } : { name },
           {
-            /* group/sortOrder are corrected on every run so a row written by
-               the earlier two-field seed is moved into its proper heading. */
-            $set: { group, sortOrder },
+            /* Canonicalize case variants without creating another row. */
+            $set: { name, group, sortOrder },
             /* active is only ever set at insert time — an admin's manual
                deactivation must not be undone by re-running this script. */
-            $setOnInsert: { name, active: true },
+            $setOnInsert: { active: true },
           },
           { upsert: true },
         );

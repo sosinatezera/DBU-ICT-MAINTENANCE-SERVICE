@@ -1,44 +1,20 @@
 /* ============================================================
    api-config.js — Single canonical API base for ALL frontend pages
    Smart ICT Maintenance Management System
-
-   This file defines the API origin/base and related helpers, plus the
-   lightweight on-demand trigger for the optional AI widget. It is safe
-   for public pages (index, login, register) and authenticated pages.
-
-   Exposes:  const API_BASE     (e.g. "http://localhost:5000/api")
-             const API_UPLOAD_BASE  (the origin root for /uploads)
-             function apiOrigin()   -> returns the origin root
-
-   Resolution order:
-   1. Production hostname mapping (cannot be overridden)
-   2. Explicit override via window.__API_BASE__ (development/custom hosts)
-   3. Localhost fallback (development)
-   4. Known backend URL as safety net for hosting platforms
    ============================================================ */
 
-/* Known production backend URL — used as the final fallback when the
-   current hostname is NOT localhost and NOT in PRODUCTION_API_MAP.
-   This prevents hosting platforms (Netlify, Vercel, etc.) from
-   accidentally falling back to same-origin /api which doesn't exist. */
 var __KNOWN_BACKEND_URL =
   "https://dbu-ict-maintenance-service.onrender.com/api";
-
-/* Production URL mapping: Netlify frontend -> Render backend */
 var PRODUCTION_API_MAP = {
   "simms-mau.netlify.app": __KNOWN_BACKEND_URL,
+  "simms-ict-maintenance-system.netlify.app": __KNOWN_BACKEND_URL,
 };
 
 var API_BASE = (function () {
   var protocol = window.location.protocol;
   var hostname = window.location.hostname;
+  if (PRODUCTION_API_MAP[hostname]) return PRODUCTION_API_MAP[hostname];
 
-  /* Production domains must never inherit a localhost deploy-time override. */
-  if (PRODUCTION_API_MAP[hostname]) {
-    return PRODUCTION_API_MAP[hostname];
-  }
-
-  /* 2. Explicit override is supported only outside mapped production domains. */
   if (
     typeof window !== "undefined" &&
     typeof window.__API_BASE__ === "string" &&
@@ -47,53 +23,39 @@ var API_BASE = (function () {
     return window.__API_BASE__;
   }
 
-  /* 3. Local development uses the backend's configured default port. */
   var isFile = protocol === "file:";
   var isLocal =
     isFile || !hostname || hostname === "localhost" || hostname === "127.0.0.1";
   if (isLocal) {
     if (isFile) {
       console.warn(
-        "[api-config] This page was opened directly from the filesystem " +
-          "(file://). That sends `Origin: null`, which the backend CORS policy " +
-          "does not allow, so every API call fails as a network error.\n" +
-          "Fix: serve the frontend — `cd frontend && node server.js` — then open " +
-          "http://localhost:3000/",
+        "[api-config] Serve the frontend with `cd frontend && node server.js` instead of opening it as file://.",
       );
     }
     return "http://" + (hostname || "localhost") + ":5000/api";
   }
 
-  /* 4. Unknown non-local hostname (new Netlify/Vercel subdomain, custom
-     domain, etc.). Never use same-origin — hosting platforms don't serve
-     the backend. Fall back to the known backend URL and log a warning
-     so developers can add the new hostname to PRODUCTION_API_MAP. */
   console.warn(
     '[api-config] Hostname "' + hostname + '" is not in PRODUCTION_API_MAP.',
     "Falling back to known backend:",
     __KNOWN_BACKEND_URL,
-    "— Add this hostname to PRODUCTION_API_MAP to silence this warning.",
   );
   return __KNOWN_BACKEND_URL;
 })();
 
-/* Origin root (e.g. "https://dbu-ict-maintenance-service.onrender.com") —
-   used to build attachment/upload URLs served from the backend /uploads route. */
 function apiOrigin() {
+  if (API_BASE.charAt(0) === "/") return window.location.origin;
   return API_BASE.replace(/\/api\/?$/, "");
 }
 
 var API_UPLOAD_BASE = apiOrigin();
+var AUTH_TOKEN_STORAGE_KEY = "ict.auth.token";
+window.__AUTH_TOKEN_STORAGE_KEY = AUTH_TOKEN_STORAGE_KEY;
 
-/* Warm the connection to the API origin as soon as the page loads so the
-   FIRST AI question starts immediately — the browser resolves DNS and opens
-   the TCP/TLS socket early, instead of paying the handshake round-trips at
-   submit time. Harmless helpers: modern browsers act on "preconnect",
-   older ones still benefit from the "dns-prefetch" fallback. */
 (function warmApiConnection() {
   if (typeof document === "undefined") return;
   var origin = apiOrigin();
-  if (!origin) return;
+  if (!origin || origin === window.location.origin) return;
   ["preconnect", "dns-prefetch"].forEach(function (kind) {
     var link = document.createElement("link");
     link.rel = kind;
@@ -102,8 +64,6 @@ var API_UPLOAD_BASE = apiOrigin();
   });
 })();
 
-/* Keep the optional AI widget off the critical path. Load its larger script
-   only when the user clicks the launcher or deliberately hovers/focuses it. */
 (function loadAiSupportWidget() {
   if (window.__aiSupportLoaded || window.__aiSupportLoading) return;
   if (document.querySelector('script[src*="ai-support.js"]')) return;
@@ -149,4 +109,102 @@ var API_UPLOAD_BASE = apiOrigin();
 
   if (document.body) setupLauncher();
   else document.addEventListener("DOMContentLoaded", setupLauncher, { once: true });
+})();
+
+(function installBearerAuthorization() {
+  var originalFetch = window.fetch.bind(window);
+  var publicAuthPaths = [
+    "/auth/login",
+    "/auth/google",
+    "/auth/google/config",
+    "/auth/register",
+    "/auth/registration-status",
+    "/auth/forgot-password",
+    "/auth/verify-reset-code",
+    "/auth/reset-password",
+    "/auth/logout",
+  ];
+  var publicPagePaths = [
+    "/",
+    "/views/index.html",
+    "/views/login.html",
+    "/views/register.html",
+    "/views/forgot-password.html",
+    "/views/reset-password.html",
+    "/views/assistant.html",
+    "/views/project-certificate.html",
+  ];
+  var redirectingToLogin = false;
+
+  function storedToken() {
+    try {
+      return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) || "";
+    } catch (error) {
+      console.error("[auth] Unable to read the saved access token.", error);
+      return "";
+    }
+  }
+
+  window.fetch = function (input, init) {
+    var requestUrl;
+    try {
+      var inputUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
+      requestUrl = new URL(inputUrl, window.location.href);
+    } catch (_) {
+      return originalFetch(input, init);
+    }
+
+    var apiUrl;
+    try {
+      apiUrl = new URL(API_BASE, window.location.href);
+    } catch (_) {
+      return originalFetch(input, init);
+    }
+    var apiPath = apiUrl.pathname.replace(/\/+$/, "");
+    var isApiRequest =
+      requestUrl.origin === apiUrl.origin &&
+      (requestUrl.pathname === apiPath ||
+        requestUrl.pathname.indexOf(apiPath + "/") === 0);
+    if (!isApiRequest) return originalFetch(input, init);
+
+    var headers = new Headers(
+      typeof Request !== "undefined" && input instanceof Request
+        ? input.headers
+        : undefined,
+    );
+    if (init && init.headers) {
+      new Headers(init.headers).forEach(function (value, name) {
+        headers.set(name, value);
+      });
+    }
+    var token = storedToken();
+    if (token && !headers.has("Authorization")) {
+      headers.set("Authorization", "Bearer " + token);
+    }
+
+    return originalFetch(input, Object.assign({}, init || {}, { headers: headers }))
+      .then(function (response) {
+        if (response.status !== 401 || redirectingToLogin) return response;
+        var apiRoute = requestUrl.pathname.slice(apiPath.length);
+        var isPublicAuthRoute = publicAuthPaths.some(function (route) {
+          return apiRoute === route || apiRoute.indexOf(route + "/") === 0;
+        });
+        if (
+          !isPublicAuthRoute &&
+          publicPagePaths.indexOf(window.location.pathname) === -1 &&
+          !window.__authRedirecting
+        ) {
+          redirectingToLogin = true;
+          window.__authRedirecting = true;
+          window.dispatchEvent(new Event("ict:auth-expired"));
+          window.location.replace("/views/login.html");
+        }
+        return response;
+      });
+  };
 })();

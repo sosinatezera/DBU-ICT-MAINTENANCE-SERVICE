@@ -6,7 +6,7 @@
  *   1. Database:   user exists, correct role, active status,
  *                  password hash verifies with bcrypt.compare(),
  *                  Technician profile exists (for the technician role).
- *   2. API (live)  correct credentials  → 200 + token + role + redirect
+ *   2. API (live)  correct credentials  → 200 + bearer token + role + redirect
  *                  wrong password       → 401 "Invalid email or password."
  *                  unknown email        → 401 "Invalid email or password."
  *                  missing fields       → 422 "Email and password are required."
@@ -30,7 +30,8 @@ const ACCOUNTS   = require('./accounts');
 
 const API_HOST = process.env.LOGIN_API_HOST || '127.0.0.1';
 const API_PORT = Number(process.env.PORT || 5000);
-const LOGIN_URL = `http://${API_HOST}:${API_PORT}/api/auth/login`;
+const AUTH_URL = `http://${API_HOST}:${API_PORT}/api/auth`;
+const LOGIN_URL = `${AUTH_URL}/login`;
 
 let failCount = 0, passCount = 0;
 const ok   = (msg) => { passCount++; console.log(`  ✔  ${msg}`); };
@@ -40,25 +41,35 @@ function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function postJson(url, payload) {
+function requestJson(url, { method = 'GET', payload, token } = {}) {
   return new Promise((resolve, reject) => {
     const { protocol, hostname, port, pathname } = new URL(url);
-    const body = JSON.stringify(payload);
+    const body = payload === undefined ? '' : JSON.stringify(payload);
+    const headers = {};
+    if (payload !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      headers['Content-Length'] = Buffer.byteLength(body);
+    }
+    if (token) headers.Authorization = `Bearer ${token}`;
     const req = http.request({
       protocol, hostname, port, path: pathname,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+      method,
+      headers,
     }, (res) => {
       let raw = '';
       res.on('data', (c) => { raw += c; });
       res.on('end', () => {
         let json = {};
         try { json = JSON.parse(raw); } catch (_) { /* non-JSON body */ }
-        resolve({ status: res.statusCode, json });
+        resolve({
+          status: res.statusCode,
+          json,
+          setCookies: res.headers['set-cookie'] || [],
+        });
       });
     });
     req.on('error', reject);
-    req.write(body);
+    if (body) req.write(body);
     req.end();
   });
 }
@@ -66,7 +77,7 @@ function postJson(url, payload) {
 async function loginTest(label, payload, expect) {
   let res;
   try {
-    res = await postJson(LOGIN_URL, payload);
+    res = await requestJson(LOGIN_URL, { method: 'POST', payload });
   } catch (err) {
     bad(`${label}: could NOT reach the API (${err.message})`);
     return null;
@@ -113,6 +124,15 @@ async function verifyDatabase() {
 async function verifyApi() {
   console.log('\n  [2] LIVE API CHECK  (POST ' + LOGIN_URL + ')\n');
 
+  const anonymousMe = await requestJson(`${AUTH_URL}/me`);
+  if (anonymousMe.status === 401) {
+    ok('unauthenticated /me correctly returns HTTP 401');
+  } else {
+    bad(`unauthenticated /me returned ${anonymousMe.status}, expected 401`);
+  }
+  if (anonymousMe.setCookies.length) bad("unauthenticated /me issued a cookie");
+  else ok("unauthenticated /me did not issue an authentication cookie");
+
   let reachable = false;
   for (const acc of ACCOUNTS) {
     const label = `${acc.email}`;
@@ -121,8 +141,16 @@ async function verifyApi() {
     if (!success) continue;
     reachable = true;
 
-    if (!success.json.token) bad(`${label}: 200 but NO token in response`);
-    else ok(`${label}: token issued`);
+    const token = success.json.token;
+    if (typeof token !== "string" || !token) {
+      bad(`${label}: 200 but NO bearer token was issued`);
+      continue;
+    }
+    if (success.setCookies.length) {
+      bad(`${label}: login unexpectedly issued an authentication cookie`);
+      continue;
+    }
+    ok(`${label}: bearer token issued without a session cookie`);
 
     if (!success.json.user || success.json.user.role !== acc.role)
       bad(`${label}: role in response is "${success.json.user?.role}", expected "${acc.role}"`);
@@ -132,6 +160,39 @@ async function verifyApi() {
     if (success.json.redirect !== expectedRedirect)
       bad(`${label}: redirect is "${success.json.redirect}", expected "${expectedRedirect}"`);
     else ok(`${label}: redirect = ${expectedRedirect}`);
+
+    const me = await requestJson(`${AUTH_URL}/me`, { token });
+    if (me.status !== 200 || me.json.user?.role !== acc.role) {
+      bad(`${label}: authenticated /me returned ${me.status} or the wrong role`);
+    } else {
+      ok(`${label}: authenticated /me confirms role ${acc.role}`);
+      const sensitiveFields = [
+        'password',
+        'resetPasswordCodeHash',
+        'resetPasswordCodeExpires',
+        'resetPasswordCodeAttempts',
+        'resetPasswordDeliveryMethod',
+        'resetPasswordRequestId',
+        'resetPasswordCodeSentAt',
+        'resetPasswordVerifiedHash',
+        'resetPasswordVerifiedExpires',
+      ];
+      const exposedFields = sensitiveFields.filter((field) =>
+        Object.prototype.hasOwnProperty.call(me.json.user, field),
+      );
+      if (exposedFields.length) {
+        bad(`${label}: authenticated /me exposed sensitive fields: ${exposedFields.join(', ')}`);
+      } else {
+        ok(`${label}: authenticated /me excludes password and password-reset fields`);
+      }
+    }
+
+    const logout = await requestJson(`${AUTH_URL}/logout`, {
+      method: 'POST',
+    });
+    if (logout.status !== 200) {
+      bad(`${label}: logout returned HTTP ${logout.status}`);
+    } else ok(`${label}: stateless logout endpoint responds successfully`);
 
     /* Negative cases */
     await loginTest(`${label} WRONG password`, { email: acc.email, password: 'WrongPass!999' }, { status: 401 });

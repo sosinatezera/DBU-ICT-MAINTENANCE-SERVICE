@@ -1,6 +1,6 @@
 /* Functional E2E test for the Permanent Delete technician feature.
-   Boots the real server, talks real HTTP with real session cookies, asserts on
-   the real MongoDB state, and cleans up everything it creates.
+   Boots the real server, authenticates with a bearer token, asserts on the real
+   MongoDB state, and cleans up everything it creates.
 
    This is NOT a syntax check.
 
@@ -31,10 +31,10 @@ function check(name, cond, detail) {
 }
 
 function client() {
-  let cookie = "";
+  let token = "";
   return async function req(method, p, body) {
     const headers = { Accept: "application/json" };
-    if (cookie) headers.Cookie = cookie;
+    if (token) headers.Authorization = `Bearer ${token}`;
     let payload;
     if (body !== undefined) {
       headers["Content-Type"] = "application/json";
@@ -46,14 +46,13 @@ function client() {
       body: payload,
       redirect: "manual",
     });
-    for (const c of res.headers.getSetCookie ? res.headers.getSetCookie() : []) {
-      const pair = c.split(";")[0];
-      if (pair.startsWith("session=") || !cookie) cookie = pair;
-    }
     let json = null;
     try {
       json = await res.json();
     } catch (_) {}
+    if (p === "/auth/login" && typeof json?.token === "string") {
+      token = json.token;
+    }
     return { status: res.status, body: json };
   };
 }

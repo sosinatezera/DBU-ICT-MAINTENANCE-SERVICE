@@ -7,13 +7,18 @@
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const {
+  TECHNICIAN_MAINTENANCE_ALERT_TYPES,
+  getDisabledSystemNotificationTypes,
+  MANDATORY_NOTIFICATION_TYPES,
   shouldDeliverInAppNotification,
 } = require("../utils/notificationPreferences");
+const Settings = require("../models/Settings");
+const { getBearerToken, verifyAuthToken } = require("./authToken");
 
 let io = null;
 const userSockets = new Map(); // userId -> Set of socket IDs
 
-function initSocketIO(httpServer, sessionMiddleware) {
+function initSocketIO(httpServer) {
   const { Server } = require("socket.io");
   io = new Server(httpServer, {
     cors: {
@@ -24,16 +29,19 @@ function initSocketIO(httpServer, sessionMiddleware) {
         "http://127.0.0.1:5000",
         "https://simms-mau.netlify.app",
       ],
-      credentials: true,
     },
   });
 
-  io.engine.use(sessionMiddleware);
   io.use(async (socket, next) => {
     try {
-      const userId = socket.request.session?.userId;
-      if (!userId) return next(new Error("Authentication required"));
-      const user = await User.findById(userId).select("role status");
+      const token =
+        socket.handshake.auth?.token ||
+        getBearerToken({
+          get: (header) => socket.handshake.headers[header.toLowerCase()],
+        });
+      if (!token) return next(new Error("Authentication required"));
+      const payload = verifyAuthToken(token);
+      const user = await User.findById(payload.sub).select("role status");
       if (!user || user.status !== "active")
         return next(new Error("Authentication required"));
       socket.userId = String(user._id);
@@ -107,17 +115,19 @@ async function broadcastNotification(notification) {
     const user = await User.findById(notification.user)
       .select("role notificationPreferences")
       .lean();
+    const settings = await Settings.getInstance();
     if (
       !user ||
       !shouldDeliverInAppNotification(
         user.notificationPreferences,
         user.role,
         notification.notificationType,
+        settings,
       )
     )
       return;
     emitToUser(notification.user, "notification:new", notification);
-    const unread = await getUnreadCount(notification.user, user);
+    const unread = await getUnreadCount(notification.user, user, settings);
     if (unread !== undefined) {
       emitToUser(notification.user, "notification:unread-count", { unread });
     }
@@ -128,19 +138,27 @@ async function broadcastNotification(notification) {
   }
 }
 
-async function getUnreadCount(userId, user) {
+async function getUnreadCount(userId, user, settings) {
   try {
     const preferences = user.notificationPreferences || {};
-    if (preferences.inAppNotifications === false) return 0;
     const filter = { user: userId, is_read: false };
-    if (user.role === "Technician" && preferences.maintenanceAlerts === false) {
-      filter.notificationType = {
-        $nin: [
-          "new_request_assigned",
-          "request_reassigned",
-          "request_reopened",
-        ],
-      };
+    const mandatoryTypes = Array.from(MANDATORY_NOTIFICATION_TYPES);
+    if (preferences.inAppNotifications === false) {
+      filter.notificationType = { $in: mandatoryTypes };
+    } else {
+      const excludedTypes = [
+        ...getDisabledSystemNotificationTypes(settings),
+        ...(user.role === "Technician" &&
+        preferences.maintenanceAlerts === false
+          ? Array.from(TECHNICIAN_MAINTENANCE_ALERT_TYPES)
+          : []),
+      ];
+      if (excludedTypes.length) {
+        filter.$or = [
+          { notificationType: { $nin: excludedTypes } },
+          { notificationType: { $in: mandatoryTypes } },
+        ];
+      }
     }
     return await Notification.countDocuments(filter);
   } catch (_) {

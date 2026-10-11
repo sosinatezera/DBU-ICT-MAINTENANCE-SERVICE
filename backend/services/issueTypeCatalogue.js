@@ -129,12 +129,14 @@ async function resolveIssueTypeCatalogue() {
 /** The catalogue as a { categoryLabel: [issueType, ...] } map, the exact shape
  *  GET /api/categories/maintenance has always returned. Every category gets the
  *  same ordered list, mirroring how the built-in catalogue is shaped. */
-async function resolveIssueTypeMap() {
+async function resolveIssueTypeMap(additionalCategories = []) {
   const { labels } = await resolveIssueTypeCatalogue();
+  const categories = new Set([
+    ...ICT_CATEGORY_GROUPS.flatMap(({ categories }) => categories),
+    ...additionalCategories,
+  ]);
   return Object.fromEntries(
-    ICT_CATEGORY_GROUPS.flatMap(({ categories }) =>
-      categories.map((label) => [label, [...labels]]),
-    ),
+    [...categories].map((label) => [label, [...labels]]),
   );
 }
 

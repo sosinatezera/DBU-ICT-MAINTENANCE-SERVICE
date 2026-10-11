@@ -560,6 +560,12 @@ const createTicket = async (req, res, next) => {
     const selectedIssueType = sanitizeString(
       String(req.body.issueType ?? req.body.serviceType ?? "").trim(),
     );
+    if (!selectedIssueType) {
+      return res.status(422).json({
+        success: false,
+        message: "Please select an issue type or service.",
+      });
+    }
     const customIssueType = sanitizeString(
       String(req.body.otherIssue ?? "").trim(),
     );
@@ -569,7 +575,7 @@ const createTicket = async (req, res, next) => {
     const issueTypeValue = isCustomIssueType
       ? customIssueType
       : selectedIssueType;
-    if (!issueTypeValue) {
+    if (selectedIssueType && !issueTypeValue) {
       return res.status(422).json({
         success: false,
         message: "Please select an issue type or service.",
@@ -585,18 +591,20 @@ const createTicket = async (req, res, next) => {
        offered is never rejected here and one it did not offer cannot be
        smuggled in — Category = Network with Issue Type = "Free text" only
        passes through the documented "Other ICT Issue" escape hatch. */
-    const normalizedCategory = normalizeCategoryValue(category);
-    if (
-      !normalizedCategory ||
-      !(await isIssueTypeAccepted(issueTypeValue, category, {
-        allowCustom: isCustomIssueType,
-      }))
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "The selected issue type is not valid for the selected category.",
-      });
+    if (issueTypeValue) {
+      const normalizedCategory = normalizeCategoryValue(category);
+      if (
+        !normalizedCategory ||
+        !(await isIssueTypeAccepted(issueTypeValue, category, {
+          allowCustom: isCustomIssueType,
+        }))
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "The selected issue type is not valid for the selected category.",
+        });
+      }
     }
 
     /* Validate asset if provided */
@@ -663,7 +671,7 @@ const createTicket = async (req, res, next) => {
       serialNumber: req.body.serialNumber || null,
       officeBlock: req.body.officeBlock || null,
       serviceType: legacyServiceTypeValue || null,
-      issueType: issueTypeValue,
+      issueType: issueTypeValue || null,
       networkDevice: req.body.networkDevice || null,
       ipAddress: req.body.ipAddress || null,
       macAddress: req.body.macAddress || null,
@@ -761,7 +769,7 @@ const createTicket = async (req, res, next) => {
 
     res.status(201).json(ticketSubmissionResponse(ticket, requester));
   } catch (err) {
-    console.error("Maintenance request creation failed.");
+    console.error("Maintenance request creation failed:", err);
     res.status(500).json({
       success: false,
       message: "Unable to create maintenance request. Please try again.",
@@ -1639,7 +1647,7 @@ const getTechnicianFeedback = async (req, res, next) => {
     if (idErr) return res.status(400).json({ success: false, message: idErr });
 
     const ticket = await Ticket.findById(req.params.id).select(
-      "technicianFeedback _id assignedTechnician",
+      "technicianFeedback _id assignedTechnician requester",
     );
     if (!ticket)
       return res

@@ -6,11 +6,6 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const p = window.location.pathname;
 
-  /* The Issue Type catalogue is local and independent of session state.
-      Populate it before awaiting authentication so a slow or unavailable
-      session endpoint cannot leave the request form showing only a placeholder. */
-  if (p.includes("user/request")) renderIssueTypeOptions();
-
   try {
     await Auth.load();
     if (!requireAuth()) return;
@@ -18,7 +13,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (p.includes("user/request")) await initSubmitRequest();
     if (p.includes("user/tracking")) await initTracking();
     if (p.includes("user/history")) await initUserHistory();
-    if (p.includes("user/feedback")) await initFeedback();
     if (p.includes("admin/requests")) await initAdminRequests();
     if (p.includes("admin/admin-feedback")) await initAdminFeedbackPage();
     if (p.includes("admin/categories")) await initCategories();
@@ -811,10 +805,25 @@ let _requestSubmissionKey = "";
 
 function getRequestSubmissionKey() {
   if (!_requestSubmissionKey) {
-    _requestSubmissionKey =
-      typeof crypto?.randomUUID === "function"
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    if (typeof globalThis.crypto?.randomUUID === "function") {
+      _requestSubmissionKey = globalThis.crypto.randomUUID();
+    } else {
+      const bytes = Array.from({ length: 16 }, () =>
+        Math.floor(Math.random() * 256),
+      );
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = bytes
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+      _requestSubmissionKey = [
+        hex.slice(0, 8),
+        hex.slice(8, 12),
+        hex.slice(12, 16),
+        hex.slice(16, 20),
+        hex.slice(20),
+      ].join("-");
+    }
   }
   return _requestSubmissionKey;
 }
@@ -1034,7 +1043,7 @@ function clearDeviceTypeError() {
    and there are several, including one on every category change — destroyed
    that node, after which showFieldError() rebuilt an anonymous one with no id
    and aria-describedby="categoryFeedback" pointed at nothing for the rest of
-   the session.
+   the page visit.
 
    These helpers address the node by id and re-create it in place if it is
    gone, so the aria reference survives. Same approach, same reason, as the
@@ -1120,7 +1129,7 @@ function describeCategoryLoadError(err) {
     return "Could not reach the server. Check your connection and try again.";
   }
   if (status === 401 || status === 403) {
-    return "Your session is not authorised for this list. Please sign in again.";
+    return "Your access token is not authorised for this list. Please sign in again.";
   }
   if (status === 404) {
     return "The category service was not found. Please contact ICT.";
@@ -1453,10 +1462,14 @@ function bindRequestIssueTypeRetry() {
     try {
       const response = await apiRequest("/categories/maintenance");
       await loadRequestIssueTypes(response?.issueTypes);
-    } catch {
+    } catch (err) {
       _requestIssueTypeStatus = "error";
       _requestIssueTypeError =
-        "Issue types could not be loaded. Please try again.";
+        err?.message || "Issue types could not be loaded. Please try again.";
+      console.error(
+        "[New Request] Retry GET /categories/maintenance failed; Issue Type is unavailable.",
+        err,
+      );
       renderIssueTypeOptions(
         document.getElementById("category")?.value || "",
         issueTypeSelection(),
@@ -1522,65 +1535,32 @@ async function initSubmitRequest() {
     { fieldId: "requesterPhone", checks: [Validators.phone] },
   ]);
 
-  /* Real-time validation for the two classification dropdowns. */
+  /* Real-time validation for the category dropdown. */
   bindRequestCategoryField(document.getElementById("category"));
   bindRequestCategoryRetry();
   bindRequestIssueTypeRetry();
 
   const issueTypeEl = document.getElementById("issueType");
-  if (issueTypeEl) {
-    issueTypeEl.addEventListener("change", () => {
-      toggleOtherIssueField();
-      if (issueTypeEl.value) {
-        clearIssueTypeError();
-        showFieldValid("issueType");
-      }
-      const clearButton = document.getElementById("clearIssueType");
-      if (clearButton) clearButton.disabled = !issueTypeEl.value;
-    });
-    issueTypeEl.addEventListener("blur", () => {
-      if (!issueTypeEl.value && !issueTypeEl.disabled) {
-        setIssueTypeError();
-      }
-    });
-  }
-
-  const otherIssueInput = document.getElementById("otherIssue");
-  if (otherIssueInput) {
-    otherIssueInput.addEventListener("input", () => {
-      if (otherIssueInput.value.trim()) {
-        clearFieldValidation("otherIssue");
-      }
-    });
-  }
-
-  document
-    .getElementById("issueTypeSearch")
-    ?.addEventListener("input", (event) => {
-      const issueTypeEl = document.getElementById("issueType");
-      renderIssueTypeOptions(
-        document.getElementById("category")?.value || "",
-        issueTypeEl?.value || "",
-        event.currentTarget.value,
-      );
-    });
-  document.getElementById("clearIssueType")?.addEventListener("click", () => {
-    const issueTypeEl = document.getElementById("issueType");
-    if (issueTypeEl) {
-      issueTypeEl.value = "";
-      issueTypeEl.classList.remove("is-valid");
-    }
+  issueTypeEl?.addEventListener("change", () => {
     clearIssueTypeError();
-    const issueSearch = document.getElementById("issueTypeSearch");
-    if (issueSearch) {
-      issueSearch.value = "";
-      issueSearch.focus();
-    }
+    if (issueTypeEl.value) showFieldValid("issueType");
+    toggleOtherIssueField();
+  });
+  document.getElementById("issueTypeSearch")?.addEventListener("input", (e) => {
     renderIssueTypeOptions(
       document.getElementById("category")?.value || "",
-      "",
-      "",
+      issueTypeSelection(),
+      e.target.value,
     );
+  });
+  document.getElementById("clearIssueType")?.addEventListener("click", () => {
+    const search = document.getElementById("issueTypeSearch");
+    if (search) search.value = "";
+    renderIssueTypeOptions(document.getElementById("category")?.value || "");
+    clearIssueTypeError();
+  });
+  document.getElementById("otherIssue")?.addEventListener("input", () => {
+    clearFieldValidation("otherIssue");
   });
 
   const deviceTypeEl = document.getElementById("deviceType");
@@ -1668,7 +1648,7 @@ async function initSubmitRequest() {
         deviceType,
         otherDeviceName,
         catValue,
-        issueType,
+        selectedIssueType,
         file,
       } = validateRequestFormFields();
 
@@ -1681,8 +1661,8 @@ async function initSubmitRequest() {
       }
 
       /* Build the multipart body — field names match the backend exactly:
-      title, equipmentType, problemDescription, phone, category, location,
-       asset_id, attachment.
+       title, equipmentType, problemDescription, phone, category, issueType,
+       location, asset_id, attachment.
        NOTE: priority is deliberately NOT sent. It is admin-assigned only
        (createTicket forces "medium" for requester tickets), so the requester
        has no priority control to read from. */
@@ -1700,16 +1680,12 @@ async function initSubmitRequest() {
         document.getElementById("requesterPhone").value.trim(),
       );
       fd.append("category", catValue);
-      const selectedIssueType =
-        document.getElementById("issueType")?.value || "";
-      fd.append(
-        "issueType",
-        selectedIssueType === OTHER_ISSUE_OPTION
-          ? OTHER_ISSUE_OPTION
-          : resolveIssueTypeValue(),
-      );
+      fd.append("issueType", selectedIssueType);
       if (selectedIssueType === OTHER_ISSUE_OPTION) {
-        fd.append("otherIssue", resolveIssueTypeValue());
+        fd.append(
+          "otherIssue",
+          document.getElementById("otherIssue").value.trim(),
+        );
       }
       fd.append(
         "location",
@@ -1804,10 +1780,11 @@ async function initSubmitRequest() {
           window.location.href = trackUrl;
         }, 2500);
       } catch (err) {
-        console.error("Submit request failed.");
+        console.error("Submit request failed:", err);
         showAlert(
           "requestAlert",
-          "Unable to submit request. Please review your details and try again.",
+          err?.message ||
+            "Unable to submit request. Please review your details and try again.",
           "danger",
         );
         /* Re-enable only here — the attempt failed, so the user may retry.
@@ -1944,38 +1921,49 @@ function validateRequestFormFields() {
     showFieldValid("category");
   }
 
-  const issueType = document.getElementById("issueType")?.value || "";
-  const resolvedIssueType = resolveIssueTypeValue();
+  const issueTypeEl = document.getElementById("issueType");
+  const selectedIssueType = issueTypeEl?.value || "";
   const allowedIssueTypes = getAllowedRequestIssueTypes(catValue);
-  const customOtherIssue =
-    normalizeIssueTypeValue(issueType) ===
-      normalizeIssueTypeValue(OTHER_ISSUE_OPTION) && resolvedIssueType;
-  if (
-    !resolvedIssueType ||
-    (!allowedIssueTypes.includes(issueType) && !customOtherIssue)
+  let issueTypeErr = null;
+  if (_requestIssueTypeStatus === "error") {
+    issueTypeErr =
+      _requestIssueTypeError ||
+      "Issue types could not be loaded. Please try again.";
+  } else if (_requestIssueTypeStatus === "loading") {
+    issueTypeErr = "Issue types are still loading. Please wait.";
+  } else if (!categoryIsAllowed) {
+    issueTypeErr = "Select a category first to load issue types.";
+  } else if (!allowedIssueTypes.length) {
+    issueTypeErr =
+      "No issue types are configured for this category. Please contact ICT.";
+  } else if (
+    !selectedIssueType ||
+    !allowedIssueTypes.includes(selectedIssueType)
   ) {
-    setIssueTypeError(
-      _requestCategoryStatus === "error"
-        ? "Issue types could not be loaded. Use Try again on the Category field."
-        : ISSUE_TYPE_ERROR_TEXT,
-    );
+    issueTypeErr = ISSUE_TYPE_ERROR_TEXT;
+  }
+  if (issueTypeErr) {
+    setIssueTypeError(issueTypeErr);
     hasError = true;
   } else {
     clearIssueTypeError();
     showFieldValid("issueType");
   }
 
-  if (
-    normalizeIssueTypeValue(issueType) ===
-    normalizeIssueTypeValue(OTHER_ISSUE_OPTION)
-  ) {
-    const text = resolvedIssueType;
-    if (!text) {
-      showFieldError("otherIssue", "Please describe the issue or service.");
+  const otherIssueValue =
+    document.getElementById("otherIssue")?.value.trim() || "";
+  if (selectedIssueType === OTHER_ISSUE_OPTION) {
+    const otherIssueErr =
+      Validators.required(otherIssueValue, "Issue or service") ||
+      Validators.length(otherIssueValue, "Issue or service", 2, 150);
+    if (otherIssueErr) {
+      showFieldError("otherIssue", otherIssueErr);
       hasError = true;
     } else {
-      clearFieldValidation("otherIssue");
+      showFieldValid("otherIssue");
     }
+  } else {
+    clearFieldValidation("otherIssue");
   }
 
   /* Priority is intentionally not validated: it is admin-assigned only, and
@@ -2025,7 +2013,14 @@ function validateRequestFormFields() {
     }
   }
 
-  return { hasError, deviceType, otherDeviceName, catValue, issueType, file };
+  return {
+    hasError,
+    deviceType,
+    otherDeviceName,
+    catValue,
+    selectedIssueType,
+    file,
+  };
 }
 
 /* ── Clear form action ─────────────────────────────────────
@@ -2044,10 +2039,7 @@ function clearRequestFormConfirm() {
 function clearRequestForm() {
   const form = document.getElementById("requestForm");
   if (form) form.reset();
-  const issueSearch = document.getElementById("issueTypeSearch");
-  if (issueSearch) issueSearch.value = "";
   _requestCategorySelection = "";
-  renderIssueTypeOptions("", "");
   clearRequestSubmissionKey();
   resetRequestClassification();
   syncDeviceTypeCardSelection();
@@ -2055,10 +2047,8 @@ function clearRequestForm() {
 
   /* Remove every validation class and dynamically-added .invalid-feedback */
   clearAllFieldValidations("requestForm");
-  /* That sweep also deleted the authored #categoryFeedback and
-     #issueTypeFeedback nodes, which aria-describedby still points at, so put
-     them back before anything can write to them. */
-  issueTypeFeedbackNode();
+  /* The sweep also deletes #categoryFeedback, which aria-describedby points
+     at, so restore it before anything can write to it. */
   categoryFeedbackNode();
 
   /* Reset the description character counter */
@@ -2117,7 +2107,6 @@ function showPreview() {
   const loc = document.getElementById("requestLocation")?.value || "—";
   const catEl = document.getElementById("category");
   const cat = catEl?.value || "—";
-  const issueType = document.getElementById("issueType")?.value || "—";
   /* Priority is admin-assigned (always "medium" for a new requester ticket),
      so it is shown read-only rather than as a requester-chosen value. */
   const pri = "Medium";
@@ -2157,7 +2146,6 @@ function showPreview() {
       <span class="badge bg-${priC}">${escHtml(pri)}</span>
       <span class="text-muted small ms-1">set by admin</span></div>
     <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">Category</div><div>${escHtml(cat)}</div></div>
-    <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">Issue Type / Service Type</div><div>${escHtml(issueType)}</div></div>
     <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1"><i class="bi bi-geo-alt me-1"></i>Location</div><div class="fw-semibold">${escHtml(loc)}</div></div>
     <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">ICT Asset</div><div>${escHtml(asset)}</div></div>
     <div class="col-sm-6 col-md-4"><div class="text-muted small mb-1">Attachment</div>
@@ -2272,7 +2260,7 @@ function currentTrackingFilters() {
   };
 }
 
-/* Search (by ID/title/device/description) + status + priority + sort. */
+/* Search (including Category) + status + priority + sort. */
 function applyTrackingFilter() {
   toggleClearFilters();
   const { q, status, priority, sort } = currentTrackingFilters();
@@ -2280,7 +2268,7 @@ function applyTrackingFilter() {
   let list = _tracking.all.filter(
     (r) =>
       (!q ||
-        `${r.ticketId || ""} ${r.title || ""} ${r.equipmentType || ""} ${r.device || ""} ${r.problemDescription || ""}`
+        `${r.ticketId || ""} ${r.title || ""} ${r.equipmentType || ""} ${r.device || ""} ${r.category || ""} ${r.problemDescription || ""}`
           .toLowerCase()
           .includes(q)) &&
       (!status || r.status === status) &&
@@ -3021,7 +3009,7 @@ function renderPendingFeedback(requests) {
 
 function requesterFeedbackErrorMessage(error) {
   if (error?.status === 401)
-    return "Your session has expired. Please sign in again.";
+    return "Your access token has expired. Please sign in again.";
   if (error?.status === 403)
     return "You do not have permission to submit feedback for this request.";
   if (error?.status === 404) return "The selected request could not be found.";
@@ -3303,7 +3291,187 @@ function initStarRating() {
 async function initAdminFeedbackPage() {
   if (!requireRole("ICT Admin")) return;
   initAdminFeedbackModal();
-  await loadAdminFeedbackPage();
+  initTechnicianFeedbackReview();
+  initAdminTechnicianFeedbackFilters();
+  await Promise.all([loadAdminFeedbackPage(), loadAdminTechnicianFeedback()]);
+}
+
+let _adminTechnicianFeedbackRecords = [];
+
+function initAdminTechnicianFeedbackFilters() {
+  const search = document.getElementById("adminTechnicianFeedbackSearch");
+  const status = document.getElementById(
+    "adminTechnicianFeedbackStatusFilter",
+  );
+  if (search && search.dataset.filterBound !== "true") {
+    search.dataset.filterBound = "true";
+    search.addEventListener("input", renderAdminTechnicianFeedbackRows);
+  }
+  if (status && status.dataset.filterBound !== "true") {
+    status.dataset.filterBound = "true";
+    status.addEventListener("change", renderAdminTechnicianFeedbackRows);
+  }
+}
+
+function initTechnicianFeedbackReview() {
+  const tbody = document.getElementById("adminTechnicianFeedbackBody");
+  if (!tbody || tbody.dataset.reviewBound === "true") return;
+  tbody.dataset.reviewBound = "true";
+
+  tbody.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-save-technician-feedback]");
+    if (!button || button.disabled) return;
+    const row = button.closest("tr");
+    const feedbackId = button.dataset.saveTechnicianFeedback;
+    const responseInput = row?.querySelector("[data-admin-feedback-response]");
+    const statusSelect = row?.querySelector("[data-admin-feedback-status]");
+    const adminResponse = responseInput?.value.trim() || "";
+    if (adminResponse.length > 2000) {
+      showToast("Admin response must be no more than 2,000 characters.", "warning");
+      return;
+    }
+
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML =
+      '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Saving...';
+    try {
+      const result = await apiRequest(
+        `/feedback/technician/${encodeURIComponent(feedbackId)}`,
+        {
+          method: "PATCH",
+          body: {
+            status: statusSelect?.value || "Pending",
+            adminResponse,
+          },
+        },
+      );
+      if (result?.success !== true || !result.data?.id) {
+        throw new Error(result?.message || "The feedback update was not confirmed.");
+      }
+      showToast("Technician feedback updated successfully.", "success");
+      await loadAdminTechnicianFeedback();
+    } catch (err) {
+      button.disabled = false;
+      button.innerHTML = originalText;
+      showToast(
+        `Unable to update technician feedback: ${err.message || "Please try again."}`,
+        "danger",
+      );
+    }
+  });
+}
+
+async function loadAdminTechnicianFeedback() {
+  const tbody = document.getElementById("adminTechnicianFeedbackBody");
+  const ratingSummary = document.getElementById(
+    "adminTechnicianFeedbackRatingSummary",
+  );
+  if (!tbody) return;
+  tbody.innerHTML =
+    '<tr><td colspan="8" class="text-center text-muted py-4">Loading technician feedback...</td></tr>';
+
+  try {
+    const result = await apiRequest("/feedback/technician");
+    if (result?.success !== true || !Array.isArray(result.data)) {
+      throw new Error(result?.message || "Unable to load technician feedback.");
+    }
+    const ratings = result.data
+      .map((item) => item.rating)
+      .filter((rating) => Number.isInteger(rating) && rating >= 1 && rating <= 5);
+    const averageRating = ratings.length
+      ? (ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length).toFixed(1)
+      : null;
+    if (ratingSummary) {
+      const distribution = [5, 4, 3, 2, 1]
+        .map((rating) => `${rating}★: ${ratings.filter((value) => value === rating).length}`)
+        .join(" · ");
+      ratingSummary.textContent = `Rating summary: ${result.data.length} feedback entries · ${ratings.length} rated · ${
+        averageRating ? `${averageRating} / 5 average` : "no ratings yet"
+      }${ratings.length ? ` · ${distribution}` : ""}`;
+    }
+    _adminTechnicianFeedbackRecords = result.data;
+    renderAdminTechnicianFeedbackRows();
+  } catch (err) {
+    if (ratingSummary) {
+      ratingSummary.textContent = `Unable to load technician feedback rating summary: ${err.message || "Please try again."}`;
+    }
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">
+      Unable to load technician feedback: ${escHtml(err.message || "Please try again.")}
+      <div class="mt-2"><button type="button" class="btn btn-sm btn-outline-primary" onclick="loadAdminTechnicianFeedback()">Retry</button></div>
+    </td></tr>`;
+  }
+}
+
+function renderAdminTechnicianFeedbackRows() {
+  const tbody = document.getElementById("adminTechnicianFeedbackBody");
+  if (!tbody) return;
+  const query = (
+    document.getElementById("adminTechnicianFeedbackSearch")?.value || ""
+  )
+    .trim()
+    .toLowerCase();
+  const statusFilter =
+    document.getElementById("adminTechnicianFeedbackStatusFilter")?.value || "";
+  const filtered = _adminTechnicianFeedbackRecords.filter((item) => {
+    if (statusFilter && (item.status || "Pending") !== statusFilter) return false;
+    if (!query) return true;
+    const searchable = [
+      item.technician?.fullName,
+      item.technician?.email,
+      item.categoryGroup,
+      item.category,
+      item.message,
+      item.ticket?.ticketId,
+      item.ticket?.title,
+      item.adminResponse,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return searchable.includes(query);
+  });
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">${
+      _adminTechnicianFeedbackRecords.length
+        ? "No technician feedback matches these filters."
+        : "No technician feedback has been submitted yet."
+    }</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered
+      .map((item) => {
+        const technician = item.technician || {};
+        const submitted = item.createdAt
+          ? new Date(item.createdAt).toLocaleString()
+          : "—";
+        return `<tr>
+          <td>${escHtml(technician.fullName || "Unknown technician")}<div class="small text-muted">${escHtml(technician.email || "")}</div></td>
+          <td><span class="small text-muted d-block">${escHtml(item.categoryGroup || "Feedback")}</span>${escHtml(item.category || "—")}</td>
+          <td>${item.ticket ? `${escHtml(item.ticket.ticketId || "Maintenance request")}<div class="small text-muted">${escHtml(item.ticket.title || "")}</div>${item.ticket.category ? `<div class="small text-muted">Request category: ${escHtml(item.ticket.category.split(">").pop().trim())}</div>` : ""}${item.ticket.priority ? `<span class="badge text-bg-${{ low: "success", medium: "primary", high: "warning", critical: "danger" }[item.ticket.priority] || "secondary"}">${escHtml(item.ticket.priority)} priority</span>` : ""}` : "—"}</td>
+          <td class="text-break" style="min-width:260px;white-space:pre-wrap">${escHtml(item.message || "")}</td>
+          <td>${Number.isInteger(item.rating) && item.rating >= 1 && item.rating <= 5
+            ? `<span role="img" aria-label="${escHtml(item.rating)} out of 5 stars: ${["", "Very Poor", "Poor", "Average", "Good", "Excellent"][item.rating]}">${'<i class="bi bi-star-fill text-warning" aria-hidden="true"></i>'.repeat(item.rating)}${'<i class="bi bi-star text-muted" aria-hidden="true"></i>'.repeat(5 - item.rating)}</span><div class="small text-muted">${escHtml(item.rating)} / 5</div>`
+            : '<span class="text-muted">Not rated</span>'}</td>
+          <td class="text-nowrap">${escHtml(submitted)}</td>
+          <td>
+            <label class="visually-hidden" for="technician-feedback-status-${escHtml(item._id)}">Status for ${escHtml(technician.fullName || "technician")} feedback</label>
+            <select id="technician-feedback-status-${escHtml(item._id)}" class="form-select form-select-sm mb-2" data-admin-feedback-status>
+              <option value="Pending"${item.status === "Pending" || !item.status ? " selected" : ""}>Pending</option>
+              <option value="Reviewed"${item.status === "Reviewed" ? " selected" : ""}>Reviewed</option>
+            </select>
+          </td>
+          <td style="min-width:260px">
+            <label class="visually-hidden" for="technician-feedback-response-${escHtml(item._id)}">ICT Admin response to ${escHtml(technician.fullName || "technician")} feedback</label>
+            <textarea id="technician-feedback-response-${escHtml(item._id)}" class="form-control form-control-sm mb-2" rows="2" maxlength="2000" placeholder="Optional response" data-admin-feedback-response>${escHtml(item.adminResponse || "")}</textarea>
+            <button type="button" class="btn btn-sm btn-primary" data-save-technician-feedback="${escHtml(item._id)}">
+              <i class="bi bi-send me-1" aria-hidden="true"></i>Save update
+            </button>
+          </td>
+        </tr>`;
+      })
+      .join("");
 }
 
 /* Cached feedback records + current filter/page state for this page. */
@@ -3700,7 +3868,7 @@ async function initAdminRequests() {
   if (!requireRole("ICT Admin")) return;
   initAdminFeedbackModal();
   await Promise.all([
-    populateSelect("categoryFilter", "/categories", true),
+    populateAdminRequestCategoryFilter(),
     loadAdminRequests(),
   ]);
   populateDepartmentFilter();
@@ -3727,12 +3895,15 @@ async function initAdminRequests() {
         return (
           (!q ||
             (r.problemDescription || "").toLowerCase().includes(q) ||
+            (r.category || "").toLowerCase().includes(q) ||
             (r.requester_name || "").toLowerCase().includes(q) ||
             (r.title || "").toLowerCase().includes(q) ||
             (r.ticketId || "").toLowerCase().includes(q)) &&
           (!st || r.status === st) &&
           (!pr || r.priority === pr) &&
-          (!cat || r.category === cat) &&
+          (!cat ||
+            resolveCategoryLabel(r.category || "").toLowerCase() ===
+              resolveCategoryLabel(cat).toLowerCase()) &&
           (!dept || r.department === dept) &&
           okDate
         );
@@ -3798,6 +3969,58 @@ async function initAdminRequests() {
   const deepLinkId = new URLSearchParams(window.location.search).get("id");
   if (deepLinkId && /^[0-9a-f]{24}$/i.test(deepLinkId))
     openAdminRequestModal(deepLinkId);
+}
+
+async function populateAdminRequestCategoryFilter() {
+  const select = document.getElementById("categoryFilter");
+  if (!select) return;
+
+  try {
+    const [maintenanceResponse, categoryResponse] = await Promise.all([
+      apiRequest("/categories/maintenance"),
+      apiRequest("/categories"),
+    ]);
+    if (
+      maintenanceResponse?.success !== true ||
+      !isValidRequestCategoryGroups(maintenanceResponse.data) ||
+      categoryResponse?.success !== true ||
+      !Array.isArray(categoryResponse.data)
+    ) {
+      throw new Error("The category list returned an invalid response.");
+    }
+
+    select.replaceChildren(new Option("All Categories", ""));
+    const knownNames = new Set();
+    maintenanceResponse.data.forEach((group) => {
+      const optgroup = document.createElement("optgroup");
+      optgroup.label = group.group;
+      group.categories.forEach((category) => {
+        const normalizedName = category.label.trim().toLowerCase();
+        if (knownNames.has(normalizedName)) return;
+        knownNames.add(normalizedName);
+        optgroup.appendChild(new Option(category.label, category.value));
+      });
+      if (optgroup.children.length) select.appendChild(optgroup);
+    });
+
+    const legacy = categoryResponse.data.filter((category) => {
+      const name = String(category.name || "").trim();
+      const key = name.toLowerCase();
+      if (!name || knownNames.has(key)) return false;
+      knownNames.add(key);
+      return true;
+    });
+    if (legacy.length) {
+      const optgroup = document.createElement("optgroup");
+      optgroup.label = "Legacy / inactive categories";
+      legacy.forEach((category) =>
+        optgroup.appendChild(new Option(category.name, category.name)),
+      );
+      select.appendChild(optgroup);
+    }
+  } catch (err) {
+    showToast(err.message || "Unable to load request categories.", "danger");
+  }
 }
 
 /* Fill the Department filter with the departments found in the loaded requests. */
@@ -5751,7 +5974,7 @@ async function saveUser() {
           "HTTP " +
             err.status +
             (err.status === 401
-              ? " (Unauthorized/session expired)"
+              ? " (Unauthorized/access token expired)"
               : err.status === 403
                 ? " (Forbidden)"
                 : err.status === 404

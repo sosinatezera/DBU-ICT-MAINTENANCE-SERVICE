@@ -17,7 +17,7 @@
  * distinct `code`, so the exact branch is identified without guessing.
  *
  * NOTHING sensitive is printed: no API key, SMTP password, Mongo URI, JWT or
- * session secret, no verification code, no reset token, and no full address
+ * JWT secret, no verification code, no reset token, and no full address
  * (addresses are reduced to their masked form).
  */
 
@@ -91,7 +91,6 @@ async function main() {
   info(`RESEND_API_KEY        : ${yesNo(process.env.RESEND_API_KEY)}`);
   info(`EMAIL_FROM            : ${yesNo(env.EMAIL_FROM)}`);
   info(`EMAIL_CONFIGURED      : ${emailConfigured()}`);
-  info(`SESSION_SECRET        : ${yesNo(process.env.SESSION_SECRET)}`);
   info(`MONGO_URI             : ${yesNo(process.env.MONGO_URI)}`);
   if (emailConfigured()) {
     pass(`${env.EMAIL_PROVIDER} configuration is complete for this process.`);

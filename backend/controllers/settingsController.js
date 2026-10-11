@@ -1,5 +1,9 @@
 
 const Settings = require("../models/Settings");
+const mongoose = require("mongoose");
+const config = require("../config/env");
+const { AUTH_TOKEN_TTL_SECONDS } = require("../services/authToken");
+const { writeAuditLog } = require("../middleware/audit");
 const {
   validateEnum,
   validateLength,
@@ -16,11 +20,19 @@ const GENERAL_FIELDS = [
   "organizationName",
   "systemDescription",
   "defaultLanguage",
+  "defaultTheme",
   "timezone",
   "dateFormat",
+  "timeFormat",
 ];
 
 const VALID_PRIORITIES = ["low", "medium", "high", "critical"];
+const POLICY_FIELDS = [
+  "publicRegistration",
+  "techAutoNotify",
+  "slaResponseHours",
+  "defaultPriority",
+];
 
 const NOTIF_FIELDS = [
   "notifNewRequest",
@@ -28,6 +40,9 @@ const NOTIF_FIELDS = [
   "notifStatusChange",
   "notifCompletion",
   "notifSystemSecurity",
+  "notifUserFeedback",
+  "notifTechnicianFeedback",
+  "notifFeedbackReplies",
   "notificationSound",
   "emailNotifications",
 ];
@@ -40,6 +55,26 @@ const HOME_HERO_IMAGE_IDS = [
   "hero-5",
   "hero-6",
 ];
+
+function recordSettingChanges(req, section, before, after, fields) {
+  const changes = fields
+    .filter((field) => JSON.stringify(before[field]) !== JSON.stringify(after[field]))
+    .map((field) => ({
+      setting: field,
+      previousValue: before[field],
+      newValue: after[field],
+    }));
+  if (!changes.length) return;
+  void writeAuditLog({
+    user: req.user.id,
+    action: `Updated ${section} settings`,
+    entity: "settings",
+    entityId: String(after._id),
+    details: JSON.stringify(changes),
+    ip: req.ip || req.socket?.remoteAddress || "",
+    userAgent: req.headers?.["user-agent"] || "",
+  });
+}
 
 /* ── GET /api/settings — retrieve all settings ─────────── */
 const getSettings = async (req, res, next) => {
@@ -55,6 +90,7 @@ const getSettings = async (req, res, next) => {
 const updateGeneral = async (req, res, next) => {
   try {
     const settings = await Settings.getInstance();
+    const before = settings.toObject();
 
     /* Validate */
     if (req.body.systemName !== undefined) {
@@ -116,11 +152,21 @@ const updateGeneral = async (req, res, next) => {
         return res.status(400).json({ success: false, message: fmtErr });
     }
 
-    /* Quick / operational settings */
-    if (req.body.publicRegistration !== undefined)
-      settings.publicRegistration = !!req.body.publicRegistration;
-    if (req.body.techAutoNotify !== undefined)
-      settings.techAutoNotify = !!req.body.techAutoNotify;
+    if (req.body.defaultTheme !== undefined) {
+      const themeErr = validateEnum(req.body.defaultTheme, ["light", "dark"], "default theme");
+      if (themeErr) return res.status(400).json({ success: false, message: themeErr });
+    }
+    if (req.body.timeFormat !== undefined) {
+      const timeErr = validateEnum(req.body.timeFormat, ["12h", "24h"], "time format");
+      if (timeErr) return res.status(400).json({ success: false, message: timeErr });
+    }
+
+    for (const field of ["publicRegistration", "techAutoNotify"]) {
+      if (req.body[field] === undefined) continue;
+      const boolErr = validateBoolean(req.body[field], field);
+      if (boolErr) return res.status(400).json({ success: false, message: boolErr });
+      settings[field] = req.body[field] === true || req.body[field] === 1 || req.body[field] === "true";
+    }
 
     if (req.body.slaResponseHours !== undefined) {
       const sla = Number(req.body.slaResponseHours);
@@ -144,6 +190,9 @@ const updateGeneral = async (req, res, next) => {
       settings.defaultPriority = req.body.defaultPriority;
     }
 
+    if (req.body.defaultTheme !== undefined) settings.defaultTheme = req.body.defaultTheme;
+    if (req.body.timeFormat !== undefined) settings.timeFormat = req.body.timeFormat;
+
     GENERAL_FIELDS.forEach((f) => {
       if (req.body[f] !== undefined) {
         settings[f] =
@@ -155,6 +204,13 @@ const updateGeneral = async (req, res, next) => {
 
     settings.updatedBy = req.user.id;
     await settings.save();
+    recordSettingChanges(
+      req,
+      "general and operational",
+      before,
+      settings.toObject(),
+      [...GENERAL_FIELDS, ...POLICY_FIELDS],
+    );
     /* getInstance() memoises the document, so the next reader would pick up
        the in-memory copy. Invalidate anyway so every reader is guaranteed to
        observe the write that just happened. */
@@ -195,11 +251,19 @@ const updateNotifications = async (req, res, next) => {
     }
 
     const settings = await Settings.getInstance();
+    const before = settings.toObject();
     entries.forEach(([key, value]) => {
       settings[key] = value;
     });
     settings.updatedBy = req.user.id;
     await settings.save();
+    recordSettingChanges(
+      req,
+      "notification",
+      before,
+      settings.toObject(),
+      entries.map(([key]) => key),
+    );
     Settings.invalidateInstanceCache();
     res.json({
       success: true,
@@ -243,12 +307,14 @@ const updateHomeLayout = async (req, res, next) => {
     }
 
     const settings = await Settings.getInstance();
+    const before = settings.toObject();
     settings.homeImageLayout = {
       heroOrder,
       logoOffset: { x: logoX, y: logoY },
     };
     settings.updatedBy = req.user.id;
     await settings.save();
+    recordSettingChanges(req, "home layout", before, settings.toObject(), ["homeImageLayout"]);
     Settings.invalidateInstanceCache();
     res.json({
       success: true,
@@ -260,9 +326,41 @@ const updateHomeLayout = async (req, res, next) => {
   }
 };
 
+const getSystemOverview = async (_req, res, next) => {
+  try {
+    const packageJson = require("../package.json");
+    res.json({
+      success: true,
+      data: {
+        version: packageJson.version,
+        environment: config.NODE_ENV,
+        database: mongoose.connection.readyState === 1 ? "Connected" : "Unavailable",
+        authTokenLifetimeHours: Math.ceil(
+          AUTH_TOKEN_TTL_SECONDS / 3600,
+        ),
+        passwordPolicy: "8–16 characters; at least one letter and one number; no spaces.",
+        multiFactorAuthentication: "Not configured",
+        roles: [
+          { name: "ICT Admin", access: "Administrator routes, including settings and audit logs" },
+          { name: "Requester", access: "Own requests, feedback, and profile" },
+          { name: "Technician", access: "Assigned work, technician feedback, and profile" },
+        ],
+        supportedOperations: {
+          backups: false,
+          maintenanceMode: false,
+          editableRolePermissions: false,
+        },
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getSettings,
   updateGeneral,
   updateNotifications,
   updateHomeLayout,
+  getSystemOverview,
 };

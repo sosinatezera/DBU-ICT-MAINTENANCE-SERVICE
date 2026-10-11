@@ -178,28 +178,7 @@ async function refreshAfterAction() {
     window.location.pathname.includes("technician/assigned-requests")
   ) {
     await fetchAssignedRequests();
-  } else if (
-    window.location.pathname.includes("technician/technician-feedback")
-  ) {
-    const { data } = await apiRequest("/technicians/my/assignments");
-    renderTechFeedbackCards(await loadTechnicianFeedbackDetails(data));
   }
-}
-
-async function loadTechnicianFeedbackDetails(assignments) {
-  return Promise.all(
-    (assignments || []).map(async (assignment) => {
-      if (!assignment.has_feedback || !assignment.ticket_id) return assignment;
-      try {
-        const { data: feedback } = await apiRequest(
-          `/tickets/${encodeURIComponent(assignment.ticket_id)}/technician-feedback`,
-        );
-        return { ...assignment, technician_feedback: feedback };
-      } catch (_) {
-        return assignment;
-      }
-    }),
-  );
 }
 
 /* Map a backend error to a clear, user-friendly message. */
@@ -209,10 +188,10 @@ function handleApiError(err) {
   let msg = (err && err.message) || "Something went wrong.";
   if (
     code === 401 ||
-    String(msg).toLowerCase().includes("session") ||
+    String(msg).toLowerCase().includes("token") ||
     String(msg).includes("expired")
   ) {
-    msg = "Your session has expired. Please login again.";
+    msg = "Your access token has expired. Please login again.";
   } else if (
     code === 403 ||
     String((err && err.message) || "")
@@ -238,7 +217,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (p.includes("technician/assigned-requests")) initAssignedRequests();
   if (p.includes("technician/maintenance")) initMaintenanceLog();
   if (p.includes("technician/history")) initTechHistory();
-  if (p.includes("technician/technician-feedback")) initTechFeedbackPage();
   if (p.includes("admin/technicians")) initAdminTechnicians();
 });
 
@@ -263,10 +241,9 @@ async function initTechDashboard() {
   }
 
   /* allSettled, not all: a single failed panel fetch used to reject here and
-     skip initAvailabilityToggle / initTechActionDelegation / initFeedbackHandlers
-     entirely, leaving the whole dashboard with dead action buttons. Each panel
-     already renders its own error state, so a partial failure must not take
-     the rest of the page down with it. */
+     skip the dashboard action handlers entirely. Each panel already renders
+     its own error state, so a partial failure must not take the rest of the
+     page down with it. */
   await Promise.allSettled([
     loadTechProfile(),
     loadDashboardTasks(),
@@ -275,7 +252,6 @@ async function initTechDashboard() {
   ]);
 
   /* These are interaction wiring, never data. Bind them unconditionally. */
-  initAvailabilityToggle();
   initTechActionDelegation();
   initFeedbackHandlers();
 }
@@ -287,29 +263,30 @@ async function loadTechFeedbackReports() {
   const panel = document.getElementById("techFeedbackPanel");
   if (!panel) return;
 
+  panel.innerHTML = `
+    <div class="text-center text-muted py-3">
+      <div class="spinner-border spinner-border-sm" role="status"></div>
+      <span class="visually-hidden">Loading technical reports...</span>
+    </div>`;
+
   try {
     const { data: assignments } = await apiRequest(
       "/technicians/my/assignments",
     );
-    const reported = (assignments || []).filter((a) => a.has_feedback);
+    if (!Array.isArray(assignments)) {
+      throw new Error("The server returned an unexpected assignments response.");
+    }
 
-    /* Fetch report details for the most recent few in parallel so the panel
-       stays light and the dashboard is not blocked by 5 serial round-trips. */
-    const recent = reported.slice(0, 5);
-    const results = await Promise.allSettled(
-      recent.map((a) =>
-        apiRequest(
-          `/tickets/${encodeURIComponent(a.ticket_id || a.id)}/technician-feedback`,
-        ),
-      ),
-    );
-    const items = recent
-      .map((a, i) => ({
-        ticket: a.ticketId || a.ticket_id || "Ticket",
-        report:
-          results[i].status === "fulfilled" ? results[i].value.data : null,
-      }))
-      .filter((it) => it.report);
+    const items = assignments
+      .filter((assignment) => assignment.has_feedback)
+      .slice(0, 5)
+      .map((assignment) => ({
+        ticket: assignment.ticketId || assignment.ticket_id || "Ticket",
+        report: assignment.technician_report,
+      }));
+    if (items.some((item) => !item.report)) {
+      throw new Error("The server returned incomplete technical report data.");
+    }
 
     if (!items.length) {
       panel.innerHTML = `
@@ -351,7 +328,11 @@ async function loadTechFeedbackReports() {
       })
       .join("");
   } catch (err) {
-    panel.innerHTML = `<div class="text-danger small p-3">Failed to load technical reports. ${escHtml(err.message || "")}</div>`;
+    panel.innerHTML = `
+      <div class="text-center text-muted small p-3">
+        <p class="mb-2">${escHtml(dashboardLoadErrorMessage(err, "technical reports"))}</p>
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadTechFeedbackReports()">Retry</button>
+      </div>`;
   }
 }
 
@@ -361,7 +342,14 @@ async function loadTechProfile() {
   if (!user) return;
 
   const initial = (user.fullName || "T").charAt(0).toUpperCase();
-  ["avatarInitial", "bannerInitial"].forEach((id) => setText(id, initial));
+  ["avatarInitial", "bannerInitial"].forEach((id) => {
+    const avatar = document.getElementById(id);
+    if (avatar && typeof applyProfileAvatar === "function") {
+      applyProfileAvatar(user, avatar);
+    } else {
+      setText(id, initial);
+    }
+  });
   setText("topUserName", user.fullName);
 
   const myTech = await resolveMyTech();
@@ -369,13 +357,7 @@ async function loadTechProfile() {
 
   setText("sidebarSpec", myTech.specialization || "ICT Support");
   setText("bannerSpec", myTech.specialization || "ICT Support");
-
-  // Restore availability toggle from saved tech state
-  const toggle = document.getElementById("availabilityToggle");
-  if (toggle) {
-    toggle.checked = myTech.available !== false;
-    updateAvailabilityUI(toggle.checked);
-  }
+  updateAvailabilityUI(myTech.available !== false);
 }
 
 /* Resolve the authenticated technician's profile deterministically via
@@ -403,8 +385,19 @@ async function resolveMyTech() {
 async function loadDashboardTasks() {
   const tbody = document.getElementById("activeTasksBody");
 
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr><td colspan="6" class="text-center py-4">
+        <span class="spinner-border spinner-border-sm text-primary me-2" role="status"></span>
+        Loading active tasks...
+      </td></tr>`;
+  }
+
   try {
     const { data } = await apiRequest("/technicians/my/assignments");
+    if (!Array.isArray(data)) {
+      throw new Error("The server returned an unexpected assignments response.");
+    }
 
     const counts = {
       total: data.length,
@@ -472,16 +465,38 @@ async function loadDashboardTasks() {
   } catch (err) {
     if (tbody)
       tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">
-      Failed to load active tasks. ${escHtml(err.message || "")}
+      ${escHtml(dashboardLoadErrorMessage(err, "active tasks"))}
       <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="loadDashboardTasks()">Retry</button>
     </td></tr>`;
   }
+}
+
+function dashboardLoadErrorMessage(err, section) {
+  if (err?.status === 403) {
+    return `You do not have permission to view ${section}.`;
+  }
+  if (err?.status === 503 && err?.data?.code === "MAINTENANCE_MODE") {
+    return "The system is undergoing scheduled maintenance. Please try again later.";
+  }
+  if ([502, 503, 504].includes(err?.status)) {
+    return `The service is temporarily unavailable, so ${section} could not be loaded. Your access token has not been cleared; please retry.`;
+  }
+  if (err?.network) {
+    return `Unable to connect to the server to load ${section}. Check your connection and retry.`;
+  }
+  return `Unable to load ${section}. Please retry.`;
 }
 
 /* ── Recent activity panel ──────────────────────────────────── */
 async function loadRecentActivity() {
   const panel = document.getElementById("recentActivityPanel");
   if (!panel) return;
+
+  panel.innerHTML = `
+    <div class="text-center text-muted py-3">
+      <span class="spinner-border spinner-border-sm" role="status"></span>
+      <span class="visually-hidden">Loading recent activity...</span>
+    </div>`;
 
   try {
     const data = await loadMyMaintenanceLog();
@@ -513,47 +528,10 @@ async function loadRecentActivity() {
       )
       .join("");
   } catch (err) {
-    panel.innerHTML = `<p class="text-muted small text-center py-2">Activity unavailable. ${escHtml(err.message || "")}
+    panel.innerHTML = `<p class="text-muted small text-center py-2">
+      ${escHtml(dashboardLoadErrorMessage(err, "recent activity"))}
       <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="loadRecentActivity()">Retry</button></p>`;
   }
-}
-
-/* ── Availability toggle ────────────────────────────────────── */
-function initAvailabilityToggle() {
-  const toggle = document.getElementById("availabilityToggle");
-  if (!toggle) return;
-
-  toggle.addEventListener("change", async () => {
-    const desired = toggle.checked;
-
-    // Persist to backend first — no premature success toast.
-    try {
-      const myTech = await resolveMyTech();
-      if (!myTech) {
-        toggle.checked = !desired;
-        updateAvailabilityUI(toggle.checked);
-        showToast(
-          "Could not locate your technician profile to save availability.",
-          "warning",
-        );
-        return;
-      }
-      await apiRequest(`/technicians/${myTech.id}`, {
-        method: "PUT",
-        body: { specialization: myTech.specialization, available: desired },
-      });
-      updateAvailabilityUI(desired);
-      showToast(
-        `Status set to ${desired ? "Available" : "Unavailable"}`,
-        desired ? "success" : "info",
-      );
-    } catch (err) {
-      // Revert the toggle since the backend rejected the change.
-      toggle.checked = !desired;
-      updateAvailabilityUI(toggle.checked);
-      showToast("Could not save availability: " + err.message, "danger");
-    }
-  });
 }
 
 function updateAvailabilityUI(isAvailable) {
@@ -914,141 +892,325 @@ async function initAssignedRequests() {
 
 async function initTechFeedbackPage() {
   if (!requireRole("Technician")) return;
+  initTechnicianSuggestionForm();
   await loadTechProfile();
-  initFeedbackHandlers();
 
-  const listEl = document.getElementById("techFeedbackList");
-  if (listEl)
-    listEl.addEventListener("click", (e) => {
-      const btn = e.target.closest(".btn-open-feedback, .btn-view-report");
-      if (!btn) return;
-      if (btn.classList.contains("btn-open-feedback")) {
-        openFeedbackModal(btn.dataset.id, btn.dataset.title);
-      } else if (btn.classList.contains("btn-view-report")) {
-        viewFeedbackReport(btn.dataset.id);
-      }
-    });
-
-  try {
-    const { data } = await apiRequest("/technicians/my/assignments");
-    renderTechFeedbackCards(await loadTechnicianFeedbackDetails(data));
-  } catch (err) {
-    /* The toast alone is not enough: the list still holds its untouched
-       "Loading assigned requests..." placeholder, so a failed request left
-       the page spinning forever. Replace it with a real failure state. */
-    showToast(err.message, "danger");
-    const list = document.getElementById("techFeedbackList");
-    if (list) {
-      list.innerHTML = `
-      <div class="col-12 text-center text-danger py-5">
-        <i class="bi bi-cloud-slash fs-1 d-block mb-2"></i>
-        <p class="mb-2">Unable to load your assigned requests.</p>
-        <button type="button" class="btn btn-sm btn-outline-primary" onclick="initTechFeedbackPage()">
-          <i class="bi bi-arrow-clockwise me-1"></i>Retry
-        </button>
-      </div>`;
-    }
-  }
+  await loadMyTechnicianFeedback();
 }
 
-function renderTechFeedbackCards(assignments) {
-  const container = document.getElementById("techFeedbackList");
-  if (!container) return;
+const TECHNICIAN_FEEDBACK_CATEGORY_GROUPS = [
+  {
+    group: "ICT Support",
+    categories: [
+      "Hardware",
+      "Software",
+      "Network",
+      "Printer & Scanner",
+      "Account & Access",
+      "Email",
+      "Internet",
+      "Security",
+      "System & Operating System",
+      "Application",
+      "Data & Storage",
+      "Mobile & Device",
+      "Audio & Video",
+      "ICT Infrastructure",
+      "Other",
+      "Computer & End-User Services",
+    ],
+  },
+  {
+    group: "Feedback",
+    categories: [
+      "Technical Issues",
+      "Maintenance Process",
+      "Equipment and Tools",
+      "System Usability",
+      "Resource Requests",
+      "Workload and Scheduling",
+      "Security Concerns",
+      "Suggestions for Improvement",
+      "Other",
+    ],
+  },
+];
 
-  if (!assignments.length) {
-    container.innerHTML = `
-      <div class="col-12 text-center py-5">
-        <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
-        <p class="text-muted">No assigned requests found.</p>
-      </div>`;
+function initTechnicianSuggestionForm() {
+  const form = document.getElementById("technicianFeedbackForm");
+  const button = document.getElementById("submitTechnicianFeedbackBtn");
+  const notice = document.getElementById("technicianFeedbackNotice");
+  const categorySelect = document.getElementById("technicianFeedbackCategory");
+  if (
+    !form ||
+    !button ||
+    !notice ||
+    !categorySelect ||
+    form.dataset.bound === "true"
+  )
     return;
-  }
+  form.dataset.bound = "true";
 
-  const borderColours = {
-    critical: "#dc3545",
-    high: "#fd7e14",
-    medium: "#2563eb",
-    low: "#198754",
+  const ratingInputs = Array.from(
+    form.querySelectorAll('input[name="technicianFeedbackRating"]'),
+  );
+  const ratingDescription = document.getElementById(
+    "technicianFeedbackRatingDescription",
+  );
+  const clearRatingButton = document.getElementById(
+    "clearTechnicianFeedbackRating",
+  );
+  const messageInput = document.getElementById("technicianFeedbackMessage");
+  const characterCount = document.getElementById(
+    "technicianFeedbackCharacterCount",
+  );
+
+  TECHNICIAN_FEEDBACK_CATEGORY_GROUPS.forEach(({ group, categories }) => {
+    const optgroup = document.createElement("optgroup");
+    optgroup.label = group;
+    categories.forEach((category) => {
+      const option = document.createElement("option");
+      option.value = `${group}::${category}`;
+      option.textContent = category;
+      optgroup.appendChild(option);
+    });
+    categorySelect.appendChild(optgroup);
+  });
+
+  const ratingLabels = [
+    "",
+    "Very Poor",
+    "Poor",
+    "Average",
+    "Good",
+    "Excellent",
+  ];
+  const updateStarRating = () => {
+    const selectedRating = Number(
+      ratingInputs.find((input) => input.checked)?.value || 0,
+    );
+    form.querySelectorAll(".technician-feedback-star").forEach((star, index) => {
+      star.classList.toggle("is-selected", index < selectedRating);
+    });
+    if (ratingDescription) {
+      ratingDescription.textContent = selectedRating
+        ? `${selectedRating} star${selectedRating === 1 ? "" : "s"} — ${ratingLabels[selectedRating]}`
+        : "No rating selected. Rating is optional.";
+    }
+  };
+  ratingInputs.forEach((input) =>
+    input.addEventListener("change", updateStarRating),
+  );
+  clearRatingButton?.addEventListener("click", () => {
+    ratingInputs.forEach((input) => {
+      input.checked = false;
+    });
+    updateStarRating();
+  });
+
+  const updateCharacterCount = () => {
+    const length = messageInput.value.length;
+    characterCount.textContent = `${length.toLocaleString()} / 2,000`;
+    characterCount.classList.toggle("is-near-limit", length >= 1800);
+  };
+  messageInput.addEventListener("input", updateCharacterCount);
+  form.addEventListener("reset", () => requestAnimationFrame(updateCharacterCount));
+
+  let submitting = false;
+  let noticeTimer;
+  const showNotice = (message, type) => {
+    clearTimeout(noticeTimer);
+    notice.className = `alert alert-${type}`;
+    notice.textContent = message;
+    if (type === "success") {
+      noticeTimer = setTimeout(() => notice.classList.add("d-none"), 4000);
+    }
   };
 
-  container.innerHTML = assignments
-    .map(
-      (r) => `
-    <div class="col-md-6 col-lg-4">
-      <div class="card border-0 shadow-sm h-100"
-           style="border-left:4px solid ${borderColours[r.priority || "medium"]}!important;">
-        <div class="card-body p-3">
-          <div class="d-flex justify-content-between align-items-start mb-2">
-            <span class="text-muted small fw-semibold">${escHtml(r.ticketId || r.ticket_id)}</span>
-            ${priorityBadge(r.priority || "medium")}
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (submitting) return;
+
+    const selectedCategory = categorySelect.value;
+    const separatorIndex = selectedCategory.indexOf("::");
+    const categoryGroup =
+      separatorIndex < 0 ? "" : selectedCategory.slice(0, separatorIndex);
+    const category =
+      separatorIndex < 0 ? "" : selectedCategory.slice(separatorIndex + 2);
+    const message = document
+      .getElementById("technicianFeedbackMessage")
+      .value.trim();
+    const rating = ratingInputs.find((input) => input.checked)?.value || "";
+    if (!category || !message) {
+      showNotice("Choose a category and enter a feedback message.", "warning");
+      return;
+    }
+    if (message.length > 2000) {
+      showNotice("Feedback must be no more than 2,000 characters.", "warning");
+      return;
+    }
+
+    submitting = true;
+    button.disabled = true;
+    button.innerHTML =
+      '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Submitting...';
+    button.setAttribute("aria-busy", "true");
+    notice.classList.add("d-none");
+
+    try {
+      const result = await apiRequest("/feedback/technician", {
+        method: "POST",
+        body: {
+          categoryGroup,
+          category,
+          message,
+          ...(rating ? { rating: Number(rating) } : {}),
+        },
+      });
+      if (result?.success !== true || !result.data?.id) {
+        throw new Error(
+          result?.message || "The feedback was not confirmed as saved.",
+        );
+      }
+      form.reset();
+      updateStarRating();
+      showNotice("Feedback submitted successfully!", "success");
+      await loadMyTechnicianFeedback();
+    } catch (err) {
+      showNotice(
+        err.message || "Unable to submit feedback. Please try again.",
+        "danger",
+      );
+    } finally {
+      submitting = false;
+      button.disabled = false;
+      button.innerHTML =
+        '<i class="bi bi-send me-1" aria-hidden="true"></i>Submit Feedback';
+      button.removeAttribute("aria-busy");
+    }
+  });
+}
+
+async function loadMyTechnicianFeedback() {
+  const container = document.getElementById("technicianFeedbackHistory");
+  if (!container) return;
+  if (container.dataset.retryBound !== "true") {
+    container.dataset.retryBound = "true";
+    container.addEventListener("click", (event) => {
+      if (event.target.closest("[data-retry-feedback-history]"))
+        loadMyTechnicianFeedback();
+    });
+  }
+  container.setAttribute("aria-busy", "true");
+  container.innerHTML = '<p class="text-muted mb-0">Loading your feedback history...</p>';
+
+  try {
+    const result = await apiRequest("/feedback/technician/mine");
+    if (result?.success !== true || !Array.isArray(result.data)) {
+      throw new Error(result?.message || "Unable to load your feedback history.");
+    }
+    if (!result.data.length) {
+      container.innerHTML = `
+        <div class="text-center py-4">
+          <i class="bi bi-chat-square-text fs-2 text-muted d-block mb-2" aria-hidden="true"></i>
+          <p class="fw-semibold mb-1">No feedback submitted yet</p>
+          <p class="small text-muted mb-0">Your feedback submissions will appear here.</p>
+        </div>`;
+      return;
+    }
+
+    const ratingNames = ["", "Very Poor", "Poor", "Average", "Good", "Excellent"];
+    container.innerHTML = result.data
+      .map((item) => {
+        const ticket = item.ticket;
+        const rating =
+          Number.isInteger(item.rating) && item.rating >= 1 && item.rating <= 5
+            ? `<span role="img" aria-label="${item.rating} out of 5 stars: ${ratingNames[item.rating]}">${"★".repeat(item.rating)}${"☆".repeat(5 - item.rating)}</span><span class="small text-muted ms-1">${item.rating}/5 · ${escHtml(ratingNames[item.rating])}</span>`
+            : '<span class="small text-muted">Not rated</span>';
+        const fullMessage = String(item.message || "");
+        const messagePreview =
+            fullMessage.length > 220
+              ? `${fullMessage.slice(0, 217).trimEnd()}...`
+              : fullMessage;
+        const request = ticket
+          ? `<strong>${escHtml(ticket.ticketId || "Maintenance request")}</strong>${
+              ticket.title ? `<span class="d-block small">${escHtml(ticket.title)}</span>` : ""
+            }${
+              ticket.category
+                ? `<span class="d-block small text-muted">Request category: ${escHtml(ticket.category.split(">").pop().trim())}</span>`
+                : ""
+            }`
+          : "No related request";
+        const submitted = item.createdAt
+          ? new Date(item.createdAt).toLocaleString()
+          : "—";
+        const reference = item._id
+          ? `FB-${String(item._id).slice(-8).toUpperCase()}`
+          : "Feedback reference unavailable";
+        const status = item.status || "Pending";
+        const statusClass = status === "Reviewed" ? "text-bg-success" : "text-bg-warning";
+        const priority = ticket?.priority
+          ? `<span class="badge text-bg-${{
+              low: "success",
+              medium: "primary",
+              high: "warning",
+              critical: "danger",
+            }[ticket.priority] || "secondary"}">${escHtml(ticket.priority)} priority</span>`
+          : "";
+        const adminResponse =
+          item.adminResponse || item.adminComment || item.response || "";
+        return `<article class="technician-feedback-record">
+          <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+            <div class="min-w-0">
+              <div class="small text-muted feedback-reference">${escHtml(reference)}</div>
+              <h3 class="h6 fw-bold mb-0">${escHtml(item.category || "Feedback")}</h3>
+            </div>
+            <div class="d-flex flex-wrap align-items-center justify-content-end gap-2">
+              ${priority}
+              <span class="badge ${statusClass}">${escHtml(status)}</span>
+            </div>
           </div>
-          <h6 class="fw-semibold mb-1" style="line-height:1.3;">
-            ${escHtml(r.title || `Ticket ${r.ticketId}`)}
-          </h6>
-          <div class="text-muted small mb-2">
-            <i class="bi bi-tag me-1"></i>${escHtml(r.equipmentType || "—")}${r.category ? ` · ${escHtml(r.category)}` : ""}
-            ${r.department ? `&nbsp;·&nbsp;<i class="bi bi-building me-1"></i>${escHtml(r.department)}` : ""}
-          </div>
-          <div class="small mb-2"><span class="text-muted">Issue Type:</span> ${escHtml(r.issueType || r.serviceType || "—")}</div>
-          <div class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${escHtml(r.location || "Not provided")}</div>
-          <div class="mb-2">
-            ${statusBadge(r.status)}
-            ${
-              r.has_feedback
-                ? `<span class="badge bg-success ms-1">Feedback added</span>`
-                : `<span class="badge bg-light text-dark border ms-1">No feedback yet</span>`
-            }
-          </div>
-          <div class="text-muted" style="font-size:.78rem;">
-            <i class="bi bi-calendar3 me-1"></i>Assigned: ${formatDate(r.assigned_at)}
-          </div>
-          ${
-            r.technician_feedback
-              ? `
-            <div class="feedback-card mt-3">
-              <div class="feedback-card-header">
-                <h6 class="feedback-card-title"><i class="bi bi-chat-left-text me-1"></i>Technician Feedback</h6>
-                ${statusBadge(r.technician_feedback.status)}
+          <p class="mb-0">${escHtml(messagePreview || "No message provided.")}</p>
+          <dl class="feedback-record-meta mb-0 small">
+            <div>
+              <dt class="text-muted fw-normal">Rating</dt>
+              <dd>${rating}</dd>
+            </div>
+            <div>
+              <dt class="text-muted fw-normal">Submitted</dt>
+              <dd><time>${escHtml(submitted)}</time></dd>
+            </div>
+          </dl>
+          <details class="technician-feedback-details">
+            <summary>View details</summary>
+            <div class="technician-feedback-message-full">${escHtml(fullMessage || "No message provided.")}</div>
+            <dl class="feedback-record-meta mb-0 small">
+              <div>
+                <dt class="text-muted fw-normal">Related Maintenance Request</dt>
+                <dd>${request}</dd>
               </div>
-              <div class="feedback-card-body">
-                <div class="text-muted small fw-semibold mb-1">Feedback message</div>
-                <div class="feedback-message">${escHtml([r.technician_feedback.diagnosis, r.technician_feedback.workPerformed, r.technician_feedback.resolution].filter(Boolean).join(" "))}</div>
-                <div class="feedback-meta">
-                  <span class="feedback-meta-item"><i class="bi bi-person"></i>${escHtml(r.technician_feedback.technician_name || "Technician")}</span>
-                  <span class="feedback-meta-item"><i class="bi bi-calendar3"></i>${formatDateTime(r.technician_feedback.submittedAt)}</span>
-                  <span class="feedback-meta-item"><i class="bi bi-ticket-detailed"></i>${escHtml(r.ticketId || r.ticket_id)}</span>
-                </div>
-              </div>
-            </div>`
-              : ""
-          }
-        </div>
-        <div class="card-footer bg-transparent border-top-0 px-3 pb-3">
-          <div class="d-grid gap-2">
-            ${
-              r.has_feedback
-                ? `<button class="btn btn-outline-primary btn-sm fw-semibold btn-view-report"
-                         data-id="${escHtml(r.ticket_id)}" data-title="${escHtml(r.title || "")}"
-                         data-bs-toggle="modal" data-bs-target="#viewReportModal">
-                   <i class="bi bi-chat-left-text me-1"></i>View Feedback
-                 </button>
-                 <button class="btn btn-primary btn-sm fw-semibold btn-open-feedback"
-                         data-id="${escHtml(r.ticket_id)}" data-title="${escHtml(r.title || "")}"
-                         data-bs-toggle="modal" data-bs-target="#feedbackModal">
-                   <i class="bi bi-pencil-square me-1"></i>Edit Feedback
-                 </button>`
-                : `<button class="btn btn-primary btn-sm fw-semibold btn-open-feedback"
-                         data-id="${escHtml(r.ticket_id)}" data-title="${escHtml(r.title || "")}"
-                         data-bs-toggle="modal" data-bs-target="#feedbackModal">
-                   <i class="bi bi-chat-left-text me-1"></i>Add Feedback
-                 </button>`
-            }
-          </div>
-        </div>
-      </div>
-    </div>`,
-    )
-    .join("");
+              ${adminResponse ? `<div><dt class="text-muted fw-normal">ICT Admin response</dt><dd>${escHtml(adminResponse)}</dd></div>` : ""}
+            </dl>
+          </details>
+        </article>`;
+      })
+      .join("");
+  } catch (err) {
+    const message =
+      err.status === 404
+        ? "The configured API returned 404 for the technician feedback history route. The backend deployment may be missing this route."
+        : err.status === 401 || err.status === 403
+          ? err.message || "Your account is not authorized to view this feedback history."
+          : err.message || "A network or server error prevented feedback history from loading.";
+    container.innerHTML = `<div class="alert alert-danger mb-0" role="alert">
+      <p class="mb-2"><strong>Unable to load your feedback history.</strong> ${escHtml(message)}</p>
+      <button type="button" class="btn btn-sm btn-outline-danger" data-retry-feedback-history>
+        <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Try again
+      </button>
+    </div>`;
+  } finally {
+    container.setAttribute("aria-busy", "false");
+  }
 }
 
 async function fetchAssignedRequests() {
@@ -1510,13 +1672,8 @@ async function submitFeedback() {
         await loadDashboardTasks();
       } else {
         const listEl = document.getElementById("assignedRequestsList");
-        const fbListEl = document.getElementById("techFeedbackList");
         const newData = await apiRequest("/technicians/my/assignments");
         if (listEl) renderAssignedCards(newData.data);
-        if (fbListEl)
-          renderTechFeedbackCards(
-            await loadTechnicianFeedbackDetails(newData.data),
-          );
       }
     } catch (refreshError) {
       console.error(
@@ -1596,11 +1753,11 @@ function renderReportView(report, title, requestId) {
   return `
     <div class="feedback-card">
       <div class="feedback-card-header">
-        <h6 class="feedback-card-title">${escHtml(title || "Technician Feedback")}</h6>
+        <h6 class="feedback-card-title">${escHtml(title || "Maintenance Report")}</h6>
         ${statusBadgeHtml}
       </div>
       <div class="feedback-card-body">
-        <div class="text-muted small fw-semibold mb-1">Feedback message</div>
+        <div class="text-muted small fw-semibold mb-1">Maintenance report summary</div>
         <div class="feedback-message">${escHtml(message || "No feedback message available.")}</div>
         <div class="feedback-meta">
           <span class="feedback-meta-item"><i class="bi bi-person"></i>${escHtml(report.technician_name || "Technician")}</span>
@@ -1616,7 +1773,7 @@ function renderReportView(report, title, requestId) {
     </div>
     <div class="d-flex justify-content-end border-top pt-3 mt-3">
       <button type="button" class="btn btn-outline-primary btn-sm" id="editReportBtn">
-        <i class="bi bi-pencil me-1"></i>Edit Feedback
+        <i class="bi bi-pencil me-1"></i>Edit Maintenance Report
       </button>
     </div>
   `;
@@ -1960,7 +2117,7 @@ function renderHistoryTable(completed, maintMap) {
 /* Cached accessor for the technician's own maintenance log.
    The history page filters this whole collection down to a single ticket on
    every row expansion, and re-fetched it each time. It changes only when a log
-   is written, so cache it for the session and invalidate after a write. */
+   is written, so cache it for this page visit and invalidate after a write. */
 let _myMaintenanceCache = null;
 let _myMaintenanceInFlight = null;
 
@@ -1969,7 +2126,10 @@ async function loadMyMaintenanceLog() {
   if (!_myMaintenanceInFlight) {
     _myMaintenanceInFlight = apiRequest("/maintenance/my")
       .then((res) => {
-        _myMaintenanceCache = res.data || [];
+        if (!Array.isArray(res.data)) {
+          throw new Error("The server returned an unexpected activity response.");
+        }
+        _myMaintenanceCache = res.data;
         return _myMaintenanceCache;
       })
       .finally(() => {

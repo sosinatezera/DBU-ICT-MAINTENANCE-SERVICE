@@ -154,6 +154,39 @@ h6 { font-size: .9375rem; font-weight: 600; }   /* 15px */
   border: 1px solid var(--border);
 }
 
+.google-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  margin: 1.25rem 0;
+  color: var(--text-secondary);
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.google-auth-divider::before,
+.google-auth-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
+.google-auth-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+}
+
+.google-auth-button[aria-disabled="true"] {
+  opacity: .65;
+}
+
+.google-auth-button iframe {
+  max-width: 100%;
+}
+
 /* ── Back to Home (auth page footer) ───────────────────────── */
 .back-home {
   display: inline-flex;
@@ -531,6 +564,8 @@ h6 { font-size: .9375rem; font-weight: 600; }   /* 15px */
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
   display: block;
 }
 
@@ -1614,9 +1649,45 @@ body.dashboard-body > .d-flex > .main-content {
 
 .admin-profile-item i { width: 1.1rem; font-size: .95rem; text-align: center; opacity: .85; }
 .admin-profile-item-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-profile-accordion-trigger { text-align: left; }
+.admin-profile-accordion-caret {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: .7rem !important;
+  opacity: 1 !important;
+  transition: transform .18s ease;
+}
+.admin-profile-accordion.is-expanded .admin-profile-accordion-caret {
+  transform: rotate(180deg);
+}
+.admin-profile-accordion-panel {
+  max-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+  transition: max-height .22s ease, opacity .18s ease, visibility 0s linear .22s;
+}
+.admin-profile-accordion.is-expanded .admin-profile-accordion-panel {
+  max-height: 3.5rem;
+  visibility: visible;
+  opacity: 1;
+  transition: max-height .22s ease, opacity .18s ease;
+}
+.admin-profile-accordion-link {
+  min-height: 2.25rem;
+  padding-left: 2.3rem;
+  color: var(--muted);
+  font-size: .8rem;
+}
 .admin-profile-item--danger { color: var(--danger); }
 .admin-profile-item--danger:hover,
 .admin-profile-item--danger:focus-visible { background: var(--danger-light); color: var(--danger); }
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-profile-accordion-panel,
+  .admin-profile-accordion-caret { transition: none; }
+}
 
 @media (max-width: 991.98px) {
   .admin-profile-dropdown { min-width: 230px; }

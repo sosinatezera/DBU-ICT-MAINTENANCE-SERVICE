@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <link rel="stylesheet" href="/assets/css/theme.css" />
-  <script src="/assets/js/api-config.js?v=5"></script>
+  <script src="/assets/js/api-config.js?v=16"></script>
 </head>
 
 <body class="auth-body">
@@ -84,6 +84,8 @@
 
               </form>
 
+<div class="google-auth-divider" aria-hidden="true"><span>OR</span></div>
+
               <hr class="my-4" />
               <p class="text-center text-muted small mb-0">
                 <span data-i18n="auth.noaccount">Don't have an account?</span>
@@ -108,19 +110,44 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/js/validation.js?v=7"></script>
   <script>
-    /* Auto-redirect only when the server confirms the current session. */
+    /* Auto-redirect only when the server confirms the saved bearer token. */
     ( async function ()
     {
+      let savedToken;
+      try
+      {
+        savedToken = localStorage.getItem( window.__AUTH_TOKEN_STORAGE_KEY );
+      } catch ( error )
+      {
+        console.error( '[auth] Could not read the saved access token; skipping the session check.', error );
+        return;
+      }
+      if ( !savedToken ) return;
+
       const controller = new AbortController();
       const timer = setTimeout( () => controller.abort(), 15000 );
       try
       {
         const res = await fetch( `${ API_BASE }/auth/me`, {
-          credentials: 'include',
           signal: controller.signal,
         } );
         const data = await res.json().catch( () => ( {} ) );
-        if ( res.ok && data.user ) redirectByRole( data.user.role );
+        if ( res.status === 401 )
+        {
+          try
+          {
+            localStorage.removeItem( window.__AUTH_TOKEN_STORAGE_KEY );
+          } catch ( error )
+          {
+            console.error( '[auth] Could not clear the rejected access token.', error );
+          }
+          return;
+        }
+        if ( res.ok && data.success === true && data.user )
+        {
+          const dashboard = dashboardForRole( data.user.role );
+          if ( dashboard ) window.location.replace( dashboard );
+        }
       } catch ( _ ) { }
       finally
       {
@@ -128,14 +155,14 @@
       }
     } )();
 
-    function redirectByRole ( role )
+    function dashboardForRole ( role )
     {
       const routes = {
         'ICT Admin': '/views/admin/dashboard.html',
         'Requester': '/views/user/dashboard.html',
         'Technician': '/views/technician/dashboard.html',
       };
-      window.location.href = routes[role] || '/views/user/dashboard.html';
+      return Object.prototype.hasOwnProperty.call( routes, role ) ? routes[ role ] : null;
     }
 
     function showAlert ( msg, type )
@@ -148,27 +175,284 @@
         info: 'bi-info-circle-fill',
       };
       el.className = `alert alert-${ type } d-flex align-items-center gap-2`;
-      el.innerHTML = `<i class="bi ${ icons[type] || 'bi-info-circle-fill' } flex-shrink-0"></i><span>${ msg }</span>`;
+      const icon = document.createElement( 'i' );
+      icon.className = `bi ${ icons[type] || 'bi-info-circle-fill' } flex-shrink-0`;
+      const text = document.createElement( 'span' );
+      text.textContent = msg;
+      el.replaceChildren( icon, text );
       el.classList.remove( 'd-none' );
     }
 
-    function setLoading ( on )
+    const loginUrl = new URL( window.location.href );
+    if ( loginUrl.searchParams.get( 'authExpired' ) === '1' )
     {
-      document.getElementById( 'loginBtn' ).disabled = on;
-      document.getElementById( 'loginSpinner' ).classList.toggle( 'd-none', !on );
-      document.getElementById( 'loginIcon' ).classList.toggle( 'd-none', on );
-      document.getElementById( 'loginBtnText' ).textContent = on ? ( window.t ? t( 'auth.login.signing' ) : 'Signing in...' ) : ( window.t ? t( 'auth.login.btn' ) : 'Sign In' );
+      showAlert( 'Your access token expired. Please sign in again.', 'warning' );
+      loginUrl.searchParams.delete( 'authExpired' );
+      window.history.replaceState( {}, '', loginUrl );
     }
+
+    let authInProgress = false;
+    let googleNonceChallenge = null;
+
+    function setLoading ( on, source )
+    {
+      authInProgress = on;
+      const loginButton = document.getElementById( 'loginBtn' );
+      const spinner = document.getElementById( 'loginSpinner' );
+      const loginIcon = document.getElementById( 'loginIcon' );
+      const buttonText = document.getElementById( 'loginBtnText' );
+      if ( loginButton ) loginButton.disabled = on;
+      if ( spinner ) spinner.classList.toggle( 'd-none', !on );
+      if ( loginIcon ) loginIcon.classList.toggle( 'd-none', on );
+      if ( buttonText )
+      {
+        buttonText.textContent = on
+          ? ( window.t ? t( 'auth.login.signing' ) : 'Signing in...' )
+          : ( window.t ? t( 'auth.login.btn' ) : 'Sign In' );
+      }
+      const googleMount = document.getElementById( 'googleSignInMount' );
+      const googleLoading = document.getElementById( 'googleSignInLoading' );
+      if ( googleMount )
+      {
+        googleMount.style.pointerEvents = on ? 'none' : '';
+        googleMount.setAttribute( 'aria-disabled', String( on ) );
+      }
+      if ( googleLoading )
+      {
+        googleLoading.classList.toggle( 'd-none', !( on && source === 'google' ) );
+      }
+    }
+
+    async function completeLogin ( data )
+    {
+      if ( !data || data.success !== true || !data.user || typeof data.user !== 'object' )
+      {
+        showAlert( 'Server responded without a valid authenticated user profile. Please retry or contact support.', 'warning' );
+        setLoading( false );
+        return;
+      }
+      if ( typeof data.token !== 'string' || !data.token )
+      {
+        showAlert( 'Server accepted the credentials but did not return an access token. Please retry or contact support.', 'warning' );
+        setLoading( false );
+        return;
+      }
+
+      try
+      {
+        localStorage.setItem( window.__AUTH_TOKEN_STORAGE_KEY, data.token );
+      } catch ( error )
+      {
+        showAlert( 'Sign-in succeeded, but this browser could not securely store the access token.', 'danger' );
+        setLoading( false );
+        return;
+      }
+
+      let authResponse;
+      let authData = {};
+      const authController = new AbortController();
+      const authTimer = setTimeout( () => authController.abort(), 30000 );
+      try
+      {
+        authResponse = await fetch( `${ API_BASE }/auth/me`, {
+          signal: authController.signal,
+        } );
+        authData = await authResponse.json().catch( () => ( {} ) );
+      } catch ( error )
+      {
+        localStorage.removeItem( window.__AUTH_TOKEN_STORAGE_KEY );
+        showAlert(
+          error && error.name === 'AbortError'
+            ? 'Sign-in succeeded, but confirming the access token timed out. Check your connection and retry.'
+            : 'Sign-in succeeded, but the server could not confirm the access token. Check your connection and retry.',
+          'warning'
+        );
+        setLoading( false );
+        return;
+      }
+      finally
+      {
+        clearTimeout( authTimer );
+      }
+
+      if ( !authResponse.ok || authData.success !== true || !authData.user )
+      {
+        localStorage.removeItem( window.__AUTH_TOKEN_STORAGE_KEY );
+        showAlert(
+          authResponse.status === 401
+            ? 'Sign-in succeeded, but the access token was not accepted. Please try again.'
+            : authData.message || 'Sign-in succeeded, but the access token could not be verified. Please retry.',
+          authResponse.status >= 500 ? 'warning' : 'danger'
+        );
+        setLoading( false );
+        return;
+      }
+
+      const authenticatedUserId = authData.user.id || authData.user._id;
+      if (
+        !authenticatedUserId ||
+        String( authenticatedUserId ) !== String( data.user.id ) ||
+        !dashboardForRole( authData.user.role )
+      )
+      {
+        localStorage.removeItem( window.__AUTH_TOKEN_STORAGE_KEY );
+        showAlert( 'The server returned an inconsistent authenticated account. Please sign in again.', 'danger' );
+        setLoading( false );
+        return;
+      }
+
+      const dashboard = dashboardForRole( authData.user.role );
+      if ( !dashboard )
+      {
+        localStorage.removeItem( window.__AUTH_TOKEN_STORAGE_KEY );
+        showAlert( 'Your account has an unsupported role. Please contact ICT support.', 'danger' );
+        setLoading( false );
+        return;
+      }
+
+      showAlert( `Welcome, ${ authData.user.fullName }!`, 'success' );
+      window.location.replace( dashboard );
+    }
+
+    async function handleGoogleCredential ( response )
+    {
+      if ( authInProgress ) return;
+      document.getElementById( 'loginAlert' ).classList.add( 'd-none' );
+      if ( !response || typeof response.credential !== 'string' )
+      {
+        showAlert( 'Google did not return a sign-in credential. Please try again.', 'warning' );
+        return;
+      }
+
+      setLoading( true, 'google' );
+      const controller = new AbortController();
+      const timer = setTimeout( () => controller.abort(), 30000 );
+      try
+      {
+        const res = await fetch( `${ API_BASE }/auth/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify( {
+            credential: response.credential,
+            ...googleNonceChallenge,
+          } ),
+          signal: controller.signal,
+        } );
+        const data = await res.json().catch( () => ( {} ) );
+        if ( !res.ok )
+        {
+          showAlert(
+            data.message || ( res.status >= 500
+              ? 'Google sign-in is temporarily unavailable. Please retry.'
+              : 'Google sign-in could not be completed.' ),
+            res.status >= 500 || res.status === 429 ? 'warning' : 'danger'
+          );
+          setLoading( false );
+          return;
+        }
+        await completeLogin( data );
+      } catch ( error )
+      {
+        showAlert(
+          error && error.name === 'AbortError'
+            ? 'Google sign-in timed out while the service was responding. Please retry.'
+            : 'Could not reach the sign-in service. Your sign-in state has not changed; please retry.',
+          'warning'
+        );
+        setLoading( false );
+      } finally
+      {
+        clearTimeout( timer );
+      }
+    }
+
+    async function initializeGoogleSignIn ()
+    {
+      const status = document.getElementById( 'googleSignInStatus' );
+      if ( !status ) return;
+      try
+      {
+        const configResponse = await fetch( `${ API_BASE }/auth/google/config`, {
+          cache: 'no-store',
+        } );
+        const config = await configResponse.json().catch( () => ( {} ) );
+        if ( !configResponse.ok )
+        {
+          if ( configResponse.status === 404 )
+          {
+            status.textContent = 'Google Sign-In configuration is unavailable on the connected backend. Use email and password, or redeploy the backend to enable Google sign-in.';
+            return;
+          }
+          throw new Error( config.message || 'Google Sign-In configuration could not be loaded.' );
+        }
+        if (
+          config.enabled !== true ||
+          !config.clientId ||
+          !config.nonce ||
+          !Number.isInteger( config.nonceExpiresAt ) ||
+          typeof config.nonceProof !== 'string'
+        )
+        {
+          status.textContent = 'Google sign-in is not configured. Use your email and password.';
+          return;
+        }
+        googleNonceChallenge = {
+          nonce: config.nonce,
+          nonceExpiresAt: config.nonceExpiresAt,
+          nonceProof: config.nonceProof,
+        };
+
+        if ( !window.google?.accounts?.id )
+        {
+          await new Promise( ( resolve, reject ) =>
+          {
+            const script = document.createElement( 'script' );
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            script.defer = true;
+            script.onload = resolve;
+            script.onerror = () => reject( new Error( 'Google sign-in could not be loaded. Check your connection and retry.' ) );
+            document.head.appendChild( script );
+          } );
+        }
+
+        window.google.accounts.id.initialize( {
+          client_id: config.clientId,
+          nonce: config.nonce,
+          callback: handleGoogleCredential,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        } );
+        const mount = document.getElementById( 'googleSignInMount' );
+        const buttonWidth = Math.max( 200, Math.min( 400, Math.floor( mount.getBoundingClientRect().width ) ) );
+        window.google.accounts.id.renderButton( mount, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'continue_with',
+          shape: 'rectangular',
+          logo_alignment: 'center',
+          width: buttonWidth,
+        } );
+        status.textContent = '';
+      } catch ( error )
+      {
+        status.textContent = error.message || 'Google sign-in could not be loaded. Use your email and password.';
+      }
+    }
+
+    void initializeGoogleSignIn();
 
     /* Real-time field validation */
     attachRealTimeValidation( 'loginForm', [
-      { fieldId: 'email', checks: [Validators.email] },
+      { fieldId: 'email', checks: [Validators.genericEmail] },
     ] );
 
     /* Form submit */
     document.getElementById( 'loginForm' ).addEventListener( 'submit', async ( e ) =>
     {
       e.preventDefault();
+      if ( authInProgress ) return;
       document.getElementById( 'loginAlert' ).classList.add( 'd-none' );
 
       const email = document.getElementById( 'email' ).value.trim();
@@ -177,7 +461,7 @@
       /* Validate fields */
       let hasError = false;
 
-      const emailErr = Validators.email( email );
+      const emailErr = Validators.genericEmail( email );
       if ( emailErr ) { showFieldError( 'email', emailErr ); hasError = true; }
       else { showFieldValid( 'email' ); }
 
@@ -190,75 +474,63 @@
       if ( hasError ) return;
 
       setLoading( true );
-      let res;
-      let data;
-      const controller = new AbortController();
-      /* Netlify -> Render is cross-origin (POST triggers a CORS preflight) and
-         Render's FREE tier cold-starts sleeping instances in 30-60s. 15s was
-         too short: a waking instance aborted here and the raw error was
-         indistinguishable from a CORS/network block. 30s still bounds the wait
-         without letting a hung request spin forever. */
-      const timer = setTimeout( () => controller.abort(), 30000 );
       try
       {
-        res = await fetch( `${ API_BASE }/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify( { email, password } ),
-          signal: controller.signal,
-        } );
-        const raw = await res.text();
-        try { data = raw ? JSON.parse( raw ) : {}; }
-        catch ( _ ) { data = {}; }
-      } catch ( err )
-      {
-        /* The ONLY abort source here is the timer above, so AbortError means
-           the request exceeded the budget (cold start / slow provider), not a
-           browser CORS block. Everything else is a transport failure — for
-           cross-origin requests that is almost always CORS (the deployment
-           does not allow Origin: https://simms-mau.netlify.app). */
-        if ( err && err.name === 'AbortError' )
+        let res;
+        let data;
+        const controller = new AbortController();
+        /* Netlify -> Render is cross-origin (POST triggers a CORS preflight) and
+           Render's FREE tier cold-starts sleeping instances in 30-60s. 30s bounds
+           the wait without letting a hung request spin forever. */
+        const timer = setTimeout( () => controller.abort(), 30000 );
+        try
         {
-          showAlert( 'The server took too long to respond — the free-tier backend may still be waking up. Please try again in a moment.', 'warning' );
-        } else
+          res = await fetch( `${ API_BASE }/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify( { email, password } ),
+            signal: controller.signal,
+          } );
+          const raw = await res.text();
+          try { data = raw ? JSON.parse( raw ) : {}; }
+          catch ( _ ) { data = {}; }
+        } catch ( err )
         {
-          showAlert( 'The server did not respond. This is usually a connection (CORS) problem — check the browser Network tab for the /api/auth/login request.', 'danger' );
+          /* AbortError is caused by the request timeout; other failures are
+             transport errors such as a network or CORS block. */
+          if ( err && err.name === 'AbortError' )
+          {
+            showAlert( 'The server took too long to respond — the free-tier backend may still be waking up. Please try again in a moment.', 'warning' );
+          } else
+          {
+            showAlert( 'The server did not respond. This is usually a connection (CORS) problem — check the browser Network tab for the /api/auth/login request.', 'danger' );
+          }
+          return;
+        } finally
+        {
+          clearTimeout( timer );
         }
-        setLoading( false );
-        return;
+
+        if ( !res.ok )
+        {
+          const message = data.message || (
+            res.status === 401
+              ? 'Invalid email or password.'
+              : 'The server could not complete sign-in. Please retry.'
+          );
+          showAlert( message, res.status >= 500 ? 'warning' : 'danger' );
+          return;
+        }
+
+        await completeLogin( data );
+      } catch ( error )
+      {
+        console.error( '[auth] Sign-in could not be completed.', error );
+        showAlert( 'Sign-in could not be completed. Please try again.', 'warning' );
       } finally
       {
-        clearTimeout( timer );
-      }
-
-      if ( !res.ok )
-      {
-        showAlert( data.message || 'Invalid email or password.', 'danger' );
         setLoading( false );
-        return;
       }
-
-      if ( !data.user )
-      {
-        showAlert( 'Server responded without user data. Please retry or contact support.', 'warning' );
-        setLoading( false );
-        return;
-      }
-
-      /* Save session — normalize role to canonical format */
-      const roleMap = {
-        'requester': 'Requester',
-        'technician': 'Technician',
-        'admin': 'ICT Admin',
-        'ict admin': 'ICT Admin',
-      };
-      const normalizedUser = {
-        ...data.user,
-        role: roleMap[data.user.role?.toLowerCase()] || data.user.role,
-      };
-      showAlert( `Welcome, <strong>${ normalizedUser.fullName }</strong>!`, 'success' );
-      window.location.href = data.redirect || redirectByRole( normalizedUser.role );
     } );
 
     /* Password toggle */
@@ -271,7 +543,6 @@
       icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
     } );
   </script>
-  <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/lang.js?v=16"></script>
 </body>
 

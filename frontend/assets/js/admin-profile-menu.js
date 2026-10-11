@@ -49,40 +49,96 @@
   /* ── Markup ──────────────────────────────────────────────
      Built as static markup only; every user-supplied value is
      written with textContent afterwards, so nothing from the
-     session is ever interpolated into HTML. */
+     authenticated user data is ever interpolated into HTML. */
   function buildProfileMenu(role) {
     const technicianItems =
       role === "Technician"
         ? `
-        <a class="admin-profile-item" role="menuitem" id="adminProfileMyProfileLink" href="/views/technician/profile.html">
-          <i class="bi bi-person" aria-hidden="true"></i>
-          <span class="admin-profile-item-label">My Profile</span>
-        </a>
-        <a class="admin-profile-item" role="menuitem" id="adminProfileSettingsLink" href="/views/technician/profile.html#profileSettings">
-          <i class="bi bi-sliders" aria-hidden="true"></i>
-          <span class="admin-profile-item-label">Profile Settings</span>
-        </a>
-        <a class="admin-profile-item" role="menuitem" href="/views/settings.html#securitySettings">
-          <i class="bi bi-shield-lock" aria-hidden="true"></i>
-          <span class="admin-profile-item-label">Security</span>
-        </a>
-        <a class="admin-profile-item" role="menuitem" href="/views/settings.html#notificationSettings">
-          <i class="bi bi-bell" aria-hidden="true"></i>
-          <span class="admin-profile-item-label">Notification Settings</span>
-        </a>
-        <a class="admin-profile-item" role="menuitem" id="adminProfileSystemSettingsLink" href="/views/settings.html#languageSettings">
-          <i class="bi bi-translate" aria-hidden="true"></i>
-          <span class="admin-profile-item-label">Language &amp; Appearance</span>
-        </a>
+        <div class="admin-profile-accordion">
+          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
+                  data-profile-accordion aria-expanded="false" aria-controls="adminProfileMyProfilePanel">
+            <i class="bi bi-person" aria-hidden="true"></i>
+            <span class="admin-profile-item-label">My Profile</span>
+            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
+          </button>
+          <div class="admin-profile-accordion-panel" id="adminProfileMyProfilePanel"
+               role="group" aria-label="My Profile" aria-hidden="true" inert>
+            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/technician/profile.html">Open My Profile</a>
+          </div>
+        </div>
+        <div class="admin-profile-accordion">
+          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
+                  data-profile-accordion aria-expanded="false" aria-controls="adminProfileSettingsPanel">
+            <i class="bi bi-sliders" aria-hidden="true"></i>
+            <span class="admin-profile-item-label">Profile Settings</span>
+            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
+          </button>
+          <div class="admin-profile-accordion-panel" id="adminProfileSettingsPanel"
+               role="group" aria-label="Profile Settings" aria-hidden="true" inert>
+            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/technician/profile.html#profileSettings">Open Profile Settings</a>
+          </div>
+        </div>
+        <div class="admin-profile-accordion">
+          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
+                  data-profile-accordion aria-expanded="false" aria-controls="adminProfileSecurityPanel">
+            <i class="bi bi-shield-lock" aria-hidden="true"></i>
+            <span class="admin-profile-item-label">Security</span>
+            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
+          </button>
+          <div class="admin-profile-accordion-panel" id="adminProfileSecurityPanel"
+               role="group" aria-label="Security" aria-hidden="true" inert>
+            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/settings.html#securitySettings">Open Security Settings</a>
+          </div>
+        </div>
+        <div class="admin-profile-accordion">
+          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
+                  data-profile-accordion aria-expanded="false" aria-controls="adminProfileNotificationsPanel">
+            <i class="bi bi-bell" aria-hidden="true"></i>
+            <span class="admin-profile-item-label">Notification Settings</span>
+            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
+          </button>
+          <div class="admin-profile-accordion-panel" id="adminProfileNotificationsPanel"
+               role="group" aria-label="Notification Settings" aria-hidden="true" inert>
+            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/settings.html#notificationSettings">Open Notification Settings</a>
+          </div>
+        </div>
+        <div class="admin-profile-accordion">
+          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
+                  data-profile-accordion aria-expanded="false" aria-controls="adminProfileAppearancePanel">
+            <i class="bi bi-translate" aria-hidden="true"></i>
+            <span class="admin-profile-item-label">Language &amp; Appearance</span>
+            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
+          </button>
+          <div class="admin-profile-accordion-panel" id="adminProfileAppearancePanel"
+               role="group" aria-label="Language and Appearance" aria-hidden="true" inert>
+            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/settings.html#languageSettings">Open Language &amp; Appearance</a>
+          </div>
+        </div>
         <div class="admin-profile-dropdown-sep" role="separator"></div>
-        <a class="admin-profile-item" role="menuitem" href="/views/technician/assigned-requests.html">
-          <i class="bi bi-tools" aria-hidden="true"></i>
-          <span class="admin-profile-item-label">My Assignments</span>
-        </a>
-        <a class="admin-profile-item" role="menuitem" href="/views/technician/dashboard.html#performanceStats">
-          <i class="bi bi-bar-chart" aria-hidden="true"></i>
-          <span class="admin-profile-item-label">My Performance</span>
-        </a>
+        <div class="admin-profile-accordion">
+          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
+                  data-profile-accordion aria-expanded="false" aria-controls="adminProfileAssignmentsPanel">
+            <i class="bi bi-tools" aria-hidden="true"></i>
+            <span class="admin-profile-item-label">My Assignments</span>
+            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
+          </button>
+          <div class="admin-profile-accordion-panel" id="adminProfileAssignmentsPanel"
+               role="group" aria-label="My Assignments" aria-hidden="true" inert>
+            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/technician/assigned-requests.html">Open My Assignments</a>
+          </div>
+        </div>
+        <div class="admin-profile-accordion">
+          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
+                  data-profile-accordion aria-expanded="false" aria-controls="adminProfilePerformancePanel">
+            <i class="bi bi-bar-chart" aria-hidden="true"></i>
+            <span class="admin-profile-item-label">My Performance</span>
+            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
+          </button>
+          <div class="admin-profile-accordion-panel" id="adminProfilePerformancePanel"
+               role="group" aria-label="My Performance" aria-hidden="true" inert>
+            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/technician/dashboard.html#performanceStats">Open My Performance</a>
+          </div>
+        </div>
         <div class="admin-profile-dropdown-sep" role="separator"></div>`
         : `
         <a class="admin-profile-item" role="menuitem" id="adminProfileSettingsLink">
@@ -176,6 +232,12 @@
     }
   }
 
+  function getDropdownItems(dropdown) {
+    return [
+      ...dropdown.querySelectorAll("a[href], button:not(:disabled)"),
+    ].filter((item) => !item.closest('[aria-hidden="true"]'));
+  }
+
   /* Keep the panel fully inside the window. The trigger sits at the far
      right of the topbar, so right-alignment normally suffices; this
      handles narrow viewports and long localised labels, and is
@@ -246,7 +308,7 @@
     const trigger = menu.querySelector("#adminProfileTrigger");
     const dropdown = menu.querySelector("#adminProfileDropdown");
 
-    /* ── Identity, from the authenticated session only ─────── */
+    /* ── Identity, from the authenticated user only ────────── */
     /* The fragment must match a REAL id on the destination page:
        the admin page's profile pane is #profileTab (a Bootstrap tab),
        while the shared personal page's is the #profileSettings section
@@ -334,16 +396,12 @@
       if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
       event.preventDefault();
       open(menu);
-      const items = [
-        ...dropdown.querySelectorAll("a[href], button:not(:disabled)"),
-      ];
+      const items = getDropdownItems(dropdown);
       items[event.key === "ArrowUp" ? items.length - 1 : 0]?.focus();
     });
 
     dropdown?.addEventListener("keydown", (event) => {
-      const items = [
-        ...dropdown.querySelectorAll("a[href], button:not(:disabled)"),
-      ];
+      const items = getDropdownItems(dropdown);
       const current = items.indexOf(document.activeElement);
       if (!items.length || current < 0) return;
       let next = current;
@@ -355,6 +413,23 @@
       else return;
       event.preventDefault();
       items[next].focus();
+    });
+
+    dropdown?.addEventListener("click", (event) => {
+      const accordionTrigger = event.target.closest("[data-profile-accordion]");
+      if (!accordionTrigger || !dropdown.contains(accordionTrigger)) return;
+      const panel = document.getElementById(
+        accordionTrigger.getAttribute("aria-controls"),
+      );
+      if (!panel) return;
+      const expanded =
+        accordionTrigger.getAttribute("aria-expanded") !== "true";
+      accordionTrigger.setAttribute("aria-expanded", String(expanded));
+      panel.setAttribute("aria-hidden", String(!expanded));
+      panel.inert = !expanded;
+      accordionTrigger
+        .closest(".admin-profile-accordion")
+        ?.classList.toggle("is-expanded", expanded);
     });
 
     menu.addEventListener("focusout", () => {
@@ -393,10 +468,7 @@
       { passive: true },
     );
 
-    /* ── Logout: the existing mechanism, never a second one ────
-       logout() destroys the server session, clears the cached user and
-       redirects to the login page. Disabling guards against a double
-       click firing two /auth/logout requests at the same session. */
+    /* ── Logout: clear the saved access token through the shared helper. */
     menu
       .querySelector("#adminProfileLogout")
       ?.addEventListener("click", async () => {
@@ -405,10 +477,11 @@
         button.disabled = true;
         close(menu);
         try {
-          await logout();
+          const signedOut = await logout();
+          if (!signedOut && document.body.contains(button))
+            button.disabled = false;
         } catch (_) {
-          /* logout() swallows transport errors and always redirects; if it
-           ever throws, restore the control rather than leaving it dead. */
+          /* Restore the control if logout unexpectedly throws. */
           if (document.body.contains(button)) button.disabled = false;
         }
       });
@@ -426,11 +499,11 @@
   /* ── Back/forward-cache guard ──────────────────────────────
      A protected admin page restored from the bfcache does not re-run any
      script, so requireAuth() never fires and the dashboard would stay
-     visible after logout. On a bfcache restore the session is therefore
+     visible after logout. On a bfcache restore authentication is therefore
      re-checked against the server.
 
      This deliberately does NOT go through Auth.load() or apiRequest():
-     both short-circuit on the module-level `_sessionLoaded` cache in
+     both short-circuit on the module-level `_authLoaded` cache in
      main.js and would replay the pre-logout user without ever reaching
      the network, making the guard a silent no-op. A direct fetch is the
      only way to get an authoritative answer here.
@@ -447,7 +520,6 @@
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8000);
     fetch(resolveApiBase() + "/auth/me", {
-      credentials: "include",
       headers: { Accept: "application/json" },
       signal: controller.signal,
     })

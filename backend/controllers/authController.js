@@ -6,8 +6,18 @@
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const env = require("../config/env");
+const { verifyGoogleIdToken } = require("../services/googleIdToken");
+const {
+  AUTH_TOKEN_TTL_SECONDS,
+  createAuthToken,
+  createGoogleNonceChallenge,
+  verifyGoogleNonceChallenge,
+} = require("../services/authToken");
+const Settings = require("../models/Settings");
 const {
   validateEmail,
+  validateMauId,
   validatePassword,
   validatePasswordMatch,
   validateName,
@@ -15,7 +25,6 @@ const {
   validateEnum,
   validateTermsAccepted,
   sanitizeString,
-  VALID_GENDERS,
 } = require("../middleware/validation");
 const {
   sendPasswordResetEmail,
@@ -28,40 +37,161 @@ const {
   smsConfigured,
 } = require("../services/smsService");
 const RESET_CODE_TTL_MS = 10 * 60 * 1000;
-const RESET_SESSION_TTL_MS = 10 * 60 * 1000;
+const RESET_TOKEN_TTL_MS = 10 * 60 * 1000;
 const RESET_CODE_MAX_ATTEMPTS = 5;
 const RESET_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
 /* Minimum gap between two code deliveries for the SAME account. The client
    shows a matching countdown, but the server enforces the real window so the
    endpoint cannot be hammered/abused to re-send codes. */
 const RESEND_COOLDOWN_MS = 30 * 1000;
+const DASHBOARD_BY_ROLE = Object.freeze({
+  "ICT Admin": "/views/admin/dashboard.html",
+  Requester: "/views/user/dashboard.html",
+  Technician: "/views/technician/dashboard.html",
+});
 
 function hashResetValue(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
-function readCookie(req, name) {
-  const cookies = String(req.headers.cookie || "").split(";");
-  const entry = cookies.find((item) => item.trim().startsWith(`${name}=`));
-  return entry ? decodeURIComponent(entry.trim().slice(name.length + 1)) : "";
+function loginUserResponse(user) {
+  return {
+    id: user._id,
+    fullName: user.fullName,
+    email: user.email,
+    role: user.role,
+    department: user.department,
+    gender: user.gender,
+    profileImage: user.profileImage || null,
+  };
 }
 
-function setResetCookie(res, value, maxAge) {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  res.setHeader(
-    "Set-Cookie",
-    `ict_reset_session=${encodeURIComponent(value)}; Max-Age=${Math.max(0, Math.floor(maxAge / 1000))}; Path=/api/auth; HttpOnly; SameSite=Lax${secure}`,
-  );
-}
+/* ── GET /api/auth/google/config ──────────────────────────────
+   The GIS client ID is public. A short-lived signed challenge binds the
+   Google ID token to this browser's sign-in attempt without server sessions. */
+const getGoogleAuthConfig = async (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  if (!env.GOOGLE_CLIENT_ID) {
+    return res.json({ success: true, enabled: false });
+  }
+
+  const challenge = createGoogleNonceChallenge();
+  return res.json({
+    success: true,
+    enabled: true,
+    clientId: env.GOOGLE_CLIENT_ID,
+    ...challenge,
+  });
+};
+
+/* ── POST /api/auth/google ───────────────────────────────────
+   GIS sends a Google-signed ID token. Only existing active accounts whose
+   email is verified by Google may use it; roles always come from MongoDB. */
+const googleLogin = async (req, res, next) => {
+  const idToken = req.body && req.body.credential;
+  if (typeof idToken !== "string" || !idToken || idToken.length > 16384) {
+    return res
+      .status(422)
+      .json({ success: false, message: "A valid Google credential is required." });
+  }
+  if (!env.GOOGLE_CLIENT_ID) {
+    return res.status(503).json({
+      success: false,
+      message: "Google Sign-In is not configured. Please use email and password.",
+    });
+  }
+  const { nonce, nonceExpiresAt, nonceProof } = req.body || {};
+  if (!verifyGoogleNonceChallenge({ nonce, nonceExpiresAt, nonceProof })) {
+    return res.status(400).json({
+      success: false,
+      message: "Your Google sign-in attempt expired. Reload the page and try again.",
+    });
+  }
+
+  let payload;
+  try {
+    payload = await verifyGoogleIdToken({
+      idToken,
+      audience: env.GOOGLE_CLIENT_ID,
+      nonce,
+    });
+  } catch (err) {
+    const transient = err && err.transient === true;
+    console.warn(
+      `[auth/google] ID token verification ${transient ? "temporarily unavailable" : "rejected"} (${(err && err.name) || "Error"}).`,
+    );
+    return res.status(transient ? 503 : 401).json({
+      success: false,
+      message: transient
+        ? "Google could not be reached to verify your sign-in. Please retry."
+        : "Google sign-in could not be verified. Please try again.",
+    });
+  }
+
+  if (
+    !payload ||
+    !payload.sub ||
+    typeof payload.email !== "string" ||
+    payload.email_verified !== true
+  ) {
+    return res.status(401).json({
+      success: false,
+      message: "Google sign-in could not be verified. Please try again.",
+    });
+  }
+
+  try {
+    const user = await User.findOne({
+      email: payload.email.trim().toLowerCase(),
+    });
+    if (!user) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "No existing account is registered with this Google email. Use the approved registration process or contact ICT support.",
+      });
+    }
+    if (user.status !== "active") {
+      return res.status(403).json({
+        success: false,
+        message: "Account has been deactivated. Contact ICT Admin.",
+      });
+    }
+    if (!Object.hasOwn(DASHBOARD_BY_ROLE, user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "This account has an unsupported role. Contact ICT Admin.",
+      });
+    }
+
+    user.lastLogin = new Date();
+    await user.save({ validateBeforeSave: false });
+    const token = createAuthToken(user._id);
+    console.log(
+      `[auth/google] SUCCESS for existing account (role: ${user.role}).`,
+    );
+    return res.json({
+      success: true,
+      message: "Google sign-in successful.",
+      redirect: DASHBOARD_BY_ROLE[user.role],
+      token,
+      expiresIn: AUTH_TOKEN_TTL_SECONDS,
+      user: loginUserResponse(user),
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
 
 /* ── Public self-registration availability ──────────────────────
-   Public registration is enabled by configuration; this does not affect
-   admin-created accounts. */
+   The Admin-managed setting controls public registration only; it does not
+   affect accounts created directly by administrators. */
 const REGISTRATION_CLOSED_MESSAGE =
   "Public registration is currently disabled. Please contact ICT support to have an account created.";
 
 async function isPublicRegistrationEnabled() {
-  return require("../config/env").PUBLIC_REGISTRATION_ENABLED;
+  const settings = await Settings.getInstance();
+  return settings.publicRegistration !== false;
 }
 
 /* ── GET /api/auth/registration-status ─────────────────────────
@@ -99,6 +229,7 @@ const register = async (req, res, next) => {
     let {
       fullName,
       email,
+      mauId,
       password,
       confirmPassword,
       department,
@@ -110,6 +241,10 @@ const register = async (req, res, next) => {
     /* Sanitize */
     fullName = fullName ? sanitizeString(fullName) : "";
     email = email ? sanitizeString(email) : "";
+    const mauIdErr = validateMauId(mauId);
+    if (mauIdErr)
+      return res.status(422).json({ success: false, message: mauIdErr });
+    const requestedMauId = mauId;
 
     /* Validate Terms-of-Service consent — cannot be bypassed by direct API call */
     const termsErr = validateTermsAccepted(agreeTerms);
@@ -155,7 +290,7 @@ const register = async (req, res, next) => {
         .status(422)
         .json({ success: false, message: "Please select a gender." });
     }
-    const genderErr = validateEnum(gender, VALID_GENDERS, "gender");
+    const genderErr = validateEnum(gender, ["Male", "Female"], "gender");
     if (genderErr)
       return res.status(422).json({ success: false, message: genderErr });
 
@@ -202,6 +337,12 @@ const register = async (req, res, next) => {
 
     /* Check duplicate email */
     const normalizedEmail = email.toLowerCase();
+    const existingMauId = await User.findOne({ mauId: requestedMauId });
+    if (existingMauId) {
+      return res
+        .status(409)
+        .json({ success: false, message: "This ID is already registered." });
+    }
     const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       return res
@@ -214,6 +355,7 @@ const register = async (req, res, next) => {
       await User.create({
         fullName,
         email: normalizedEmail,
+        mauId: requestedMauId,
         password: hashed,
         role: "Requester",
         department: normalizedDept,
@@ -221,12 +363,20 @@ const register = async (req, res, next) => {
         gender,
       });
     } catch (err) {
-      /* The unique email index is the final concurrency-safe duplicate guard;
-         two simultaneous submissions can both pass the lookup above. */
+      /* Unique indexes are the final concurrency-safe duplicate guard; two
+         simultaneous submissions can both pass the lookup above. */
       if (err && err.code === 11000) {
-        return res
-          .status(409)
-          .json({ success: false, message: "Email already registered." });
+        if (err.keyPattern?.mauId || err.keyValue?.mauId) {
+          return res.status(409).json({
+            success: false,
+            message: "This ID is already registered.",
+          });
+        }
+        if (err.keyPattern?.email || err.keyValue?.email) {
+          return res
+            .status(409)
+            .json({ success: false, message: "Email already registered." });
+        }
       }
       throw err;
     }
@@ -295,6 +445,13 @@ const login = async (req, res, next) => {
         .json({ success: false, message: "Invalid email or password." });
     }
 
+    if (!Object.hasOwn(DASHBOARD_BY_ROLE, user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "This account has an unsupported role. Contact ICT Admin.",
+      });
+    }
+
     /* Record last login */
     user.lastLogin = new Date();
     await user.save({ validateBeforeSave: false });
@@ -303,64 +460,42 @@ const login = async (req, res, next) => {
       `[auth/login] SUCCESS for "${user.email}" (role: ${user.role}).`,
     );
 
-    /* ── Session fixation protection ──────────────────────────
-       The session identifier MUST change when privileges are elevated.
-       Without regenerate(), the pre-login session id survives
-       authentication, so anyone who captured that earlier id (shared or
-       pre-seeded browser, injected cookie, another subdomain) still holds a
-       valid authenticated session after the victim logs in. regenerate()
-       mints a new id, sends a fresh cookie and discards pre-auth data, so
-       the old id stops resolving immediately.
-
-       Uses the built-in express-session API — no additional library. The
-       promise wrapper matches the session.save() style already used below,
-       and any failure is surfaced through this handler's existing catch. */
-    await new Promise((resolve, reject) =>
-      req.session.regenerate((err) => (err ? reject(err) : resolve())),
-    );
-
-    req.session.userId = String(user._id);
-    await new Promise((resolve, reject) =>
-      req.session.save((err) => (err ? reject(err) : resolve())),
-    );
-
-    const redirectMap = {
-      "ICT Admin": "/views/admin/dashboard.html",
-      Requester: "/views/user/dashboard.html",
-      Technician: "/views/technician/dashboard.html",
-    };
+    const token = createAuthToken(user._id);
 
     res.json({
       success: true,
       message: "Login successful.",
-      redirect: redirectMap[user.role] || "/views/user/dashboard.html",
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        department: user.department,
-        gender: user.gender,
-        profileImage: user.profileImage || null,
-      },
+      redirect: DASHBOARD_BY_ROLE[user.role],
+      token,
+      expiresIn: AUTH_TOKEN_TTL_SECONDS,
+      user: loginUserResponse(user),
     });
   } catch (err) {
     next(err);
   }
 };
 
-const logout = (req, res, next) => {
-  req.session.destroy((err) => {
-    if (err) return next(err);
-    res.clearCookie("ict_session", { httpOnly: true, sameSite: "lax" });
-    res.json({ success: true, message: "Logged out." });
+const logout = (_req, res) => {
+  res.json({
+    success: true,
+    message: "Access token cleared by the client.",
   });
 };
 
 /* ── GET /api/auth/me ───────────────────────────────────────── */
 const getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id).select(
+      "-password " +
+        "-resetPasswordCodeHash " +
+        "-resetPasswordCodeExpires " +
+        "-resetPasswordCodeAttempts " +
+        "-resetPasswordDeliveryMethod " +
+        "-resetPasswordRequestId " +
+        "-resetPasswordCodeSentAt " +
+        "-resetPasswordVerifiedHash " +
+        "-resetPasswordVerifiedExpires",
+    );
     if (!user) {
       return res
         .status(404)
@@ -627,29 +762,23 @@ const verifyResetCode = async (req, res, next) => {
       });
     }
 
-    /* Code accepted. Issue the reset authorization token: opaque, 256-bit,
-       random, stored only as a SHA-256 hash, single-use, expires shortly.
-       It is returned in the body so the flow works when the frontend and API
-       live on different origins (where cross-site cookies can be blocked);
-       the HttpOnly cookie remains as a same-origin hardening layer. */
-    const sessionToken = crypto.randomBytes(32).toString("hex");
+    /* Code accepted. Issue a random, single-use token; only its hash is stored. */
+    const resetToken = crypto.randomBytes(32).toString("hex");
     user.resetPasswordCodeHash = null;
     user.resetPasswordCodeExpires = null;
     user.resetPasswordCodeAttempts = 0;
     user.resetPasswordDeliveryMethod = null;
     user.resetPasswordRequestId = null;
     user.resetPasswordCodeSentAt = null;
-    user.resetPasswordVerifiedHash = hashResetValue(sessionToken);
+    user.resetPasswordVerifiedHash = hashResetValue(resetToken);
     user.resetPasswordVerifiedExpires = new Date(
-      Date.now() + RESET_SESSION_TTL_MS,
+      Date.now() + RESET_TOKEN_TTL_MS,
     );
     await user.save({ validateBeforeSave: false });
-    setResetCookie(res, sessionToken, RESET_SESSION_TTL_MS);
-
     return res.json({
       success: true,
       message: "Code verified. Create your new password.",
-      resetToken: sessionToken,
+      resetToken,
     });
   } catch (err) {
     next(err);
@@ -658,8 +787,8 @@ const verifyResetCode = async (req, res, next) => {
 
 /* ── POST /api/auth/reset-password ─────────────────────────────
    Updates the password ONLY when the caller can present a valid reset
-   authorization: the single-use token issued by verify-reset-code, delivered
-   either through the HttpOnly cookie or the JSON body (cross-origin safe).
+   authorization: the single-use token issued by verify-reset-code in the
+   JSON body.
    The token is opaque, single-use, expires, and is tied to this reset
    request — the server resolves the account from the hashed token, so an
    arbitrary user ID can never be submitted by the client. */
@@ -675,14 +804,12 @@ const resetPassword = async (req, res, next) => {
     const pwErr = validatePassword(password);
     if (pwErr) return res.status(400).json({ success: false, message: pwErr });
 
-    /* Accept either transport for the same opaque token. */
-    let rawToken = typeof resetToken === "string" ? resetToken.trim() : "";
-    if (!rawToken) rawToken = readCookie(req, "ict_reset_session");
+    const rawToken = typeof resetToken === "string" ? resetToken.trim() : "";
     if (!RESET_TOKEN_PATTERN.test(rawToken)) {
       return res.status(400).json({
         success: false,
         message:
-          "Your verification session is invalid or has already been used.",
+          "Your verification token is invalid or has already been used.",
       });
     }
 
@@ -695,7 +822,7 @@ const resetPassword = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message:
-          "Your verification session is invalid or has already been used.",
+          "Your verification token is invalid or has already been used.",
       });
     }
 
@@ -706,11 +833,10 @@ const resetPassword = async (req, res, next) => {
       user.resetPasswordVerifiedHash = null;
       user.resetPasswordVerifiedExpires = null;
       await user.save({ validateBeforeSave: false });
-      setResetCookie(res, "", 0);
       return res.status(400).json({
         success: false,
         message:
-          "Your verification session has expired. Please request a new code.",
+          "Your verification token has expired. Please request a new code.",
       });
     }
 
@@ -738,8 +864,6 @@ const resetPassword = async (req, res, next) => {
     user.resetPasswordRequestId = null;
     user.resetPasswordCodeSentAt = null;
     await user.save({ validateBeforeSave: false });
-    setResetCookie(res, "", 0);
-
     console.log(`[auth/reset-password] Password reset for "${user.email}".`);
 
     return res.json({
@@ -755,6 +879,8 @@ const resetPassword = async (req, res, next) => {
 module.exports = {
   register,
   getRegistrationStatus,
+  getGoogleAuthConfig,
+  googleLogin,
   login,
   logout,
   getMe,

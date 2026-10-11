@@ -96,9 +96,9 @@ module.exports = {
   MONGO_URI: process.env.MONGO_URI || "mongodb://localhost:27017",
   MONGO_DB_NAME: process.env.MONGO_DB_NAME || "ict_maintenance_db",
 
-  // Server-side session
-  SESSION_SECRET: process.env.SESSION_SECRET || "change_this_session_secret",
-  SESSION_TTL_MS: Number(process.env.SESSION_TTL_MS) || 24 * 60 * 60 * 1000,
+  // Signed stateless bearer authentication
+  JWT_SECRET: process.env.JWT_SECRET || "",
+  GOOGLE_CLIENT_ID: String(process.env.GOOGLE_CLIENT_ID || "").trim(),
 
   // File Upload
   UPLOAD_PATH: process.env.UPLOAD_PATH || "uploads/",

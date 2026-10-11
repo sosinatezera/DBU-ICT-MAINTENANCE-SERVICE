@@ -778,6 +778,65 @@ body.dashboard-body {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
+.admin-profile-card {
+  overflow: hidden;
+  color: var(--admin-ink);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--admin-shadow-card);
+}
+
+.admin-profile-photo-controls {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--admin-border-soft);
+}
+
+.admin-profile-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .625rem;
+}
+
+.admin-profile-photo-actions .btn:focus-visible {
+  box-shadow: 0 0 0 .25rem var(--admin-ring);
+  outline: none;
+}
+
+.admin-profile-photo-selection {
+  margin-top: .7rem;
+  color: var(--admin-muted);
+  font-size: .875rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-profile-photo-selection[hidden] {
+  display: none;
+}
+
+.admin-profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+}
+
+.admin-profile-identity .profile-avatar-lg {
+  width: 84px;
+  height: 84px;
+  min-width: 84px;
+}
+
+.admin-profile-identity-details {
+  min-width: 0;
+}
+
+.admin-profile-identity-details h5 {
+  color: var(--admin-ink);
+  overflow-wrap: anywhere;
+}
+
 /* ── Responsive: Settings Tabs Scroll ──────────────────────── */
 @media (max-width: 767.98px) {
   .settings-nav {
@@ -805,6 +864,15 @@ body.dashboard-body {
   .dashboard-body .card h4.fw-bold.mb-0 { font-size: 1.35rem; }
   .dashboard-body .card .bg-opacity-10.p-3.rounded { padding: .6rem !important; }
   .dashboard-body .card.p-3.d-flex.flex-row.align-items-center.gap-3 { gap: .65rem !important; }
+
+  .admin-profile-photo-controls,
+  .admin-profile-identity { padding: 1rem; }
+  .admin-profile-identity { gap: .9rem; }
+  .admin-profile-identity .profile-avatar-lg {
+    width: 72px;
+    height: 72px;
+    min-width: 72px;
+  }
 
   /* Keep admin tables readable — no horizontal overflow */
   .table-responsive { overflow-x: auto; }

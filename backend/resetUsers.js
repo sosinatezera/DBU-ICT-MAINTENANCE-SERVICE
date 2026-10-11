@@ -43,7 +43,7 @@ const TECH_DEPT = "ICT Department";
 
 const SALT_ROUNDS = 12;
 const API_BASE = "http://localhost:5000/api";
-let sessionCookie = "";
+let accessToken = "";
 
 // ── Helpers ────────────────────────────────────────────────────
 const log = (msg) => console.log(`  ✔  ${msg}`);
@@ -61,14 +61,14 @@ async function apiLogin(email, password) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  const setCookie = res.headers.get("set-cookie") || "";
-  sessionCookie = setCookie.split(";")[0];
-  return res.json();
+  const data = await res.json();
+  accessToken = data.token || "";
+  return data;
 }
 
 async function apiGetUsers() {
   const res = await fetch(`${API_BASE}/users`, {
-    headers: { cookie: sessionCookie },
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
   return res.json();
 }
@@ -78,7 +78,7 @@ async function apiCreateUser(userData) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      cookie: sessionCookie,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(userData),
   });
@@ -90,7 +90,7 @@ async function apiUpdateUserPassword(userId, password) {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      cookie: sessionCookie,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({ password }),
   });
@@ -102,7 +102,7 @@ async function apiUpdateUser(userId, userData) {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      cookie: sessionCookie,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(userData),
   });

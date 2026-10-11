@@ -1,16 +1,24 @@
 const User = require("../models/User");
+const { getBearerToken, verifyAuthToken } = require("../services/authToken");
 
 const authenticate = async (req, res, next) => {
-  const userId = req.session?.userId;
-  if (!userId)
+  const token = getBearerToken(req);
+  if (!token) {
     return res
       .status(401)
       .json({ success: false, message: "Not authenticated." });
+  }
 
-  /* Always resolve the account from the database so deactivated/deleted users lose
-     access immediately and role changes take effect on the next request. */
   try {
-    const user = await User.findById(userId).select("role status fullName");
+    let payload;
+    try {
+      payload = verifyAuthToken(token);
+    } catch {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid or expired access token." });
+    }
+    const user = await User.findById(payload.sub).select("role status fullName");
     if (!user) {
       return res
         .status(401)
@@ -22,7 +30,6 @@ const authenticate = async (req, res, next) => {
         message: "Account has been deactivated. Contact ICT Admin.",
       });
     }
-
     req.user = {
       id: user._id,
       role: user.role,
@@ -36,10 +43,11 @@ const authenticate = async (req, res, next) => {
 };
 
 const optionalAuthenticate = async (req, res, next) => {
-  const userId = req.session?.userId;
-  if (!userId) return next();
+  const token = getBearerToken(req);
+  if (!token) return next();
   try {
-    const user = await User.findById(userId).select("role status fullName");
+    const payload = verifyAuthToken(token);
+    const user = await User.findById(payload.sub).select("role status fullName");
     if (user && user.status === "active") {
       req.user = {
         id: user._id,
@@ -48,7 +56,7 @@ const optionalAuthenticate = async (req, res, next) => {
         status: user.status,
       };
     }
-  } catch (_) {
+  } catch {
     /* AI support remains available as a public advisory tool. */
   }
   next();

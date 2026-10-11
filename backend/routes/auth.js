@@ -4,6 +4,8 @@ const router = express.Router();
 const {
   register,
   getRegistrationStatus,
+  getGoogleAuthConfig,
+  googleLogin,
   login,
   logout,
   getMe,
@@ -90,8 +92,10 @@ const verifyAccountRateLimit = rateLimit({
    load to decide whether to offer the Register link, so it carries no limiter
    and reads only a single boolean. */
 router.get("/registration-status", getRegistrationStatus);
+router.get("/google/config", authRateLimit, getGoogleAuthConfig);
 router.post("/register", authRateLimit, register);
 router.post("/login", authRateLimit, login);
+router.post("/google", authRateLimit, googleLogin);
 router.post("/logout", logout);
 router.post(
   "/forgot-password",

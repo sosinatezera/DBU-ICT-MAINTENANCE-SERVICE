@@ -54,6 +54,29 @@
       padding: 24px 20px 32px;
     }
 
+    .feedback-rating-row {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .feedback-star {
+      color: #adb5bd;
+      cursor: pointer;
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+
+    .feedback-star.is-selected {
+      color: #f0ad00;
+    }
+
+    .feedback-rating-input:focus-visible + .feedback-star {
+      border-radius: 0.25rem;
+      outline: 2px solid #0d6efd;
+      outline-offset: 2px;
+    }
+
     /* ── Page Header ──────────────────────────────────────────── */
     .feedback-header {
       margin-bottom: 28px;
@@ -615,9 +638,8 @@
           <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle"><i
               class="bi bi-list"></i></button>
           <div>
-            <h5 class="mb-0 fw-bold feedback-title" data-i18n="fb.title">Submit Feedback</h5>
-            <div class="text-muted small feedback-subtitle" data-i18n="fb.formHint">Rate and review the service you
-              received.</div>
+            <h5 class="mb-0 fw-bold feedback-title">My Feedback</h5>
+            <div class="text-muted small feedback-subtitle">Send feedback to ICT Administration and follow the conversation.</div>
           </div>
         </div>
         <div class="d-flex align-items-center gap-3">
@@ -629,8 +651,133 @@
           <!-- Alert -->
           <div id="requestAlert" class="alert d-none mb-4" role="alert"></div>
 
+          <div class="row g-3 mb-4">
+            <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Total</div><strong class="fs-4" data-own-feedback-stat="total">0</strong></div></div>
+            <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Pending</div><strong class="fs-4" data-own-feedback-stat="pending">0</strong></div></div>
+            <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">In Progress</div><strong class="fs-4" data-own-feedback-stat="inProgress">0</strong></div></div>
+            <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Replied</div><strong class="fs-4" data-own-feedback-stat="replied">0</strong></div></div>
+            <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Closed</div><strong class="fs-4" data-own-feedback-stat="closed">0</strong></div></div>
+          </div>
+
+          <section class="card shadow-sm border-0 mb-4" aria-labelledby="newFeedbackTitle">
+            <div class="card-header bg-white py-3">
+              <h2 class="h5 fw-bold mb-1" id="newFeedbackTitle">Submit feedback</h2>
+              <p class="small text-muted mb-0">Your feedback will be reviewed by ICT Administration.</p>
+            </div>
+            <div class="card-body">
+              <div id="feedbackSubmissionNotice" class="alert d-none" role="status" aria-live="polite"></div>
+              <form id="feedbackSubmissionForm" novalidate>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6"><label class="form-label" for="feedbackSubmissionUser">User name</label>
+                    <input class="form-control" id="feedbackSubmissionUser" readonly aria-readonly="true"></div>
+                  <div class="col-md-6"><label class="form-label" for="feedbackSubmissionDepartment">Department</label>
+                    <input class="form-control" id="feedbackSubmissionDepartment" readonly aria-readonly="true"
+                      placeholder="Not provided in your profile"></div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="feedbackSubmissionCategory">Category <span class="text-danger">*</span></label>
+                  <select class="form-select" id="feedbackSubmissionCategory" required>
+                    <option value="">Choose a category</option>
+                    <option>Service Quality</option>
+                    <option>Technician Performance</option>
+                    <option>System Improvement</option>
+                    <option>Complaint</option>
+                    <option>Suggestion</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="feedbackSubmissionTechnician">Technician (optional)</label>
+                  <select class="form-select" id="feedbackSubmissionTechnician">
+                    <option value="">Not about a specific technician</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="feedbackSubmissionSubject">Subject <span class="text-danger">*</span></label>
+                  <input class="form-control" id="feedbackSubmissionSubject" maxlength="160" required />
+                  <div class="form-text">Maximum 160 characters.</div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="feedbackSubmissionDescription">Description <span class="text-danger">*</span></label>
+                  <textarea class="form-control" id="feedbackSubmissionDescription" rows="5" maxlength="5000" required
+                    aria-describedby="feedbackSubmissionDescriptionHelp"></textarea>
+                  <div class="form-text" id="feedbackSubmissionDescriptionHelp">Maximum 5,000 characters. Do not include passwords or other sensitive credentials.</div>
+                </div>
+                <fieldset class="mb-3 border-0 p-0">
+                  <legend class="form-label">Service rating <span class="text-muted fw-normal">(optional)</span></legend>
+                  <div class="feedback-rating-row" role="radiogroup" aria-describedby="feedbackRatingDescription">
+                    <input class="visually-hidden feedback-rating-input" type="radio" name="feedbackRating" id="feedbackRating1" value="1" aria-label="1 star">
+                    <label class="feedback-star" for="feedbackRating1" title="1 star" aria-hidden="true">★</label>
+                    <input class="visually-hidden feedback-rating-input" type="radio" name="feedbackRating" id="feedbackRating2" value="2" aria-label="2 stars">
+                    <label class="feedback-star" for="feedbackRating2" title="2 stars" aria-hidden="true">★</label>
+                    <input class="visually-hidden feedback-rating-input" type="radio" name="feedbackRating" id="feedbackRating3" value="3" aria-label="3 stars">
+                    <label class="feedback-star" for="feedbackRating3" title="3 stars" aria-hidden="true">★</label>
+                    <input class="visually-hidden feedback-rating-input" type="radio" name="feedbackRating" id="feedbackRating4" value="4" aria-label="4 stars">
+                    <label class="feedback-star" for="feedbackRating4" title="4 stars" aria-hidden="true">★</label>
+                    <input class="visually-hidden feedback-rating-input" type="radio" name="feedbackRating" id="feedbackRating5" value="5" aria-label="5 stars">
+                    <label class="feedback-star" for="feedbackRating5" title="5 stars" aria-hidden="true">★</label>
+                  </div>
+                  <div class="form-text" id="feedbackRatingDescription" aria-live="polite">No rating selected. Rating is optional.</div>
+                  <button class="btn btn-sm btn-link px-0" type="button" id="clearFeedbackRating">Clear rating</button>
+                </fieldset>
+                <div class="mb-3">
+                  <label class="form-label" for="feedbackSubmissionAttachment">Attachment <span class="text-muted fw-normal">(optional, max 5 MB)</span></label>
+                  <input class="form-control" type="file" id="feedbackSubmissionAttachment"
+                    accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt">
+                  <div class="form-text">Images, PDF, Office documents, or plain text files only.</div>
+                </div>
+                <button class="btn btn-primary" type="submit" data-feedback-submit>
+                  <i class="bi bi-send me-1" aria-hidden="true"></i>Submit Feedback
+                </button>
+              </form>
+            </div>
+          </section>
+          <section class="card shadow-sm border-0 mb-4" aria-labelledby="myFeedbackTitle">
+            <div class="card-header bg-white py-3">
+              <h2 class="h5 fw-bold mb-0" id="myFeedbackTitle">My feedback history</h2>
+            </div>
+            <div class="card-body border-bottom">
+              <div class="row g-2">
+                <div class="col-md-8">
+                  <label class="form-label small mb-1" for="feedbackHistorySearch">Search my feedback</label>
+                  <input class="form-control form-control-sm" id="feedbackHistorySearch" type="search"
+                    placeholder="Feedback ID, subject, category, or description" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small mb-1" for="feedbackHistoryStatus">Filter by status</label>
+                  <select class="form-select form-select-sm" id="feedbackHistoryStatus">
+                    <option value="">All statuses</option>
+                    <option>Pending</option><option>In Progress</option><option>Replied</option>
+                    <option>Resolved</option><option>Closed</option>
+                  </select>
+                </div>
+                <div class="col-md-4"><label class="form-label small mb-1" for="feedbackHistoryCategory">Category</label>
+                  <select class="form-select form-select-sm" id="feedbackHistoryCategory">
+                    <option value="">All categories</option>
+                    <option>Service Quality</option><option>Technician Performance</option>
+                    <option>System Improvement</option><option>Complaint</option><option>Suggestion</option><option>Other</option>
+                  </select>
+                </div>
+                <div class="col-md-2"><label class="form-label small mb-1" for="feedbackHistoryFrom">From</label>
+                  <input class="form-control form-control-sm" id="feedbackHistoryFrom" type="date"></div>
+                <div class="col-md-2"><label class="form-label small mb-1" for="feedbackHistoryTo">To</label>
+                  <input class="form-control form-control-sm" id="feedbackHistoryTo" type="date"></div>
+              </div>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center gap-2">
+              <small id="feedbackHistoryPageInfo" class="text-muted"> </small>
+              <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-secondary" id="feedbackHistoryPrev" aria-label="Previous feedback page">&laquo;</button>
+                <button type="button" class="btn btn-outline-secondary" id="feedbackHistoryNext" aria-label="Next feedback page">&raquo;</button>
+              </div>
+            </div>
+            <div class="card-body" id="feedbackSubmissionHistory" aria-live="polite" aria-busy="true">
+              <p class="text-muted mb-0">Loading your feedback...</p>
+            </div>
+          </section>
+
           <!-- Pending Feedback Requests Card -->
-          <div class="feedback-card mb-4" id="pendingFeedbackCard">
+          <div class="feedback-card mb-4 d-none" id="pendingFeedbackCard">
             <div class="feedback-card-header">
               <div class="feedback-card-header-content">
                 <div class="feedback-card-icon">
@@ -833,11 +980,12 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/js/api-config.js?v=5"></script>
+  <script src="/assets/js/api-config.js?v=16"></script>
   <script src="/assets/js/lang.js?v=16"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="/assets/js/main.js?v=19"></script>
+  <script src="/assets/js/main.js?v=25"></script>
   <script src="/assets/js/requests.js?v=20"></script>
+  <script src="/assets/js/feedback.js?v=4"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

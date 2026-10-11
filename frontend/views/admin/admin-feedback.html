@@ -68,10 +68,135 @@
       </header>
 
       <main class="p-4">
+        <section class="card border-0 shadow-sm mb-4" id="feedbackSubmissionManager"
+          aria-labelledby="feedbackSubmissionManagerTitle">
+          <div class="card-header bg-white py-3">
+            <h2 class="h5 fw-bold mb-1" id="feedbackSubmissionManagerTitle">Feedback Management</h2>
+            <p class="small text-muted mb-0">Review feedback from Requesters and Technicians, record actions, and manage replies and status.</p>
+          </div>
+          <div class="card-body border-bottom">
+            <div class="row g-3">
+              <div class="col-6 col-md-3"><div class="small text-muted">Total</div><strong class="fs-4" data-feedback-stat="total">0</strong></div>
+              <div class="col-6 col-md-3"><div class="small text-muted">Pending</div><strong class="fs-4" data-feedback-stat="pending">0</strong></div>
+              <div class="col-6 col-md-3"><div class="small text-muted">In Progress</div><strong class="fs-4" data-feedback-stat="inProgress">0</strong></div>
+              <div class="col-6 col-md-3"><div class="small text-muted">Replied</div><strong class="fs-4" data-feedback-stat="replied">0</strong></div>
+              <div class="col-6 col-md-3"><div class="small text-muted">Resolved</div><strong class="fs-4" data-feedback-stat="resolved">0</strong></div>
+              <div class="col-6 col-md-3"><div class="small text-muted">Closed</div><strong class="fs-4" data-feedback-stat="closed">0</strong></div>
+              <div class="col-6 col-md-3"><div class="small text-muted">Requesters</div><strong class="fs-4" data-feedback-stat="requesters">0</strong></div>
+              <div class="col-6 col-md-3"><div class="small text-muted">Technicians</div><strong class="fs-4" data-feedback-stat="technicians">0</strong></div>
+            </div>
+          </div>
+          <div class="card-body border-bottom">
+            <div id="feedbackAdminLoadError" class="alert alert-danger d-none mb-3" role="alert" aria-live="polite">
+              <span id="feedbackAdminLoadErrorMessage"></span>
+              <button class="btn btn-sm btn-outline-danger ms-2" type="button" id="feedbackAdminRetry">Retry</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-12 col-lg-3">
+                <label class="form-label small mb-1" for="feedbackAdminSearch">Search</label>
+                <input class="form-control form-control-sm" id="feedbackAdminSearch" type="search"
+                  placeholder="Feedback ID, sender, subject, or description" />
+              </div>
+              <div class="col-6 col-lg-2">
+                <label class="form-label small mb-1" for="feedbackAdminRole">Sender role</label>
+                <select class="form-select form-select-sm" id="feedbackAdminRole">
+                  <option value="">All roles</option><option>Requester</option><option>Technician</option>
+                </select>
+              </div>
+              <div class="col-6 col-lg-2">
+                <label class="form-label small mb-1" for="feedbackAdminTechnician">Technician</label>
+                <select class="form-select form-select-sm" id="feedbackAdminTechnician">
+                  <option value="">All technicians</option>
+                </select>
+              </div>
+              <div class="col-6 col-lg-2">
+                <label class="form-label small mb-1" for="feedbackAdminDepartment">Department</label>
+                <input class="form-control form-control-sm" id="feedbackAdminDepartment" type="search"
+                  placeholder="Filter department" />
+              </div>
+              <div class="col-6 col-lg-2">
+                <label class="form-label small mb-1" for="feedbackAdminStatus">Status</label>
+                <select class="form-select form-select-sm" id="feedbackAdminStatus">
+                  <option value="">All statuses</option>
+                  <option>Pending</option><option>In Progress</option><option>Replied</option>
+                  <option>Resolved</option><option>Closed</option>
+                </select>
+              </div>
+              <div class="col-6 col-lg-2">
+                <label class="form-label small mb-1" for="feedbackAdminCategory">Category</label>
+                <select class="form-select form-select-sm" id="feedbackAdminCategory">
+                  <option value="">All categories</option>
+                </select>
+              </div>
+              <div class="col-6 col-lg-1">
+                <label class="form-label small mb-1" for="feedbackAdminPriority">Priority</label>
+                <select class="form-select form-select-sm" id="feedbackAdminPriority">
+                  <option value="">All priorities</option><option>Low</option><option>Medium</option><option>High</option>
+                </select>
+              </div>
+              <div class="col-6 col-lg-2">
+                <label class="form-label small mb-1" for="feedbackAdminReplyStatus">Reply status</label>
+                <select class="form-select form-select-sm" id="feedbackAdminReplyStatus">
+                  <option value="">All feedback</option><option value="replied">Has replies</option><option value="unreplied">No replies</option>
+                </select>
+              </div>
+              <div class="col-6 col-lg-1">
+                <label class="form-label small mb-1" for="feedbackAdminSort">Sort</label>
+                <select class="form-select form-select-sm" id="feedbackAdminSort">
+                  <option value="newest">Newest</option><option value="oldest">Oldest</option><option value="status">Status</option>
+                </select>
+              </div>
+              <div class="col-6 col-lg-1">
+                <label class="form-label small mb-1" for="feedbackAdminFrom">From</label>
+                <input class="form-control form-control-sm" id="feedbackAdminFrom" type="date" />
+              </div>
+              <div class="col-6 col-lg-1">
+                <label class="form-label small mb-1" for="feedbackAdminTo">To</label>
+                <input class="form-control form-control-sm" id="feedbackAdminTo" type="date" />
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Feedback ID</th><th>Sender</th><th>Role</th><th>Department</th>
+                  <th>Category / Subject</th><th>Priority</th><th>Submitted</th>
+                  <th>Last Reply</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="feedbackAdminRows">
+                <tr><td colspan="10" class="text-center text-muted py-4">Loading feedback submissions...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer bg-white d-flex justify-content-between align-items-center gap-2">
+            <small id="feedbackAdminPageInfo" class="text-muted"> </small>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-secondary" id="feedbackAdminPrev" aria-label="Previous page">&laquo;</button>
+              <button type="button" class="btn btn-outline-secondary" id="feedbackAdminNext" aria-label="Next page">&raquo;</button>
+            </div>
+          </div>
+        </section>
+
         <div class="alert alert-info d-flex align-items-center py-2 small mb-4">
           <i class="bi bi-info-circle me-2"></i>
-          <span data-i18n="admin.feedback.intro">Evaluate how each maintenance request was handled by the service.
-            Feedback is visible only to the ICT Admin.</span>
+          <span data-i18n="admin.feedback.intro">Review feedback, reply to its submitter, record actions taken, and close resolved items.</span>
+        </div>
+
+        <div class="modal fade" id="feedbackSubmissionModal" tabindex="-1" aria-labelledby="feedbackSubmissionModalTitle"
+          aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h2 class="modal-title fs-5 fw-bold" id="feedbackSubmissionModalTitle">Feedback details</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body" id="feedbackSubmissionModalBody">
+                <p class="text-muted mb-0">Select feedback to view its conversation.</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Feedback Summary KPIs (computed by the backend, never hard-coded) -->
@@ -225,6 +350,52 @@
             </div>
           </div>
         </div>
+
+        <section class="card border-0 shadow-sm mt-4" aria-labelledby="adminTechnicianFeedbackTitle">
+          <div class="card-header bg-white py-3">
+            <h2 class="h6 fw-bold mb-0" id="adminTechnicianFeedbackTitle">
+              <i class="bi bi-chat-square-text text-primary me-2" aria-hidden="true"></i>Technician Feedback
+            </h2>
+          </div>
+          <div class="card-body border-bottom small" id="adminTechnicianFeedbackRatingSummary" role="status" aria-live="polite">
+            Loading technician feedback rating summary...
+          </div>
+          <div class="card-body border-bottom">
+            <div class="row g-2">
+              <div class="col-md-8">
+                <label class="form-label small mb-1" for="adminTechnicianFeedbackSearch">Search technician feedback</label>
+                <input class="form-control form-control-sm" id="adminTechnicianFeedbackSearch" type="search" placeholder="Technician, category, request, or message">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small mb-1" for="adminTechnicianFeedbackStatusFilter">Filter by status</label>
+                <select class="form-select form-select-sm" id="adminTechnicianFeedbackStatusFilter">
+                  <option value="">All statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Reviewed">Reviewed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">Technician</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Maintenance Request</th>
+                  <th scope="col">Feedback</th>
+                  <th scope="col">Rating</th>
+                  <th scope="col">Submitted</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Admin response</th>
+                </tr>
+              </thead>
+              <tbody id="adminTechnicianFeedbackBody">
+                <tr><td colspan="8" class="text-center text-muted py-4">Loading technician feedback...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </main>
     </div>
   </div>
@@ -411,13 +582,14 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/js/api-config.js?v=5"></script>
+  <script src="/assets/js/api-config.js?v=16"></script>
   <script src="/assets/js/lang.js?v=16"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="/assets/js/admin-profile-menu.js?v=2"></script>
-  <script src="/assets/js/main.js?v=19"></script>
-  <script src="/assets/js/notifications.js?v=8"></script>
-  <script src="/assets/js/requests.js?v=20"></script>
+  <script src="/assets/js/admin-profile-menu.js?v=3"></script>
+  <script src="/assets/js/main.js?v=25"></script>
+  <script src="/assets/js/notifications.js?v=10"></script>
+  <script src="/assets/js/requests.js?v=25"></script>
+  <script src="/assets/js/feedback.js?v=4"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

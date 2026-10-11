@@ -16,7 +16,7 @@
  * ═══════════════════════════════════════════════════════════════ */
 
 /* ── CATEGORY ──────────────────────────────────────────────────
-   Fifteen high-level ICT areas. Specific problems ("Laptop Problem",
+   Sixteen high-level ICT areas. Specific problems ("Laptop Problem",
    "Printer Problem", "Software Error") belong in the Issue Type list and
    must never appear here. */
 const ICT_CATEGORY_GROUPS = [
@@ -38,6 +38,7 @@ const ICT_CATEGORY_GROUPS = [
       "Audio & Video",
       "ICT Infrastructure",
       "Other",
+      "Computer & End-User Services",
     ],
   },
 ];
