@@ -13,7 +13,13 @@
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <link rel="stylesheet" href="/assets/css/theme.css" />
   <style>
+    html:has(body.auth-body.login-page) {
+      overflow-x: auto !important;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
     body.auth-body.login-page {
+      overflow: visible !important;
       --auth-card-background: #0B1628;
       --auth-card-border: rgba(96, 165, 250, .48);
       --auth-card-shadow: 0 16px 38px rgba(2, 8, 23, .42);
@@ -25,15 +31,32 @@
       background-size: cover !important;
       background-position: center !important;
       background-repeat: no-repeat !important;
-      background-attachment: scroll !important;
-      overflow-y: auto;
+      background-attachment: fixed !important;
     }
     body.auth-body.login-page > .min-vh-100 {
+      justify-content: flex-end !important;
       padding-top: 1rem !important;
       padding-bottom: 1rem !important;
     }
-    body.auth-body.login-page .row > .col-sm-10 {
+    body.auth-body.login-page > .min-vh-100 > .container {
+      width: min(100%, 360px);
       max-width: 360px;
+      margin-right: clamp(1rem, 5vw, 4rem);
+      margin-left: auto;
+      padding-right: 0;
+      padding-left: 0;
+    }
+    body.auth-body.login-page > .min-vh-100 > .container > .row {
+      margin-right: 0;
+      margin-left: 0;
+      justify-content: flex-end;
+    }
+    body.auth-body.login-page .row > .col-sm-10 {
+      flex: 0 0 100%;
+      width: 100%;
+      max-width: 360px;
+      padding-right: 0;
+      padding-left: 0;
     }
     body.auth-body.login-page .card-body {
       padding: 1.125rem !important;
@@ -95,7 +118,7 @@
     }
     body.auth-body.login-page .auth-footer .back-home,
     body.auth-body.login-page .auth-footer .back-home:hover {
-      color: #0D6EFD !important;
+      color: #FFFFFF !important;
       font-weight: 600;
     }
     body.auth-body.login-page .card-body h4,
@@ -105,6 +128,25 @@
     body.auth-body.login-page .card-body .text-muted,
     body.auth-body.login-page .google-auth-divider {
       color: var(--auth-card-muted) !important;
+    }
+    @media (max-width: 767.98px) {
+      body.auth-body.login-page > .min-vh-100 {
+        justify-content: center !important;
+      }
+      body.auth-body.login-page > .min-vh-100 > .container {
+        margin-right: auto;
+        margin-left: auto;
+        padding-right: .75rem;
+        padding-left: .75rem;
+      }
+      body.auth-body.login-page > .min-vh-100 > .container > .row {
+        justify-content: center;
+      }
+    }
+    @media (max-height: 600px) {
+      body.auth-body.login-page > .min-vh-100 {
+        align-items: flex-start !important;
+      }
     }
   </style>
   <script src="/assets/js/api-config.js?v=16"></script>
@@ -178,8 +220,6 @@
                 </button>
 
               </form>
-
-<div class="google-auth-divider" aria-hidden="true"><span>OR</span></div>
 
               <hr class="my-4" />
               <p class="text-center text-muted small mb-0">

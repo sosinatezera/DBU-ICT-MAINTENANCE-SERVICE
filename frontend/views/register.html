@@ -13,7 +13,13 @@
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <link rel="stylesheet" href="/assets/css/theme.css" />
   <style>
+    html:has(body.auth-body.register-page) {
+      overflow-x: auto !important;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
     body.auth-body.register-page {
+      overflow: visible !important;
       --auth-card-background: #0B1628;
       --auth-card-border: rgba(96, 165, 250, .36);
       --auth-card-shadow: 0 16px 40px rgba(2, 8, 23, .38);
@@ -24,9 +30,10 @@
       isolation: isolate;
       background: transparent !important;
     }
+
     body.auth-body.register-page::before {
       content: "";
-      position: absolute;
+      position: fixed;
       z-index: -1;
       inset: 0;
       pointer-events: none;
@@ -39,28 +46,34 @@
       background-repeat: no-repeat;
       animation: register-background-drift 36s ease-in-out infinite alternate;
     }
+
     @keyframes register-background-drift {
       from {
         background-position: 50% 50%, 50% 50%;
       }
+
       to {
         background-position: 50% 50%, 51.5% 49%;
       }
     }
+
     @media (prefers-reduced-motion: reduce) {
       body.auth-body.register-page::before {
         animation: none;
       }
     }
-    body.auth-body.register-page .row > .col-sm-10 {
+
+    body.auth-body.register-page .row>.col-sm-10 {
       flex: 0 0 100%;
       width: 100%;
       max-width: 504px;
     }
-    body.auth-body.register-page > .min-vh-100 {
+
+    body.auth-body.register-page>.min-vh-100 {
       padding-top: 1.5rem !important;
       padding-bottom: 1.5rem !important;
     }
+
     body.auth-body.register-page .card {
       width: min(92vw, 480px);
       max-width: 100%;
@@ -69,26 +82,33 @@
       border-radius: 1rem;
       box-shadow: var(--auth-card-shadow) !important;
     }
+
     body.auth-body.register-page .card-body {
       padding: 1.25rem !important;
     }
-    body.auth-body.register-page .card-body > .text-center.mb-4 img {
+
+    body.auth-body.register-page .card-body>.text-center.mb-4 img {
       width: 76px !important;
       height: 76px !important;
       margin-bottom: .75rem !important;
     }
-    body.auth-body.register-page .card-body > .text-center.mb-4 {
+
+    body.auth-body.register-page .card-body>.text-center.mb-4 {
       margin-bottom: 1rem !important;
     }
+
     body.auth-body.register-page .card-body .mb-3 {
       margin-bottom: .65rem !important;
     }
+
     body.auth-body.register-page .card-body .row.g-3 {
       --bs-gutter-y: .65rem;
     }
+
     body.auth-body.register-page .card-body .form-label {
       margin-bottom: .3rem;
     }
+
     body.auth-body.register-page .card-body .form-control,
     body.auth-body.register-page .card-body .form-select,
     body.auth-body.register-page .card-body .input-group-text {
@@ -96,13 +116,16 @@
       color: #f8fafc !important;
       border-color: #344761 !important;
     }
+
     body.auth-body.register-page .card-body .input-group-text .text-muted {
       color: #aab8ca !important;
     }
+
     body.auth-body.register-page .card-body .form-control::placeholder {
       color: #aab8ca;
       opacity: 1;
     }
+
     body.auth-body.register-page .card-body .form-control:focus,
     body.auth-body.register-page .card-body .form-select:focus {
       background-color: #101F35 !important;
@@ -110,24 +133,34 @@
       border-color: #60a5fa !important;
       box-shadow: 0 0 0 .2rem rgba(96, 165, 250, .24) !important;
     }
+
     body.auth-body.register-page .card-body .form-select option {
       background-color: #101F35;
       color: #f8fafc;
     }
+
     body.auth-body.register-page .card-body .btn-outline-secondary {
       color: #cbd5e1;
       border-color: #344761;
     }
+
     body.auth-body.register-page .card-body hr {
       border-color: #52647b;
     }
+
     body.auth-body.register-page .card-body h4,
     body.auth-body.register-page .card-body .form-label {
       color: var(--auth-card-text) !important;
     }
+
     body.auth-body.register-page .card-body .text-muted,
     body.auth-body.register-page .card-body .form-text {
       color: var(--auth-card-muted) !important;
+    }
+
+    body.auth-body.register-page .auth-footer .back-home,
+    body.auth-body.register-page .auth-footer .back-home:hover {
+      color: #FFFFFF !important;
     }
   </style>
   <script src="/assets/js/api-config.js?v=16"></script>
@@ -163,7 +196,7 @@
                 <!-- ── Full Name ── -->
                 <div class="mb-3">
                   <label for="name" class="form-label fw-semibold small"><span data-i18n="auth.register.fullName">Full
-                      Name</span> <span class="text-danger">*</span></label>
+                      Name</span> <span class="text-danger"></span></label>
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-person text-muted"></i></span>
                     <input type="text" class="form-control" id="name" placeholder="Enter your full name"
@@ -176,7 +209,7 @@
                 <!-- ── Email ── -->
                 <div class="mb-3">
                   <label for="email" class="form-label fw-semibold small"><span data-i18n="auth.register.email">Email
-                      Address</span> <span class="text-danger">*</span></label>
+                      Address</span> <span class="text-danger"></span></label>
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-envelope text-muted"></i></span>
                     <input type="email" class="form-control" id="email" placeholder="e.g. example@gmail.com"
@@ -189,8 +222,7 @@
                 <!-- ── ID, Department & Phone ── -->
                 <div class="row g-3 mb-3">
                   <div class="col-md-5">
-                    <label for="mauId" class="form-label fw-semibold small">ID <span
-                        class="text-danger">*</span></label>
+                    <label for="mauId" class="form-label fw-semibold small">ID <span class="text-danger"></span></label>
                     <div class="input-group">
                       <span class="input-group-text"><i class="bi bi-person-vcard text-muted"></i></span>
                       <input type="text" class="form-control" id="mauId" name="mauId" placeholder="12345"
@@ -247,7 +279,7 @@
                 <!-- ── Gender ── -->
                 <div class="mb-3">
                   <label for="gender" class="form-label fw-semibold small"><span data-i18n="auth.gender">Gender</span>
-                    <span class="text-danger">*</span></label>
+                    <span class="text-danger"></span></label>
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-gender-ambiguous text-muted"></i></span>
                     <select class="form-select" id="gender" required>
@@ -263,7 +295,7 @@
                 <!-- ── Password ── -->
                 <div class="mb-3">
                   <label for="password" class="form-label fw-semibold small"><span
-                      data-i18n="auth.form.password">Password</span> <span class="text-danger">*</span></label>
+                      data-i18n="auth.form.password">Password</span> <span class="text-danger"></span></label>
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-lock text-muted"></i></span>
                     <input type="password" class="form-control" id="password"
@@ -285,7 +317,7 @@
                 <div class="mb-4">
                   <label for="confirmPassword" class="form-label fw-semibold small"><span
                       data-i18n="auth.register.pwd_confirm">Confirm Password</span> <span
-                      class="text-danger">*</span></label>
+                      class="text-danger"></span></label>
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-lock-fill text-muted"></i></span>
                     <input type="password" class="form-control" id="confirmPassword" placeholder="Repeat your password"
