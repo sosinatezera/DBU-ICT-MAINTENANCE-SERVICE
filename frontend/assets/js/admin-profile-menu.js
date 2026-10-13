@@ -78,67 +78,6 @@
             <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/technician/profile.html#profileSettings">Open Profile Settings</a>
           </div>
         </div>
-        <div class="admin-profile-accordion">
-          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
-                  data-profile-accordion aria-expanded="false" aria-controls="adminProfileSecurityPanel">
-            <i class="bi bi-shield-lock" aria-hidden="true"></i>
-            <span class="admin-profile-item-label">Security</span>
-            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
-          </button>
-          <div class="admin-profile-accordion-panel" id="adminProfileSecurityPanel"
-               role="group" aria-label="Security" aria-hidden="true" inert>
-            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/settings.html#securitySettings">Open Security Settings</a>
-          </div>
-        </div>
-        <div class="admin-profile-accordion">
-          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
-                  data-profile-accordion aria-expanded="false" aria-controls="adminProfileNotificationsPanel">
-            <i class="bi bi-bell" aria-hidden="true"></i>
-            <span class="admin-profile-item-label">Notification Settings</span>
-            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
-          </button>
-          <div class="admin-profile-accordion-panel" id="adminProfileNotificationsPanel"
-               role="group" aria-label="Notification Settings" aria-hidden="true" inert>
-            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/settings.html#notificationSettings">Open Notification Settings</a>
-          </div>
-        </div>
-        <div class="admin-profile-accordion">
-          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
-                  data-profile-accordion aria-expanded="false" aria-controls="adminProfileAppearancePanel">
-            <i class="bi bi-translate" aria-hidden="true"></i>
-            <span class="admin-profile-item-label">Language &amp; Appearance</span>
-            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
-          </button>
-          <div class="admin-profile-accordion-panel" id="adminProfileAppearancePanel"
-               role="group" aria-label="Language and Appearance" aria-hidden="true" inert>
-            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/settings.html#languageSettings">Open Language &amp; Appearance</a>
-          </div>
-        </div>
-        <div class="admin-profile-dropdown-sep" role="separator"></div>
-        <div class="admin-profile-accordion">
-          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
-                  data-profile-accordion aria-expanded="false" aria-controls="adminProfileAssignmentsPanel">
-            <i class="bi bi-tools" aria-hidden="true"></i>
-            <span class="admin-profile-item-label">My Assignments</span>
-            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
-          </button>
-          <div class="admin-profile-accordion-panel" id="adminProfileAssignmentsPanel"
-               role="group" aria-label="My Assignments" aria-hidden="true" inert>
-            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/technician/assigned-requests.html">Open My Assignments</a>
-          </div>
-        </div>
-        <div class="admin-profile-accordion">
-          <button type="button" class="admin-profile-item admin-profile-accordion-trigger" role="menuitem"
-                  data-profile-accordion aria-expanded="false" aria-controls="adminProfilePerformancePanel">
-            <i class="bi bi-bar-chart" aria-hidden="true"></i>
-            <span class="admin-profile-item-label">My Performance</span>
-            <i class="bi bi-chevron-down admin-profile-accordion-caret" aria-hidden="true"></i>
-          </button>
-          <div class="admin-profile-accordion-panel" id="adminProfilePerformancePanel"
-               role="group" aria-label="My Performance" aria-hidden="true" inert>
-            <a class="admin-profile-item admin-profile-accordion-link" role="menuitem" href="/views/technician/dashboard.html#performanceStats">Open My Performance</a>
-          </div>
-        </div>
         <div class="admin-profile-dropdown-sep" role="separator"></div>`
         : `
         <a class="admin-profile-item" role="menuitem" id="adminProfileSettingsLink">

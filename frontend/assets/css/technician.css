@@ -173,6 +173,68 @@
   background: linear-gradient(180deg, #0b1f3a 0%, #071426 100%) !important;
 }
 
+/* Technician-only header palette. This stylesheet is loaded by technician
+   pages only, so these shared component selectors cannot affect other roles. */
+html body.dashboard-body .topbar,
+html body.dashboard-body #sidebar > a:first-of-type > div,
+html body.dashboard-body #sidebar .sidebar-brand,
+html body.dashboard-body #sidebar .sidebar-section-header,
+html body.dashboard-body #sidebar .sidebar-section-title,
+html body.dashboard-body #sidebar .nav-section-title,
+html body.dashboard-body .card-header,
+html body.dashboard-body .modal-header,
+html body.dashboard-body .technician-feedback-page-header {
+  background-color: #1d4ed8 !important;
+  color: #fff !important;
+}
+
+html body.dashboard-body .topbar h1,
+html body.dashboard-body .topbar h2,
+html body.dashboard-body .topbar h3,
+html body.dashboard-body .topbar h4,
+html body.dashboard-body .topbar h5,
+html body.dashboard-body .topbar h6,
+html body.dashboard-body .topbar .text-muted,
+html body.dashboard-body #sidebar > a:first-of-type > div,
+html body.dashboard-body #sidebar > a:first-of-type > div i,
+html body.dashboard-body #sidebar .sidebar-brand,
+html body.dashboard-body #sidebar .sidebar-brand i,
+html body.dashboard-body #sidebar .sidebar-section-header,
+html body.dashboard-body #sidebar .sidebar-section-title,
+html body.dashboard-body #sidebar .nav-section-title,
+html body.dashboard-body .card-header h1,
+html body.dashboard-body .card-header h2,
+html body.dashboard-body .card-header h3,
+html body.dashboard-body .card-header h4,
+html body.dashboard-body .card-header h5,
+html body.dashboard-body .card-header h6,
+html body.dashboard-body .card-header .text-muted,
+html body.dashboard-body .modal-header .modal-title,
+html body.dashboard-body .modal-header .btn-close,
+html body.dashboard-body .technician-feedback-page-header h1,
+html body.dashboard-body .technician-feedback-page-header h2,
+html body.dashboard-body .technician-feedback-page-header h3,
+html body.dashboard-body .technician-feedback-page-header h4,
+html body.dashboard-body .technician-feedback-page-header h5,
+html body.dashboard-body .technician-feedback-page-header h6,
+html body.dashboard-body .technician-feedback-page-header p {
+  color: #fff !important;
+}
+
+html body.dashboard-body .modal-header .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+html body.dashboard-body .table thead th {
+  background-color: #1d4ed8 !important;
+  color: #fff !important;
+}
+
+html body.dashboard-body .technician-feedback-page-header {
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+}
+
 /* Keep the profile cards at the full width left by the fixed sidebar. */
 #profileSection,
 #profileSection .profile-details-layout,
