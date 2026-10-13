@@ -451,6 +451,7 @@ let _reportFilter = {
 };
 let _reportLoadInFlight = false;
 let _reportExportInFlight = false;
+let _technicianMaintenanceReports = [];
 
 function reportPeriodPrefix() {
   return (
@@ -652,7 +653,116 @@ async function initReports() {
     .getElementById("printReportBtn")
     ?.addEventListener("click", printReport);
 
-  await loadReportData();
+  await Promise.all([loadReportData(), loadTechnicianMaintenanceReports()]);
+}
+
+async function loadTechnicianMaintenanceReports() {
+  const tbody = document.getElementById("technicianMaintenanceReportsBody");
+  if (!tbody) return;
+  tbody.innerHTML =
+    '<tr><td colspan="6" class="text-center text-muted py-4">Loading technician reports...</td></tr>';
+  try {
+    const { data } = await apiRequest("/tickets");
+    if (!Array.isArray(data)) {
+      throw new Error("The maintenance report list returned an invalid response.");
+    }
+    _technicianMaintenanceReports = data.filter(
+      (ticket) => ticket.has_technician_feedback && ticket.technician_feedback,
+    );
+    if (!_technicianMaintenanceReports.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="6" class="text-center text-muted py-4">No technician maintenance reports have been submitted.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = _technicianMaintenanceReports
+      .map((ticket, index) => {
+        const report = ticket.technician_feedback;
+        const result =
+          report.repairResult === "Unresolved"
+            ? "Not Resolved"
+            : report.repairResult ||
+              ({
+            Fixed: "Resolved",
+            "In Progress": "Partially Resolved",
+            "Not Fixed": "Not Resolved",
+          }[report.status] || "—");
+        const submitted = report.submittedAt
+          ? new Date(report.submittedAt).toLocaleString()
+          : "—";
+        const equipment =
+          report.equipment_name ||
+          ticket.asset_name ||
+          ticket.deviceLabel ||
+          ticket.equipmentType ||
+          "—";
+        const assetTag = report.asset_tag || ticket.asset_tag;
+        return `<tr>
+          <td><strong class="text-primary">${escHtml(ticket.ticketId || ticket.id)}</strong><div class="small text-muted">${escHtml(ticket.title || "")}</div></td>
+          <td>${escHtml(report.technician_name || ticket.technician_name || "Technician")}</td>
+          <td>${escHtml(equipment)}${assetTag ? `<div class="small text-muted">${escHtml(assetTag)}</div>` : ""}</td>
+          <td><span class="badge ${result === "Resolved" ? "bg-success" : result === "Not Resolved" ? "bg-danger" : "bg-warning text-dark"}">${escHtml(result)}</span></td>
+          <td>${escHtml(submitted)}</td>
+          <td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary" data-review-technician-report="${index}"><i class="bi bi-eye me-1"></i>Review</button></td>
+        </tr>`;
+      })
+      .join("");
+    tbody.querySelectorAll("[data-review-technician-report]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const index = Number(button.dataset.reviewTechnicianReport);
+        const ticket = _technicianMaintenanceReports[index];
+        if (ticket) showTechnicianMaintenanceReport(ticket);
+      });
+    });
+  } catch (error) {
+    console.error("Could not load technician maintenance reports:", error);
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${escHtml(error.message || "Could not load technician reports.")}</td></tr>`;
+  }
+}
+
+function showTechnicianMaintenanceReport(ticket) {
+  const report = ticket.technician_feedback || {};
+  const result =
+    report.repairResult === "Unresolved"
+      ? "Not Resolved"
+      : report.repairResult ||
+        ({
+      Fixed: "Resolved",
+      "In Progress": "Partially Resolved",
+      "Not Fixed": "Not Resolved",
+    }[report.status] || "—");
+  const fields = [
+    ["Maintenance request ID", ticket.ticketId || ticket.id],
+    ["Equipment / asset", report.equipment_name || ticket.deviceLabel || ticket.equipmentType || "—"],
+    ["Asset ID / tag", report.asset_tag || ticket.asset_tag || report.asset_id || "—"],
+    ["Reported problem", report.reportedProblem || ticket.problemDescription],
+    ["Technical diagnosis", report.diagnosis],
+    ["Maintenance actions performed", report.workPerformed],
+    ["Spare parts / materials used", report.partsUsed],
+    ["Time spent", report.timeSpentMinutes == null ? "—" : `${report.timeSpentMinutes} minutes`],
+    ["Repair result", result],
+    ["Follow-up required", report.followUpRequired ? "Yes" : "No"],
+    ["Resolution summary", report.resolution],
+    ["Reason unresolved", report.reasonNotFixed],
+    ["Recommendation", report.recommendation],
+    ["Additional notes", report.technicianNotes],
+    ["Technician", report.technician_name || ticket.technician_name || "Technician"],
+    ["Submitted", report.submittedAt ? new Date(report.submittedAt).toLocaleString() : "—"],
+  ];
+  const title = document.getElementById("technicianMaintenanceReportTitle");
+  if (title) title.textContent = `Maintenance Report — ${ticket.ticketId || ticket.id}`;
+  const details = document.getElementById("technicianMaintenanceReportDetails");
+  if (details) {
+    details.innerHTML = `<dl class="row g-3 mb-0">${fields
+      .map(
+        ([label, value]) =>
+          `<div class="col-12 ${label === "Reported problem" || label === "Technical diagnosis" || label === "Maintenance actions performed" || label === "Additional notes" ? "" : "col-md-6"}"><dt class="small text-muted">${escHtml(label)}</dt><dd class="mb-0 text-break" style="white-space:pre-wrap">${escHtml(value || "—")}</dd></div>`,
+      )
+      .join("")}</dl>`;
+  }
+  const modal = document.getElementById("technicianMaintenanceReportModal");
+  if (modal && window.bootstrap?.Modal) {
+    bootstrap.Modal.getOrCreateInstance(modal).show();
+  }
 }
 
 function printReport() {

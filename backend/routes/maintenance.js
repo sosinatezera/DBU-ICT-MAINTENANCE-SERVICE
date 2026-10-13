@@ -26,6 +26,7 @@ const {
   VALID_MAINT_STATUS,
 } = require("../middleware/validation");
 const { displayTicketId } = require("../utils/ticketId");
+const { sameMongoId } = require("../utils/mongoId");
 
 /* GET /api/maintenance/my — my repair logs */
 router.get("/my", authenticate, async (req, res, next) => {
@@ -229,8 +230,7 @@ router.post(
         });
         const isAssigned =
           activeAssignment ||
-          (ticket.assignedTechnician &&
-            ticket.assignedTechnician.toString() === req.user.id);
+          sameMongoId(ticket.assignedTechnician, req.user.id);
 
         if (!isAssigned) {
           return res.status(403).json({

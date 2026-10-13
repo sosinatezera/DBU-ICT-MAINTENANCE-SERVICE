@@ -78,7 +78,12 @@ router.put(
   authorize("ICT Admin", "Technician"),
   editTechnicianFeedback,
 );
-router.get("/:id/technician-feedback", authenticate, getTechnicianFeedback);
+router.get(
+  "/:id/technician-feedback",
+  authenticate,
+  authorize("ICT Admin", "Technician", "Requester"),
+  getTechnicianFeedback,
+);
 
 /* Requester Service Feedback (Requester owner + ICT Admin)
    Purpose: the requester's evaluation of the ICT SERVICE they received. */

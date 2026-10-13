@@ -273,6 +273,20 @@ const ticketSchema = new mongoose.Schema(
       workPerformed: { type: String, trim: true, default: null }, // action taken
       partsUsed: { type: String, trim: true, default: null },
       resolution: { type: String, trim: true, default: null }, // resolution summary (public)
+      repairResult: {
+        type: String,
+        enum: [
+          "Resolved",
+          "Partially Resolved",
+          "Not Resolved",
+          "Unresolved",
+          "Pending Further Action",
+          null,
+        ],
+        default: null,
+      },
+      timeSpentMinutes: { type: Number, min: 0, default: null },
+      followUpRequired: { type: Boolean, default: false },
       status: {
         type: String,
         enum: ["Fixed", "In Progress", "Not Fixed"],

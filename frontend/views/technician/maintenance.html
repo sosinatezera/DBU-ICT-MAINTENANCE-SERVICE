@@ -98,7 +98,7 @@
                   <div class="mb-3">
                     <label for="actionTaken" class="form-label fw-semibold"><span data-i18n="tech.actionTaken">Action
                         Taken</span> <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="actionTaken" rows="4"
+                    <textarea class="form-control" id="actionTaken" rows="4" maxlength="1000"
                       placeholder="Describe the actions performed..." data-i18n-placeholder="maint.ph.actionTaken"
                       required minlength="10"></textarea>
                     <div class="invalid-feedback" data-i18n="maint.err.action">Please describe the action taken (min 10
@@ -109,7 +109,8 @@
                   <div class="mb-3">
                     <label for="partsUsed" class="form-label fw-semibold" data-i18n="tech.report.partsUsed">Parts /
                       Materials Used</label>
-                    <input type="text" class="form-control" id="partsUsed" placeholder="e.g. HDD 1TB, Power Adapter"
+                    <input type="text" class="form-control" id="partsUsed" maxlength="500"
+                      placeholder="e.g. HDD 1TB, Power Adapter"
                       data-i18n-placeholder="maint.ph.parts" />
                   </div>
 
@@ -117,7 +118,8 @@
                   <div class="mb-4">
                     <label for="techNotes" class="form-label fw-semibold" data-i18n="maint.additionalNotes">Additional
                       Notes</label>
-                    <textarea class="form-control" id="techNotes" rows="3" placeholder="Any observations or notes..."
+                    <textarea class="form-control" id="techNotes" rows="3" maxlength="2000"
+                      placeholder="Any observations or notes..."
                       data-i18n-placeholder="maint.ph.notes"></textarea>
                   </div>
 

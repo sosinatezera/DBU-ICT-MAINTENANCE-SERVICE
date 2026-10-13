@@ -17,6 +17,13 @@
  */
 
 const VALID_TECH_FEEDBACK_STATUS = ["Fixed", "In Progress", "Not Fixed"];
+const VALID_REPAIR_RESULTS = [
+  "Resolved",
+  "Partially Resolved",
+  "Not Resolved",
+  "Unresolved",
+  "Pending Further Action",
+];
 
 /* ── Requester feedback option sets (service experience survey) ── */
 const VALID_QUALITY_LEVELS = ["Excellent", "Very Good", "Good", "Fair", "Poor"];
@@ -61,6 +68,7 @@ const { broadcastNotification } = require("../services/notificationService");
 
 const Ticket = require("../models/Ticket");
 const Feedback = require("../models/Feedback");
+const MaintenanceRecord = require("../models/MaintenanceRecord");
 const Category = require("../models/Category");
 const Settings = require("../models/Settings");
 const {
@@ -94,6 +102,7 @@ const {
   DEVICE_TYPE_MAX_LENGTH,
 } = require("../middleware/validation");
 const { displayTicketId, ticketCodeMatchQuery } = require("../utils/ticketId");
+const { sameMongoId } = require("../utils/mongoId");
 
 function ticketSubmissionResponse(ticket, requester) {
   return {
@@ -1042,20 +1051,117 @@ const updateStatus = async (req, res, next) => {
         .json({ success: false, message: "Ticket not found." });
     }
 
+    const hasWorkDetails = [
+      "actionTaken",
+      "action_taken",
+      "partsUsed",
+      "parts_used",
+      "notes",
+    ].some((field) => Object.prototype.hasOwnProperty.call(req.body, field));
+    let technicianProfile = null;
+
+    /* The authenticated identity is a User ID. Ticket.assignedTechnician also
+       stores a User ID, while Assignment.technician stores a Technician ID. */
+    if (req.user.role === "Technician") {
+      technicianProfile = await Technician.findOne({ user: req.user.id });
+      const activeAssignment = technicianProfile
+        ? await Assignment.exists({
+            ticket: ticket._id,
+            technician: technicianProfile._id,
+            status: { $in: ["assigned", "accepted", "in_progress"] },
+          })
+        : false;
+      const isAssigned =
+        Boolean(activeAssignment) ||
+        sameMongoId(ticket.assignedTechnician, req.user.id);
+
+      console.info("[TICKET STATUS AUTH]", {
+        userId: String(req.user.id),
+        role: req.user.role,
+        ticketId: String(ticket._id),
+        assigned: isAssigned,
+      });
+      if (!isAssigned) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Access denied. You can only update tickets assigned to you.",
+        });
+      }
+    }
+
+    let workDetails = null;
+    if (hasWorkDetails) {
+      const actionTaken = req.body.actionTaken ?? req.body.action_taken;
+      if (typeof actionTaken !== "string" || !actionTaken.trim()) {
+        return res.status(422).json({
+          success: false,
+          message: "Action taken is required.",
+          field: "actionTaken",
+        });
+      }
+      const cleanActionTaken = sanitizeString(actionTaken);
+      if (!cleanActionTaken.trim()) {
+        return res.status(422).json({
+          success: false,
+          message: "Action taken is required.",
+          field: "actionTaken",
+        });
+      }
+      const actionErr = validateLength(cleanActionTaken, "Action taken", {
+        min: 2,
+        max: 1000,
+      });
+      if (actionErr)
+        return res.status(400).json({ success: false, message: actionErr });
+
+      const optionalText = (camelCase, snakeCase, label, max) => {
+        const value = req.body[camelCase] ?? req.body[snakeCase];
+        if (value === undefined || value === null || value === "") return null;
+        if (typeof value !== "string") {
+          return { error: `${label} must be text.` };
+        }
+        const sanitized = sanitizeString(value);
+        const error = validateLength(sanitized, label, { max });
+        return error ? { error } : { value: sanitized || null };
+      };
+      const partsUsed = optionalText("partsUsed", "parts_used", "Parts used", 500);
+      if (partsUsed?.error)
+        return res.status(400).json({ success: false, message: partsUsed.error });
+      const notes = optionalText("notes", "notes", "Notes", 2000);
+      if (notes?.error)
+        return res.status(400).json({ success: false, message: notes.error });
+
+      if (req.user.role !== "Technician") {
+        return res.status(403).json({
+          success: false,
+          message: "Only assigned technicians can submit maintenance details.",
+        });
+      }
+      if (!technicianProfile) {
+        return res.status(404).json({
+          success: false,
+          message: "Technician profile not found.",
+        });
+      }
+      workDetails = {
+        action_taken: cleanActionTaken,
+        parts_used: partsUsed?.value || null,
+        notes: notes?.value || null,
+        technician: technicianProfile._id,
+        status: ["resolved", "closed"].includes(status)
+          ? "resolved"
+          : status === "in_progress"
+            ? "in_progress"
+            : "accepted",
+      };
+    }
+
     /* Track if this is a reopen (from resolved/closed to active status) */
     const isReopen =
       ["resolved", "closed"].includes(ticket.status) &&
       !["resolved", "closed"].includes(status);
-
-    /* ── Diagnostic log (identifies the exact failing request) ── */
-    console.log("[TICKET STATUS]", {
-      userId: req.user?.id,
-      role: req.user?.role,
-      ticketId: req.params.id,
-      from: ticket.status,
-      to: status,
-      body: req.body,
-    });
+    const isStatusChanged = ticket.status !== status;
 
     /* ── Validate the workflow transition (Technicians strictly) ──
        Admins keep full control (their flows set status directly). */
@@ -1070,7 +1176,10 @@ const updateStatus = async (req, res, next) => {
     };
     if (req.user.role === "Technician") {
       const allowed = VALID_TRANSITIONS[ticket.status] || [];
-      if (!allowed.includes(status)) {
+      if (
+        !allowed.includes(status) &&
+        !(status === ticket.status && workDetails)
+      ) {
         return res.status(400).json({
           success: false,
           message: `Cannot change ticket status from "${ticket.status}" to "${status}".`,
@@ -1078,28 +1187,24 @@ const updateStatus = async (req, res, next) => {
       }
     }
 
-    /* If a technician is updating, they must be the technician assigned to this ticket */
-    if (req.user.role === "Technician") {
-      const tech = await Technician.findOne({ user: req.user.id });
-
-      const activeAssignment = tech
-        ? await Assignment.exists({
-            ticket: ticket._id,
-            technician: tech._id,
-            status: { $in: ["assigned", "accepted", "in_progress"] },
-          })
-        : false;
-
-      const isAssigned =
-        activeAssignment ||
-        (ticket.assignedTechnician &&
-          ticket.assignedTechnician.toString() === req.user.id);
-
-      if (!isAssigned) {
-        return res.status(403).json({
+    if (["resolved", "closed"].includes(status)) {
+      const savedRepairResult =
+        ticket.technicianFeedback?.repairResult ||
+        ({
+          Fixed: "Resolved",
+          "In Progress": "Partially Resolved",
+          "Not Fixed": "Unresolved",
+        }[ticket.technicianFeedback?.status] || null);
+      if (
+        (req.user.role === "Technician" &&
+          savedRepairResult !== "Resolved" &&
+          !(status === "resolved" && workDetails)) ||
+        (savedRepairResult && savedRepairResult !== "Resolved")
+      ) {
+        return res.status(409).json({
           success: false,
           message:
-            "Access denied. You can only update tickets assigned to you.",
+            "This request cannot be resolved or closed unless its maintenance report result is Resolved.",
         });
       }
     }
@@ -1118,6 +1223,14 @@ const updateStatus = async (req, res, next) => {
         .json({ success: false, message: "Ticket not found." });
     }
 
+    let maintenanceRecord = null;
+    if (workDetails) {
+      maintenanceRecord = await MaintenanceRecord.create({
+        request: ticket._id,
+        ...workDetails,
+      });
+    }
+
     /* Keep the linked Assignment.status in sync with the ticket lifecycle so
        the data chain stays consistent (accept→accepted, start→in_progress, resolve→completed). */
     const ASSIGN_STATUS = {
@@ -1130,7 +1243,9 @@ const updateStatus = async (req, res, next) => {
       await Assignment.updateMany(
         {
           ticket: ticket._id,
-          status: { $in: ["assigned", "accepted", "in_progress"] },
+          status: {
+            $in: ["assigned", "accepted", "in_progress", "completed"],
+          },
         },
         { $set: { status: ASSIGN_STATUS[status] } },
       );
@@ -1181,7 +1296,7 @@ const updateStatus = async (req, res, next) => {
     }
 
     /* Notify the requester of the status change */
-    if (updated.requester?._id) {
+    if (isStatusChanged && updated.requester?._id) {
       const requesterNotif = await Notification.create({
         user: updated.requester._id,
         ticket: updated._id,
@@ -1194,7 +1309,7 @@ const updateStatus = async (req, res, next) => {
     }
 
     /* Notify ICT Admins when resolved or closed */
-    if (["resolved", "closed"].includes(status)) {
+    if (isStatusChanged && ["resolved", "closed"].includes(status)) {
       const admins = await User.find({
         role: "ICT Admin",
         status: "active",
@@ -1209,6 +1324,37 @@ const updateStatus = async (req, res, next) => {
             message: `Ticket "${displayId}" has been marked as ${adminStatusDisplay}.`,
             type: "success",
             notificationType: "request_completed_admin",
+          });
+          broadcastNotification(adminNotif);
+        }),
+      );
+    }
+
+    if (maintenanceRecord) {
+      const techName = req.user.name || "A technician";
+      if (updated.requester?._id) {
+        const requesterNotif = await Notification.create({
+          user: updated.requester._id,
+          ticket: updated._id,
+          title: `Maintenance Update: ${displayId}`,
+          message: `${techName} logged maintenance activity on your request #${displayId}.`,
+          type: "info",
+        });
+        broadcastNotification(requesterNotif);
+      }
+
+      const admins = await User.find({
+        role: "ICT Admin",
+        status: "active",
+      }).select("_id");
+      await Promise.all(
+        admins.map(async (admin) => {
+          const adminNotif = await Notification.create({
+            user: admin._id,
+            ticket: updated._id,
+            title: `Maintenance Logged: ${displayId}`,
+            message: `${techName} logged maintenance activity on ticket "${displayId}".`,
+            type: "info",
           });
           broadcastNotification(adminNotif);
         }),
@@ -1259,6 +1405,16 @@ const updateStatus = async (req, res, next) => {
         req.user.id,
         assignedTechnicians.get(String(updated._id)),
       ),
+      maintenanceRecord: maintenanceRecord
+        ? {
+            id: maintenanceRecord._id,
+            action_taken: maintenanceRecord.action_taken,
+            parts_used: maintenanceRecord.parts_used,
+            notes: maintenanceRecord.notes,
+            status: maintenanceRecord.status,
+            createdAt: maintenanceRecord.createdAt,
+          }
+        : undefined,
     });
   } catch (err) {
     next(err);
@@ -1302,6 +1458,14 @@ function pickFeedbackFields(body) {
     }
   });
   if (body.status !== undefined) fields.status = body.status;
+  const selectedResult = body.repairResult ?? body.currentResult;
+  if (selectedResult !== undefined) fields.repairResult = selectedResult;
+  if (body.timeSpentMinutes !== undefined) {
+    fields.timeSpentMinutes = body.timeSpentMinutes;
+  }
+  if (body.followUpRequired !== undefined) {
+    fields.followUpRequired = body.followUpRequired;
+  }
   return fields;
 }
 
@@ -1323,6 +1487,44 @@ function validateFeedbackPayload(payload, { isEdit = false } = {}) {
       return `${f === "diagnosis" ? "Diagnosis" : f === "workPerformed" ? "Work performed" : "Resolution summary"} is required.`;
     }
   }
+  if (
+    payload.repairResult !== undefined &&
+    !VALID_REPAIR_RESULTS.includes(payload.repairResult)
+  ) {
+    return `Repair result must be one of: ${VALID_REPAIR_RESULTS.join(", ")}.`;
+  }
+  if (payload.repairResult === "Unresolved") {
+    payload.repairResult = "Not Resolved";
+  }
+  const resultToStatus = {
+    Resolved: "Fixed",
+    "Partially Resolved": "In Progress",
+    "Not Resolved": "Not Fixed",
+    Unresolved: "Not Fixed",
+    "Pending Further Action": "In Progress",
+  };
+  const statusToResult = {
+    Fixed: "Resolved",
+    "In Progress": "Partially Resolved",
+    "Not Fixed": "Unresolved",
+    Resolved: "Resolved",
+    "Partially Resolved": "Partially Resolved",
+    "Not Resolved": "Not Resolved",
+    Unresolved: "Unresolved",
+    "Pending Further Action": "Pending Further Action",
+  };
+  if (payload.repairResult) {
+    payload.status = resultToStatus[payload.repairResult];
+  }
+  if (!payload.repairResult && payload.status) {
+    payload.repairResult = statusToResult[payload.status];
+    if (VALID_REPAIR_RESULTS.includes(payload.status)) {
+      payload.status = resultToStatus[payload.status];
+    }
+  }
+  if (payload.repairResult === "Unresolved") {
+    payload.repairResult = "Not Resolved";
+  }
   if (!payload.status) return "Current result/status is required.";
   const statusErr = validateEnum(
     payload.status,
@@ -1330,7 +1532,27 @@ function validateFeedbackPayload(payload, { isEdit = false } = {}) {
     "report status",
   );
   if (statusErr) return statusErr;
-  if (payload.status === "Not Fixed") {
+  if (!isEdit || payload.timeSpentMinutes !== undefined) {
+    const minutes = Number(payload.timeSpentMinutes);
+    if (
+      !Number.isInteger(minutes) ||
+      minutes < 1 ||
+      minutes > 10080
+    ) {
+      return "Time spent must be a whole number of minutes between 1 and 10080.";
+    }
+    payload.timeSpentMinutes = minutes;
+  }
+  if (
+    payload.followUpRequired !== undefined &&
+    typeof payload.followUpRequired !== "boolean"
+  ) {
+    return "Follow-up required must be answered Yes or No.";
+  }
+  if (!isEdit && payload.followUpRequired === undefined) {
+    return "Follow-up required is required.";
+  }
+  if (payload.repairResult === "Not Resolved" || payload.status === "Not Fixed") {
     if (!payload.reasonNotFixed)
       return "Please provide a reason why the issue is not fixed.";
   } else if (payload.reasonNotFixed) {
@@ -1361,6 +1583,13 @@ function buildFeedbackReport(payload, user, ticket, isEdit) {
     workPerformed: payload.workPerformed ?? null,
     partsUsed: payload.partsUsed ?? null,
     resolution: payload.resolution ?? null,
+    repairResult: payload.repairResult ?? null,
+    timeSpentMinutes:
+      payload.timeSpentMinutes ??
+      (isEdit ? ticket.technicianFeedback?.timeSpentMinutes : null),
+    followUpRequired:
+      payload.followUpRequired ??
+      (isEdit ? ticket.technicianFeedback?.followUpRequired : false),
     status: payload.status ?? (isEdit ? null : "In Progress"),
     reasonNotFixed: payload.reasonNotFixed ?? null,
     recommendation: payload.recommendation ?? null,
@@ -1383,7 +1612,10 @@ function applyFeedbackToTicket(ticket, report) {
   ticket.resolutionResponse = report.resolution ?? ticket.resolutionResponse;
   ticket.reasonIfNotFixed = report.reasonNotFixed ?? ticket.reasonIfNotFixed;
 
-  if (report.status === "Fixed") {
+  if (
+    report.repairResult === "Resolved" ||
+    (!report.repairResult && report.status === "Fixed")
+  ) {
     ticket.isFixed = true;
     ticket.status = "resolved";
   } else {
@@ -1447,7 +1679,7 @@ const submitTechnicianFeedback = async (req, res, next) => {
         return res.status(200).json({
           success: true,
           message: "Maintenance report was already submitted.",
-          data: formatFeedbackReport(ticket.technicianFeedback),
+          data: formatFeedbackReport(ticket.technicianFeedback, ticket),
         });
       }
       return res.status(409).json({
@@ -1481,7 +1713,9 @@ const submitTechnicianFeedback = async (req, res, next) => {
         await Assignment.updateMany(
           {
             ticket: ticket._id,
-            status: { $in: ["assigned", "accepted", "in_progress"] },
+            status: {
+              $in: ["assigned", "accepted", "in_progress", "completed"],
+            },
           },
           { $set: { status: ASSIGN_FB_MAP[ticket.status] } },
         );
@@ -1548,7 +1782,7 @@ const submitTechnicianFeedback = async (req, res, next) => {
         report.status === "Fixed"
           ? "Maintenance report submitted. Ticket marked as resolved."
           : "Maintenance report submitted.",
-      data: formatFeedbackReport(ticket.technicianFeedback),
+      data: formatFeedbackReport(ticket.technicianFeedback, ticket),
     });
   } catch (err) {
     next(err);
@@ -1621,7 +1855,9 @@ const editTechnicianFeedback = async (req, res, next) => {
         await Assignment.updateMany(
           {
             ticket: ticket._id,
-            status: { $in: ["assigned", "accepted", "in_progress"] },
+            status: {
+              $in: ["assigned", "accepted", "in_progress", "completed"],
+            },
           },
           { $set: { status: ASSIGN_FB_MAP_EDIT[ticket.status] } },
         );
@@ -1636,7 +1872,7 @@ const editTechnicianFeedback = async (req, res, next) => {
     res.json({
       success: true,
       message: "Maintenance report updated.",
-      data: formatFeedbackReport(ticket.technicianFeedback),
+      data: formatFeedbackReport(ticket.technicianFeedback, ticket),
     });
   } catch (err) {
     next(err);
@@ -1650,8 +1886,8 @@ const getTechnicianFeedback = async (req, res, next) => {
     if (idErr) return res.status(400).json({ success: false, message: idErr });
 
     const ticket = await Ticket.findById(req.params.id).select(
-      "technicianFeedback _id assignedTechnician requester",
-    );
+      "technicianFeedback _id assignedTechnician requester ticketId problemDescription equipmentType otherDeviceName device assetId",
+    ).populate("assetId", "asset_tag asset_name");
     if (!ticket)
       return res
         .status(404)
@@ -1680,6 +1916,13 @@ const getTechnicianFeedback = async (req, res, next) => {
         success: true,
         data: {
           resolution: report.resolution,
+          repairResult:
+            report.repairResult ||
+            ({
+              Fixed: "Resolved",
+              "In Progress": "Partially Resolved",
+              "Not Fixed": "Unresolved",
+            }[report.status] || null),
           status: report.status,
           isFixed: report.status === "Fixed",
           completionDate: report.completionDate,
@@ -1702,19 +1945,40 @@ const getTechnicianFeedback = async (req, res, next) => {
       });
     }
 
-    res.json({ success: true, data: formatFeedbackReport(report) });
+    res.json({ success: true, data: formatFeedbackReport(report, ticket) });
   } catch (err) {
     next(err);
   }
 };
 
 /* ── Helper: format technician feedback for API response ───── */
-function formatFeedbackReport(report) {
+function formatFeedbackReport(report, ticket = null) {
+  const repairResult =
+    report?.repairResult ||
+    ({
+      Fixed: "Resolved",
+      "In Progress": "Partially Resolved",
+      "Not Fixed": "Unresolved",
+    }[report?.status] ?? null);
   return {
     diagnosis: report?.diagnosis ?? null,
     workPerformed: report?.workPerformed ?? null,
     partsUsed: report?.partsUsed ?? null,
     resolution: report?.resolution ?? null,
+    reportedProblem: ticket?.problemDescription ?? null,
+    request_id: ticket ? displayTicketId(ticket.ticketId) : null,
+    equipment_name: ticket
+      ? ticket.assetId?.asset_name ||
+        ticket.otherDeviceName ||
+        ticket.device ||
+        ticket.equipmentType ||
+        null
+      : null,
+    asset_id: ticket?.assetId?._id || ticket?.assetId || null,
+    asset_tag: ticket?.assetId?.asset_tag || null,
+    repairResult,
+    timeSpentMinutes: report?.timeSpentMinutes ?? null,
+    followUpRequired: report?.followUpRequired ?? false,
     status: report?.status ?? null,
     reasonNotFixed: report?.reasonNotFixed ?? null,
     recommendation: report?.recommendation ?? null,
@@ -2155,11 +2419,19 @@ function formatAdminFeedbackPublic(report, ticket) {
 
 /* ── Helper: format ticket for API response ────────────────── */
 function formatFeedbackPublic(report) {
+  const repairResult =
+    report?.repairResult ||
+    ({
+      Fixed: "Resolved",
+      "In Progress": "Partially Resolved",
+      "Not Fixed": "Unresolved",
+    }[report?.status] ?? null);
   return {
     diagnosis: report?.diagnosis ?? null,
     workPerformed: report?.workPerformed ?? null,
     partsUsed: report?.partsUsed ?? null,
     resolution: report?.resolution ?? null,
+    repairResult,
     status: report?.status ?? null,
     reasonNotFixed: report?.reasonNotFixed ?? null,
     recommendation: report?.recommendation ?? null,
@@ -2218,9 +2490,16 @@ function formatTicket(
     t.technicianFeedback && t.technicianFeedback.technicianConfirmed
       ? t.technicianFeedback
       : null;
+  const isAssignedTechnician =
+    isTech &&
+    ((assignedTechnician?.technicianUserId &&
+      String(assignedTechnician.technicianUserId) === String(viewerId)) ||
+      (t.assignedTechnician &&
+        String(t.assignedTechnician._id || t.assignedTechnician) ===
+          String(viewerId)));
   const techFeedback = tf
-    ? isAdmin || isTech
-      ? formatFeedbackReport(tf)
+    ? isAdmin || isAssignedTechnician
+      ? formatFeedbackReport(tf, t)
       : formatFeedbackPublic(tf)
     : null;
 

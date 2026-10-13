@@ -140,18 +140,20 @@
                   <div class="mb-3">
                     <label for="actionTaken" class="form-label fw-semibold"><span data-i18n="tech.actionTaken">Action
                         Taken</span> <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="actionTaken" rows="3" placeholder="Describe what was done..."
-                      required data-i18n-placeholder="tech.ph.actionTaken"></textarea>
+                    <textarea class="form-control" id="actionTaken" rows="3" maxlength="1000" required
+                      placeholder="Describe what was done..." data-i18n-placeholder="tech.ph.actionTaken"></textarea>
                   </div>
                   <div class="mb-3">
                     <label for="partsUsed" class="form-label fw-semibold" data-i18n="tech.report.partsUsed">Parts /
                       Materials Used</label>
-                    <input type="text" class="form-control" id="partsUsed" placeholder="e.g. RAM Module 8GB, HDMI Cable"
+                    <input type="text" class="form-control" id="partsUsed" maxlength="500"
+                      placeholder="e.g. RAM Module 8GB, HDMI Cable"
                       data-i18n-placeholder="tech.ph.partsUsed" />
                   </div>
                   <div class="mb-3">
                     <label for="techNotes" class="form-label fw-semibold" data-i18n="common.notes">Notes</label>
-                    <textarea class="form-control" id="techNotes" rows="2" placeholder="Additional notes..."
+                    <textarea class="form-control" id="techNotes" rows="2" maxlength="2000"
+                      placeholder="Additional notes..."
                       data-i18n-placeholder="tech.ph.notes"></textarea>
                   </div>
                 </form>
@@ -183,8 +185,7 @@
                 <input type="hidden" id="feedbackRequestId" />
                 <div class="row g-3">
                   <div class="col-12">
-                    <label class="form-label fw-semibold small"><span data-i18n="tech.report.diagnosis">Diagnosis /
-                        Identified Problem</span> <span class="text-danger">*</span></label>
+                    <label class="form-label fw-semibold small" for="fbDiagnosis">Technical diagnosis <span class="text-danger">*</span></label>
                     <textarea class="form-control" id="fbDiagnosis" rows="2" maxlength="2000"
                       placeholder="What was the root cause?" data-i18n-placeholder="tech.ph.diagnosis"></textarea>
                   </div>
@@ -201,14 +202,26 @@
                       placeholder="e.g. RAM 8GB, HDMI Cable" data-i18n-placeholder="tech.ph.partsUsed" />
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label fw-semibold small"><span
-                        data-i18n="tech.report.maintenanceStatus">Maintenance Status</span> <span
-                        class="text-danger">*</span></label>
-                    <select class="form-select" id="fbStatus">
-                      <option value="" data-i18n="techfb.selectStatus">-- Select Status --</option>
-                      <option value="Fixed" data-i18n="status.fixed">Fixed</option>
-                      <option value="In Progress" data-i18n="status.inProgress">In Progress</option>
-                      <option value="Not Fixed" data-i18n="status.notFixed">Not Fixed</option>
+                    <label class="form-label fw-semibold small" for="fbTimeSpent">Time spent (minutes) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="fbTimeSpent" min="1" max="10080" step="1" required />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold small" for="fbRepairResult">Current Result / Status <span class="text-danger">*</span></label>
+                    <select class="form-select" id="fbRepairResult" aria-describedby="fbRepairResultError" required>
+                      <option value="">-- Select current result / status --</option>
+                      <option value="Resolved">Resolved</option>
+                      <option value="Partially Resolved">Partially Resolved</option>
+                      <option value="Not Resolved">Not Resolved</option>
+                      <option value="Pending Further Action">Pending Further Action</option>
+                    </select>
+                    <div class="invalid-feedback" id="fbRepairResultError" aria-live="polite">Current result/status is required.</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold small" for="fbFollowUpRequired">Follow-up required <span class="text-danger">*</span></label>
+                    <select class="form-select" id="fbFollowUpRequired" required>
+                      <option value="">-- Select --</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
                     </select>
                   </div>
                   <div class="col-12">
@@ -233,8 +246,7 @@
                       placeholder="Recommended next steps..." data-i18n-placeholder="tech.ph.recommendation"></textarea>
                   </div>
                   <div class="col-12">
-                    <label class="form-label fw-semibold small" data-i18n="tech.report.notesInternal">Technician Notes
-                      (internal only)</label>
+                    <label class="form-label fw-semibold small" for="fbTechnicianNotes">Additional notes (internal only)</label>
                     <textarea class="form-control" id="fbTechnicianNotes" rows="2" maxlength="2000"
                       placeholder="Notes visible only to technicians and admins..."
                       data-i18n-placeholder="tech.ph.notesInternal"></textarea>
@@ -315,7 +327,7 @@
   <script src="/assets/js/lang.js?v=16"></script>
   <script src="/assets/js/main.js?v=25"></script>
   <script src="/assets/js/notifications.js?v=10"></script>
-  <script src="/assets/js/technicians.js?v=9"></script>
+  <script src="/assets/js/technicians.js?v=17"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

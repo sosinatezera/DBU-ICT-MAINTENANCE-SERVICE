@@ -3,19 +3,6 @@
     Smart ICT Maintenance Management System
    ============================================================ */
 
-/* Map Ticket statuses → MaintenanceRecord statuses for /maintenance POST */
-function ticketStatusToMaintenance(s) {
-  return (
-    {
-      assigned: "accepted",
-      accepted: "in_progress",
-      in_progress: "in_progress",
-      resolved: "resolved",
-      closed: "resolved",
-    }[s] || "in_progress"
-  );
-}
-
 /* JSON.stringify output that is safe to embed in a double-quoted HTML onclick attribute.
    Double-quotes are escaped as &quot; so the browser decodes them back to real quotes
    BEFORE evaluating the inline handler — otherwise the attribute would be truncated and
@@ -177,7 +164,7 @@ async function refreshAfterAction() {
   } else if (
     window.location.pathname.includes("technician/assigned-requests")
   ) {
-    await fetchAssignedRequests();
+    _assignedAll = await fetchAssignedRequests();
   }
 }
 
@@ -192,16 +179,6 @@ function handleApiError(err) {
     String(msg).includes("expired")
   ) {
     msg = "Your access token has expired. Please login again.";
-  } else if (
-    code === 403 ||
-    String((err && err.message) || "")
-      .toLowerCase()
-      .includes("not authorized") ||
-    String((err && err.message) || "")
-      .toLowerCase()
-      .includes("assigned to you")
-  ) {
-    msg = "You are not authorized to modify this request.";
   } else if (code === 404) {
     msg = "Request not found.";
   }
@@ -690,7 +667,7 @@ async function openUpdateModal(requestId, title, currentStatus) {
           
           ${r.category ? `<div class="col-sm-6"><span class="text-muted small d-block">Category</span><strong>${escHtml(r.category)}</strong></div>` : ""}
           ${r.issueType || r.serviceType ? `<div class="col-sm-6"><span class="text-muted small d-block">Issue Type / Service Type</span><strong>${escHtml(r.issueType || r.serviceType)}</strong></div>` : ""}
-          <div class="col-12"><span class="text-muted small d-block">Description</span>
+          <div class="col-12"><span class="text-muted small d-block">Reported problem</span>
             <div class="small p-2 bg-white border rounded" style="max-height:80px;overflow-y:auto;">${escHtml(r.problemDescription)}</div>
           </div>
         </div>`;
@@ -723,31 +700,23 @@ async function saveTaskUpdate(requestId) {
     return;
   }
 
-  if (!action) {
+  if (!status || !action) {
     showAlert(
       "updateTaskAlert",
-      "Please describe the action taken.",
+      !status ? "Please select a status." : "Please describe the action taken.",
       "warning",
     );
     return;
   }
+  if (document.getElementById("saveUpdateBtn").disabled) return;
 
   setLoading("saveUpdateBtn", "saveUpdateSpinner", true);
 
   try {
-    await apiRequest(`/tickets/${requestId}/status`, {
-      method: "PATCH",
-      body: { status },
-    });
-    await apiRequest("/maintenance", {
-      method: "POST",
-      body: {
-        request_id: requestId,
-        action_taken: action,
-        parts_used: parts || null,
-        notes: notes || null,
-        status: ticketStatusToMaintenance(status),
-      },
+    await updateTicketStatusWithMaintenanceDetails(requestId, status, {
+      actionTaken: action,
+      partsUsed: parts || null,
+      notes: notes || null,
     });
     invalidateMyMaintenanceCache();
 
@@ -791,10 +760,8 @@ async function initAssignedRequests() {
     }
   }
 
-  /* The Retry button above re-enters this function, and these elements live
-     outside the replaced list container — so every retry stacked another copy
-     of the save handler, turning one click into two PATCH /tickets/:id/status
-     plus two POST /maintenance writes. Bind once, refetch freely. */
+  /* The Retry button above re-enters this function, so bind the save handler
+     once to prevent duplicate status updates and maintenance records. */
   if (_assignedRequestsBound) {
     const deepLinkId = new URLSearchParams(window.location.search).get("id");
     if (deepLinkId && /^[0-9a-f]{24}$/i.test(deepLinkId))
@@ -837,6 +804,7 @@ async function initAssignedRequests() {
       const parts = document.getElementById("partsUsed").value.trim();
       const notes = document.getElementById("techNotes").value.trim();
 
+      if (document.getElementById("saveTaskUpdateBtn").disabled) return;
       if (!requestId || !/^[0-9a-f]{24}$/i.test(requestId)) {
         showAlert(
           "taskUpdateAlert",
@@ -856,19 +824,10 @@ async function initAssignedRequests() {
       }
       setLoading("saveTaskUpdateBtn", "saveTaskSpinner", true);
       try {
-        await apiRequest(`/tickets/${requestId}/status`, {
-          method: "PATCH",
-          body: { status },
-        });
-        await apiRequest("/maintenance", {
-          method: "POST",
-          body: {
-            request_id: requestId,
-            action_taken: action,
-            parts_used: parts || null,
-            notes: notes || null,
-            status: ticketStatusToMaintenance(status),
-          },
+        await updateTicketStatusWithMaintenanceDetails(requestId, status, {
+          actionTaken: action,
+          partsUsed: parts || null,
+          notes: notes || null,
         });
         invalidateMyMaintenanceCache();
         showToast("Task updated!", "success");
@@ -1353,8 +1312,32 @@ let _fbSubmitting = false;
 
 function getFeedbackStatusSelect() {
   return (
+    document.getElementById("fbRepairResult") ||
     document.getElementById("fbResultStatus") ||
     document.getElementById("fbStatus")
+  );
+}
+
+function feedbackRepairResult(report) {
+  const result =
+    report?.repairResult ||
+    ({
+      Fixed: "Resolved",
+      "In Progress": "Partially Resolved",
+      "Not Fixed": "Not Resolved",
+    }[report?.status] || "")
+  return result === "Unresolved" ? "Not Resolved" : result;
+}
+
+function feedbackLegacyStatus(result) {
+  return (
+    {
+      Resolved: "Fixed",
+      "Partially Resolved": "In Progress",
+      "Not Resolved": "Not Fixed",
+      Unresolved: "Not Fixed",
+      "Pending Further Action": "In Progress",
+    }[result] || ""
   );
 }
 
@@ -1369,6 +1352,7 @@ function initFeedbackHandlers() {
   const statusSel = getFeedbackStatusSelect();
   if (statusSel)
     statusSel.addEventListener("change", () => {
+      statusSel.classList.remove("is-invalid");
       updateFeedbackReasonVisibility();
       updateFeedbackPreview();
     });
@@ -1383,7 +1367,22 @@ function initFeedbackHandlers() {
   const modalEl = document.getElementById("feedbackModal");
   if (modalEl) {
     modalEl.addEventListener("hide.bs.modal", (e) => {
-      if (_fbMode !== "edit" && !_feedbackDirty()) return;
+      const dirty = [
+        "fbDiagnosis",
+        "fbWorkPerformed",
+        "fbResolution",
+        "fbPartsUsed",
+        "fbTimeSpent",
+        "fbRepairResult",
+        "fbFollowUpRequired",
+        "fbReasonNotFixed",
+        "fbRecommendation",
+        "fbTechnicianNotes",
+      ].some((id) => {
+        const field = document.getElementById(id);
+        return field && String(field.value || "").trim() !== "";
+      });
+      if (_fbSubmitting || !dirty) return;
       if (!confirm("This report has unsaved changes. Discard and close?")) {
         e.preventDefault();
       }
@@ -1418,7 +1417,10 @@ function updateFeedbackReasonVisibility() {
   const wrap = document.getElementById("fbReasonWrap");
   const reason = document.getElementById("fbReasonNotFixed");
   if (!wrap || !reason) return;
-  const required = status === "Not Fixed";
+  const required =
+    status === "Not Resolved" ||
+    status === "Unresolved" ||
+    status === "Not Fixed";
   wrap.classList.toggle("d-none", !required);
   reason.required = required;
   if (!required) reason.value = "";
@@ -1430,6 +1432,9 @@ function resetFeedbackForm() {
     "fbWorkPerformed",
     "fbResolution",
     "fbPartsUsed",
+    "fbTimeSpent",
+    "fbRepairResult",
+    "fbFollowUpRequired",
     "fbReasonNotFixed",
     "fbRecommendation",
     "fbTechnicianNotes",
@@ -1556,7 +1561,18 @@ async function openEditFeedbackModal(requestId, title, report) {
   set("fbRecommendation", report.recommendation);
   set("fbTechnicianNotes", report.technicianNotes);
   const status = getFeedbackStatusSelect();
-  if (status) status.value = report.status || "";
+  if (status) status.value = feedbackRepairResult(report);
+  const timeSpent = document.getElementById("fbTimeSpent");
+  if (timeSpent) timeSpent.value = report.timeSpentMinutes ?? "";
+  const followUp = document.getElementById("fbFollowUpRequired");
+  if (followUp) {
+    followUp.value =
+      report.followUpRequired === true
+        ? "yes"
+        : report.followUpRequired === false
+          ? "no"
+          : "";
+  }
   const confirmed = document.getElementById("fbConfirmed");
   if (confirmed) confirmed.checked = true;
   updateFeedbackReasonVisibility();
@@ -1589,10 +1605,19 @@ async function submitFeedback() {
 
   const statusSelect = getFeedbackStatusSelect();
   const confirmation = document.getElementById("fbConfirmed");
+  const repairResult = statusSelect?.value || "";
+  const timeSpentMinutes = Number(
+    document.getElementById("fbTimeSpent")?.value,
+  );
+  const followUpValue =
+    document.getElementById("fbFollowUpRequired")?.value || "";
   const body = {
     diagnosis: document.getElementById("fbDiagnosis").value.trim(),
     workPerformed: document.getElementById("fbWorkPerformed").value.trim(),
-    status: statusSelect?.value || "",
+    repairResult,
+    status: feedbackLegacyStatus(repairResult),
+    timeSpentMinutes,
+    followUpRequired: followUpValue === "yes",
     resolution: document.getElementById("fbResolution").value.trim(),
     partsUsed: document.getElementById("fbPartsUsed")?.value.trim() || "",
     reasonNotFixed:
@@ -1617,13 +1642,36 @@ async function submitFeedback() {
       "Resolution summary is required.",
       "warning",
     );
-  if (!body.status)
+  if (!repairResult) {
+    statusSelect?.classList.add("is-invalid");
+    statusSelect?.focus();
     return showAlert(
       "feedbackAlert",
       "Current result/status is required.",
       "warning",
     );
-  if (body.status === "Not Fixed" && !body.reasonNotFixed)
+  }
+  statusSelect?.classList.remove("is-invalid");
+  if (
+    !Number.isInteger(timeSpentMinutes) ||
+    timeSpentMinutes < 1 ||
+    timeSpentMinutes > 10080
+  )
+    return showAlert(
+      "feedbackAlert",
+      "Enter time spent as a whole number of minutes between 1 and 10080.",
+      "warning",
+    );
+  if (!followUpValue)
+    return showAlert(
+      "feedbackAlert",
+      "Please select whether follow-up is required.",
+      "warning",
+    );
+  if (
+    ["Not Resolved", "Unresolved"].includes(repairResult) &&
+    !body.reasonNotFixed
+  )
     return showAlert(
       "feedbackAlert",
       "Please provide a reason why the issue is not fixed.",
@@ -1656,8 +1704,8 @@ async function submitFeedback() {
     );
     showToast(
       _fbMode === "edit"
-        ? "Technician feedback updated."
-        : "Technician feedback submitted.",
+      ? "Maintenance report updated."
+      : "Maintenance report submitted.",
       "success",
     );
     bootstrap.Modal.getInstance(
@@ -1739,12 +1787,13 @@ async function viewFeedbackReport(requestId) {
 }
 
 function renderReportView(report, title, requestId) {
+  const result = feedbackRepairResult(report);
   const statusBadgeHtml =
-    report.status === "Fixed"
-      ? '<span class="badge bg-success">Fixed</span>'
-      : report.status === "Not Fixed"
-        ? '<span class="badge bg-danger">Not Fixed</span>'
-        : '<span class="badge bg-warning text-dark">In Progress</span>';
+    result === "Resolved"
+      ? '<span class="badge bg-success">Resolved</span>'
+      : result === "Not Resolved"
+        ? '<span class="badge bg-danger">Not Resolved</span>'
+        : '<span class="badge bg-warning text-dark">Partially Resolved</span>';
 
   const message = [report.diagnosis, report.workPerformed, report.resolution]
     .filter(Boolean)
@@ -1763,11 +1812,18 @@ function renderReportView(report, title, requestId) {
           <span class="feedback-meta-item"><i class="bi bi-person"></i>${escHtml(report.technician_name || "Technician")}</span>
           <span class="feedback-meta-item"><i class="bi bi-calendar3"></i>${report.submittedAt ? formatDateTime(report.submittedAt) : "—"}</span>
           <span class="feedback-meta-item"><i class="bi bi-ticket-detailed"></i>${escHtml(requestId)}</span>
+          <span class="feedback-meta-item"><i class="bi bi-stopwatch"></i>${report.timeSpentMinutes == null ? "—" : `${escHtml(report.timeSpentMinutes)} minutes`}</span>
         </div>
         <div class="feedback-detail-list mt-3">
+          <div><strong>Reported problem</strong><span>${escHtml(report.reportedProblem || "—")}</span></div>
+          <div><strong>Equipment / asset</strong><span>${escHtml(report.equipment_name || report.asset_tag || "—")}${report.asset_tag && report.equipment_name ? ` (${escHtml(report.asset_tag)})` : ""}</span></div>
           <div><strong>Diagnosis</strong><span>${escHtml(report.diagnosis || "—")}</span></div>
           <div><strong>Action taken</strong><span>${escHtml(report.workPerformed || "—")}</span></div>
-          <div><strong>Current result/status</strong><span>${escHtml(report.resolution || "—")}</span></div>
+          <div><strong>Repair result</strong><span>${escHtml(result || "—")}</span></div>
+          <div><strong>Resolution summary</strong><span>${escHtml(report.resolution || "—")}</span></div>
+          <div><strong>Parts / materials used</strong><span>${escHtml(report.partsUsed || "—")}</span></div>
+          <div><strong>Follow-up required</strong><span>${report.followUpRequired ? "Yes" : "No"}</span></div>
+          <div><strong>Additional notes</strong><span>${escHtml(report.technicianNotes || "—")}</span></div>
         </div>
       </div>
     </div>
@@ -1779,10 +1835,7 @@ function renderReportView(report, title, requestId) {
   `;
 }
 
-/* ── Advance a ticket through the real backend transition chain.
-   Reuses the existing PATCH /tickets/:id/status endpoint one valid step at a
-   time, so it NEVER performs an invalid single jump (e.g. assigned → in_progress).
-   The backend's own workflow validation is preserved for every step. */
+/* Ticket workflow transitions must be sent one validated step at a time. */
 const _TICKET_STATUS_CHAIN = [
   "submitted",
   "under_review",
@@ -1793,22 +1846,47 @@ const _TICKET_STATUS_CHAIN = [
   "closed",
 ];
 
-async function advanceTicketStatus(requestId, fromStatus, toStatus) {
-  const fromIdx = _TICKET_STATUS_CHAIN.indexOf(fromStatus);
-  const toIdx = _TICKET_STATUS_CHAIN.indexOf(toStatus);
-  if (fromIdx < 0 || toIdx < 0 || toIdx <= fromIdx) return;
-  // Step through every intermediate status so each PATCH is a valid transition.
+async function updateTicketStatusWithMaintenanceDetails(
+  requestId,
+  status,
+  workDetails,
+) {
+  const actionTaken = String(workDetails.actionTaken || "").trim();
+  if (!actionTaken) throw new Error("Action taken is required.");
+  if (actionTaken.length > 1000)
+    throw new Error("Action taken must be no more than 1,000 characters.");
+  if (String(workDetails.partsUsed || "").length > 500)
+    throw new Error("Parts / materials used must be no more than 500 characters.");
+  if (String(workDetails.notes || "").length > 2000)
+    throw new Error("Notes must be no more than 2,000 characters.");
+
+  const { data: ticket } = await apiRequest(`/tickets/${requestId}`);
+  const fromIdx = _TICKET_STATUS_CHAIN.indexOf(ticket.status);
+  const toIdx = _TICKET_STATUS_CHAIN.indexOf(status);
+  if (fromIdx < 0 || toIdx < 0 || toIdx < fromIdx) {
+    throw new Error("The selected status is not a valid forward transition.");
+  }
+
   for (let i = fromIdx + 1; i <= toIdx; i++) {
     const step = _TICKET_STATUS_CHAIN[i];
     await apiRequest(`/tickets/${requestId}/status`, {
       method: "PATCH",
-      body: { status: step },
+      body: {
+        status: step,
+        ...(i === toIdx ? workDetails : {}),
+      },
+    });
+  }
+
+  if (fromIdx === toIdx) {
+    return apiRequest(`/tickets/${requestId}/status`, {
+      method: "PATCH",
+      body: { status, ...workDetails },
     });
   }
 }
 
-/* Bind the form + filter handlers once. A duplicate submit handler would
-   double-post POST /maintenance and walk advanceTicketStatus twice. */
+/* Bind the form + filter handlers once to prevent duplicate submissions. */
 let _maintenanceLogBound = false;
 
 async function initMaintenanceLog() {
@@ -1883,6 +1961,7 @@ async function initMaintenanceLog() {
         return;
       }
 
+      if (document.getElementById("logSubmitBtn").disabled) return;
       setLoading("logSubmitBtn", "logSpinner", true);
       try {
         // Read the ticket's REAL current status — never assume the workflow step.
@@ -1908,22 +1987,10 @@ async function initMaintenanceLog() {
           return;
         }
 
-        // Walk the real transition chain to the selected target status. For an
-        // "assigned" ticket this performs assigned → accepted → in_progress
-        // through the existing validated updateStatus endpoint (never a single
-        // invalid assigned → in_progress jump). For an already "in_progress"
-        // ticket selecting in_progress this performs no status change at all.
-        await advanceTicketStatus(requestId, current, status);
-
-        await apiRequest("/maintenance", {
-          method: "POST",
-          body: {
-            request_id: requestId,
-            action_taken: action,
-            parts_used: parts || null,
-            notes: notes || null,
-            status: ticketStatusToMaintenance(status),
-          },
+        await updateTicketStatusWithMaintenanceDetails(requestId, status, {
+          actionTaken: action,
+          partsUsed: parts || null,
+          notes: notes || null,
         });
         invalidateMyMaintenanceCache();
         showToast("Activity logged successfully!", "success");

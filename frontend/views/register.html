@@ -35,31 +35,30 @@
       content: "";
       position: fixed;
       z-index: -1;
-      inset: 0;
+      inset: -4%;
       pointer-events: none;
       background:
         linear-gradient(135deg, rgba(8, 30, 66, .3) 0%, rgba(8, 30, 66, .16) 100%),
         url("/assets/images/registerback.png");
-      background-attachment: scroll;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      animation: register-background-drift 36s ease-in-out infinite alternate;
+      animation: auth-background-ken-burns 52s ease-in-out infinite alternate;
     }
 
-    @keyframes register-background-drift {
+    @keyframes auth-background-ken-burns {
       from {
-        background-position: 50% 50%, 50% 50%;
+        transform: scale(1.02) translateX(0);
       }
-
       to {
-        background-position: 50% 50%, 51.5% 49%;
+        transform: scale(1.07) translateX(-.5%);
       }
     }
 
     @media (prefers-reduced-motion: reduce) {
       body.auth-body.register-page::before {
         animation: none;
+        transform: none;
       }
     }
 

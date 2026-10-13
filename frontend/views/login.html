@@ -25,13 +25,37 @@
       --auth-card-shadow: 0 16px 38px rgba(2, 8, 23, .42);
       --auth-card-text: #f8fafc;
       --auth-card-muted: #cbd5e1;
+      position: relative;
+      isolation: isolate;
+      background: transparent !important;
+    }
+    body.auth-body.login-page::before {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      inset: -4%;
+      pointer-events: none;
       background:
         linear-gradient(135deg, rgba(8, 30, 66, .48) 0%, rgba(8, 30, 66, .24) 100%),
-        url("/assets/images/logibackgrou.png") !important;
-      background-size: cover !important;
-      background-position: center !important;
-      background-repeat: no-repeat !important;
-      background-attachment: fixed !important;
+        url("/assets/images/logibackgrou.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      animation: auth-background-ken-burns 52s ease-in-out infinite alternate;
+    }
+    @keyframes auth-background-ken-burns {
+      from {
+        transform: scale(1.02) translateX(0);
+      }
+      to {
+        transform: scale(1.07) translateX(-.5%);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body.auth-body.login-page::before {
+        animation: none;
+        transform: none;
+      }
     }
     body.auth-body.login-page > .min-vh-100 {
       justify-content: flex-end !important;
