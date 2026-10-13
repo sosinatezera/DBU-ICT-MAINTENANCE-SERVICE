@@ -887,13 +887,37 @@
         } );
       }
 
-      function showProfileAlert ( msg, type )
+      function showProfileAlert ( msg, type, onRetry = null )
       {
         const el = document.getElementById( 'profileAlert' );
         if ( !el ) { showToast( msg, type ); return; }
         el.className = 'alert alert-' + ( type || 'danger' );
         el.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>' + escHtml( msg );
         el.classList.remove( 'd-none' );
+        if ( onRetry )
+        {
+          const retryButton = document.createElement( 'button' );
+          retryButton.type = 'button';
+          retryButton.className = 'btn btn-sm btn-outline-danger ms-2';
+          retryButton.textContent = 'Retry loading profile';
+          retryButton.addEventListener( 'click', async () =>
+          {
+            retryButton.disabled = true;
+            retryButton.textContent = 'Retrying...';
+            try
+            {
+              await onRetry();
+            } catch ( err )
+            {
+              showProfileAlert(
+                err.message || 'The saved profile could not be reloaded.',
+                'danger',
+                onRetry
+              );
+            }
+          } );
+          el.append( retryButton );
+        }
       }
 
       function clearProfileAlert ()
@@ -978,6 +1002,9 @@
 
         _saving = true;
         setProfileSaveLoading( true );          // -> "Saving...", disabled
+        let saveConfirmed = false;
+        let savedProfile;
+        let reloadAndVerify;
         try
         {
           /* apiRequest resolves ONLY on a 2xx, i.e. after the backend has
@@ -988,15 +1015,23 @@
           if ( res?.success !== true || !res.data ) {
             throw new Error( 'The server did not confirm the saved profile.' );
           }
-          const updated = await Auth.refresh();
-          if (
-            updated.fullName !== body.fullName ||
-            ( updated.phone || null ) !== body.phone ||
-            ( updated.department || null ) !== body.department ||
-            ( updated.gender || null ) !== body.gender
-          ) {
-            throw new Error( 'The saved profile could not be reloaded.' );
-          }
+          savedProfile = res.data;
+          saveConfirmed = true;
+          reloadAndVerify = async () =>
+          {
+            const updated = await Auth.refresh();
+            if (
+              !updated ||
+              updated.fullName !== savedProfile.fullName ||
+              ( updated.phone || null ) !== ( savedProfile.phone || null ) ||
+              ( updated.department || null ) !== ( savedProfile.department || null ) ||
+              ( updated.gender || null ) !== ( savedProfile.gender || null )
+            ) {
+              throw new Error( 'The saved profile could not be reloaded.' );
+            }
+            return updated;
+          };
+          const updated = await reloadAndVerify();
 
           document.getElementById( 'fullName' ).value = updated.fullName || '';
           document.getElementById( 'phone' ).value = updated.phone || '';
@@ -1026,7 +1061,32 @@
         {
           console.error( 'Failed to save profile:', err );
           if ( err && err.redirected ) return;   // apiRequest is redirecting to login
-          showProfileAlert( profileSaveErrorMessage( err ), 'danger' );
+          const retryReload = saveConfirmed
+            ? async () =>
+            {
+              const updated = await reloadAndVerify();
+              document.getElementById( 'fullName' ).value = updated.fullName || '';
+              document.getElementById( 'phone' ).value = updated.phone || '';
+              document.getElementById( 'department' ).value = updated.department || '';
+              document.getElementById( 'gender' ).value = updated.gender || '';
+              _originalValues = {
+                fullName: updated.fullName || '',
+                phone: updated.phone || '',
+                department: updated.department || '',
+                gender: updated.gender || '',
+              };
+              if ( typeof populateUserInfo === 'function' ) populateUserInfo();
+              showToast( t( 'profile.savedChanges' ) || 'Changes saved successfully.', 'success' );
+              exitEditMode();
+            }
+            : null;
+          showProfileAlert(
+            saveConfirmed
+              ? 'Profile changes were saved, but the updated profile could not be reloaded. Your entries are preserved.'
+              : profileSaveErrorMessage( err ),
+            'danger',
+            retryReload
+          );
         } finally
         {
           _saving = false;

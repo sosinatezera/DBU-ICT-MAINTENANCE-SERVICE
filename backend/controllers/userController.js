@@ -35,6 +35,7 @@ const {
   VALID_STATUSES,
   VALID_GENDERS,
 } = require("../middleware/validation");
+const { normalizeGender } = require("../utils/gender");
 
 /* ── GET /api/users — list all users (admin only) ─────────── */
 const getAllUsers = async (req, res, next) => {
@@ -566,6 +567,7 @@ const updateMyProfile = async (req, res, next) => {
 
     if (gender !== undefined) {
       if (gender !== null && gender !== "") {
+        gender = normalizeGender(gender);
         const genderErr = validateEnum(gender, VALID_GENDERS, "gender");
         if (genderErr)
           return res.status(400).json({ success: false, message: genderErr });

@@ -19,13 +19,14 @@ const {
   VALID_GENDERS,
 } = require("../middleware/validation");
 const { displayTicketId } = require("../utils/ticketId");
+const { normalizeGender } = require("../utils/gender");
 
 const getAllTechnicians = async (req, res, next) => {
   try {
     const techs = await Technician.find()
       .populate(
         "user",
-        "fullName email phone department status role profileImage",
+        "fullName email phone department gender status role profileImage",
       )
       .sort({ createdAt: 1 })
       .lean();
@@ -76,7 +77,7 @@ const getMyTechnicianProfile = async (req, res, next) => {
   try {
     const tech = await Technician.findOne({ user: req.user.id }).populate(
       "user",
-      "fullName email phone department status role profileImage",
+      "fullName email phone department gender status role profileImage",
     );
     if (!tech) {
       return res.status(404).json({
@@ -95,6 +96,7 @@ const getMyTechnicianProfile = async (req, res, next) => {
         email: tech.user?.email,
         phone: tech.user?.phone,
         department: tech.user?.department,
+        gender: normalizeGender(tech.user?.gender),
         status: tech.user?.status,
         role: tech.user?.role,
         profileImage: tech.user?.profileImage || null,
@@ -304,6 +306,7 @@ const updateMyTechnicianProfile = async (req, res, next) => {
     }
 
     if (gender !== undefined && gender !== null && gender !== "") {
+      gender = normalizeGender(gender);
       const genderErr = validateEnum(
         gender,
         ["Male", "Female", "Other", "Prefer not to say"],
@@ -324,15 +327,16 @@ const updateMyTechnicianProfile = async (req, res, next) => {
           .json({ success: false, message: departmentErr });
     }
 
-    if (specialization !== undefined && specialization !== null) {
-      const specErr = validateLength(
-        sanitizeString(specialization),
-        "Specialization",
-        { max: 100 },
-      );
+    if (specialization !== undefined) {
+      specialization =
+        specialization === null || specialization === ""
+          ? null
+          : sanitizeString(specialization);
+      const specErr = validateLength(specialization || "", "Specialization", {
+        max: 100,
+      });
       if (specErr)
         return res.status(400).json({ success: false, message: specErr });
-      specialization = sanitizeString(specialization);
     }
 
     if (employeeId !== undefined) {
@@ -415,6 +419,7 @@ const updateMyTechnicianProfile = async (req, res, next) => {
         email: updatedUser.email,
         phone: updatedUser.phone,
         department: updatedUser.department,
+        gender: normalizeGender(updatedUser.gender),
         status: updatedUser.status,
         role: updatedUser.role,
         profileImage: updatedUser.profileImage || null,

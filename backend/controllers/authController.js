@@ -15,6 +15,7 @@ const {
   verifyGoogleNonceChallenge,
 } = require("../services/authToken");
 const Settings = require("../models/Settings");
+const { normalizeGender } = require("../utils/gender");
 const {
   validateEmail,
   validateMauId,
@@ -61,7 +62,7 @@ function loginUserResponse(user) {
     email: user.email,
     role: user.role,
     department: user.department,
-    gender: user.gender,
+    gender: normalizeGender(user.gender),
     profileImage: user.profileImage || null,
   };
 }
@@ -501,7 +502,9 @@ const getMe = async (req, res, next) => {
         .status(404)
         .json({ success: false, message: "User not found." });
     }
-    res.json({ success: true, user });
+    const profile = user.toObject();
+    profile.gender = normalizeGender(profile.gender);
+    res.json({ success: true, user: profile });
   } catch (err) {
     next(err);
   }

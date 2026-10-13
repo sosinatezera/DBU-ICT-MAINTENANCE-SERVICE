@@ -607,6 +607,26 @@
         return value;
       }
 
+      function comparableProfileValue ( value )
+      {
+        if ( value === undefined || value === null ) return null;
+        const normalized = String( value ).trim();
+        return normalized || null;
+      }
+
+      function normalizeGenderValue ( value )
+      {
+        const trimmed = comparableProfileValue( value );
+        if ( trimmed === null ) return null;
+        const canonicalGenders = {
+          male: 'Male',
+          female: 'Female',
+          other: 'Other',
+          'prefer not to say': 'Prefer not to say',
+        };
+        return canonicalGenders[trimmed.toLowerCase()] || trimmed;
+      }
+
       function syncHeaderProfilePhoto ()
       {
         if ( !_current ) return;
@@ -619,8 +639,57 @@
         if ( typeof populateUserInfo === 'function' ) populateUserInfo();
       }
 
+      function setProfileText ( id, value )
+      {
+        const element = document.getElementById( id );
+        if ( !element )
+        {
+          throw new Error( `Profile page is missing the #${id} element.` );
+        }
+        element.textContent = value == null ? '' : String( value );
+      }
+
+      function showProfileLoadError ( message )
+      {
+        const main = document.getElementById( 'profileSection' );
+        if ( !main ) return;
+        let alert = document.getElementById( 'profileLoadAlert' );
+        if ( !alert )
+        {
+          alert = document.createElement( 'div' );
+          alert.id = 'profileLoadAlert';
+          alert.className = 'alert alert-danger m-3';
+          alert.setAttribute( 'role', 'alert' );
+          main.prepend( alert );
+        }
+        alert.replaceChildren();
+        const messageText = document.createElement( 'span' );
+        messageText.textContent = message || 'Failed to load profile.';
+        alert.append( messageText );
+        const retryButton = document.createElement( 'button' );
+        retryButton.type = 'button';
+        retryButton.className = 'btn btn-sm btn-outline-danger ms-2';
+        retryButton.textContent = 'Retry';
+        retryButton.addEventListener( 'click', async () =>
+        {
+          retryButton.disabled = true;
+          retryButton.textContent = 'Retrying...';
+          alert.classList.add( 'd-none' );
+          if ( await loadProfileData() )
+          {
+            alert.remove();
+          } else
+          {
+            retryButton.disabled = false;
+            retryButton.textContent = 'Retry';
+            alert.classList.remove( 'd-none' );
+          }
+        } );
+        alert.append( retryButton );
+      }
+
       // ---------- Load profile ----------
-      async function loadProfileData ()
+      async function loadProfileData ( { requireTechnician = false } = {} )
       {
         try
         {
@@ -633,19 +702,19 @@
           {
             const techRes = await apiRequest( '/technicians/me' );
             _tech = techRes.data || null;
-          } catch ( _ ) { _tech = null; }
+          } catch ( err )
+          {
+            _tech = null;
+            if ( requireTechnician ) throw err;
+          }
 
           // Populate form
           const phoneVal = toEthMobilePhone( user.phone );
-          if ( phoneVal !== user.phone )
-          {
-            _current = { ...user, phone: phoneVal };
-          }
           document.getElementById( 'fullName' ).value = user.fullName || '';
           document.getElementById( 'email' ).value = user.email || '';
           document.getElementById( 'phone' ).value = phoneVal || '';
           document.getElementById( 'department' ).value = user.department || '';
-          document.getElementById( 'gender' ).value = user.gender || '';
+          document.getElementById( 'gender' ).value = normalizeGenderValue( user.gender ) || '';
           document.getElementById( 'specialization' ).value = _tech?.specialization || '';
           const pwdUsername = document.getElementById( 'pwdUsername' );
           if ( pwdUsername ) pwdUsername.value = user.email || '';
@@ -658,45 +727,39 @@
 
           // Header + account info
           const fullName = user.fullName || 'Technician';
-          document.getElementById( 'profileFullName' ).textContent = fullName;
-          document.getElementById( 'profileEmail' ).textContent = user.email || '';
-          document.getElementById( 'sidebarUserName' ).textContent = fullName;
+          setProfileText( 'profileFullName', fullName );
+          setProfileText( 'profileEmail', user.email || '' );
           const topUserName = document.getElementById( 'topUserName' );
           if ( topUserName ) topUserName.textContent = 'Welcome, ' + fullName;
 
           // Account info card
-          if ( user.createdAt ) document.getElementById( 'memberSince' ).textContent = formatDate( user.createdAt );
-          if ( user.lastLogin ) document.getElementById( 'lastLogin' ).textContent = formatDate( user.lastLogin );
-          document.getElementById( 'profileAccountRole' ).textContent = user.role || 'Not available';
-          document.getElementById( 'profileEmployeeId' ).textContent = _tech?.employeeId || 'Not available';
-          document.getElementById( 'profileSpecialization' ).textContent = _tech?.specialization || 'Not available';
+          setProfileText( 'memberSince', user.createdAt ? formatDate( user.createdAt ) : '—' );
+          setProfileText( 'lastLogin', user.lastLogin ? formatDate( user.lastLogin ) : '—' );
+          setProfileText( 'profileAccountRole', user.role || 'Not available' );
+          setProfileText( 'profileEmployeeId', _tech?.employeeId || 'Not available' );
+          setProfileText( 'profileSpecialization', _tech?.specialization || 'Not available' );
           const availability = _tech?.availability || ( _tech?.available ? 'available' : 'offline' );
           const availabilityLabels = { available: 'Available', busy: 'Busy', offline: 'Offline' };
-          document.getElementById( 'profileTechnicianStatus' ).textContent = _tech
+          setProfileText( 'profileTechnicianStatus', _tech
             ? ( availabilityLabels[availability] || 'Not available' )
-            : 'Not available';
+            : 'Not available' );
           const accountStatus = user.status || '';
-          document.getElementById( 'profileAccountStatus' ).textContent = accountStatus
+          setProfileText( 'profileAccountStatus', accountStatus
             ? accountStatus.charAt( 0 ).toUpperCase() + accountStatus.slice( 1 )
-            : 'Not available';
-          document.getElementById( 'completionRate' ).textContent = ( _tech && _tech.completionRate ) ? _tech.completionRate + '%' : '—';
+            : 'Not available' );
+          setProfileText( 'completionRate', ( _tech && _tech.completionRate ) ? _tech.completionRate + '%' : '—' );
 
           // Sync sidebar/topbar from the freshly loaded backend profile.
           if ( typeof populateUserInfo === 'function' ) populateUserInfo();
           syncRemovePhotoButton();
+          document.getElementById( 'profileLoadAlert' )?.remove();
           return true;
         } catch ( err )
         {
           if ( err && err.redirected ) return false;
           console.error( 'Failed to load profile:', err );
-          const main = document.getElementById( 'profileSection' );
-          if ( main )
-          {
-            const alert = document.createElement( 'div' );
-            alert.className = 'alert alert-danger m-3';
-            alert.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i>${ escHtml( err.message || 'Failed to load profile.' ) } <button class="btn btn-sm btn-outline-danger ms-2" onclick="window.location.reload()">Retry</button>`;
-            main.prepend( alert );
-          }
+          if ( requireTechnician ) throw err;
+          showProfileLoadError( err.message || 'Failed to load profile.' );
           return false;
         }
       }
@@ -708,8 +771,12 @@
       {
         EDITABLE.forEach( id => enableInput( document.getElementById( id ) ) );
         document.getElementById( 'profileSaveBtn' ).closest( '.d-flex' ).style.display = '';
-        document.getElementById( 'editProfileBtn' ).textContent = t( 'profile.cancel' ) || 'Cancel';
-        document.getElementById( 'editProfileBtn' ).className = 'btn btn-outline-secondary btn-sm';
+        const editButton = document.getElementById( 'editProfileBtn' );
+        if ( editButton )
+        {
+          editButton.textContent = t( 'profile.cancel' ) || 'Cancel';
+          editButton.className = 'btn btn-outline-secondary btn-sm';
+        }
       }
 
       function exitEditMode ( restore )
@@ -728,8 +795,12 @@
         }
         EDITABLE.forEach( id => disableInput( document.getElementById( id ) ) );
         document.getElementById( 'profileSaveBtn' ).closest( '.d-flex' ).style.display = 'none';
-        document.getElementById( 'editProfileBtn' ).textContent = t( 'profile.edit' ) || 'Edit Profile';
-        document.getElementById( 'editProfileBtn' ).className = 'btn btn-primary btn-sm';
+        const editButton = document.getElementById( 'editProfileBtn' );
+        if ( editButton )
+        {
+          editButton.textContent = t( 'profile.edit' ) || 'Edit Profile';
+          editButton.className = 'btn btn-primary btn-sm';
+        }
         EDITABLE.forEach( id => clearFieldValidation( id ) );
       }
 
@@ -757,7 +828,7 @@
       }
 
       let profileAlertTimeout = null;
-      function showProfileAlert ( message, type, autoHide = false )
+      function showProfileAlert ( message, type, autoHide = false, onRetry = null )
       {
         const alert = document.getElementById( 'technicianProfileAlert' );
         if ( !alert ) return;
@@ -768,6 +839,31 @@
         }
         alert.className = `alert alert-${type} mb-3`;
         alert.textContent = message;
+        if ( onRetry )
+        {
+          const retryButton = document.createElement( 'button' );
+          retryButton.type = 'button';
+          retryButton.className = 'btn btn-sm btn-outline-danger ms-2';
+          retryButton.textContent = 'Retry loading profile';
+          retryButton.addEventListener( 'click', async () =>
+          {
+            retryButton.disabled = true;
+            retryButton.textContent = 'Retrying...';
+            try
+            {
+              await onRetry();
+            } catch ( err )
+            {
+              showProfileAlert(
+                err.message || 'The saved profile could not be reloaded.',
+                'danger',
+                false,
+                onRetry
+              );
+            }
+          } );
+          alert.append( retryButton );
+        }
         if ( autoHide )
         {
           profileAlertTimeout = setTimeout( () =>
@@ -826,25 +922,38 @@
         setLoading( 'profileSaveBtn', 'profileSaveSpinner', true );
         const saveLabel = document.getElementById( 'profileSaveLabel' );
         if ( saveLabel ) saveLabel.textContent = 'Saving...';
+        let saveConfirmed = false;
+        let savedProfile;
+        let reloadAndVerify;
         try
         {
           const res = await apiRequest( '/technicians/me', { method: 'PUT', body } );
           if ( res?.success !== true || !res.data ) {
             throw new Error( 'The server did not confirm the saved profile.' );
           }
-          if ( !await loadProfileData() ) {
-            throw new Error( 'The saved profile could not be reloaded.' );
-          }
-          if (
-            _current.fullName !== body.fullName ||
-            ( _current.phone || null ) !== body.phone ||
-            ( _current.department || null ) !== body.department ||
-            ( _current.gender || null ) !== body.gender ||
-            _tech?.specialization !== body.specialization ||
-            _tech?.available !== body.available
-          ) {
-            throw new Error( 'The saved profile could not be reloaded.' );
-          }
+          savedProfile = res.data;
+          saveConfirmed = true;
+          reloadAndVerify = async () =>
+          {
+            if ( !await loadProfileData( { requireTechnician: true } ) )
+            {
+              throw new Error( 'The saved profile could not be reloaded.' );
+            }
+            const mismatchedFields = [];
+            const valuesMatch = ( actual, expected, normalize = comparableProfileValue ) =>
+              normalize( actual ) === normalize( expected );
+            if ( !valuesMatch( _current.fullName, savedProfile.fullName ) ) mismatchedFields.push( 'Full Name' );
+            if ( !valuesMatch( toEthMobilePhone( _current.phone ), toEthMobilePhone( savedProfile.phone ) ) ) mismatchedFields.push( 'Phone' );
+            if ( !valuesMatch( _current.department, savedProfile.department ) ) mismatchedFields.push( 'Department' );
+            if ( normalizeGenderValue( _current.gender ) !== normalizeGenderValue( savedProfile.gender ) ) mismatchedFields.push( 'Gender' );
+            if ( !_tech || !valuesMatch( _tech.specialization, savedProfile.specialization ) ) mismatchedFields.push( 'Specialization' );
+            if ( !_tech || Boolean( _tech.available ) !== Boolean( savedProfile.available ) ) mismatchedFields.push( 'Availability' );
+            if ( mismatchedFields.length )
+            {
+              throw new Error( `The profile was reloaded, but these saved values do not match: ${mismatchedFields.join( ', ')}.` );
+            }
+          };
+          await reloadAndVerify();
           showProfileAlert( '✓ Profile updated successfully!', 'success', true );
           showToast( '✓ Profile updated successfully!', 'success' );
           exitEditMode( false );
@@ -856,13 +965,38 @@
           document.getElementById( 'gender' ).value = body.gender;
           document.getElementById( 'specialization' ).value = body.specialization || '';
           document.getElementById( 'available' ).value = String( body.available );
-          let msg = err.message || 'Failed to save profile.';
-          if ( err.status === 400 ) msg = err.data?.message || msg;
-          else if ( err.status === 401 ) msg = 'Access token expired. Please log in again.';
-          else if ( err.status === 403 ) msg = 'You do not have permission to edit this profile.';
-          else if ( err.status === 404 ) msg = 'Profile not found.';
-          else if ( err.status === 500 ) msg = 'Server error. Please try again later.';
-          showProfileAlert( msg, 'danger' );
+          let msg = saveConfirmed
+            ? `Profile changes were saved, but reloading the updated profile failed: ${err.message || 'Please retry loading your profile.'} Your entries are preserved.`
+            : err.message || 'Failed to save profile.';
+          if ( !saveConfirmed ) {
+            if ( err.status === 400 ) msg = err.data?.message || msg;
+            else if ( err.status === 401 ) msg = 'Access token expired. Please log in again.';
+            else if ( err.status === 403 ) msg = 'You do not have permission to edit this profile.';
+            else if ( err.status === 404 ) msg = 'Profile not found.';
+            else if ( err.status === 500 ) msg = 'Server error. Please try again later.';
+          }
+          const retryReload = saveConfirmed
+            ? async () =>
+            {
+              try
+              {
+                await reloadAndVerify();
+              } catch ( reloadErr )
+              {
+                document.getElementById( 'fullName' ).value = body.fullName;
+                document.getElementById( 'phone' ).value = phoneRaw;
+                document.getElementById( 'department' ).value = body.department || '';
+                document.getElementById( 'gender' ).value = body.gender;
+                document.getElementById( 'specialization' ).value = body.specialization || '';
+                document.getElementById( 'available' ).value = String( body.available );
+                throw reloadErr;
+              }
+              showProfileAlert( '✓ Profile updated successfully!', 'success', true );
+              showToast( '✓ Profile updated successfully!', 'success' );
+              exitEditMode( false );
+            }
+            : null;
+          showProfileAlert( msg, 'danger', false, retryReload );
           showToast( msg, 'danger' );
         } finally
         {
@@ -1145,6 +1279,7 @@
           );
           const savedUser = await Auth.refresh();
           if (
+            !savedUser ||
             !res.data?.profileImage ||
             savedUser.profileImage !== res.data.profileImage
           ) {
@@ -1172,8 +1307,12 @@
         try
         {
           await apiRequest( '/users/profile-image', { method: 'DELETE' } );
-          _current = await Auth.refresh();
-          if ( _current.profileImage ) {
+          const refreshedUser = await Auth.refresh();
+          if ( !refreshedUser ) {
+            throw new Error( 'The profile could not be reloaded after removing the photo.' );
+          }
+          _current = refreshedUser;
+          if ( refreshedUser.profileImage ) {
             throw new Error( 'The saved profile photo could not be removed.' );
           }
           resetPhotoSelection();

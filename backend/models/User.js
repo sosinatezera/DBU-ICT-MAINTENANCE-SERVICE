@@ -9,6 +9,7 @@
  * */
 
 const mongoose = require("mongoose");
+const { GENDERS, normalizeGender } = require("../utils/gender");
 
 const userSchema = new mongoose.Schema(
   {
@@ -36,8 +37,9 @@ const userSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: ["Male", "Female", "Other", "Prefer not to say"],
+      enum: GENDERS,
       default: null,
+      set: normalizeGender,
     },
     department: {
       type: String,

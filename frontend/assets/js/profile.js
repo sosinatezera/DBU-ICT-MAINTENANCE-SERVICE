@@ -254,8 +254,8 @@
   async function saveProfile() {
     if (_saving) return; // prevent duplicate submissions
     const section = document.getElementById(PROFILE_SECTION_ID);
-    const showErr = (msg) =>
-      showProfileAlert(section && "profileEditAlert", msg);
+    const showErr = (msg, onRetry) =>
+      showProfileAlert(section && "profileEditAlert", msg, onRetry);
 
     const fullName = document.getElementById("editFullName").value.trim();
     if (!fullName) {
@@ -273,36 +273,58 @@
 
     _saving = true;
     setLoading("profileSaveBtn", "profileSaveSpinner", true);
+    let saveConfirmed = false;
+    let savedProfile;
+    let reloadAndVerify;
     try {
-      const { data: updated } = await apiRequest("/users/profile", {
+      const response = await apiRequest("/users/profile", {
         method: "PUT",
         body,
       });
-      if (!updated) {
+      savedProfile = response?.data;
+      if (response?.success !== true || !savedProfile) {
         throw new Error("The server did not confirm the saved profile.");
       }
+      saveConfirmed = true;
 
-      _current = await Auth.refresh();
-      if (
-        _current.fullName !== body.fullName ||
-        (_current.phone || null) !== body.phone ||
-        (_current.department || null) !== body.department ||
-        (_current.gender || null) !== body.gender
-      ) {
-        throw new Error("The saved profile could not be reloaded.");
-      }
+      reloadAndVerify = async () => {
+        _current = await Auth.refresh();
+        if (
+          !_current ||
+          _current.fullName !== savedProfile.fullName ||
+          (_current.phone || null) !== (savedProfile.phone || null) ||
+          (_current.department || null) !== (savedProfile.department || null) ||
+          (_current.gender || null) !== (savedProfile.gender || null)
+        ) {
+          throw new Error("The saved profile could not be reloaded.");
+        }
+      };
+      await reloadAndVerify();
       populateUserInfo();
       showToast(t("profile.saved"), "success");
       renderProfile();
     } catch (err) {
-      showErr(err.message || t("profile.loadFailed"));
+      const retryReload = saveConfirmed
+        ? async () => {
+            await reloadAndVerify();
+            populateUserInfo();
+            showToast(t("profile.saved"), "success");
+            renderProfile();
+          }
+        : null;
+      showErr(
+        saveConfirmed
+          ? "Profile changes were saved, but the updated profile could not be reloaded. Your entries are preserved."
+          : err.message || t("profile.loadFailed"),
+        retryReload,
+      );
     } finally {
       _saving = false;
       setLoading("profileSaveBtn", "profileSaveSpinner", false);
     }
   }
 
-  function showProfileAlert(id, msg) {
+  function showProfileAlert(id, msg, onRetry) {
     const el = document.getElementById(id || "profileEditAlert");
     if (!el) {
       showToast(msg, "danger");
@@ -311,6 +333,26 @@
     el.className = "alert alert-danger";
     el.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i>${escHtml(msg)}`;
     el.classList.remove("d-none");
+    if (onRetry) {
+      const retryButton = document.createElement("button");
+      retryButton.type = "button";
+      retryButton.className = "btn btn-sm btn-outline-danger ms-2";
+      retryButton.textContent = "Retry loading profile";
+      retryButton.addEventListener("click", async () => {
+        retryButton.disabled = true;
+        retryButton.textContent = "Retrying...";
+        try {
+          await onRetry();
+        } catch (err) {
+          showProfileAlert(
+            id,
+            err.message || "The saved profile could not be reloaded.",
+            onRetry,
+          );
+        }
+      });
+      el.append(retryButton);
+    }
   }
 
   /* ── Profile Image ────────────────────────────────────────── */
