@@ -10,6 +10,7 @@ const User = require("../models/User");
 const { updateStatus } = require("../controllers/ticketController");
 
 const originals = {
+  startSession: mongoose.startSession,
   assignmentExists: Assignment.exists,
   assignmentFind: Assignment.find,
   assignmentUpdateMany: Assignment.updateMany,
@@ -22,6 +23,7 @@ const originals = {
 };
 
 afterEach(() => {
+  mongoose.startSession = originals.startSession;
   Assignment.exists = originals.assignmentExists;
   Assignment.find = originals.assignmentFind;
   Assignment.updateMany = originals.assignmentUpdateMany;
@@ -76,8 +78,14 @@ function makeQuery(value) {
 function configureModels(ticket, { technician, activeAssignment = false } = {}) {
   let persistedRecord = null;
   let assignmentQuery = null;
+  let statusUpdateCount = 0;
+  mongoose.startSession = async () => ({
+    withTransaction: async (callback) => callback(),
+    endSession: async () => {},
+  });
   Ticket.findById = async () => ticket;
   Ticket.findByIdAndUpdate = (_id, update) => {
+    statusUpdateCount += 1;
     Object.assign(ticket, update);
     return makeQuery({
       ...ticket,
@@ -107,9 +115,10 @@ function configureModels(ticket, { technician, activeAssignment = false } = {}) 
       return [];
     },
   });
-  MaintenanceRecord.create = async (record) => {
+  MaintenanceRecord.create = async (records) => {
+    const [record] = Array.isArray(records) ? records : [records];
     persistedRecord = { _id: makeId(), createdAt: new Date(), ...record };
-    return persistedRecord;
+    return [persistedRecord];
   };
   Notification.create = async (notification) => notification;
   User.find = () => ({
@@ -121,6 +130,9 @@ function configureModels(ticket, { technician, activeAssignment = false } = {}) 
     },
     get assignmentQuery() {
       return assignmentQuery;
+    },
+    get statusUpdateCount() {
+      return statusUpdateCount;
     },
   };
 }
@@ -168,14 +180,67 @@ test("assigned technician updates status and persists maintenance fields", async
   assert.equal(String(models.persistedRecord.technician), String(techId));
 });
 
+test("technician can log activity on the current status without rewriting ticket status", async () => {
+  const userId = makeId();
+  const techId = makeId();
+  const ticket = makeTicket({
+    status: "in_progress",
+    assignedTechnician: userId,
+  });
+  const models = configureModels(ticket, { technician: { _id: techId } });
+
+  const response = await callUpdateStatus({
+    ticketId: ticket._id,
+    userId,
+    body: {
+      status: "IN_PROGRESS",
+      actionTaken: "Checked the repaired workstation and verified operation.",
+      partsUsed: "Replacement power cable",
+      notes: "Stable after testing.",
+    },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.match(response.body.message, /status remains "In Progress"/i);
+  assert.equal(ticket.status, "in_progress");
+  assert.equal(models.statusUpdateCount, 0);
+  assert.equal(models.persistedRecord.action_taken, "Checked the repaired workstation and verified operation.");
+  assert.equal(models.persistedRecord.parts_used, "Replacement power cable");
+  assert.equal(models.persistedRecord.notes, "Stable after testing.");
+  assert.equal(String(models.persistedRecord.technician), String(techId));
+  assert.ok(models.persistedRecord.createdAt instanceof Date);
+});
+
+test("technician selecting the current status without activity is a successful no-op", async () => {
+  const userId = makeId();
+  const ticket = makeTicket({
+    status: "in_progress",
+    assignedTechnician: userId,
+  });
+  const models = configureModels(ticket, { technician: { _id: makeId() } });
+
+  const response = await callUpdateStatus({
+    ticketId: ticket._id,
+    userId,
+    body: { status: "in_progress" },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.match(response.body.message, /already "In Progress"/i);
+  assert.equal(ticket.status, "in_progress");
+  assert.equal(models.statusUpdateCount, 0);
+  assert.equal(models.persistedRecord, null);
+});
+
 test("assigned technician can resolve a ticket with submitted work details", async () => {
   const userId = makeId();
   const ticket = makeTicket({
     status: "in_progress",
     assignedTechnician: userId,
   });
+  const techId = makeId();
   const models = configureModels(ticket, {
-    technician: { _id: makeId() },
+    technician: { _id: techId },
   });
 
   const response = await callUpdateStatus({
@@ -184,12 +249,42 @@ test("assigned technician can resolve a ticket with submitted work details", asy
     body: {
       status: "resolved",
       actionTaken: "Repaired the network adapter and verified connectivity.",
+      partsUsed: "Replacement network adapter",
+      notes: "Confirmed stable connectivity after repair.",
     },
   });
 
   assert.equal(response.statusCode, 200);
   assert.equal(ticket.status, "resolved");
   assert.equal(models.persistedRecord.status, "resolved");
+  assert.equal(
+    models.persistedRecord.parts_used,
+    "Replacement network adapter",
+  );
+  assert.equal(
+    models.persistedRecord.notes,
+    "Confirmed stable connectivity after repair.",
+  );
+  assert.equal(String(models.persistedRecord.technician), String(techId));
+});
+
+test("technician cannot move a ticket backward in the workflow", async () => {
+  const userId = makeId();
+  const ticket = makeTicket({
+    status: "in_progress",
+    assignedTechnician: userId,
+  });
+  configureModels(ticket, { technician: { _id: makeId() } });
+
+  const response = await callUpdateStatus({
+    ticketId: ticket._id,
+    userId,
+    body: { status: "accepted" },
+  });
+
+  assert.equal(response.statusCode, 400);
+  assert.match(response.body.message, /cannot change ticket status/i);
+  assert.equal(ticket.status, "in_progress");
 });
 
 test("active assignment profile authorizes its linked user account", async () => {
@@ -212,6 +307,28 @@ test("active assignment profile authorizes its linked user account", async () =>
   assert.equal(String(models.assignmentQuery.ticket), String(ticket._id));
 });
 
+test("legacy ticket Technician ID authorizes only its linked user account", async () => {
+  const userId = makeId();
+  const techId = makeId();
+  const ticket = makeTicket({
+    status: "in_progress",
+    assignedTechnician: techId,
+  });
+  configureModels(ticket, { technician: { _id: techId } });
+
+  const response = await callUpdateStatus({
+    ticketId: ticket._id,
+    userId,
+    body: {
+      status: "resolved",
+      actionTaken: "Repaired the network adapter and verified connectivity.",
+    },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(ticket.status, "resolved");
+});
+
 test("technician cannot update a ticket assigned to another user", async () => {
   const ticket = makeTicket();
   configureModels(ticket, { technician: { _id: makeId() } });
@@ -224,6 +341,21 @@ test("technician cannot update a ticket assigned to another user", async () => {
 
   assert.equal(response.statusCode, 403);
   assert.match(response.body.message, /assigned to you/i);
+  assert.equal(ticket.status, "accepted");
+});
+
+test("technician cannot update an unassigned ticket", async () => {
+  const ticket = makeTicket({ assignedTechnician: null });
+  configureModels(ticket, { technician: { _id: makeId() } });
+
+  const response = await callUpdateStatus({
+    ticketId: ticket._id,
+    userId: makeId(),
+    body: { status: "in_progress" },
+  });
+
+  assert.equal(response.statusCode, 403);
+  assert.match(response.body.message, /ask an ict admin/i);
   assert.equal(ticket.status, "accepted");
 });
 

@@ -135,6 +135,8 @@ router.get("/:ticketId", authenticate, async (req, res, next) => {
         tech &&
         ((ticket.assignedTechnician &&
           String(ticket.assignedTechnician) === String(req.user.id)) ||
+          (ticket.assignedTechnician &&
+            sameMongoId(ticket.assignedTechnician, tech._id)) ||
           (await Assignment.exists({
             ticket: ticket._id,
             technician: tech._id,
@@ -230,13 +232,14 @@ router.post(
         });
         const isAssigned =
           activeAssignment ||
-          sameMongoId(ticket.assignedTechnician, req.user.id);
+          sameMongoId(ticket.assignedTechnician, req.user.id) ||
+          sameMongoId(ticket.assignedTechnician, tech._id);
 
         if (!isAssigned) {
           return res.status(403).json({
             success: false,
             message:
-              "You can only log maintenance for tickets assigned to you.",
+              "This ticket is not assigned to your technician account. Ask an ICT Admin to assign it to you or manage the ticket.",
           });
         }
       }

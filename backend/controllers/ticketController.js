@@ -66,6 +66,7 @@ const VALID_POLICY_COMPLIANCE = ["Compliant", "Non-Compliant", "Partial"];
 const { sendEventEmail } = require("../services/mailer");
 const { broadcastNotification } = require("../services/notificationService");
 
+const mongoose = require("mongoose");
 const Ticket = require("../models/Ticket");
 const Feedback = require("../models/Feedback");
 const MaintenanceRecord = require("../models/MaintenanceRecord");
@@ -1032,19 +1033,28 @@ const updateStatus = async (req, res, next) => {
     const idErr = validateObjectId(req.params.id, "Ticket");
     if (idErr) return res.status(400).json({ success: false, message: idErr });
 
-    const { status } = req.body;
+    const requestedStatus = req.body.status;
 
-    if (!status) {
+    if (typeof requestedStatus !== "string" || !requestedStatus.trim()) {
       return res
         .status(422)
         .json({ success: false, message: "Status is required." });
     }
 
+    const status = requestedStatus
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, "_");
     const statusErr = validateEnum(status, VALID_TICKET_STATUSES, "status");
     if (statusErr)
       return res.status(400).json({ success: false, message: statusErr });
 
-    const ticket = await Ticket.findById(req.params.id);
+    let ticketQuery = Ticket.findById(req.params.id);
+    if (typeof ticketQuery.populate === "function") {
+      ticketQuery = ticketQuery
+        .populate("requester", "_id fullName email department");
+    }
+    const ticket = await ticketQuery;
     if (!ticket) {
       return res
         .status(404)
@@ -1073,7 +1083,11 @@ const updateStatus = async (req, res, next) => {
         : false;
       const isAssigned =
         Boolean(activeAssignment) ||
-        sameMongoId(ticket.assignedTechnician, req.user.id);
+        sameMongoId(ticket.assignedTechnician, req.user.id) ||
+        /* Older ticket rows may contain Technician._id despite the current
+           Ticket schema referencing User._id. Only trust that value when it
+           matches the authenticated user's own Technician profile. */
+        sameMongoId(ticket.assignedTechnician, technicianProfile?._id);
 
       console.info("[TICKET STATUS AUTH]", {
         userId: String(req.user.id),
@@ -1085,7 +1099,7 @@ const updateStatus = async (req, res, next) => {
         return res.status(403).json({
           success: false,
           message:
-            "Access denied. You can only update tickets assigned to you.",
+            "This ticket is not assigned to your technician account. Ask an ICT Admin to assign it to you or manage the ticket.",
         });
       }
     }
@@ -1158,10 +1172,14 @@ const updateStatus = async (req, res, next) => {
     }
 
     /* Track if this is a reopen (from resolved/closed to active status) */
+    const currentStatus = String(ticket.status || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, "_");
     const isReopen =
-      ["resolved", "closed"].includes(ticket.status) &&
+      ["resolved", "closed"].includes(currentStatus) &&
       !["resolved", "closed"].includes(status);
-    const isStatusChanged = ticket.status !== status;
+    const isStatusChanged = currentStatus !== status;
 
     /* ── Validate the workflow transition (Technicians strictly) ──
        Admins keep full control (their flows set status directly). */
@@ -1175,14 +1193,14 @@ const updateStatus = async (req, res, next) => {
       closed: [],
     };
     if (req.user.role === "Technician") {
-      const allowed = VALID_TRANSITIONS[ticket.status] || [];
+      const allowed = VALID_TRANSITIONS[currentStatus] || [];
       if (
         !allowed.includes(status) &&
-        !(status === ticket.status && workDetails)
+        !(status === currentStatus && workDetails)
       ) {
         return res.status(400).json({
           success: false,
-          message: `Cannot change ticket status from "${ticket.status}" to "${status}".`,
+          message: `Cannot change ticket status from "${currentStatus}" to "${status}".`,
         });
       }
     }
@@ -1209,46 +1227,70 @@ const updateStatus = async (req, res, next) => {
       }
     }
 
-    const updated = await Ticket.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true, runValidators: true },
-    )
-      .populate("requester", "_id fullName email department")
-      .populate("assignedTechnician", "fullName email");
-
-    if (!updated) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Ticket not found." });
-    }
-
+    let updated = ticket;
     let maintenanceRecord = null;
-    if (workDetails) {
-      maintenanceRecord = await MaintenanceRecord.create({
-        request: ticket._id,
-        ...workDetails,
-      });
-    }
-
-    /* Keep the linked Assignment.status in sync with the ticket lifecycle so
-       the data chain stays consistent (accept→accepted, start→in_progress, resolve→completed). */
     const ASSIGN_STATUS = {
       accepted: "accepted",
       in_progress: "in_progress",
       resolved: "completed",
       closed: "completed",
     };
-    if (ASSIGN_STATUS[status]) {
-      await Assignment.updateMany(
-        {
-          ticket: ticket._id,
-          status: {
-            $in: ["assigned", "accepted", "in_progress", "completed"],
-          },
-        },
-        { $set: { status: ASSIGN_STATUS[status] } },
-      );
+
+    if (isStatusChanged || workDetails) {
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          if (isStatusChanged) {
+            let updateQuery = Ticket.findByIdAndUpdate(
+              req.params.id,
+              { status },
+              { new: true, runValidators: true, session },
+            );
+            if (typeof updateQuery.populate === "function") {
+              updateQuery = updateQuery
+                .populate("requester", "_id fullName email department")
+                .populate("assignedTechnician", "fullName email");
+            }
+            updated = await updateQuery;
+            if (!updated) return;
+          }
+
+          if (workDetails) {
+            [maintenanceRecord] = await MaintenanceRecord.create(
+              [
+                {
+                  request: ticket._id,
+                  ...workDetails,
+                },
+              ],
+              { session },
+            );
+          }
+
+          /* Keep the linked Assignment.status in sync with the ticket lifecycle
+             in the same transaction as its ticket status change. */
+          if (isStatusChanged && ASSIGN_STATUS[status]) {
+            await Assignment.updateMany(
+              {
+                ticket: ticket._id,
+                status: {
+                  $in: ["assigned", "accepted", "in_progress", "completed"],
+                },
+              },
+              { $set: { status: ASSIGN_STATUS[status] } },
+              { session },
+            );
+          }
+        });
+      } finally {
+        await session.endSession();
+      }
+    }
+
+    if (!updated) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Ticket not found." });
     }
 
     const displayId = displayTicketId(updated.ticketId);
@@ -1398,7 +1440,11 @@ const updateStatus = async (req, res, next) => {
     const assignedTechnicians = await getAssignedTechnicians([updated]);
     res.json({
       success: true,
-      message: `Status updated to "${statusDisplay[status] || status}".`,
+      message: isStatusChanged
+        ? `Status updated to "${statusDisplay[status] || status}".`
+        : workDetails
+          ? `Activity logged. Ticket status remains "${statusDisplay[currentStatus] || currentStatus}".`
+          : `Ticket status is already "${statusDisplay[currentStatus] || currentStatus}".`,
       data: formatTicket(
         updated,
         req.user.role,

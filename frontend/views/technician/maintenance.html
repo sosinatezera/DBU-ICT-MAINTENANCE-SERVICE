@@ -90,8 +90,10 @@
                       <option value="" data-i18n="tech.ph.selectStatus">-- Select Status --</option>
                       <option value="in_progress" data-i18n="status.inProgress">In Progress</option>
                       <option value="resolved" data-i18n="status.resolved">Resolved</option>
+                      <option value="unchanged">Log activity only (keep current status)</option>
                     </select>
                     <div class="invalid-feedback" data-i18n="maint.err.status">Please select a status.</div>
+                    <div id="activityStatusMessage" class="form-text d-none" role="status" aria-live="polite"></div>
                   </div>
 
                   <!-- Action Taken -->

@@ -636,14 +636,28 @@ async function openUpdateModal(requestId, title, currentStatus) {
     accepted: ["in_progress"],
     in_progress: ["resolved"],
   };
-  const allowed = validNext[currentStatus] || ["in_progress", "resolved"];
+  const allowed = validNext[currentStatus] || [];
   statusSel.innerHTML = allowed
     .map(
       (s) =>
         `<option value="${s}">${{ accepted: "Accept Task", in_progress: "Mark In Progress", resolved: "Mark as Resolved" }[s] || s}</option>`,
     )
-    .join("");
-  statusSel.value = allowed[allowed.length - 1];
+    .join("") +
+    `<option value="unchanged">Log work without changing status</option>`;
+  statusSel.value = allowed.length
+    ? allowed[allowed.length - 1]
+    : "unchanged";
+  statusSel.onchange = () => {
+    if (statusSel.value === "unchanged") {
+      showAlert(
+        "updateTaskAlert",
+        "Work will be logged without changing the ticket status.",
+        "info",
+      );
+    } else {
+      document.getElementById("updateTaskAlert")?.classList.add("d-none");
+    }
+  };
 
   document.getElementById("modalAction").value = "";
   document.getElementById("modalParts").value = "";
@@ -657,6 +671,19 @@ async function openUpdateModal(requestId, title, currentStatus) {
     info.innerHTML = `<div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading request details...`;
     try {
       const { data: r } = await apiRequest(`/tickets/${requestId}`);
+      const actualStatus = normalizeTicketStatus(r.status);
+      const actualAllowed = validNext[actualStatus] || [];
+      statusSel.innerHTML =
+        actualAllowed
+          .map(
+            (s) =>
+              `<option value="${s}">${{ accepted: "Accept Task", in_progress: "Mark In Progress", resolved: "Mark as Resolved" }[s] || s}</option>`,
+          )
+          .join("") +
+        `<option value="unchanged">Log work without changing status</option>`;
+      statusSel.value = actualAllowed.length
+        ? actualAllowed[actualAllowed.length - 1]
+        : "unchanged";
       info.innerHTML = `
         <div class="row g-2">
           <div class="col-sm-6"><span class="text-muted small d-block">Title</span><strong>${escHtml(r.ticketId || r.id)}</strong></div>
@@ -1270,7 +1297,51 @@ function openTaskModal(requestId, title, currentStatus) {
   document.getElementById("techNotes").value = "";
   const alert = document.getElementById("taskUpdateAlert");
   if (alert) alert.classList.add("d-none");
-  loadTaskInfoSection(requestId, "taskInfoSection");
+  loadTaskInfoSection(requestId, "taskInfoSection").then((ticket) => {
+    if (
+      !ticket ||
+      document.getElementById("taskRequestId").value !== requestId
+    ) {
+      return;
+    }
+
+    const actualStatus = normalizeTicketStatus(ticket.status);
+    const nextStatuses = {
+      assigned: ["accepted", "in_progress"],
+      accepted: ["in_progress"],
+      in_progress: ["resolved"],
+    }[actualStatus] || [];
+    const labels = {
+      accepted: "Accept Task",
+      in_progress: "Mark In Progress",
+      resolved: "Mark as Resolved",
+    };
+    const statusSelect = document.getElementById("newStatus");
+    statusSelect.innerHTML =
+      nextStatuses
+        .map(
+          (status) =>
+            `<option value="${status}">${labels[status] || status}</option>`,
+        )
+        .join("") +
+      `<option value="unchanged">Log work without changing status</option>`;
+    statusSelect.value = nextStatuses.length
+      ? nextStatuses[nextStatuses.length - 1]
+      : "unchanged";
+  });
+
+  const statusSelect = document.getElementById("newStatus");
+  statusSelect.onchange = () => {
+    if (statusSelect.value === "unchanged") {
+      showAlert(
+        "taskUpdateAlert",
+        "Work will be logged without changing the ticket status.",
+        "info",
+      );
+    } else {
+      document.getElementById("taskUpdateAlert")?.classList.add("d-none");
+    }
+  };
 
   const modalEl = document.getElementById("taskModal");
   const m = bootstrap.Modal.getInstance(modalEl);
@@ -1280,7 +1351,7 @@ function openTaskModal(requestId, title, currentStatus) {
 
 async function loadTaskInfoSection(requestId, sectionId) {
   const section = document.getElementById(sectionId);
-  if (!section) return;
+  if (!section) return null;
   section.innerHTML = `<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>`;
   try {
     const { data: r } = await apiRequest(`/tickets/${requestId}`);
@@ -1298,8 +1369,10 @@ async function loadTaskInfoSection(requestId, sectionId) {
           <div class="small p-2 bg-light rounded" style="max-height:70px;overflow-y:auto;">${escHtml(r.problemDescription)}</div>
         </div>
       </div>`;
+    return r;
   } catch (_) {
     section.innerHTML = `<span class="text-muted small">Request #${requestId}</span>`;
+    return null;
   }
 }
 
@@ -1846,10 +1919,18 @@ const _TICKET_STATUS_CHAIN = [
   "closed",
 ];
 
+function normalizeTicketStatus(status) {
+  return String(status || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+}
+
 async function updateTicketStatusWithMaintenanceDetails(
   requestId,
   status,
   workDetails,
+  currentStatus = null,
 ) {
   const actionTaken = String(workDetails.actionTaken || "").trim();
   if (!actionTaken) throw new Error("Action taken is required.");
@@ -1860,9 +1941,19 @@ async function updateTicketStatusWithMaintenanceDetails(
   if (String(workDetails.notes || "").length > 2000)
     throw new Error("Notes must be no more than 2,000 characters.");
 
-  const { data: ticket } = await apiRequest(`/tickets/${requestId}`);
-  const fromIdx = _TICKET_STATUS_CHAIN.indexOf(ticket.status);
-  const toIdx = _TICKET_STATUS_CHAIN.indexOf(status);
+  let normalizedCurrentStatus = currentStatus
+    ? normalizeTicketStatus(currentStatus)
+    : "";
+  if (!normalizedCurrentStatus) {
+    const { data: ticket } = await apiRequest(`/tickets/${requestId}`);
+    normalizedCurrentStatus = normalizeTicketStatus(ticket.status);
+  }
+  const targetStatus =
+    status === "unchanged"
+      ? normalizedCurrentStatus
+      : normalizeTicketStatus(status);
+  const fromIdx = _TICKET_STATUS_CHAIN.indexOf(normalizedCurrentStatus);
+  const toIdx = _TICKET_STATUS_CHAIN.indexOf(targetStatus);
   if (fromIdx < 0 || toIdx < 0 || toIdx < fromIdx) {
     throw new Error("The selected status is not a valid forward transition.");
   }
@@ -1881,13 +1972,55 @@ async function updateTicketStatusWithMaintenanceDetails(
   if (fromIdx === toIdx) {
     return apiRequest(`/tickets/${requestId}/status`, {
       method: "PATCH",
-      body: { status, ...workDetails },
+      body: { status: targetStatus, ...workDetails },
     });
   }
 }
 
 /* Bind the form + filter handlers once to prevent duplicate submissions. */
 let _maintenanceLogBound = false;
+let _maintenanceStatusRequestId = "";
+let _maintenanceCurrentStatus = "";
+
+function renderMaintenanceStatusHint() {
+  const hint = document.getElementById("activityStatusMessage");
+  const selectedStatus = document.getElementById("activityStatus")?.value || "";
+  if (!hint) return;
+
+  if (!_maintenanceCurrentStatus || !_maintenanceStatusRequestId) {
+    hint.textContent = "";
+    hint.classList.add("d-none");
+    return;
+  }
+
+  const statusName =
+    {
+      submitted: "Submitted",
+      under_review: "Under Review",
+      assigned: "Assigned",
+      accepted: "Accepted",
+      in_progress: "In Progress",
+      resolved: "Resolved",
+      closed: "Closed",
+    }[_maintenanceCurrentStatus] || _maintenanceCurrentStatus;
+  if (
+    selectedStatus === "unchanged" ||
+    selectedStatus === _maintenanceCurrentStatus
+  ) {
+    hint.textContent = ["resolved", "closed"].includes(
+      _maintenanceCurrentStatus,
+    )
+      ? `This request is already ${statusName}; no new activity can be logged.`
+      : selectedStatus === "unchanged"
+        ? `Activity will be logged without changing the current status (${statusName}).`
+        : `This request is already ${statusName}; activity will be logged without changing its status.`;
+    hint.classList.remove("d-none");
+    return;
+  }
+
+  hint.textContent = "";
+  hint.classList.add("d-none");
+}
 
 async function initMaintenanceLog() {
   if (!requireRole("Technician")) return;
@@ -1937,6 +2070,33 @@ async function initMaintenanceLog() {
     .getElementById("activityRequestFilter")
     ?.addEventListener("change", loadActivityTimeline);
 
+  const requestSelect = document.getElementById("requestSelect");
+  requestSelect?.addEventListener("change", async () => {
+    const requestId = requestSelect.value;
+    _maintenanceStatusRequestId = requestId;
+    _maintenanceCurrentStatus = "";
+    renderMaintenanceStatusHint();
+    if (!requestId) return;
+
+    try {
+      const { data: ticket } = await apiRequest(`/tickets/${requestId}`);
+      if (_maintenanceStatusRequestId !== requestId) return;
+      _maintenanceCurrentStatus = normalizeTicketStatus(ticket.status);
+      renderMaintenanceStatusHint();
+    } catch (_) {
+      if (_maintenanceStatusRequestId !== requestId) return;
+      const hint = document.getElementById("activityStatusMessage");
+      if (hint) {
+        hint.textContent =
+          "The current status will be checked again when the activity is saved.";
+        hint.classList.remove("d-none");
+      }
+    }
+  });
+  document
+    .getElementById("activityStatus")
+    ?.addEventListener("change", renderMaintenanceStatusHint);
+
   document
     .getElementById("maintenanceForm")
     ?.addEventListener("submit", async (e) => {
@@ -1947,7 +2107,7 @@ async function initMaintenanceLog() {
       }
 
       const requestId = document.getElementById("requestSelect").value;
-      const status = document.getElementById("activityStatus").value;
+      const selectedStatus = document.getElementById("activityStatus").value;
       const action = document.getElementById("actionTaken").value.trim();
       const parts = document.getElementById("partsUsed").value.trim();
       const notes = document.getElementById("techNotes").value.trim();
@@ -1966,7 +2126,10 @@ async function initMaintenanceLog() {
       try {
         // Read the ticket's REAL current status — never assume the workflow step.
         const { data: ticket } = await apiRequest(`/tickets/${requestId}`);
-        const current = ticket.status;
+        const current = normalizeTicketStatus(ticket.status);
+        _maintenanceStatusRequestId = requestId;
+        _maintenanceCurrentStatus = current;
+        renderMaintenanceStatusHint();
 
         // Resolved / closed tickets reject new maintenance activity (per the
         // backend workflow: resolved → closed only, no new activity).
@@ -1987,15 +2150,23 @@ async function initMaintenanceLog() {
           return;
         }
 
-        await updateTicketStatusWithMaintenanceDetails(requestId, status, {
-          actionTaken: action,
-          partsUsed: parts || null,
-          notes: notes || null,
-        });
+        await updateTicketStatusWithMaintenanceDetails(
+          requestId,
+          selectedStatus,
+          {
+            actionTaken: action,
+            partsUsed: parts || null,
+            notes: notes || null,
+          },
+          current,
+        );
         invalidateMyMaintenanceCache();
         showToast("Activity logged successfully!", "success");
         e.target.reset();
         e.target.classList.remove("was-validated");
+        _maintenanceStatusRequestId = "";
+        _maintenanceCurrentStatus = "";
+        renderMaintenanceStatusHint();
         await loadActivityTimeline();
       } catch (err) {
         showAlert("maintenanceAlert", err.message, "danger");
