@@ -164,6 +164,13 @@ const getMyAssignments = async (req, res, next) => {
         requester_name: a.ticket?.requester?.fullName,
         department: a.ticket?.requester?.department,
         assigned_at: a.createdAt,
+        completed_at:
+          a.ticket?.technicianFeedback?.completionDate ||
+          (a.status === "completed" ? a.updatedAt : null),
+        rating:
+          a.ticket?.requesterFeedback?.overallRating ??
+          a.ticket?.feedbackRating ??
+          null,
         has_feedback: !!a.ticket?.technicianFeedback?.technicianConfirmed,
         technician_report: a.ticket?.technicianFeedback?.technicianConfirmed
           ? {

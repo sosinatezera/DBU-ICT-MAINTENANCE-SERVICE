@@ -2244,10 +2244,11 @@ async function initTechHistory() {
     );
     _historyAll = completed;
 
-    // Build maintenance lookup: request_id → latest record
+    // The endpoint sorts newest first; keep the first record per ticket.
     const maintMap = {};
     (maintRes.status === "fulfilled" ? maintRes.value : []).forEach((m) => {
-      maintMap[String(m.ticket_id)] = m;
+      const key = String(m.ticket_id);
+      if (!maintMap[key]) maintMap[key] = m;
     });
 
     // Stats
@@ -2332,15 +2333,18 @@ function renderHistoryTable(completed, maintMap) {
   tbody.innerHTML = completed
     .map((r) => {
       const m = maintMap[String(r.ticket_id)];
-      const completedAt = m?.created_at ? formatDate(m.created_at) : "—";
+      const resolvedLog = m?.status === "resolved" ? m : null;
+      const completedAt =
+        r.completed_at || resolvedLog?.created_at || null;
+      const rating = r.rating ?? r.feedbackRating ?? null;
       return `
       <tr>
         <td><strong class="text-primary">${escHtml(r.ticketId || r.ticket_id)}</strong></td>
-        <td>${escHtml(r.title || "—")}</td>
-        <td><span class="badge bg-light text-dark border">${escHtml(r.equipmentType || "—")}</span>${r.device ? `<div class="small text-muted">${escHtml(r.device)}</div>` : ""}${r.issueType || r.serviceType ? `<div class="small mt-1"><span class="text-muted">Issue Type:</span> ${escHtml(r.issueType || r.serviceType)}</div>` : ""}</td>
-        <td>${escHtml(r.requester_name || "—")}</td>
-        <td>${completedAt}</td>
-        <td><span class="text-muted">—</span></td>
+        <td>${escHtml(r.title || "N/A")}</td>
+        <td><span class="badge bg-light text-dark border">${escHtml(r.equipmentType || "N/A")}</span>${r.device ? `<div class="small text-muted">${escHtml(r.device)}</div>` : ""}${r.issueType || r.serviceType ? `<div class="small mt-1"><span class="text-muted">Issue Type:</span> ${escHtml(r.issueType || r.serviceType)}</div>` : ""}</td>
+        <td>${escHtml(r.requester_name || "N/A")}</td>
+        <td>${completedAt ? escHtml(formatDate(completedAt)) : "N/A"}</td>
+        <td>${rating == null ? "N/A" : `<span class="text-warning" aria-label="${escHtml(rating)} out of 5">${escHtml(rating)} <i class="bi bi-star-fill"></i></span>`}</td>
         <td>
           <button class="btn btn-sm btn-outline-secondary" title="View details"
                   onclick="viewHistoryDetail(${jsAttr(r.ticket_id)}, this)">
@@ -2382,8 +2386,14 @@ function invalidateMyMaintenanceCache() {
 }
 
 async function viewHistoryDetail(requestId, btn) {
+  const ticketId = String(requestId || "").trim();
+  if (!/^[0-9a-f]{24}$/i.test(ticketId)) {
+    showToast("This task has an invalid request ID. Refresh the page and try again.", "danger");
+    return;
+  }
+
   // Toggle inline detail row
-  const existingRow = document.getElementById(`detail-row-${requestId}`);
+  const existingRow = document.getElementById(`detail-row-${ticketId}`);
   if (existingRow) {
     existingRow.remove();
     return;
@@ -2392,10 +2402,10 @@ async function viewHistoryDetail(requestId, btn) {
   const tr = btn.closest("tr");
   const colCount = tr.querySelectorAll("td").length;
   const detailRow = document.createElement("tr");
-  detailRow.id = `detail-row-${requestId}`;
+  detailRow.id = `detail-row-${ticketId}`;
   detailRow.innerHTML = `<td colspan="${colCount}" class="bg-light p-0">
-    <div id="detail-content-${requestId}" class="p-3">
-      <div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+    <div id="detail-content-${ticketId}" class="p-3" role="status" aria-live="polite">
+      <div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></div><span class="visually-hidden">Loading task details...</span></div>
     </div>
   </td>`;
   tr.insertAdjacentElement("afterend", detailRow);
@@ -2405,42 +2415,70 @@ async function viewHistoryDetail(requestId, btn) {
        away the request details too, so a maintenance glitch blanked the whole
        expanded row. Each half now degrades on its own. */
     const [reqRes, maintRes] = await Promise.allSettled([
-      apiRequest(`/tickets/${requestId}`),
+      apiRequest(`/tickets/${encodeURIComponent(ticketId)}`),
       loadMyMaintenanceLog(),
     ]);
     if (reqRes.status === "rejected") throw reqRes.reason;
     const r = reqRes.data;
     const logs = (maintRes.status === "fulfilled" ? maintRes.value : []).filter(
-      (m) => String(m.ticket_id) === String(requestId),
+      (m) => String(m.ticket_id) === ticketId,
     );
     const maintUnavailable = maintRes.status === "rejected";
+    const fallbackRow = _historyAll.find(
+      (task) => String(task.ticket_id) === ticketId,
+    );
+    const resolvedLog = logs.find((log) => log.status === "resolved");
+    const completedAt =
+      r.technician_feedback?.completionDate ||
+      fallbackRow?.completed_at ||
+      resolvedLog?.created_at ||
+      null;
+    const rating =
+      r.requester_feedback?.overallRating ??
+      r.feedbackRating ??
+      fallbackRow?.rating ??
+      null;
+    const detailValue = (value) =>
+      value === null || value === undefined || value === ""
+        ? "N/A"
+        : String(value);
+    const field = (label, value) =>
+      `<div class="small mt-1"><strong>${label}:</strong> ${escHtml(detailValue(value))}</div>`;
 
-    document.getElementById(`detail-content-${requestId}`).innerHTML = `
+    const content = document.getElementById(`detail-content-${ticketId}`);
+    if (!content) return;
+    content.removeAttribute("role");
+    content.innerHTML = `
       <div class="row g-3">
         <div class="col-md-6">
-          <div class="small text-muted fw-semibold mb-1">Request Details</div>
-          <div class="small"><strong>Description:</strong> ${escHtml(r.problemDescription || "—")}</div>
-          <div class="small mt-1"><strong>Equipment:</strong> ${escHtml(r.equipmentType || "—")}</div>
-          ${r.device ? `<div class="small mt-1"><strong>Device / Equipment:</strong> ${escHtml(r.device)}</div>` : ""}
-          ${r.category ? `<div class="small mt-1"><strong>Category:</strong> ${escHtml(r.category)}</div>` : ""}
-          ${r.issueType || r.serviceType ? `<div class="small mt-1"><strong>Issue Type / Service Type:</strong> ${escHtml(r.issueType || r.serviceType)}</div>` : ""}
-          ${r.asset_tag ? `<div class="small mt-1"><strong>ICT Asset:</strong> ${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}</div>` : ""}
-          <div class="small mt-1"><strong>Department:</strong> ${escHtml(r.department || "—")}</div>
+          <div class="fw-semibold mb-1">Task Details</div>
+          ${field("Ticket ID", r.ticketId || fallbackRow?.ticketId)}
+          ${field("Title", r.title || fallbackRow?.title)}
+          ${field("Category", r.category || fallbackRow?.category)}
+          ${field("Issue Type", r.issueType || r.serviceType || fallbackRow?.issueType || fallbackRow?.serviceType)}
+          ${field("Requester", r.requester_name || fallbackRow?.requester_name)}
+          ${field("Description", r.problemDescription || fallbackRow?.problemDescription)}
+          ${field("Status", r.status || fallbackRow?.status)}
+          ${field("Completed Date", completedAt ? formatDateTime(completedAt) : null)}
+          ${field("Rating", rating == null ? null : `${rating} / 5`)}
+          ${field("Technician", r.technician_name || fallbackRow?.technician_name)}
+          ${field("Created", r.created_at)}
+          ${field("Last Updated", r.updated_at)}
         </div>
         <div class="col-md-6">
-          <div class="small text-muted fw-semibold mb-1">Maintenance Logs</div>
+          <div class="fw-semibold mb-1">Maintenance Activity</div>
           ${
             maintUnavailable
-              ? '<span class="text-muted small">Maintenance logs unavailable.</span>'
+              ? '<span class="text-muted small">Maintenance activity is temporarily unavailable.</span>'
               : logs.length
                 ? logs
                     .map(
                       (l) => `
             <div class="small border-start border-2 border-success ps-2 mb-2">
-              <div class="fw-semibold">${escHtml(l.action_taken)}</div>
-              ${l.parts_used ? `<div class="text-muted"><i class="bi bi-box me-1"></i>${escHtml(l.parts_used)}</div>` : ""}
-              ${l.notes ? `<div class="text-muted fst-italic">${escHtml(l.notes)}</div>` : ""}
-              <div class="text-muted" style="font-size:.7rem;">${formatDateTime(l.created_at)}</div>
+              <div class="fw-semibold">${escHtml(detailValue(l.action_taken))}</div>
+              <div class="text-muted"><i class="bi bi-box me-1"></i><strong>Parts / Materials:</strong> ${escHtml(detailValue(l.parts_used))}</div>
+              <div class="text-muted fst-italic"><strong>Notes:</strong> ${escHtml(detailValue(l.notes))}</div>
+              <div class="text-muted" style="font-size:.7rem;">${escHtml(l.created_at ? formatDateTime(l.created_at) : "N/A")}</div>
             </div>`,
                     )
                     .join("")
@@ -2448,9 +2486,24 @@ async function viewHistoryDetail(requestId, btn) {
           }
         </div>
       </div>`;
-  } catch (_) {
-    document.getElementById(`detail-content-${requestId}`).innerHTML =
-      `<p class="text-muted small mb-0">Could not load details.</p>`;
+  } catch (err) {
+    console.error("[Technician History] Ticket details request failed.", {
+      ticketId,
+      status: err.status || null,
+      message: err.message,
+    });
+    const content = document.getElementById(`detail-content-${ticketId}`);
+    if (!content) return;
+    const message =
+      err.status === 404
+        ? "This ticket could not be found. It may have been removed."
+        : err.status === 403
+          ? err.message
+          : err.status >= 500 || err.network
+            ? "The server is unavailable. Please try again shortly."
+            : err.message || "Please refresh the page and try again.";
+    content.removeAttribute("role");
+    content.innerHTML = `<div class="alert alert-danger mb-0 py-2" role="alert"><strong>Unable to load task details.</strong> ${escHtml(message)}</div>`;
   }
 }
 

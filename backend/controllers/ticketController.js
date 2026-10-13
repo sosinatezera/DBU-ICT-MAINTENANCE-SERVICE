@@ -368,7 +368,6 @@ const getTicketById = async (req, res, next) => {
 
     const ticket = await Ticket.findById(req.params.id)
       .populate("requester", "fullName email department phone")
-      .populate("assignedTechnician", "fullName email")
       .populate("assetId", "asset_tag asset_name")
       .lean();
 
@@ -393,6 +392,9 @@ const getTicketById = async (req, res, next) => {
           ticket.assignedTechnician &&
           String(ticket.assignedTechnician._id || ticket.assignedTechnician) ===
             String(req.user.id);
+        const ticketAssignedToTechnician =
+          tech &&
+          sameMongoId(ticket.assignedTechnician, tech._id);
         const hasAssignment = tech
           ? await Assignment.exists({
               ticket: ticket._id,
@@ -402,7 +404,11 @@ const getTicketById = async (req, res, next) => {
               },
             })
           : false;
-        if (!ticketAssignedToUser && !hasAssignment) {
+        if (
+          !ticketAssignedToUser &&
+          !ticketAssignedToTechnician &&
+          !hasAssignment
+        ) {
           denyMessage = "You can only view tickets assigned to you.";
         }
       } else {
