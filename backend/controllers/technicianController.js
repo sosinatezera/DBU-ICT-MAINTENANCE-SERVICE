@@ -143,6 +143,16 @@ const getMyAssignments = async (req, res, next) => {
       const ticketKey = String(a.ticket?._id || "");
       if (!ticketKey || seen.has(ticketKey)) return acc;
       seen.add(ticketKey);
+      const technicianFeedback = a.ticket?.technicianFeedback;
+      const technicianReport = technicianFeedback?.technicianConfirmed
+        ? {
+            diagnosis: technicianFeedback.diagnosis,
+            workPerformed: technicianFeedback.workPerformed,
+            status: technicianFeedback.status,
+            resolution: technicianFeedback.resolution,
+            completionDate: technicianFeedback.completionDate,
+          }
+        : null;
       acc.push({
         _id: a._id,
         technician_id: a.technician?._id || null,
@@ -173,16 +183,9 @@ const getMyAssignments = async (req, res, next) => {
           a.ticket?.requesterFeedback?.overallRating ??
           a.ticket?.feedbackRating ??
           null,
-        has_feedback: !!a.ticket?.technicianFeedback?.technicianConfirmed,
-        technician_report: a.ticket?.technicianFeedback?.technicianConfirmed
-          ? {
-              diagnosis: a.ticket.technicianFeedback.diagnosis,
-              workPerformed: a.ticket.technicianFeedback.workPerformed,
-              status: a.ticket.technicianFeedback.status,
-              resolution: a.ticket.technicianFeedback.resolution,
-              completionDate: a.ticket.technicianFeedback.completionDate,
-            }
-          : null,
+        has_feedback: !!technicianReport,
+        technician_feedback: technicianReport,
+        technician_report: technicianReport,
       });
       return acc;
     }, []);

@@ -916,6 +916,19 @@ function formatDateTime(d) {
   return `${date}, ${time}`;
 }
 
+function normalizeGenderValue(value) {
+  if (value === undefined || value === null) return null;
+  const normalized = String(value).trim();
+  if (!normalized) return null;
+  const canonicalGenders = {
+    male: "Male",
+    female: "Female",
+    other: "Other",
+    "prefer not to say": "Prefer not to say",
+  };
+  return canonicalGenders[normalized.toLowerCase()] || normalized;
+}
+
 /* Relative time is elapsed real time, so it is identical in every time zone —
    e.g. "2h ago" is the same instant whether viewed in UTC or EAT. */
 function timeAgo(d) {

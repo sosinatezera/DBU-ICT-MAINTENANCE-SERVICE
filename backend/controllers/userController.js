@@ -567,11 +567,15 @@ const updateMyProfile = async (req, res, next) => {
 
     if (gender !== undefined) {
       if (gender !== null && gender !== "") {
-        gender = normalizeGender(gender);
-        const genderErr = validateEnum(gender, VALID_GENDERS, "gender");
+        const normalizedGender = normalizeGender(gender);
+        const genderErr = validateEnum(
+          normalizedGender,
+          VALID_GENDERS,
+          "gender",
+        );
         if (genderErr)
           return res.status(400).json({ success: false, message: genderErr });
-        update.gender = gender;
+        update.gender = normalizedGender;
       } else {
         update.gender = null;
       }

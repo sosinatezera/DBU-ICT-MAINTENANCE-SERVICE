@@ -519,7 +519,7 @@
   <script src="/assets/js/api-config.js?v=16"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/validation.js?v=7"></script>
-  <script src="/assets/js/main.js?v=25"></script>
+  <script src="/assets/js/main.js?v=26"></script>
   <script src="/assets/js/notifications.js?v=10"></script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/lang.js?v=16"></script>
@@ -726,14 +726,14 @@
             fullName: user.fullName || '',
             phone: user.phone || '',
             department: user.department || '',
-            gender: user.gender || '',
+            gender: normalizeGenderValue( user.gender ) || '',
           };
 
           setProfileValue( 'fullName', user.fullName );
           setProfileValue( 'email', user.email );
           setProfileValue( 'phone', user.phone );
           setProfileValue( 'department', user.department );
-          setProfileValue( 'gender', user.gender );
+          setProfileValue( 'gender', normalizeGenderValue( user.gender ) );
           const username = user.username || user.userName || user.handle || '';
           const positionProgram = user.position || user.program || user.positionProgram || '';
           setProfileValue( 'username', username || 'Not provided' );
@@ -801,7 +801,7 @@
             localUser.email = user.email;
             localUser.role = user.role;
             localUser.department = user.department;
-            localUser.gender = user.gender;
+            localUser.gender = normalizeGenderValue( user.gender );
             localUser.profileImage = user.profileImage;
             Auth.setUser( localUser );
             populateUserInfo();
@@ -1025,7 +1025,7 @@
               updated.fullName !== savedProfile.fullName ||
               ( updated.phone || null ) !== ( savedProfile.phone || null ) ||
               ( updated.department || null ) !== ( savedProfile.department || null ) ||
-              ( updated.gender || null ) !== ( savedProfile.gender || null )
+              normalizeGenderValue( updated.gender ) !== normalizeGenderValue( savedProfile.gender )
             ) {
               throw new Error( 'The saved profile could not be reloaded.' );
             }
@@ -1036,7 +1036,7 @@
           document.getElementById( 'fullName' ).value = updated.fullName || '';
           document.getElementById( 'phone' ).value = updated.phone || '';
           document.getElementById( 'department' ).value = updated.department || '';
-          document.getElementById( 'gender' ).value = updated.gender || '';
+          document.getElementById( 'gender' ).value = normalizeGenderValue( updated.gender ) || '';
 
           const newFullName = updated.fullName || body.fullName;
           document.getElementById( 'profileFullName' ).textContent = newFullName;
@@ -1051,7 +1051,7 @@
             fullName: updated.fullName || '',
             phone: updated.phone || '',
             department: updated.department || '',
-            gender: updated.gender || '',
+            gender: normalizeGenderValue( updated.gender ) || '',
           };
           if ( typeof populateUserInfo === 'function' ) populateUserInfo();
 
@@ -1068,12 +1068,12 @@
               document.getElementById( 'fullName' ).value = updated.fullName || '';
               document.getElementById( 'phone' ).value = updated.phone || '';
               document.getElementById( 'department' ).value = updated.department || '';
-              document.getElementById( 'gender' ).value = updated.gender || '';
+              document.getElementById( 'gender' ).value = normalizeGenderValue( updated.gender ) || '';
               _originalValues = {
                 fullName: updated.fullName || '',
                 phone: updated.phone || '',
                 department: updated.department || '',
-                gender: updated.gender || '',
+                gender: normalizeGenderValue( updated.gender ) || '',
               };
               if ( typeof populateUserInfo === 'function' ) populateUserInfo();
               showToast( t( 'profile.savedChanges' ) || 'Changes saved successfully.', 'success' );

@@ -33,6 +33,10 @@ function getTicketId(ticket) {
   return /^[0-9a-f]{24}$/i.test(s) ? s : null;
 }
 
+function isObjectRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
 /* One guard for every technician action — ensures a valid Mongo ticket _id
    is always sent to the backend (never undefined / null / "undefined" / ""). */
 function requireTicketId(btn) {
@@ -2239,6 +2243,15 @@ async function initTechHistory() {
     ]);
     if (assignRes.status === "rejected") throw assignRes.reason;
 
+    if (
+      !assignRes.value ||
+      !Array.isArray(assignRes.value.data) ||
+      !assignRes.value.data.every(isObjectRecord)
+    ) {
+      throw new Error(
+        "The server returned an unexpected assignments response.",
+      );
+    }
     const completed = assignRes.value.data.filter((r) =>
       ["resolved", "closed"].includes(r.status),
     );
@@ -2368,7 +2381,11 @@ async function loadMyMaintenanceLog() {
   if (!_myMaintenanceInFlight) {
     _myMaintenanceInFlight = apiRequest("/maintenance/my")
       .then((res) => {
-        if (!Array.isArray(res.data)) {
+        if (
+          !res ||
+          !Array.isArray(res.data) ||
+          !res.data.every(isObjectRecord)
+        ) {
           throw new Error("The server returned an unexpected activity response.");
         }
         _myMaintenanceCache = res.data;
@@ -2399,7 +2416,14 @@ async function viewHistoryDetail(requestId, btn) {
     return;
   }
 
-  const tr = btn.closest("tr");
+  const tr = btn?.closest("tr");
+  if (!tr) {
+    showToast(
+      "Unable to open this task. Refresh the page and try again.",
+      "danger",
+    );
+    return;
+  }
   const colCount = tr.querySelectorAll("td").length;
   const detailRow = document.createElement("tr");
   detailRow.id = `detail-row-${ticketId}`;
@@ -2419,22 +2443,55 @@ async function viewHistoryDetail(requestId, btn) {
       loadMyMaintenanceLog(),
     ]);
     if (reqRes.status === "rejected") throw reqRes.reason;
-    const r = reqRes.data;
-    const logs = (maintRes.status === "fulfilled" ? maintRes.value : []).filter(
-      (m) => String(m.ticket_id) === ticketId,
-    );
-    const maintUnavailable = maintRes.status === "rejected";
     const fallbackRow = _historyAll.find(
       (task) => String(task.ticket_id) === ticketId,
     );
+    const ticketResponse = reqRes.value;
+    if (
+      !ticketResponse ||
+      typeof ticketResponse !== "object" ||
+      Array.isArray(ticketResponse) ||
+      ticketResponse.success !== true
+    ) {
+      throw new Error(
+        "The server returned an unexpected ticket details response.",
+      );
+    }
+    const responseHasTicket = isObjectRecord(ticketResponse.data);
+    if (
+      ticketResponse.data !== null &&
+      ticketResponse.data !== undefined &&
+      !responseHasTicket
+    ) {
+      throw new Error("The server returned invalid ticket details.");
+    }
+    const r = responseHasTicket ? ticketResponse.data : fallbackRow;
+    if (!r) {
+      throw new Error("The server returned no task details to display.");
+    }
+    const logs = (maintRes.status === "fulfilled" ? maintRes.value : []).filter(
+      (m) => m && String(m.ticket_id) === ticketId,
+    );
+    const maintUnavailable = maintRes.status === "rejected";
     const resolvedLog = logs.find((log) => log.status === "resolved");
+    const technicianFeedback = isObjectRecord(r.technician_feedback)
+      ? r.technician_feedback
+      : null;
+    const fallbackFeedback = isObjectRecord(fallbackRow?.technician_feedback)
+      ? fallbackRow.technician_feedback
+      : isObjectRecord(fallbackRow?.technician_report)
+        ? fallbackRow.technician_report
+        : null;
     const completedAt =
-      r.technician_feedback?.completionDate ||
+      technicianFeedback?.completionDate ||
+      fallbackFeedback?.completionDate ||
       fallbackRow?.completed_at ||
       resolvedLog?.created_at ||
       null;
     const rating =
-      r.requester_feedback?.overallRating ??
+      (isObjectRecord(r.requester_feedback)
+        ? r.requester_feedback.overallRating
+        : null) ??
       r.feedbackRating ??
       fallbackRow?.rating ??
       null;
@@ -2449,6 +2506,11 @@ async function viewHistoryDetail(requestId, btn) {
     if (!content) return;
     content.removeAttribute("role");
     content.innerHTML = `
+      ${
+        responseHasTicket
+          ? ""
+          : '<div class="alert alert-warning py-2 mb-3" role="status">Full task details are unavailable. Showing the completed-task summary instead.</div>'
+      }
       <div class="row g-3">
         <div class="col-md-6">
           <div class="fw-semibold mb-1">Task Details</div>

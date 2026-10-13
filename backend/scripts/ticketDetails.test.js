@@ -95,6 +95,7 @@ test("assigned technician can load completed ticket details by Mongo ID", async 
   assert.equal(response.body.success, true);
   assert.equal(response.body.data.ticketId, "MAU-0441");
   assert.equal(response.body.data.status, "resolved");
+  assert.equal(response.body.data.technician_feedback, null);
 });
 
 test("technician cannot load another technician's completed ticket", async () => {

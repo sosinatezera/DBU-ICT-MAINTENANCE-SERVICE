@@ -240,7 +240,7 @@
       </div>`;
 
     const g = document.getElementById("editGender");
-    if (_current.gender) g.value = _current.gender;
+    if (_current.gender) g.value = normalizeGenderValue(_current.gender);
 
     document
       .getElementById("profileSaveBtn")
@@ -294,7 +294,8 @@
           _current.fullName !== savedProfile.fullName ||
           (_current.phone || null) !== (savedProfile.phone || null) ||
           (_current.department || null) !== (savedProfile.department || null) ||
-          (_current.gender || null) !== (savedProfile.gender || null)
+          normalizeGenderValue(_current.gender) !==
+            normalizeGenderValue(savedProfile.gender)
         ) {
           throw new Error("The saved profile could not be reloaded.");
         }

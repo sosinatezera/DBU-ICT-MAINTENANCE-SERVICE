@@ -2016,7 +2016,7 @@ async function initPersonalSettings(user) {
     profileFields.email.value = profile.email || "";
     profileFields.phone.value = profile.phone || "";
     profileFields.department.value = profile.department || "";
-    profileFields.gender.value = profile.gender || "";
+    profileFields.gender.value = normalizeGenderValue(profile.gender) || "";
   };
   const readProfile = () => ({
     fullName: profileFields.fullName.value.trim(),
@@ -2074,7 +2074,8 @@ async function initPersonalSettings(user) {
         updatedUser.fullName !== submittedProfile.fullName ||
         (updatedUser.phone || "") !== submittedProfile.phone ||
         (updatedUser.department || "") !== submittedProfile.department ||
-        (updatedUser.gender || "") !== submittedProfile.gender
+        normalizeGenderValue(updatedUser.gender) !==
+          normalizeGenderValue(submittedProfile.gender)
       ) {
         throw new Error("The saved profile could not be reloaded.");
       }
