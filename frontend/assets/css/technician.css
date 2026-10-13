@@ -184,7 +184,7 @@ html body.dashboard-body #sidebar .nav-section-title,
 html body.dashboard-body .card-header,
 html body.dashboard-body .modal-header,
 html body.dashboard-body .technician-feedback-page-header {
-  background-color: #1d4ed8 !important;
+  background-color: #172554 !important;
   color: #fff !important;
 }
 
@@ -226,7 +226,7 @@ html body.dashboard-body .modal-header .btn-close {
 }
 
 html body.dashboard-body .table thead th {
-  background-color: #1d4ed8 !important;
+  background-color: #172554 !important;
   color: #fff !important;
 }
 

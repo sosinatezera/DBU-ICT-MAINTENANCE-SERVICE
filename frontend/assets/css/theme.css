@@ -2142,3 +2142,34 @@ html[data-theme="dark"] .certificate-page {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Shared header background across the application. */
+html body.dashboard-body .topbar,
+html body.dashboard-body .main-navbar,
+html body.dashboard-body #sidebar .sidebar-brand,
+html body.dashboard-body #sidebar .sidebar-section-header,
+html body.dashboard-body #sidebar .sidebar-section-title,
+html body.dashboard-body #sidebar .nav-section-title,
+html body.dashboard-body .dashboard-sidebar-header,
+html body.dashboard-body .dashboard-sidebar-panel-title,
+html body.dashboard-body .technician-feedback-page-header,
+html body .card-header,
+html[data-theme="dark"] body .card-header,
+html[data-theme="dark"] body .card-header.bg-white,
+html body .modal-header,
+html[data-theme="dark"] body .modal-header,
+html body .table thead th,
+html body.dashboard-body .table thead th,
+html[data-theme="dark"] body .table thead th,
+html[data-theme="dark"] body.dashboard-body .table thead th,
+html body .admin-table thead th,
+html body.dashboard-body .admin-table thead th,
+html[data-theme="dark"] body .admin-table thead th,
+html body .main-navbar,
+html body:not(.dashboard-body):not(.auth-body) .main-navbar,
+html body .assistant-header,
+html body .ai-support-header,
+html body .masthead,
+html body .report-print-header {
+  background: #172554 !important;
+}
