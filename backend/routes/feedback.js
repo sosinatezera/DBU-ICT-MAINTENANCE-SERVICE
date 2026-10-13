@@ -8,10 +8,10 @@ const {
   getAllFeedback,
   getMyTechnicianFeedback,
   getTechnicianFeedback,
-  submitFeedback,
   submitTechnicianFeedback,
   updateTechnicianFeedback,
 } = require('../controllers/feedbackController');
+const { submitRequesterFeedback } = require('../controllers/ticketController');
 const { authenticate } = require('../middleware/auth');
 const { authorize }    = require('../middleware/authorize');
 const uploadFeedbackAttachment = require('../config/multerFeedback');
@@ -37,7 +37,10 @@ router.get('/submissions/:id', authenticate, getFeedbackSubmission);
 router.post('/submissions/:id/replies', authenticate, authorize('Requester', 'Technician', 'ICT Admin'), addFeedbackReply);
 router.patch('/submissions/:id', authenticate, authorize('ICT Admin'), updateFeedbackSubmission);
 router.get('/',  authenticate, authorize('ICT Admin'), getAllFeedback);
-router.post('/', authenticate, submitFeedback);
+router.post('/', authenticate, authorize('Requester'), (req, res, next) => {
+  req.params.id = req.body?.request_id;
+  submitRequesterFeedback(req, res, next);
+});
 router.get('/technician/mine', authenticate, authorize('Technician'), getMyTechnicianFeedback);
 router.patch('/technician/:id', authenticate, authorize('ICT Admin'), updateTechnicianFeedback);
 router.get('/technician', authenticate, authorize('ICT Admin'), getTechnicianFeedback);

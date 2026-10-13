@@ -24,6 +24,8 @@ const {
 const escapeRegExp = (s) =>
   String(s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+const VALID_REPAIR_QUALITIES = ["Fully Fixed", "Partially Fixed", "Not Fixed"];
+
 const getAllFeedback = async (req, res, next) => {
   try {
     const {
@@ -35,6 +37,8 @@ const getAllFeedback = async (req, res, next) => {
       technician,
       from,
       to,
+      repairQuality,
+      followUpRequested,
     } = req.query;
 
     const filter = {};
@@ -62,9 +66,48 @@ const getAllFeedback = async (req, res, next) => {
       ratingCond = ratingRange;
     if (ratingCond !== undefined) filter.rating = ratingCond;
 
+    if (repairQuality) {
+      if (!VALID_REPAIR_QUALITIES.includes(repairQuality)) {
+        return res.status(400).json({
+          success: false,
+          message: "Choose a valid repair quality.",
+        });
+      }
+      filter.repairQuality = repairQuality;
+    }
+    if (followUpRequested !== undefined && followUpRequested !== "") {
+      if (!["true", "false"].includes(String(followUpRequested))) {
+        return res.status(400).json({
+          success: false,
+          message: "Follow-up filter must be true or false.",
+        });
+      }
+      if (String(followUpRequested) === "true") {
+        filter.followUpRequested = true;
+      } else {
+        filter.$or = [
+          { followUpRequested: false },
+          { followUpRequested: { $exists: false } },
+        ];
+      }
+    }
+
     /* Date range on when the feedback was submitted. */
     if (from || to) {
       filter.createdAt = {};
+      for (const date of [from, to].filter(Boolean)) {
+        const parsed = new Date(`${date}T00:00:00.000Z`);
+        if (
+          !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+          Number.isNaN(parsed.getTime()) ||
+          parsed.toISOString().slice(0, 10) !== date
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Feedback date filters must use YYYY-MM-DD.",
+          });
+        }
+      }
       if (from) filter.createdAt.$gte = new Date(`${from}T00:00:00.000Z`);
       if (to) filter.createdAt.$lte = new Date(`${to}T23:59:59.999Z`);
     }
@@ -104,6 +147,7 @@ const getAllFeedback = async (req, res, next) => {
             fiveStarFeedback: 0,
             lowRatings: 0,
             pendingReview: 0,
+            followUpRequests: 0,
           },
         });
       }
@@ -115,10 +159,11 @@ const getAllFeedback = async (req, res, next) => {
       .populate({
         path: "request",
         select:
-          "ticketId problemDescription status equipmentType department requester assignedTechnician adminFeedback.adminId",
+          "ticketId title problemDescription status equipmentType otherDeviceName device assetId department requester assignedTechnician adminFeedback.adminId",
         populate: [
           { path: "requester", select: "fullName" },
           { path: "assignedTechnician", select: "fullName" },
+          { path: "assetId", select: "asset_tag asset_name" },
         ],
       })
       .sort({ createdAt: -1 })
@@ -140,6 +185,9 @@ const getAllFeedback = async (req, res, next) => {
           avg: { $avg: "$rating" },
           five: { $sum: { $cond: [{ $eq: ["$rating", 5] }, 1, 0] } },
           low: { $sum: { $cond: [{ $lte: ["$rating", 2] }, 1, 0] } },
+          followUps: {
+            $sum: { $cond: [{ $eq: ["$followUpRequested", true] }, 1, 0] },
+          },
         },
       },
     ]);
@@ -174,6 +222,7 @@ const getAllFeedback = async (req, res, next) => {
         fiveStarFeedback: agg ? agg.five : 0,
         lowRatings: agg ? agg.low : 0,
         pendingReview,
+        followUpRequests: agg ? agg.followUps : 0,
       },
     });
   } catch (err) {
@@ -220,10 +269,7 @@ const submitFeedback = async (req, res, next) => {
        `ticket.requester` is a Mongoose ObjectId and `req.user.id` is also an ObjectId.
        Comparing a string to an ObjectId directly would always be unequal and would
        wrongly reject the ticket owner with a 403. */
-    if (
-      String(ticket.requester) !== String(req.user.id) &&
-      req.user.role !== "ICT Admin"
-    ) {
+    if (String(ticket.requester) !== String(req.user.id)) {
       return res
         .status(403)
         .json({
@@ -251,6 +297,13 @@ const submitFeedback = async (req, res, next) => {
           success: false,
           message: "Feedback already submitted for this ticket.",
         });
+    }
+
+    if (ticket.requesterFeedback && ticket.requesterFeedback.overallRating) {
+      return res.status(409).json({
+        success: false,
+        message: "Feedback already submitted for this ticket.",
+      });
     }
 
     await Feedback.create({

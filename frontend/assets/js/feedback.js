@@ -46,7 +46,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const userForm = document.getElementById("feedbackSubmissionForm");
   const technicianForm = document.getElementById("technicianFeedbackForm");
   const adminPanel = document.getElementById("feedbackSubmissionManager");
-  if (!userForm && !technicianForm && !adminPanel) return;
+  const serviceFeedbackPanel = document.getElementById(
+    "requesterServiceFeedbackPanel",
+  );
+  if (!userForm && !technicianForm && !adminPanel && !serviceFeedbackPanel) return;
 
   try {
     await Auth.load();
@@ -65,6 +68,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       initSubmitterHistory("technicianFeedbackHistory", "Technician");
     } else if (adminPanel && requireRole("ICT Admin")) {
       initAdminFeedbackManager(adminPanel);
+    }
+    if (serviceFeedbackPanel && requireRole("ICT Admin")) {
+      initRequesterServiceFeedbackManager(serviceFeedbackPanel);
     }
   } catch (err) {
     console.error("Feedback page initialization failed:", err);
@@ -773,6 +779,132 @@ async function populateAdminFeedbackTechnicians() {
 }
 
 const adminFeedbackState = { page: 1, totalPages: 1, categoriesLoaded: false };
+
+function initRequesterServiceFeedbackManager(panel) {
+  if (panel.dataset.serviceFeedbackBound === "true") return;
+  panel.dataset.serviceFeedbackBound = "true";
+  document
+    .getElementById("serviceFeedbackApplyFilters")
+    ?.addEventListener("click", () => loadRequesterServiceFeedback());
+  document
+    .getElementById("serviceFeedbackClearFilters")
+    ?.addEventListener("click", () => {
+      [
+        "serviceFeedbackFrom",
+        "serviceFeedbackTo",
+        "serviceFeedbackRating",
+        "serviceFeedbackRepairQuality",
+        "serviceFeedbackFollowUp",
+      ].forEach((id) => {
+        const field = document.getElementById(id);
+        if (field) field.value = "";
+      });
+      loadRequesterServiceFeedback();
+    });
+  loadRequesterServiceFeedback();
+}
+
+async function loadRequesterServiceFeedback() {
+  const rows = document.getElementById("requesterServiceFeedbackRows");
+  const error = document.getElementById("serviceFeedbackLoadError");
+  if (!rows) return;
+  if (error) error.classList.add("d-none");
+  rows.innerHTML =
+    '<tr><td colspan="10" class="text-center text-muted py-4">Loading requester service feedback...</td></tr>';
+
+  const params = new URLSearchParams();
+  const filters = [
+    ["from", "serviceFeedbackFrom"],
+    ["to", "serviceFeedbackTo"],
+    ["rating", "serviceFeedbackRating"],
+    ["repairQuality", "serviceFeedbackRepairQuality"],
+    ["followUpRequested", "serviceFeedbackFollowUp"],
+  ];
+  filters.forEach(([key, id]) => {
+    const value = document.getElementById(id)?.value;
+    if (value) params.set(key, value);
+  });
+
+  try {
+    const result = await apiRequest(`/feedback?${params.toString()}`);
+    if (result?.success !== true || !Array.isArray(result.data)) {
+      throw new Error(result?.message || "Unable to load requester feedback.");
+    }
+    const summary = result.summary || {};
+    document.getElementById("serviceFeedbackTotal").textContent =
+      String(summary.totalFeedback ?? result.data.length);
+    document.getElementById("serviceFeedbackAverage").textContent =
+      Number(summary.averageRating || 0).toFixed(1);
+    document.getElementById("serviceFeedbackLowRatings").textContent =
+      String(summary.lowRatings || 0);
+    document.getElementById("serviceFeedbackFollowUps").textContent =
+      String(summary.followUpRequests || 0);
+
+    const qualityCounts = { "Fully Fixed": 0, "Partially Fixed": 0, "Not Fixed": 0 };
+    result.data.forEach((item) => {
+      if (Object.prototype.hasOwnProperty.call(qualityCounts, item.repairQuality)) {
+        qualityCounts[item.repairQuality] += 1;
+      }
+    });
+    const qualitySummary = document.getElementById(
+      "serviceFeedbackQualitySummary",
+    );
+    if (qualitySummary) {
+      qualitySummary.textContent = `Repair outcomes: Fully Fixed ${qualityCounts["Fully Fixed"]} · Partially Fixed ${qualityCounts["Partially Fixed"]} · Not Fixed ${qualityCounts["Not Fixed"]}`;
+    }
+
+    if (!result.data.length) {
+      rows.innerHTML =
+        '<tr><td colspan="10" class="text-center text-muted py-4">No requester service feedback matches these filters.</td></tr>';
+      return;
+    }
+    rows.innerHTML = result.data
+      .map((item) => {
+        const ticket = item.request || {};
+        const requesterName =
+          item.user?.fullName || ticket.requester?.fullName || "Unknown requester";
+        const technicianName =
+          ticket.assignedTechnician?.fullName || "Not assigned";
+        const asset = ticket.assetId || {};
+        const equipment =
+          asset.asset_name ||
+          ticket.otherDeviceName ||
+          ticket.device ||
+          ticket.equipmentType ||
+          "Not specified";
+        const assetLabel = asset.asset_tag || "";
+        const ticketId = ticket.ticketId || String(ticket._id || "");
+        const feedbackId = String(item._id || "");
+        const followUp = item.followUpRequested
+          ? `Yes — ${item.followUpStatus || "Pending"}`
+          : "No";
+        const submittedAt = feedbackDate(item.submittedAt || item.createdAt);
+        const comment = item.comment || "—";
+        const rating = Number(item.rating) || 0;
+        return `<tr>
+          <td><span class="d-block fw-semibold">${feedbackEscape(feedbackId)}</span><span class="small text-muted">${feedbackEscape(ticketId)}</span></td>
+          <td>${feedbackEscape(requesterName)}</td>
+          <td>${feedbackEscape(technicianName)}</td>
+          <td>${feedbackEscape(equipment)}${assetLabel ? `<span class="small text-muted d-block">${feedbackEscape(assetLabel)}</span>` : ""}</td>
+          <td class="text-nowrap"><span class="text-warning" aria-label="${rating} out of 5 stars">${feedbackEscape("★".repeat(Math.max(0, Math.min(5, rating))))}</span><span class="small text-muted"> ${rating}/5</span></td>
+          <td>${feedbackEscape(item.repairQuality || "—")}</td>
+          <td>${feedbackEscape(item.responseTimeliness || "—")}</td>
+          <td><span class="badge ${item.followUpRequested ? "text-bg-warning" : "text-bg-secondary"}">${feedbackEscape(followUp)}</span></td>
+          <td><span title="${feedbackEscape(comment)}">${feedbackEscape(comment.length > 120 ? `${comment.slice(0, 117)}...` : comment)}</span></td>
+          <td class="text-nowrap">${feedbackEscape(submittedAt)}</td>
+        </tr>`;
+      })
+      .join("");
+  } catch (err) {
+    rows.innerHTML =
+      '<tr><td colspan="10" class="text-center text-muted py-4">Requester service feedback could not be loaded.</td></tr>';
+    if (error) {
+      error.textContent = err.message || "Unable to load requester feedback.";
+      error.classList.remove("d-none");
+    }
+    console.error("Requester service feedback report failed to load:", err);
+  }
+}
 
 function buildAdminFeedbackQuery() {
   const params = new URLSearchParams({

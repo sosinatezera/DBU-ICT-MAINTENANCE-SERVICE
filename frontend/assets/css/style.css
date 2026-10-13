@@ -142,16 +142,21 @@ h6 { font-size: .9375rem; font-weight: 600; }   /* 15px */
 *::-webkit-scrollbar-thumb:hover  { background: #94a3b8; }
 
 /* ── Auth Pages ────────────────────────────────────────────── */
-.auth-body {
-  background: linear-gradient(135deg, var(--primary-subtle) 0%, #f8fafc 55%, var(--primary-soft) 100%);
+.auth-body.login-page {
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, .5) 0%, rgba(15, 23, 42, .2) 100%),
+    url("/assets/images/laptop1.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   min-height: 100vh;
 }
 
 .auth-body .card {
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
+  box-shadow: var(--auth-card-shadow, var(--shadow-lg));
+  border: 1px solid var(--auth-card-border, var(--border));
 }
 
 .google-auth-divider {
@@ -194,9 +199,9 @@ h6 { font-size: .9375rem; font-weight: 600; }   /* 15px */
   justify-content: center;
   gap: .4rem;
   padding: .35rem .6rem;
-  color: var(--primary);
+  color: #0D6EFD;
   font-weight: 600;
-  font-size: .875rem;
+  font-size: 14px;
   text-decoration: none;
   transition: var(--transition);
 }
@@ -2052,12 +2057,15 @@ body {
 }
 
 .auth-body .card {
-  border: 1px solid rgba(228, 231, 236, .9);
+  border: 1px solid var(--auth-card-border, rgba(228, 231, 236, .9));
   border-radius: var(--radius-lg);
-  box-shadow: 0 18px 45px rgba(16, 24, 40, .12);
+  box-shadow: var(--auth-card-shadow, 0 18px 45px rgba(16, 24, 40, .12));
 }
 
-.auth-body .card-body { background: rgba(255, 255, 255, .96); }
+.auth-body .card-body {
+  background: var(--auth-card-background, rgba(255, 255, 255, .96));
+  color: var(--auth-card-text, inherit);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

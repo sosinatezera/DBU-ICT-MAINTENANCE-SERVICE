@@ -12,10 +12,128 @@
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
   <link rel="stylesheet" href="/assets/css/theme.css" />
+  <style>
+    body.auth-body.register-page {
+      --auth-card-background: #0B1628;
+      --auth-card-border: rgba(96, 165, 250, .36);
+      --auth-card-shadow: 0 16px 40px rgba(2, 8, 23, .38);
+      --auth-card-text: #f8fafc;
+      --auth-card-muted: #cbd5e1;
+      min-height: 100vh;
+      position: relative;
+      isolation: isolate;
+      background: transparent !important;
+    }
+    body.auth-body.register-page::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(135deg, rgba(8, 30, 66, .3) 0%, rgba(8, 30, 66, .16) 100%),
+        url("/assets/images/registerback.png");
+      background-attachment: scroll;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      animation: register-background-drift 36s ease-in-out infinite alternate;
+    }
+    @keyframes register-background-drift {
+      from {
+        background-position: 50% 50%, 50% 50%;
+      }
+      to {
+        background-position: 50% 50%, 51.5% 49%;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body.auth-body.register-page::before {
+        animation: none;
+      }
+    }
+    body.auth-body.register-page .row > .col-sm-10 {
+      flex: 0 0 100%;
+      width: 100%;
+      max-width: 504px;
+    }
+    body.auth-body.register-page > .min-vh-100 {
+      padding-top: 1.5rem !important;
+      padding-bottom: 1.5rem !important;
+    }
+    body.auth-body.register-page .card {
+      width: min(92vw, 480px);
+      max-width: 100%;
+      margin-inline: auto;
+      border: 1px solid var(--auth-card-border) !important;
+      border-radius: 1rem;
+      box-shadow: var(--auth-card-shadow) !important;
+    }
+    body.auth-body.register-page .card-body {
+      padding: 1.25rem !important;
+    }
+    body.auth-body.register-page .card-body > .text-center.mb-4 img {
+      width: 76px !important;
+      height: 76px !important;
+      margin-bottom: .75rem !important;
+    }
+    body.auth-body.register-page .card-body > .text-center.mb-4 {
+      margin-bottom: 1rem !important;
+    }
+    body.auth-body.register-page .card-body .mb-3 {
+      margin-bottom: .65rem !important;
+    }
+    body.auth-body.register-page .card-body .row.g-3 {
+      --bs-gutter-y: .65rem;
+    }
+    body.auth-body.register-page .card-body .form-label {
+      margin-bottom: .3rem;
+    }
+    body.auth-body.register-page .card-body .form-control,
+    body.auth-body.register-page .card-body .form-select,
+    body.auth-body.register-page .card-body .input-group-text {
+      background-color: #101F35 !important;
+      color: #f8fafc !important;
+      border-color: #344761 !important;
+    }
+    body.auth-body.register-page .card-body .input-group-text .text-muted {
+      color: #aab8ca !important;
+    }
+    body.auth-body.register-page .card-body .form-control::placeholder {
+      color: #aab8ca;
+      opacity: 1;
+    }
+    body.auth-body.register-page .card-body .form-control:focus,
+    body.auth-body.register-page .card-body .form-select:focus {
+      background-color: #101F35 !important;
+      color: #f8fafc !important;
+      border-color: #60a5fa !important;
+      box-shadow: 0 0 0 .2rem rgba(96, 165, 250, .24) !important;
+    }
+    body.auth-body.register-page .card-body .form-select option {
+      background-color: #101F35;
+      color: #f8fafc;
+    }
+    body.auth-body.register-page .card-body .btn-outline-secondary {
+      color: #cbd5e1;
+      border-color: #344761;
+    }
+    body.auth-body.register-page .card-body hr {
+      border-color: #52647b;
+    }
+    body.auth-body.register-page .card-body h4,
+    body.auth-body.register-page .card-body .form-label {
+      color: var(--auth-card-text) !important;
+    }
+    body.auth-body.register-page .card-body .text-muted,
+    body.auth-body.register-page .card-body .form-text {
+      color: var(--auth-card-muted) !important;
+    }
+  </style>
   <script src="/assets/js/api-config.js?v=16"></script>
 </head>
 
-<body class="auth-body">
+<body class="auth-body register-page">
 
   <div class="min-vh-100 d-flex align-items-center justify-content-center py-5">
     <div class="container">

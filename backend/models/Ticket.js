@@ -216,6 +216,11 @@ const ticketSchema = new mongoose.Schema(
        Purpose: evaluate the ICT SERVICE the requester received.
        This is kept as a subdocument so the full ticket carries it. */
     requesterFeedback: {
+      feedbackId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Feedback",
+        default: null,
+      },
       requesterId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -224,8 +229,18 @@ const ticketSchema = new mongoose.Schema(
       requesterName: { type: String, trim: true, default: null },
       overallRating: { type: Number, min: 1, max: 5, default: null },
       serviceQuality: { type: String, trim: true, default: null }, // Excellent/Very Good/Good/Fair/Poor
+      repairQuality: {
+        type: String,
+        enum: ["Fully Fixed", "Partially Fixed", "Not Fixed", null],
+        default: null,
+      },
       technicianProfessionalism: { type: String, trim: true, default: null },
       responseTime: { type: String, trim: true, default: null }, // Fast/Normal/Slow
+      responseTimeliness: {
+        type: String,
+        enum: ["Excellent", "Good", "Fair", "Poor", null],
+        default: null,
+      },
       communication: { type: String, trim: true, default: null },
       problemResolution: { type: String, trim: true, default: null }, // Completely Resolved/Partially Resolved/Not Resolved
       satisfactionLevel: { type: String, trim: true, default: null }, // Very Satisfied .. Very Dissatisfied
@@ -236,6 +251,12 @@ const ticketSchema = new mongoose.Schema(
       },
       comment: { type: String, trim: true, default: null },
       suggestions: { type: String, trim: true, default: null },
+      followUpRequested: { type: Boolean, default: false },
+      followUpStatus: {
+        type: String,
+        enum: ["Not Requested", "Pending", "In Progress", "Resolved"],
+        default: "Not Requested",
+      },
       submittedAt: { type: Date, default: null },
     },
     attachment: {

@@ -202,7 +202,7 @@ function initNotificationBell(refreshCount = true) {
           </label>
           <input class="form-range mb-0" type="range" id="notifSoundVolume"
                  min="0" max="100" step="1" aria-describedby="notifSoundVolumeValue" />
-          <output class="small text-muted" id="notifSoundVolumeValue" for="notifSoundVolume">10%</output>
+          <output class="small text-muted" id="notifSoundVolumeValue" for="notifSoundVolume">50%</output>
         </div>
         <!-- List -->
         <div id="notifDropList" style="max-height:360px;overflow-y:auto;">

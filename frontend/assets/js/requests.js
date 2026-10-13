@@ -2705,6 +2705,9 @@ async function initFeedback() {
   _feedbackInitDone = true;
   try {
     const { data } = await apiRequest("/tickets/my");
+    renderSubmittedServiceFeedback(
+      data.filter((ticket) => ticket.has_requester_feedback || ticket.feedbackRating),
+    );
     renderPendingFeedback(
       data.filter(
         (r) =>
@@ -2730,6 +2733,15 @@ async function initFeedback() {
 
   initStarRating();
 
+  const repairQuality = document.getElementById("fbRepairQuality");
+  const followUpYes = document.getElementById("followUpYes");
+  const followUpNo = document.getElementById("followUpNo");
+  repairQuality?.addEventListener("change", () => {
+    const repairNotFixed = repairQuality.value === "Not Fixed";
+    if (repairNotFixed && followUpYes) followUpYes.checked = true;
+    if (followUpNo) followUpNo.disabled = repairNotFixed;
+  });
+
   const pendingFeedbackList = document.getElementById("pendingFeedbackList");
   if (pendingFeedbackList && !pendingFeedbackList.dataset.feedbackBound) {
     pendingFeedbackList.dataset.feedbackBound = "true";
@@ -2743,6 +2755,32 @@ async function initFeedback() {
       void openFeedbackForm(id).finally(() => {
         if (arrow?.isConnected) arrow.disabled = false;
       });
+    });
+  }
+
+  const submittedFeedbackList = document.getElementById(
+    "submittedServiceFeedbackList",
+  );
+  if (submittedFeedbackList && !submittedFeedbackList.dataset.feedbackBound) {
+    submittedFeedbackList.dataset.feedbackBound = "true";
+    submittedFeedbackList.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-submitted-feedback-ticket]");
+      if (!button) return;
+      button.disabled = true;
+      try {
+        const { data: ticket } = await apiRequest(
+          `/tickets/${encodeURIComponent(button.dataset.submittedFeedbackTicket)}`,
+        );
+        showFeedbackSubmitted(ticket, { justSubmitted: false });
+        document.getElementById("feedbackSubmittedCard")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      } catch (err) {
+        showAlert("feedbackAlert", requesterFeedbackErrorMessage(err), "danger");
+      } finally {
+        if (button.isConnected) button.disabled = false;
+      }
     });
   }
 
@@ -2777,9 +2815,9 @@ async function initFeedback() {
       const requiredSelects = [
         "fbServiceQuality",
         "fbProfessionalism",
-        "fbResponseTime",
+        "fbResponseTimeliness",
+        "fbRepairQuality",
         "fbCommunication",
-        "fbProblemResolution",
         "fbSatisfaction",
         "fbWouldRecommend",
       ];
@@ -2811,6 +2849,18 @@ async function initFeedback() {
         return;
       }
       commentField?.classList.remove("is-invalid");
+      const followUpSelection = document.querySelector(
+        'input[name="followUpRequested"]:checked',
+      );
+      if (!followUpSelection) {
+        showAlert(
+          "feedbackAlert",
+          "Please choose whether you need a follow-up request.",
+          "warning",
+        );
+        document.getElementById("followUpYes")?.focus();
+        return;
+      }
       if (comment && comment.length > 1000) {
         showAlert(
           "feedbackAlert",
@@ -2831,13 +2881,14 @@ async function initFeedback() {
       const payload = {
         overallRating: ratingNum,
         serviceQuality: document.getElementById("fbServiceQuality").value,
+        repairQuality: document.getElementById("fbRepairQuality").value,
         technicianProfessionalism:
           document.getElementById("fbProfessionalism").value,
-        responseTime: document.getElementById("fbResponseTime").value,
+        responseTimeliness: document.getElementById("fbResponseTimeliness").value,
         communication: document.getElementById("fbCommunication").value,
-        problemResolution: document.getElementById("fbProblemResolution").value,
         satisfactionLevel: document.getElementById("fbSatisfaction").value,
         wouldRecommend: document.getElementById("fbWouldRecommend").value,
+        followUpRequested: followUpSelection.value === "true",
         comment: comment || null,
         suggestions: suggestions || null,
       };
@@ -2872,7 +2923,10 @@ async function initFeedback() {
           feedbackAlert.classList.add("d-none");
           feedbackAlert.innerHTML = "";
         }
-        showToast("Feedback submitted successfully.", "success");
+        showToast(
+          response.message || "Feedback submitted successfully.",
+          response.warning ? "warning" : "success",
+        );
         lockRequesterFeedbackButton();
 
         const requestSummary = {
@@ -2918,6 +2972,12 @@ async function initFeedback() {
                 ["resolved", "closed"].includes(r.status) &&
                 !r.has_requester_feedback &&
                 !r.feedbackRating,
+            ),
+          );
+          renderSubmittedServiceFeedback(
+            data.filter(
+              (ticket) =>
+                ticket.has_requester_feedback || ticket.feedbackRating,
             ),
           );
         } catch (refreshError) {
@@ -3007,6 +3067,36 @@ function renderPendingFeedback(requests) {
     .join("");
 }
 
+function renderSubmittedServiceFeedback(tickets) {
+  const container = document.getElementById("submittedServiceFeedbackList");
+  if (!container) return;
+  if (!tickets.length) {
+    container.innerHTML =
+      '<div class="list-group-item text-muted">You have not submitted service feedback yet.</div>';
+    return;
+  }
+  container.innerHTML = tickets
+    .map((ticket) => {
+      const id = ticket && (ticket._id || ticket.id);
+      const displayId = ticket.ticketId || id || "";
+      const feedback = ticket.requester_feedback || {};
+      const rating = Number(feedback.overallRating || ticket.feedbackRating) || 0;
+      const stars = "★".repeat(Math.max(0, Math.min(5, rating)));
+      const submittedAt = feedback.submittedAt || ticket.updated_at;
+      return `
+        <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 text-start"
+          data-submitted-feedback-ticket="${escHtml(id || "")}">
+          <span class="min-w-0">
+            <span class="fw-semibold d-block">${escHtml(displayId)}</span>
+            <span class="small text-muted">${escHtml(ticket.title || ticket.problemDescription || "Maintenance request")}</span>
+            <span class="small text-muted d-block">Submitted ${escHtml(formatDateTime(submittedAt))}</span>
+          </span>
+          <span class="text-warning text-nowrap" aria-label="${rating} out of 5 stars">${escHtml(stars || "—")}</span>
+        </button>`;
+    })
+    .join("");
+}
+
 function requesterFeedbackErrorMessage(error) {
   if (error?.status === 401)
     return "Your access token has expired. Please sign in again.";
@@ -3038,6 +3128,11 @@ async function openFeedbackForm(id, loadedTicket = null) {
   }
 
   try {
+    document.getElementById("feedbackForm")?.reset();
+    setStarRating("");
+    const followUpNo = document.getElementById("followUpNo");
+    if (followUpNo) followUpNo.disabled = false;
+    document.getElementById("feedbackAlert")?.classList.add("d-none");
     const ticket =
       loadedTicket ||
       (await apiRequest(`/tickets/${encodeURIComponent(requestId)}`)).data;
@@ -3072,6 +3167,17 @@ async function openFeedbackForm(id, loadedTicket = null) {
       service || ticket.problemDescription || "Request details unavailable";
     document.getElementById("feedbackRequestTechnician").value =
       ticket.assignedTechnician || ticket.technician_name || "Not assigned";
+    document.getElementById("feedbackRequesterId").value =
+      ticket.requester_id || "";
+    document.getElementById("feedbackRequesterName").value =
+      ticket.requester_name || "";
+    document.getElementById("feedbackEquipment").value =
+      [ticket.deviceLabel || ticket.asset_name || ticket.equipmentType,
+       ticket.asset_tag ? `Asset ${ticket.asset_tag}` : null]
+        .filter(Boolean)
+        .join(" · ") || "Not specified";
+    document.getElementById("feedbackGeneratedId").value = "";
+    document.getElementById("feedbackSubmittedAt").value = "";
     document.getElementById("feedbackRequestStatus").value = String(
       ticket.status || "Unavailable",
     )
@@ -3172,10 +3278,17 @@ function showFeedbackSubmitted(ticket, opts) {
     : `Feedback for request <strong>${escHtml(title)}</strong> has already been submitted. You cannot submit it again.`;
 
   const rows = [
+    ["Requester ID", ticket.requester_id],
+    ["Requester Name", fb.requester_name || ticket.requester_name],
+    ["Technician", ticket.assignedTechnician || ticket.technician_name],
+    ["Equipment / Asset", [ticket.deviceLabel || ticket.asset_name || ticket.equipmentType, ticket.asset_tag ? `Asset ${ticket.asset_tag}` : null].filter(Boolean).join(" · ")],
     [
       "Overall Service Rating",
       stars + '<span class="ms-1">' + escHtml(ratingLabel) + "</span>",
     ],
+    ["Feedback ID", fb.feedbackId],
+    ["Repair Quality", fb.repairQuality],
+    ["Response and Timeliness", fb.responseTimeliness],
     ["Service Quality", fb.serviceQuality],
     ["Technician Professionalism", fb.technicianProfessionalism],
     ["Response Time", fb.responseTime],
@@ -3183,6 +3296,7 @@ function showFeedbackSubmitted(ticket, opts) {
     ["Problem Resolution", fb.problemResolution],
     ["Satisfaction Level", fb.satisfactionLevel],
     ["Would Recommend Service", fb.wouldRecommend],
+    ["Follow-up Requested", fb.followUpRequested ? `Yes — ${fb.followUpStatus || "Pending"}` : "No"],
     ["Comment", fb.comment],
     ["Suggestions", fb.suggestions],
   ].filter(([, v]) => v != null && v !== "" && v !== "—");

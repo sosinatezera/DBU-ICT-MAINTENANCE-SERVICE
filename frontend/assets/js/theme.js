@@ -67,7 +67,7 @@ function syncThemeSwitchers(theme) {
 }
 
 /* Build a single switcher control and return it. */
-function buildThemeSwitch(onClick) {
+function buildThemeSwitch() {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = "app-theme-switch";
@@ -76,7 +76,6 @@ function buildThemeSwitch(onClick) {
   btn.innerHTML =
     '<i class="bi bi-sun-fill theme-sun" style="display:none;"></i>' +
     '<i class="bi bi-moon-stars-fill theme-moon"></i>';
-  btn.addEventListener("click", onClick);
   return btn;
 }
 
@@ -99,7 +98,7 @@ function injectThemeSwitch() {
   if (sidebarNav) {
     // Dashboard / role pages: place the toggle at the top of the left sidebar,
     // outside the brand link so clicking it does not trigger navigation.
-    const btn = buildThemeSwitch(toggleTheme);
+    const btn = buildThemeSwitch();
     btn.classList.add("app-theme-in-sidebar");
     btn.setAttribute("title", "Toggle dark/light mode");
     if (sidebarThemeSlot) {
@@ -119,7 +118,7 @@ function injectThemeSwitch() {
   const topbar = document.querySelector(".topbar");
   if (topbar) {
     // Dashboard / role pages without a sidebar: add to topbar's controls.
-    const btn = buildThemeSwitch(toggleTheme);
+    const btn = buildThemeSwitch();
     btn.classList.add("app-theme-in-topbar");
     // Prefer an existing right-aligned action cluster, else append to topbar.
     const cluster =
@@ -138,7 +137,7 @@ function injectThemeSwitch() {
     ".main-navbar .d-flex.align-items-center.gap-2.mt-2.mt-lg-0",
   );
   if (navActions && !document.body.classList.contains("auth-body")) {
-    const btn = buildThemeSwitch(toggleTheme);
+    const btn = buildThemeSwitch();
     btn.classList.add("app-theme-in-navbar");
     const before = navActions.firstElementChild;
     if (before) navActions.insertBefore(btn, before);
@@ -148,7 +147,7 @@ function injectThemeSwitch() {
 
   const mainNavbar = document.getElementById("mainNavbar");
   if (mainNavbar && !document.body.classList.contains("auth-body")) {
-    const btn = buildThemeSwitch(toggleTheme);
+    const btn = buildThemeSwitch();
     btn.classList.add("app-theme-in-navbar");
     const actions =
       mainNavbar.querySelector("#navMenu .d-flex.align-items-center.gap-2") ||
@@ -163,7 +162,7 @@ function injectThemeSwitch() {
   }
 
   // Public / auth pages (login, register): floating top-right.
-  const btn = buildThemeSwitch(toggleTheme);
+  const btn = buildThemeSwitch();
   btn.classList.add("app-theme-float");
   document.body.appendChild(btn);
 }

@@ -340,6 +340,7 @@
 
   /* Render Change/Remove Photo buttons inside the avatar header */
   function renderProfileAvatarButtons(u) {
+    if (!u || typeof u !== "object") return;
     const avatar = document.getElementById("profileAvatar");
     if (!avatar) return;
     const initialsSpan = avatar.querySelector(".profile-avatar-initials");
@@ -425,6 +426,9 @@
 
         const freshUser = await Auth.refresh();
         if (
+          data?.success !== true ||
+          !data.data?.profileImage ||
+          !freshUser ||
           data.data.profileImage !== freshUser.profileImage ||
           !freshUser.profileImage
         ) {
@@ -454,17 +458,24 @@
 
     setLoading("profileAvatarRemoveBtn", null, true);
     try {
-      await apiRequest("/users/profile-image", {
+      const response = await apiRequest("/users/profile-image", {
         method: "DELETE",
       });
+      if (response?.success !== true) {
+        throw new Error("The server did not confirm photo removal.");
+      }
 
-      showToast(t("profile.success"), "success");
-      _current = await Auth.refresh();
-      if (_current.profileImage) {
+      const freshUser = await Auth.refresh();
+      if (!freshUser) {
+        throw new Error("The updated profile could not be reloaded.");
+      }
+      if (freshUser.profileImage) {
         throw new Error("The saved profile photo could not be removed.");
       }
 
+      _current = freshUser;
       renderProfile();
+      showToast(t("profile.success"), "success");
     } catch (err) {
       showToast(err.message || t("profile.loadFailed"), "danger");
     } finally {
@@ -477,16 +488,9 @@
     const section = document.getElementById(PROFILE_SECTION_ID);
     if (!section) return;
 
-    /* Re-render buttons whenever the profile view changes */
-    /* Explicit re-render on profile tab switch handled by renderProfile()
-       rather than MutationObserver to avoid recursive rendering and
-       duplicated click handlers. */
+    /* renderProfile() owns rendering after _current is loaded; this function
+       only binds handlers to the newly rendered avatar. */
     const avatar = document.getElementById("profileAvatar");
-    if (avatar) {
-      /* Ensure buttons are rendered initially */
-      renderProfileAvatarButtons(_current);
-    }
-
     /* Click handlers */
     avatar?.addEventListener("click", (e) => {
       const changeBtn = e.target.closest(".profile-avatar-change");

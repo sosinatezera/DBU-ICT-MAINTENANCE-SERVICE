@@ -26,6 +26,8 @@ const VALID_RESOLUTION = [
   "Partially Resolved",
   "Not Resolved",
 ];
+const VALID_REPAIR_QUALITY = ["Fully Fixed", "Partially Fixed", "Not Fixed"];
+const VALID_RESPONSE_TIMELINESS = ["Excellent", "Good", "Fair", "Poor"];
 const VALID_SATISFACTION = [
   "Very Satisfied",
   "Satisfied",
@@ -58,6 +60,7 @@ const { sendEventEmail } = require("../services/mailer");
 const { broadcastNotification } = require("../services/notificationService");
 
 const Ticket = require("../models/Ticket");
+const Feedback = require("../models/Feedback");
 const Category = require("../models/Category");
 const Settings = require("../models/Settings");
 const {
@@ -2310,17 +2313,22 @@ function formatTicket(
 /* ── Helper: format requester feedback for API response ────── */
 function formatRequesterFeedback(report) {
   return {
+    feedbackId: report?.feedbackId ? String(report.feedbackId) : null,
     requester_name: report?.requesterName || null,
     overallRating: report?.overallRating ?? null,
     serviceQuality: report?.serviceQuality ?? null,
+    repairQuality: report?.repairQuality ?? null,
     technicianProfessionalism: report?.technicianProfessionalism ?? null,
     responseTime: report?.responseTime ?? null,
+    responseTimeliness: report?.responseTimeliness ?? null,
     communication: report?.communication ?? null,
     problemResolution: report?.problemResolution ?? null,
     satisfactionLevel: report?.satisfactionLevel ?? null,
     wouldRecommend: report?.wouldRecommend ?? null,
     comment: report?.comment ?? null,
     suggestions: report?.suggestions ?? null,
+    followUpRequested: report?.followUpRequested ?? false,
+    followUpStatus: report?.followUpStatus ?? "Not Requested",
     submittedAt: report?.submittedAt ?? null,
   };
 }
@@ -2332,6 +2340,8 @@ function pickRequesterFeedbackFields(body) {
     serviceQuality: VALID_QUALITY_LEVELS,
     technicianProfessionalism: VALID_QUALITY_LEVELS,
     responseTime: VALID_RESPONSE_TIME,
+    responseTimeliness: VALID_RESPONSE_TIMELINESS,
+    repairQuality: VALID_REPAIR_QUALITY,
     communication: VALID_QUALITY_LEVELS,
     problemResolution: VALID_RESOLUTION,
     satisfactionLevel: VALID_SATISFACTION,
@@ -2361,6 +2371,49 @@ function pickRequesterFeedbackFields(body) {
     if (body[f] !== undefined && body[f] !== null && body[f] !== "")
       fields[f] = body[f];
   }
+  const repairQualityToResolution = {
+    "Fully Fixed": "Completely Resolved",
+    "Partially Fixed": "Partially Resolved",
+    "Not Fixed": "Not Resolved",
+  };
+  const resolutionToRepairQuality = {
+    "Completely Resolved": "Fully Fixed",
+    "Partially Resolved": "Partially Fixed",
+    "Not Resolved": "Not Fixed",
+  };
+  if (!fields.repairQuality && fields.problemResolution) {
+    fields.repairQuality = resolutionToRepairQuality[fields.problemResolution];
+  }
+  if (!fields.problemResolution && fields.repairQuality) {
+    fields.problemResolution = repairQualityToResolution[fields.repairQuality];
+  }
+  const timelinessToLegacyResponse = {
+    Excellent: "Fast",
+    Good: "Normal",
+    Fair: "Slow",
+    Poor: "Slow",
+  };
+  const legacyResponseToTimeliness = {
+    Fast: "Excellent",
+    Normal: "Good",
+    Slow: "Fair",
+  };
+  if (!fields.responseTimeliness && fields.responseTime) {
+    fields.responseTimeliness = legacyResponseToTimeliness[fields.responseTime];
+  }
+  if (!fields.responseTime && fields.responseTimeliness) {
+    fields.responseTime = timelinessToLegacyResponse[fields.responseTimeliness];
+  }
+  if (body.followUpRequested !== undefined) {
+    if (body.followUpRequested === true || body.followUpRequested === "true") {
+      fields.followUpRequested = true;
+    } else if (
+      body.followUpRequested === false ||
+      body.followUpRequested === "false"
+    ) {
+      fields.followUpRequested = false;
+    }
+  }
   return fields;
 }
 
@@ -2377,6 +2430,9 @@ function validateRequesterFeedbackPayload(payload) {
   }
   if (validateRequired(payload.serviceQuality, "Service quality"))
     return "Service quality is required.";
+  if (!VALID_REPAIR_QUALITY.includes(payload.repairQuality)) {
+    return "Choose a valid repair quality.";
+  }
   if (validateRequired(payload.comment, "Comment"))
     return "Comment is required.";
   if (
@@ -2386,21 +2442,29 @@ function validateRequesterFeedbackPayload(payload) {
     )
   )
     return "Technician professionalism is required.";
-  if (validateRequired(payload.responseTime, "Response time"))
-    return "Response time is required.";
+  if (!VALID_RESPONSE_TIMELINESS.includes(payload.responseTimeliness)) {
+    return "Choose a valid response and timeliness rating.";
+  }
   if (validateRequired(payload.communication, "Communication"))
     return "Communication is required.";
-  if (validateRequired(payload.problemResolution, "Problem resolution"))
-    return "Problem resolution is required.";
+  if (!payload.problemResolution) return "Problem resolution is required.";
   if (validateRequired(payload.satisfactionLevel, "Satisfaction level"))
     return "Satisfaction level is required.";
   if (validateRequired(payload.wouldRecommend, "Would recommend service"))
     return "Please indicate whether you would recommend the service.";
+  if (typeof payload.followUpRequested !== "boolean") {
+    return "Choose whether you need a follow-up request.";
+  }
+  if (payload.repairQuality === "Not Fixed" && !payload.followUpRequested) {
+    return "A follow-up request is required when the repair is not fixed.";
+  }
 
   const options = {
     serviceQuality: VALID_QUALITY_LEVELS,
     technicianProfessionalism: VALID_QUALITY_LEVELS,
     responseTime: VALID_RESPONSE_TIME,
+    responseTimeliness: VALID_RESPONSE_TIMELINESS,
+    repairQuality: VALID_REPAIR_QUALITY,
     communication: VALID_QUALITY_LEVELS,
     problemResolution: VALID_RESOLUTION,
     satisfactionLevel: VALID_SATISFACTION,
@@ -2440,8 +2504,7 @@ const submitRequesterFeedback = async (req, res, next) => {
     const idErr = validateObjectId(req.params.id, "Ticket");
     if (idErr) return res.status(400).json({ success: false, message: idErr });
 
-    /* Only the Requester (owner) or an ICT Admin may submit. Technicians cannot. */
-    if (req.user.role === "Technician") {
+    if (req.user.role !== "Requester") {
       return res.status(403).json({
         success: false,
         message: "Only the requester can submit service feedback.",
@@ -2456,7 +2519,7 @@ const submitRequesterFeedback = async (req, res, next) => {
 
     const ownerId = ticket.requester?._id || ticket.requester;
     const isOwner = String(ownerId) === String(req.user.id);
-    if (!isOwner && req.user.role !== "ICT Admin") {
+    if (!isOwner) {
       return res.status(403).json({
         success: false,
         message: "You can only give feedback on your own tickets.",
@@ -2478,6 +2541,13 @@ const submitRequesterFeedback = async (req, res, next) => {
       });
     }
 
+    if (await Feedback.exists({ request: ticket._id })) {
+      return res.status(409).json({
+        success: false,
+        message: "Service feedback already submitted for this ticket.",
+      });
+    }
+
     const payload = pickRequesterFeedbackFields(req.body);
     const validationErr = validateRequesterFeedbackPayload(payload);
     if (validationErr)
@@ -2490,52 +2560,113 @@ const submitRequesterFeedback = async (req, res, next) => {
         message: "The ticket requester account no longer exists.",
       });
     }
+    const submittedAt = new Date();
+    let feedbackRecord;
+    try {
+      feedbackRecord = await Feedback.create({
+        request: ticket._id,
+        user: requester._id,
+        rating: Number(payload.overallRating),
+        repairQuality: payload.repairQuality,
+        responseTimeliness: payload.responseTimeliness,
+        followUpRequested: payload.followUpRequested,
+        followUpStatus: payload.followUpRequested ? "Pending" : "Not Requested",
+        submittedAt,
+        comment: payload.comment || null,
+      });
+    } catch (err) {
+      if (err.code === 11000) {
+        return res.status(409).json({
+          success: false,
+          message: "Service feedback already submitted for this ticket.",
+        });
+      }
+      throw err;
+    }
+
     ticket.requesterFeedback = {
+      feedbackId: feedbackRecord._id,
       requesterId: requester._id,
       requesterName: requester.fullName,
       overallRating: Number(payload.overallRating),
       serviceQuality: payload.serviceQuality,
+      repairQuality: payload.repairQuality,
       technicianProfessionalism: payload.technicianProfessionalism,
       responseTime: payload.responseTime,
+      responseTimeliness: payload.responseTimeliness,
       communication: payload.communication,
       problemResolution: payload.problemResolution,
       satisfactionLevel: payload.satisfactionLevel,
       wouldRecommend: payload.wouldRecommend,
       comment: payload.comment || null,
       suggestions: payload.suggestions || null,
-      submittedAt: new Date(),
+      followUpRequested: payload.followUpRequested,
+      followUpStatus: payload.followUpRequested ? "Pending" : "Not Requested",
+      submittedAt,
     };
     ticket.markModified("requesterFeedback");
     /* Keep legacy aggregate fields in sync (used by reports + history display). */
     ticket.feedbackRating = Number(payload.overallRating);
     ticket.feedbackComments = payload.comment || null;
-    await ticket.save();
-
-    /* Mirror a minimal record into the standalone Feedback collection so the
-       existing admin dashboard avg-rating and "recent feedback" report keep working. */
     try {
-      const Feedback = require("../models/Feedback");
-      const existing = await Feedback.findOne({ request: ticket._id });
-      if (existing) {
-        existing.user = requester._id;
-        existing.rating = Number(payload.overallRating);
-        existing.comment = payload.comment || null;
-        await existing.save();
-      } else {
-        await Feedback.create({
+      await ticket.save();
+    } catch (err) {
+      try {
+        await Feedback.deleteOne({
+          _id: feedbackRecord._id,
           request: ticket._id,
-          user: requester._id,
-          rating: Number(payload.overallRating),
-          comment: payload.comment || null,
         });
+      } catch (cleanupError) {
+        console.error(
+          "[feedback] Failed to remove the unlinked requester feedback record:",
+          cleanupError,
+        );
       }
-    } catch (_) {
-      /* non-blocking */
+      throw err;
+    }
+
+    let followUpNotificationFailed = false;
+    if (payload.followUpRequested) {
+      try {
+        const admins = await User.find({
+          role: "ICT Admin",
+          status: "active",
+        })
+          .select("_id")
+          .lean();
+        const recipientIds = new Set(
+          admins.map((admin) => String(admin._id)),
+        );
+        if (ticket.assignedTechnician) {
+          recipientIds.add(String(ticket.assignedTechnician));
+        }
+        const displayId = displayTicketId(ticket.ticketId);
+        const notifications = await Notification.insertMany(
+          [...recipientIds].map((userId) => ({
+            user: userId,
+            ticket: ticket._id,
+            title: `Requester follow-up requested: ${displayId}`,
+            message: `${requester.fullName || "A requester"} reported that the issue remains or has happened again.`,
+            type: "warning",
+            notificationType: "request_reopened",
+          })),
+        );
+        notifications.forEach(broadcastNotification);
+      } catch (err) {
+        followUpNotificationFailed = true;
+        console.error(
+          "[feedback] Requester follow-up was saved, but notification delivery failed:",
+          err,
+        );
+      }
     }
 
     res.status(201).json({
       success: true,
-      message: "Service feedback submitted. Thank you!",
+      message: followUpNotificationFailed
+        ? "Feedback was saved, but the follow-up notification could not be delivered. ICT Admin can still see the pending request."
+        : "Service feedback submitted. Thank you!",
+      ...(followUpNotificationFailed ? { warning: "follow_up_notification_failed" } : {}),
       data: formatRequesterFeedback(ticket.requesterFeedback),
     });
   } catch (err) {
@@ -2550,8 +2681,12 @@ const getRequesterFeedback = async (req, res, next) => {
     if (idErr) return res.status(400).json({ success: false, message: idErr });
 
     const ticket = await Ticket.findById(req.params.id)
-      .select("requesterFeedback requester")
-      .populate("requester", "fullName");
+      .select(
+        "requesterFeedback requester ticketId assignedTechnician equipmentType otherDeviceName device assetId",
+      )
+      .populate("requester", "fullName")
+      .populate("assignedTechnician", "fullName")
+      .populate("assetId", "asset_tag asset_name");
     if (!ticket)
       return res
         .status(404)
@@ -2566,7 +2701,13 @@ const getRequesterFeedback = async (req, res, next) => {
     }
 
     /* Only the ticket owner or an ICT Admin may read the requester's survey. */
-    if (req.user.role !== "ICT Admin") {
+    if (!["Requester", "ICT Admin"].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the requester or an ICT Admin may view service feedback.",
+      });
+    }
+    if (req.user.role === "Requester") {
       const ownerId = ticket.requester?._id || ticket.requester;
       if (String(ownerId) !== String(req.user.id)) {
         return res.status(403).json({
@@ -2580,7 +2721,18 @@ const getRequesterFeedback = async (req, res, next) => {
       success: true,
       data: {
         ...formatRequesterFeedback(report),
+        request_id: displayTicketId(ticket.ticketId),
+        requester_id: ticket.requester?._id || report.requesterId || null,
         requester_name: ticket.requester?.fullName || null,
+        technician_name: ticket.assignedTechnician?.fullName || null,
+        equipment_name:
+          ticket.assetId?.asset_name ||
+          ticket.otherDeviceName ||
+          ticket.device ||
+          ticket.equipmentType ||
+          null,
+        asset_id: ticket.assetId?._id || ticket.assetId || null,
+        asset_tag: ticket.assetId?.asset_tag || null,
       },
     });
   } catch (err) {

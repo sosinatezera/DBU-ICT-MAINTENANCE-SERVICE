@@ -593,7 +593,7 @@
   <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
 
-<body class="dashboard-body feedback-page-bg">
+<body class="dashboard-body requester-dashboard feedback-page-bg">
 
   <div class="d-flex">
 
@@ -794,6 +794,16 @@
             </div>
           </div>
 
+          <section class="card shadow-sm border-0 mb-4" id="submittedServiceFeedbackCard"
+            aria-labelledby="submittedServiceFeedbackTitle">
+            <div class="card-header bg-white py-3">
+              <h2 class="h5 fw-bold mb-0" id="submittedServiceFeedbackTitle">My submitted service feedback</h2>
+            </div>
+            <div class="list-group list-group-flush" id="submittedServiceFeedbackList" aria-live="polite">
+              <div class="list-group-item text-muted">Loading your submitted feedback...</div>
+            </div>
+          </section>
+
           <!-- Feedback Already Submitted (read-only) -->
           <div class="feedback-submitted-card mb-4 d-none" id="feedbackSubmittedCard">
             <div class="feedback-submitted-header">
@@ -827,6 +837,11 @@
                   <h6 class="fw-bold mb-3">Request Information</h6>
                   <div class="row g-3">
                     <div class="col-md-6">
+                      <label for="feedbackGeneratedId" class="form-label fw-semibold">Feedback ID</label>
+                      <input type="text" class="form-control" id="feedbackGeneratedId" readonly
+                        placeholder="Generated after submission" />
+                    </div>
+                    <div class="col-md-6">
                       <label for="feedbackRequestTitle" class="form-label fw-semibold">Request ID</label>
                       <input type="text" class="form-control" id="feedbackRequestTitle" readonly />
                     </div>
@@ -837,6 +852,18 @@
                     <div class="col-md-6">
                       <label for="feedbackRequestTechnician" class="form-label fw-semibold">Technician</label>
                       <input type="text" class="form-control" id="feedbackRequestTechnician" readonly />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="feedbackRequesterId" class="form-label fw-semibold">Requester ID</label>
+                      <input type="text" class="form-control" id="feedbackRequesterId" readonly />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="feedbackRequesterName" class="form-label fw-semibold">Requester Name</label>
+                      <input type="text" class="form-control" id="feedbackRequesterName" readonly />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="feedbackEquipment" class="form-label fw-semibold">Equipment / Asset</label>
+                      <input type="text" class="form-control" id="feedbackEquipment" readonly />
                     </div>
                     <div class="col-md-6">
                       <label for="feedbackRequestStatus" class="form-label fw-semibold">Status</label>
@@ -896,13 +923,14 @@
                     </select>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label fw-semibold small"><span>Response / Resolution Time</span>
+                    <label class="form-label fw-semibold small" for="fbResponseTimeliness"><span>Response and Timeliness</span>
                       <span class="text-danger">*</span></label>
-                    <select class="form-select" id="fbResponseTime">
-                      <option value="" data-i18n="fb.select">-- Select --</option>
-                      <option data-i18n="fb.opt.fast">Fast</option>
-                      <option data-i18n="fb.opt.normal">Normal</option>
-                      <option data-i18n="fb.opt.slow">Slow</option>
+                    <select class="form-select" id="fbResponseTimeliness">
+                      <option value="">-- Select --</option>
+                      <option>Excellent</option>
+                      <option>Good</option>
+                      <option>Fair</option>
+                      <option>Poor</option>
                     </select>
                   </div>
                   <div class="col-md-6">
@@ -918,13 +946,13 @@
                     </select>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label fw-semibold small"><span data-i18n="fb.problemResolution">Problem
-                        Resolution</span> <span class="text-danger">*</span></label>
-                    <select class="form-select" id="fbProblemResolution">
-                      <option value="" data-i18n="fb.select">-- Select --</option>
-                      <option data-i18n="fb.opt.complete">Completely Resolved</option>
-                      <option data-i18n="fb.opt.partial">Partially Resolved</option>
-                      <option data-i18n="fb.opt.notResolved">Not Resolved</option>
+                    <label class="form-label fw-semibold small" for="fbRepairQuality">Repair Quality
+                      <span class="text-danger">*</span></label>
+                    <select class="form-select" id="fbRepairQuality">
+                      <option value="">-- Select --</option>
+                      <option>Fully Fixed</option>
+                      <option>Partially Fixed</option>
+                      <option>Not Fixed</option>
                     </select>
                   </div>
                   <div class="col-md-6">
@@ -948,6 +976,27 @@
                       <option data-i18n="fb.opt.no">No</option>
                     </select>
                   </div>
+                </div>
+
+                <fieldset class="mt-3 mb-3">
+                  <legend class="form-label fw-semibold small">Reopen / Follow-up Request <span class="text-danger">*</span></legend>
+                  <div class="d-flex gap-3">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="followUpRequested" id="followUpYes" value="true" required />
+                      <label class="form-check-label" for="followUpYes">Yes, please follow up</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="followUpRequested" id="followUpNo" value="false" required />
+                      <label class="form-check-label" for="followUpNo">No</label>
+                    </div>
+                  </div>
+                  <div class="form-text">Choose Yes if the problem remains or has happened again. This sends a follow-up request without changing the ticket status.</div>
+                </fieldset>
+
+                <div class="mb-3">
+                  <label for="feedbackSubmittedAt" class="form-label fw-semibold">Submission Date and Time</label>
+                  <input type="text" class="form-control" id="feedbackSubmittedAt" readonly
+                    placeholder="Recorded automatically when submitted" />
                 </div>
 
                 <div class="mb-3 mt-3">
@@ -984,8 +1033,8 @@
   <script src="/assets/js/lang.js?v=16"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/main.js?v=25"></script>
-  <script src="/assets/js/requests.js?v=20"></script>
-  <script src="/assets/js/feedback.js?v=4"></script>
+  <script src="/assets/js/requests.js?v=21"></script>
+  <script src="/assets/js/feedback.js?v=5"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

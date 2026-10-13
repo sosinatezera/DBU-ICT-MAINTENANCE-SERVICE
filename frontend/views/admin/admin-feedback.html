@@ -68,6 +68,73 @@
       </header>
 
       <main class="p-4">
+        <section class="card border-0 shadow-sm mb-4" id="requesterServiceFeedbackPanel"
+          aria-labelledby="requesterServiceFeedbackTitle">
+          <div class="card-header bg-white py-3">
+            <h2 class="h5 fw-bold mb-1" id="requesterServiceFeedbackTitle">Requester Service Ratings</h2>
+            <p class="small text-muted mb-0">Review submitted service feedback and follow-up requests. Technician maintenance reports are managed separately.</p>
+          </div>
+          <div class="card-body border-bottom">
+            <div class="row g-3">
+              <div class="col-6 col-lg-3"><div class="small text-muted">Total responses</div><strong class="fs-4" id="serviceFeedbackTotal">0</strong></div>
+              <div class="col-6 col-lg-3"><div class="small text-muted">Average satisfaction</div><strong class="fs-4" id="serviceFeedbackAverage">0</strong></div>
+              <div class="col-6 col-lg-3"><div class="small text-muted">Low ratings (1–2)</div><strong class="fs-4" id="serviceFeedbackLowRatings">0</strong></div>
+              <div class="col-6 col-lg-3"><div class="small text-muted">Follow-up requested</div><strong class="fs-4" id="serviceFeedbackFollowUps">0</strong></div>
+            </div>
+            <div class="small text-muted mt-2" id="serviceFeedbackQualitySummary" aria-live="polite"></div>
+          </div>
+          <div class="card-body border-bottom">
+            <div class="row g-2 align-items-end">
+              <div class="col-6 col-md-3">
+                <label class="form-label small mb-1" for="serviceFeedbackFrom">From</label>
+                <input class="form-control form-control-sm" id="serviceFeedbackFrom" type="date" />
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small mb-1" for="serviceFeedbackTo">To</label>
+                <input class="form-control form-control-sm" id="serviceFeedbackTo" type="date" />
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1" for="serviceFeedbackRating">Rating</label>
+                <select class="form-select form-select-sm" id="serviceFeedbackRating">
+                  <option value="">All ratings</option><option value="5">5 stars</option><option value="4">4 stars</option>
+                  <option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1" for="serviceFeedbackRepairQuality">Repair quality</label>
+                <select class="form-select form-select-sm" id="serviceFeedbackRepairQuality">
+                  <option value="">All outcomes</option><option>Fully Fixed</option>
+                  <option>Partially Fixed</option><option>Not Fixed</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small mb-1" for="serviceFeedbackFollowUp">Follow-up</label>
+                <select class="form-select form-select-sm" id="serviceFeedbackFollowUp">
+                  <option value="">All</option><option value="true">Requested</option><option value="false">Not requested</option>
+                </select>
+              </div>
+              <div class="col-12 d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-primary" id="serviceFeedbackApplyFilters">Apply filters</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="serviceFeedbackClearFilters">Clear filters</button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="serviceFeedbackLoadError" class="alert alert-danger d-none" role="alert" aria-live="polite"></div>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead><tr>
+                  <th>Feedback / Request</th><th>Requester</th><th>Technician</th><th>Equipment / Asset</th>
+                  <th>Rating</th><th>Repair quality</th><th>Response</th><th>Follow-up</th><th>Comments</th><th>Submitted</th>
+                </tr></thead>
+                <tbody id="requesterServiceFeedbackRows">
+                  <tr><td colspan="10" class="text-center text-muted py-4">Loading requester service feedback...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <section class="card border-0 shadow-sm mb-4" id="feedbackSubmissionManager"
           aria-labelledby="feedbackSubmissionManagerTitle">
           <div class="card-header bg-white py-3">
@@ -588,8 +655,8 @@
   <script src="/assets/js/admin-profile-menu.js?v=3"></script>
   <script src="/assets/js/main.js?v=25"></script>
   <script src="/assets/js/notifications.js?v=10"></script>
-  <script src="/assets/js/requests.js?v=25"></script>
-  <script src="/assets/js/feedback.js?v=4"></script>
+  <script src="/assets/js/requests.js?v=26"></script>
+  <script src="/assets/js/feedback.js?v=5"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

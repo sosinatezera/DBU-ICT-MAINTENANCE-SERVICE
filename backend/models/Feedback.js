@@ -23,6 +23,29 @@ const feedbackSchema = new mongoose.Schema(
       min: 1,
       max: 5,
     },
+    repairQuality: {
+      type: String,
+      enum: ['Fully Fixed', 'Partially Fixed', 'Not Fixed', null],
+      default: null,
+    },
+    responseTimeliness: {
+      type: String,
+      enum: ['Excellent', 'Good', 'Fair', 'Poor', null],
+      default: null,
+    },
+    followUpRequested: {
+      type: Boolean,
+      default: false,
+    },
+    followUpStatus: {
+      type: String,
+      enum: ['Not Requested', 'Pending', 'In Progress', 'Resolved'],
+      default: 'Not Requested',
+    },
+    submittedAt: {
+      type: Date,
+      default: null,
+    },
     comment: {
       type: String,
       default: null,
@@ -37,5 +60,7 @@ const feedbackSchema = new mongoose.Schema(
    deliberately NOT repeated here. */
 feedbackSchema.index({ createdAt: -1 });
 feedbackSchema.index({ rating: 1, createdAt: -1 });
+feedbackSchema.index({ repairQuality: 1, createdAt: -1 });
+feedbackSchema.index({ followUpRequested: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Feedback', feedbackSchema);

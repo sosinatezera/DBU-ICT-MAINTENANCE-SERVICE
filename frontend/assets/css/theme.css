@@ -449,6 +449,10 @@ html[data-theme="dark"] .dashboard-logout-btn:hover {
   border-color: rgba(255, 255, 255, .12) !important;
 }
 
+.dashboard-body:has(#settingsSidebarNav) .topbar {
+  --topbar-background: #F8D7E8;
+}
+
 .topbar {
   background: rgba(255, 255, 255, .94) !important;
   border-bottom-color: var(--border) !important;
@@ -458,9 +462,9 @@ html[data-theme="dark"] .dashboard-logout-btn:hover {
 .card,
 .modal-content,
 .auth-body .card {
-  border-color: var(--border) !important;
+  border-color: var(--auth-card-border, var(--border)) !important;
   border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-card) !important;
+  box-shadow: var(--auth-card-shadow, var(--shadow-card)) !important;
 }
 
 .card:hover {
@@ -515,7 +519,10 @@ html[data-theme="dark"] .dashboard-logout-btn:hover {
     linear-gradient(135deg, #f8fbff 0%, #f4f6f8 64%, #eef1f3 100%);
 }
 
-.auth-body .card-body { background: rgba(255, 255, 255, .97); }
+.auth-body .card-body {
+  background: var(--auth-card-background, rgba(255, 255, 255, .97));
+  color: var(--auth-card-text, inherit);
+}
 
 .app-footer {
   border-top-color: var(--border) !important;
@@ -1356,7 +1363,7 @@ textarea:focus-visible,
 .topbar,
 .main-navbar {
   min-height: var(--topbar-height);
-  background: rgba(255, 255, 255, .96) !important;
+  background: var(--topbar-background, rgba(255, 255, 255, .96)) !important;
   border-bottom: 1px solid var(--border) !important;
   box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
   backdrop-filter: blur(10px);
@@ -1770,8 +1777,8 @@ html[data-theme="dark"] body.dashboard-body .card,
 html[data-theme="dark"] body.auth-body .card,
 html[data-theme="dark"] body.dashboard-body .modal-content {
   --bs-card-bg: var(--surface);
-  background: var(--surface) !important;
-  background-color: var(--surface) !important;
+  background: var(--auth-card-background, var(--surface)) !important;
+  background-color: var(--auth-card-background, var(--surface)) !important;
   color: var(--text) !important;
 }
 
@@ -1780,8 +1787,8 @@ html[data-theme="dark"] .auth-body {
 }
 
 html[data-theme="dark"] .auth-body .card-body {
-  background: var(--surface) !important;
-  color: var(--text);
+  background: var(--auth-card-background, var(--surface)) !important;
+  color: var(--auth-card-text, var(--text));
 }
 
 html[data-theme="dark"] .assistant-page {
@@ -1947,17 +1954,112 @@ html[data-theme="dark"] .btn-info,
 html[data-theme="dark"] .btn-outline-info { --bs-btn-bg: #1e40af; --bs-btn-border-color: #1e40af; --bs-btn-color: #fff; }
 html[data-theme="dark"] .btn-outline-info { --bs-btn-bg: transparent; --bs-btn-border-color: #3b82f6; }
 html[data-theme="dark"] .btn-outline-info:hover { --bs-btn-color: #fff; --bs-btn-bg: #1d4ed8; }
-
 html[data-theme="dark"] .assistant-header,
 html[data-theme="dark"] .ai-support-header { background: linear-gradient(135deg, #57400A, #A16207) !important; }
+
+/* Requester pages use a light sidebar in light mode; other role sidebars
+   retain their existing dark treatment. */
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar.sidebar {
+  color: #334155 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar .sidebar-brand {
+  border-bottom-color: #e2e8f0;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar .sidebar-brand i {
+  color: var(--primary) !important;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar .sidebar-brand div {
+  color: #1e293b;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar .nav-link {
+  color: #475569 !important;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar .nav-link:hover:not(.active) {
+  color: #1e40af !important;
+  background: #eff6ff !important;
+  border-color: #dbeafe !important;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar .nav-link.active {
+  color: #1e3a8a !important;
+  background: linear-gradient(90deg, #dbeafe, #eff6ff) !important;
+  border-color: #bfdbfe !important;
+  box-shadow: inset 3px 0 0 #2563eb, 0 4px 12px rgba(37, 99, 235, .1) !important;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar .nav-link.active i,
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar .nav-link.active::after {
+  color: #1d4ed8 !important;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar .mt-auto {
+  border-top-color: #e2e8f0 !important;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar .mt-auto .d-flex i {
+  color: #475569;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard #sidebar .mt-auto .small {
+  color: #64748b;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard .app-theme-switch.app-theme-in-sidebar {
+  color: #334155 !important;
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+html:not([data-theme="dark"]) body.requester-dashboard .app-theme-switch.app-theme-in-sidebar:hover {
+  color: #1d4ed8 !important;
+  background: #eff6ff !important;
+  border-color: #93c5fd !important;
+}
+
+html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark {
+  color: #e2e8f0 !important;
+  background: #172554 !important;
+  border-right: 1px solid rgba(96, 165, 250, .18) !important;
+}
+
+html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark .sidebar-brand div {
+  color: #f8fafc !important;
+}
+
+html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark .nav-link:not(.active):not(:hover) {
+  color: #cbd5e1 !important;
+}
+
+html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark .mt-auto {
+  border-top-color: rgba(255, 255, 255, .2) !important;
+}
+
+html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark .mt-auto .d-flex i {
+  color: #93c5fd !important;
+}
+
+html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark .mt-auto .small {
+  color: #cbd5e1 !important;
+}
+
+html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) .topbar {
+  background: #F8D7E8 !important;
+}
 
 html[data-theme="dark"] .assistant-message.is-user .assistant-message-bubble,
 html[data-theme="dark"] .ai-support-message.user { background: linear-gradient(135deg, #1E40AF, #A16207) !important; }
 
 body.dashboard-body .card,
 body.auth-body .card {
-  background: var(--surface) !important;
-  background-color: var(--surface) !important;
+  background: var(--auth-card-background, var(--surface)) !important;
+  background-color: var(--auth-card-background, var(--surface)) !important;
 }
 
 /* Keep legacy light-only component surfaces aligned with the shared theme. */
