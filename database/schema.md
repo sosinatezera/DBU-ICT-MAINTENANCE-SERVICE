@@ -17,6 +17,7 @@
 | `assignments`         | Assignment          | Technician-to-ticket assignments     |
 | `maintenancerecords`  | MaintenanceRecord   | Work logs per ticket                 |
 | `feedbacks`           | Feedback            | User ratings after resolution                 |
+| `technicianfeedbacks` | TechnicianFeedback  | Technician maintenance feedback and review workflow |
 | `notifications`       | Notification        | In-app notifications per user                 |
 | `inquiries`           | Inquiry             | Public contact/support inquiries              |
 | `counters`            | Counter             | Auto-increment counters                       |
@@ -183,6 +184,33 @@ submitted → under_review → assigned → accepted → in_progress → resolve
 | `comment`  | String   | no       |                                    |
 | `createdAt`| Date     | auto     |                                    |
 | `updatedAt`| Date     | auto     |                                    |
+
+---
+
+## 8a. technicianfeedbacks
+
+Separate from the technician maintenance report embedded in a ticket. Feedback
+records are stored in their own collection and linked to the submitting user,
+and optionally to an assigned maintenance ticket and its authorized ICT asset.
+
+| Field              | Type     | Required | Notes |
+|--------------------|----------|----------|-------|
+| `_id`              | ObjectId | auto     | Feedback ID |
+| `technician`       | ObjectId | yes      | ref → users._id |
+| `technicianName`   | String   | no       | Name snapshot captured at submission |
+| `ticket`           | ObjectId | no       | ref → tickets._id |
+| `asset`            | ObjectId | no       | ref → ictassets._id |
+| `category`         | String   | yes      | Technical Difficulty, Spare Parts Shortage, Recurring Fault, Resource Problem, Safety Concern, Improvement Suggestion |
+| `description`      | String   | yes      | Up to 2,000 characters |
+| `recommendation`   | String   | no       | Proposed solution, up to 2,000 characters |
+| `followUpRequired` | Boolean  | yes      | Whether follow-up is required |
+| `submittedAt`      | Date     | auto     | Submission date and time |
+| `status`           | String   | yes      | Submitted, Under Review, Action Required, Resolved |
+| `reviewComments`   | String   | no       | Reviewer comments, up to 2,000 characters |
+| `reviewedBy`       | ObjectId | no       | ref → users._id |
+| `reviewedAt`       | Date     | no       | Last review timestamp |
+| `createdAt`        | Date     | auto     | |
+| `updatedAt`        | Date     | auto     | |
 
 ---
 

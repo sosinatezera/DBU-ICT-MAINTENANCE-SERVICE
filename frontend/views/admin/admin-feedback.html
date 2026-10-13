@@ -425,20 +425,34 @@
             </h2>
           </div>
           <div class="card-body border-bottom small" id="adminTechnicianFeedbackRatingSummary" role="status" aria-live="polite">
-            Loading technician feedback rating summary...
+            Review technical difficulties, recurring faults, resource shortages, safety concerns, and service improvement ideas.
           </div>
           <div class="card-body border-bottom">
             <div class="row g-2">
-              <div class="col-md-8">
+              <div class="col-md-6">
                 <label class="form-label small mb-1" for="adminTechnicianFeedbackSearch">Search technician feedback</label>
-                <input class="form-control form-control-sm" id="adminTechnicianFeedbackSearch" type="search" placeholder="Technician, category, request, or message">
+                <input class="form-control form-control-sm" id="adminTechnicianFeedbackSearch" type="search" placeholder="Technician, request, asset, or description">
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
+                <label class="form-label small mb-1" for="adminTechnicianFeedbackCategoryFilter">Filter by category</label>
+                <select class="form-select form-select-sm" id="adminTechnicianFeedbackCategoryFilter">
+                  <option value="">All categories</option>
+                  <option>Technical Difficulty</option>
+                  <option>Spare Parts Shortage</option>
+                  <option>Recurring Fault</option>
+                  <option>Resource Problem</option>
+                  <option>Safety Concern</option>
+                  <option>Improvement Suggestion</option>
+                </select>
+              </div>
+              <div class="col-md-3">
                 <label class="form-label small mb-1" for="adminTechnicianFeedbackStatusFilter">Filter by status</label>
                 <select class="form-select form-select-sm" id="adminTechnicianFeedbackStatusFilter">
                   <option value="">All statuses</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Reviewed">Reviewed</option>
+                  <option>Submitted</option>
+                  <option>Under Review</option>
+                  <option>Action Required</option>
+                  <option>Resolved</option>
                 </select>
               </div>
             </div>
@@ -449,16 +463,17 @@
                 <tr>
                   <th scope="col">Technician</th>
                   <th scope="col">Category</th>
-                  <th scope="col">Maintenance Request</th>
-                  <th scope="col">Feedback</th>
-                  <th scope="col">Rating</th>
+                  <th scope="col">Request / Asset</th>
+                  <th scope="col">Description</th>
+                  <th scope="col">Recommendation</th>
+                  <th scope="col">Follow-up</th>
                   <th scope="col">Submitted</th>
                   <th scope="col">Status</th>
-                  <th scope="col">Admin response</th>
+                  <th scope="col">Review comments</th>
                 </tr>
               </thead>
               <tbody id="adminTechnicianFeedbackBody">
-                <tr><td colspan="8" class="text-center text-muted py-4">Loading technician feedback...</td></tr>
+                <tr><td colspan="9" class="text-center text-muted py-4">Loading technician feedback...</td></tr>
               </tbody>
             </table>
           </div>

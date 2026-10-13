@@ -3417,14 +3417,18 @@ function initAdminTechnicianFeedbackFilters() {
   const status = document.getElementById(
     "adminTechnicianFeedbackStatusFilter",
   );
+  const category = document.getElementById(
+    "adminTechnicianFeedbackCategoryFilter",
+  );
   if (search && search.dataset.filterBound !== "true") {
     search.dataset.filterBound = "true";
     search.addEventListener("input", renderAdminTechnicianFeedbackRows);
   }
-  if (status && status.dataset.filterBound !== "true") {
-    status.dataset.filterBound = "true";
-    status.addEventListener("change", renderAdminTechnicianFeedbackRows);
-  }
+  [status, category].filter(Boolean).forEach((filter) => {
+    if (filter.dataset.filterBound === "true") return;
+    filter.dataset.filterBound = "true";
+    filter.addEventListener("change", loadAdminTechnicianFeedback);
+  });
 }
 
 function initTechnicianFeedbackReview() {
@@ -3439,9 +3443,9 @@ function initTechnicianFeedbackReview() {
     const feedbackId = button.dataset.saveTechnicianFeedback;
     const responseInput = row?.querySelector("[data-admin-feedback-response]");
     const statusSelect = row?.querySelector("[data-admin-feedback-status]");
-    const adminResponse = responseInput?.value.trim() || "";
-    if (adminResponse.length > 2000) {
-      showToast("Admin response must be no more than 2,000 characters.", "warning");
+    const reviewComments = responseInput?.value.trim() || "";
+    if (reviewComments.length > 2000) {
+      showToast("Review comments must be no more than 2,000 characters.", "warning");
       return;
     }
 
@@ -3455,12 +3459,12 @@ function initTechnicianFeedbackReview() {
         {
           method: "PATCH",
           body: {
-            status: statusSelect?.value || "Pending",
-            adminResponse,
+            status: statusSelect?.value || "Submitted",
+            reviewComments,
           },
         },
       );
-      if (result?.success !== true || !result.data?.id) {
+      if (result?.success !== true || !(result.data?._id || result.data?.id)) {
         throw new Error(result?.message || "The feedback update was not confirmed.");
       }
       showToast("Technician feedback updated successfully.", "success");
@@ -3483,26 +3487,27 @@ async function loadAdminTechnicianFeedback() {
   );
   if (!tbody) return;
   tbody.innerHTML =
-    '<tr><td colspan="8" class="text-center text-muted py-4">Loading technician feedback...</td></tr>';
+    '<tr><td colspan="9" class="text-center text-muted py-4">Loading technician feedback...</td></tr>';
 
   try {
-    const result = await apiRequest("/feedback/technician");
+    const params = new URLSearchParams();
+    const status = document.getElementById(
+      "adminTechnicianFeedbackStatusFilter",
+    )?.value;
+    const category = document.getElementById(
+      "adminTechnicianFeedbackCategoryFilter",
+    )?.value;
+    if (status) params.set("status", status);
+    if (category) params.set("category", category);
+    const query = params.toString();
+    const result = await apiRequest(
+      `/feedback/technician${query ? `?${query}` : ""}`,
+    );
     if (result?.success !== true || !Array.isArray(result.data)) {
       throw new Error(result?.message || "Unable to load technician feedback.");
     }
-    const ratings = result.data
-      .map((item) => item.rating)
-      .filter((rating) => Number.isInteger(rating) && rating >= 1 && rating <= 5);
-    const averageRating = ratings.length
-      ? (ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length).toFixed(1)
-      : null;
     if (ratingSummary) {
-      const distribution = [5, 4, 3, 2, 1]
-        .map((rating) => `${rating}★: ${ratings.filter((value) => value === rating).length}`)
-        .join(" · ");
-      ratingSummary.textContent = `Rating summary: ${result.data.length} feedback entries · ${ratings.length} rated · ${
-        averageRating ? `${averageRating} / 5 average` : "no ratings yet"
-      }${ratings.length ? ` · ${distribution}` : ""}`;
+      ratingSummary.textContent = `${result.data.length} technician feedback item${result.data.length === 1 ? "" : "s"} match the selected category and status.`;
     }
     _adminTechnicianFeedbackRecords = result.data;
     renderAdminTechnicianFeedbackRows();
@@ -3510,7 +3515,7 @@ async function loadAdminTechnicianFeedback() {
     if (ratingSummary) {
       ratingSummary.textContent = `Unable to load technician feedback rating summary: ${err.message || "Please try again."}`;
     }
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-4">
       Unable to load technician feedback: ${escHtml(err.message || "Please try again.")}
       <div class="mt-2"><button type="button" class="btn btn-sm btn-outline-primary" onclick="loadAdminTechnicianFeedback()">Retry</button></div>
     </td></tr>`;
@@ -3527,18 +3532,24 @@ function renderAdminTechnicianFeedbackRows() {
     .toLowerCase();
   const statusFilter =
     document.getElementById("adminTechnicianFeedbackStatusFilter")?.value || "";
+  const categoryFilter =
+    document.getElementById("adminTechnicianFeedbackCategoryFilter")?.value || "";
   const filtered = _adminTechnicianFeedbackRecords.filter((item) => {
-    if (statusFilter && (item.status || "Pending") !== statusFilter) return false;
+    if (statusFilter && (item.status || "Submitted") !== statusFilter) return false;
+    if (categoryFilter && item.category !== categoryFilter) return false;
     if (!query) return true;
     const searchable = [
       item.technician?.fullName,
       item.technician?.email,
       item.categoryGroup,
       item.category,
-      item.message,
+      item.description || item.message,
+      item.recommendation,
       item.ticket?.ticketId,
       item.ticket?.title,
-      item.adminResponse,
+      item.asset?.asset_tag,
+      item.asset?.asset_name,
+      item.reviewComments || item.adminResponse,
     ]
       .filter(Boolean)
       .join(" ")
@@ -3546,7 +3557,7 @@ function renderAdminTechnicianFeedbackRows() {
     return searchable.includes(query);
   });
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">${
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">${
       _adminTechnicianFeedbackRecords.length
         ? "No technician feedback matches these filters."
         : "No technician feedback has been submitted yet."
@@ -3555,37 +3566,50 @@ function renderAdminTechnicianFeedbackRows() {
   }
 
   tbody.innerHTML = filtered
-      .map((item) => {
-        const technician = item.technician || {};
-        const submitted = item.createdAt
-          ? new Date(item.createdAt).toLocaleString()
-          : "—";
-        return `<tr>
-          <td>${escHtml(technician.fullName || "Unknown technician")}<div class="small text-muted">${escHtml(technician.email || "")}</div></td>
-          <td><span class="small text-muted d-block">${escHtml(item.categoryGroup || "Feedback")}</span>${escHtml(item.category || "—")}</td>
-          <td>${item.ticket ? `${escHtml(item.ticket.ticketId || "Maintenance request")}<div class="small text-muted">${escHtml(item.ticket.title || "")}</div>${item.ticket.category ? `<div class="small text-muted">Request category: ${escHtml(item.ticket.category.split(">").pop().trim())}</div>` : ""}${item.ticket.priority ? `<span class="badge text-bg-${{ low: "success", medium: "primary", high: "warning", critical: "danger" }[item.ticket.priority] || "secondary"}">${escHtml(item.ticket.priority)} priority</span>` : ""}` : "—"}</td>
-          <td class="text-break" style="min-width:260px;white-space:pre-wrap">${escHtml(item.message || "")}</td>
-          <td>${Number.isInteger(item.rating) && item.rating >= 1 && item.rating <= 5
-            ? `<span role="img" aria-label="${escHtml(item.rating)} out of 5 stars: ${["", "Very Poor", "Poor", "Average", "Good", "Excellent"][item.rating]}">${'<i class="bi bi-star-fill text-warning" aria-hidden="true"></i>'.repeat(item.rating)}${'<i class="bi bi-star text-muted" aria-hidden="true"></i>'.repeat(5 - item.rating)}</span><div class="small text-muted">${escHtml(item.rating)} / 5</div>`
-            : '<span class="text-muted">Not rated</span>'}</td>
-          <td class="text-nowrap">${escHtml(submitted)}</td>
-          <td>
-            <label class="visually-hidden" for="technician-feedback-status-${escHtml(item._id)}">Status for ${escHtml(technician.fullName || "technician")} feedback</label>
-            <select id="technician-feedback-status-${escHtml(item._id)}" class="form-select form-select-sm mb-2" data-admin-feedback-status>
-              <option value="Pending"${item.status === "Pending" || !item.status ? " selected" : ""}>Pending</option>
-              <option value="Reviewed"${item.status === "Reviewed" ? " selected" : ""}>Reviewed</option>
-            </select>
-          </td>
-          <td style="min-width:260px">
-            <label class="visually-hidden" for="technician-feedback-response-${escHtml(item._id)}">ICT Admin response to ${escHtml(technician.fullName || "technician")} feedback</label>
-            <textarea id="technician-feedback-response-${escHtml(item._id)}" class="form-control form-control-sm mb-2" rows="2" maxlength="2000" placeholder="Optional response" data-admin-feedback-response>${escHtml(item.adminResponse || "")}</textarea>
-            <button type="button" class="btn btn-sm btn-primary" data-save-technician-feedback="${escHtml(item._id)}">
-              <i class="bi bi-send me-1" aria-hidden="true"></i>Save update
-            </button>
-          </td>
-        </tr>`;
-      })
-      .join("");
+    .map((item) => {
+      const technician = item.technician || {};
+      const feedbackId = String(item._id || item.id || "");
+      const status = item.status || "Submitted";
+      const asset = item.asset || {};
+      const related = [
+        item.ticket
+          ? `${escHtml(item.ticket.ticketId || "Maintenance request")}<div class="small text-muted">${escHtml(item.ticket.title || "")}</div>`
+          : "",
+        asset.asset_tag || asset.asset_name
+          ? `<div class="small">${escHtml(asset.asset_tag || "")}${asset.asset_name ? ` — ${escHtml(asset.asset_name)}` : ""}</div>`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("");
+      const submitted = item.submittedAt || item.createdAt
+        ? new Date(item.submittedAt || item.createdAt).toLocaleString()
+        : "—";
+      return `<tr>
+        <td>${escHtml(technician.fullName || item.technicianName || "Unknown technician")}<div class="small text-muted">${escHtml(technician.email || "")}</div><div class="small text-muted">Feedback ID: ${escHtml(feedbackId)}</div></td>
+        <td>${escHtml(item.category || "—")}</td>
+        <td>${related || "—"}</td>
+        <td class="text-break" style="min-width:220px;white-space:pre-wrap">${escHtml(item.description || item.message || "")}</td>
+        <td class="text-break" style="min-width:180px;white-space:pre-wrap">${escHtml(item.recommendation || "—")}</td>
+        <td>${item.followUpRequired === true ? "Yes" : item.followUpRequired === false ? "No" : "—"}</td>
+        <td class="text-nowrap">${escHtml(submitted)}</td>
+        <td>
+          <label class="visually-hidden" for="technician-feedback-status-${escHtml(feedbackId)}">Status for ${escHtml(technician.fullName || "technician")} feedback</label>
+          <select id="technician-feedback-status-${escHtml(feedbackId)}" class="form-select form-select-sm" data-admin-feedback-status>
+            ${["Submitted", "Under Review", "Action Required", "Resolved"]
+              .map((option) => `<option${status === option ? " selected" : ""}>${option}</option>`)
+              .join("")}
+          </select>
+        </td>
+        <td style="min-width:240px">
+          <label class="visually-hidden" for="technician-feedback-review-${escHtml(feedbackId)}">Review comments for ${escHtml(technician.fullName || "technician")} feedback</label>
+          <textarea id="technician-feedback-review-${escHtml(feedbackId)}" class="form-control form-control-sm mb-2" rows="3" maxlength="2000" placeholder="Add review comments" data-admin-feedback-response>${escHtml(item.reviewComments || item.adminResponse || "")}</textarea>
+          <button type="button" class="btn btn-sm btn-primary" data-save-technician-feedback="${escHtml(feedbackId)}">
+            <i class="bi bi-send me-1" aria-hidden="true"></i>Save review
+          </button>
+        </td>
+      </tr>`;
+    })
+    .join("");
 }
 
 /* Cached feedback records + current filter/page state for this page. */

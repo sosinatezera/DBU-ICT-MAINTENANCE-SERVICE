@@ -128,7 +128,10 @@ const getMyAssignments = async (req, res, next) => {
       })
       .populate({
         path: "ticket",
-        populate: [{ path: "requester", select: "fullName department" }],
+        populate: [
+          { path: "requester", select: "fullName department" },
+          { path: "assetId", select: "asset_tag asset_name" },
+        ],
       })
       .sort({ createdAt: -1 })
       .lean();
@@ -161,6 +164,9 @@ const getMyAssignments = async (req, res, next) => {
         technician_email: a.technician?.user?.email || null,
         ticket_id: a.ticket?._id || null,
         ticketId: displayTicketId(a.ticket?.ticketId),
+        assetId: a.ticket?.assetId?._id || a.ticket?.assetId || null,
+        assetTag: a.ticket?.assetId?.asset_tag || null,
+        assetName: a.ticket?.assetId?.asset_name || null,
         title:
           a.ticket?.title || a.ticket?.problemDescription?.substring(0, 80),
         priority: a.ticket?.priority,

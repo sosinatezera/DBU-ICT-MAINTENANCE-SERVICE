@@ -14,7 +14,7 @@
  *   /api/categories    — Ticket categories
  *   /api/device-types  — Device Type catalogue (active list + admin CRUD)
  *   /api/notifications — User notifications
- *   /api/feedback      — Ticket feedback / ratings
+ *   /api/feedback      — Requester ratings and technician feedback
  *   /api/reports       — Analytics and reports
  *   /api/maintenance   — Repair activity logs
  *   /api/networking    — Direct user-to-user messages

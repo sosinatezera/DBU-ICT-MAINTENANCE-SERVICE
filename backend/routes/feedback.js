@@ -1,6 +1,6 @@
 /**
  * routes/feedback.js
- * Feedback — requesters rate resolved tickets
+ * Requester ratings, technician feedback, and feedback submissions.
  */
 const express = require('express');
 const router  = express.Router();

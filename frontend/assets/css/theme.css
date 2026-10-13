@@ -2173,3 +2173,7 @@ html body .masthead,
 html body .report-print-header {
   background: #172554 !important;
 }
+
+html body:not(.dashboard-body):not(.auth-body) .main-navbar {
+  background: #E8F5E9 !important;
+}

@@ -2258,7 +2258,7 @@ const PAGE_TOPBAR_SUBTITLES = {
   "technician/assigned-requests": "Requests awaiting your review and action.",
   "technician/maintenance": "Record and update maintenance activities.",
   "technician/history": "Completed requests and past maintenance work.",
-  "technician/technician-feedback": "Share feedback with ICT Admin and review your maintenance reports.",
+  "technician/technician-feedback": "Report maintenance difficulties and improvement opportunities, then track feedback reviews.",
   "technician/notifications": "Updates and alerts addressed to you.",
   "technician/profile": "Your profile, specialization and preferences.",
 
