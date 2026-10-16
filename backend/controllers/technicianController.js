@@ -20,6 +20,7 @@ const {
 } = require("../middleware/validation");
 const { displayTicketId } = require("../utils/ticketId");
 const { normalizeGender } = require("../utils/gender");
+const { maintenanceRepairResult } = require("../utils/maintenanceRepairResult");
 
 const getAllTechnicians = async (req, res, next) => {
   try {
@@ -151,8 +152,16 @@ const getMyAssignments = async (req, res, next) => {
         ? {
             diagnosis: technicianFeedback.diagnosis,
             workPerformed: technicianFeedback.workPerformed,
+            repairResult: maintenanceRepairResult(technicianFeedback),
             status: technicianFeedback.status,
             resolution: technicianFeedback.resolution,
+            partsUsed: technicianFeedback.partsUsed,
+            timeSpentMinutes: technicianFeedback.timeSpentMinutes,
+            technicianName:
+              technicianFeedback.technician?.technicianName ||
+              a.technician?.user?.fullName ||
+              null,
+            submittedAt: technicianFeedback.submittedAt,
             completionDate: technicianFeedback.completionDate,
           }
         : null;
@@ -185,10 +194,6 @@ const getMyAssignments = async (req, res, next) => {
         completed_at:
           a.ticket?.technicianFeedback?.completionDate ||
           (a.status === "completed" ? a.updatedAt : null),
-        rating:
-          a.ticket?.requesterFeedback?.overallRating ??
-          a.ticket?.feedbackRating ??
-          null,
         has_feedback: !!technicianReport,
         technician_feedback: technicianReport,
         technician_report: technicianReport,

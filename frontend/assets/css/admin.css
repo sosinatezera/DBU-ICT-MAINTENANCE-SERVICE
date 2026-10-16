@@ -297,46 +297,46 @@
    Applies to Add Asset, Search, Save Asset and other primary
    actions so the whole dashboard shares one consistent accent. */
 .btn-primary {
-  --bs-btn-bg: var(--primary);
-  --bs-btn-border-color: var(--primary);
-  --bs-btn-hover-bg: var(--primary-hover);
-  --bs-btn-hover-border-color: var(--primary-hover);
-  --bs-btn-active-bg: var(--primary-deeper);
-  --bs-btn-active-border-color: var(--primary-deeper);
-  --bs-btn-disabled-bg: var(--primary-soft);
-  --bs-btn-disabled-border-color: var(--primary-soft);
-  color: #1F2937 !important;
-  background-color: var(--primary);
-  border-color: var(--primary);
+  --bs-btn-bg: #2563EB;
+  --bs-btn-border-color: #2563EB;
+  --bs-btn-hover-bg: #1D4ED8;
+  --bs-btn-hover-border-color: #1D4ED8;
+  --bs-btn-active-bg: #1E40AF;
+  --bs-btn-active-border-color: #1E40AF;
+  --bs-btn-disabled-bg: #EFF6FF;
+  --bs-btn-disabled-border-color: #EFF6FF;
+  color: #FFFFFF !important;
+  background-color: #2563EB;
+  border-color: #2563EB;
   box-shadow: 0 1px 2px rgba(30,64,170,.18), 0 2px 6px -2px rgba(30,64,170,.3);
 }
 .btn-primary:hover {
-  color: #1F2937 !important;
-  background-color: var(--primary-hover);
-  border-color: var(--primary-hover);
+  color: #FFFFFF !important;
+  background-color: #1D4ED8;
+  border-color: #1D4ED8;
   box-shadow: 0 6px 14px -8px rgba(30,64,170,.6);
   transform: translateY(-1px);
 }
 .btn-primary:focus-visible,
 .btn-primary:focus {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  box-shadow: 0 0 0 .25rem rgba(30,64,170,.22);
+  background-color: #2563EB;
+  border-color: #2563EB;
+  box-shadow: 0 0 0 .25rem rgba(37,99,235,.22);
 }
 .btn-primary:active,
 .btn-primary.active,
 .btn-primary:active:focus {
-  background-color: var(--primary-deeper) !important;
-  border-color: var(--primary-deeper) !important;
-  color: #1F2937 !important;
+  background-color: #1E40AF !important;
+  border-color: #1E40AF !important;
+  color: #FFFFFF !important;
   box-shadow: inset 0 2px 4px rgba(0,0,0,.12);
   transform: scale(.98);
 }
 .btn-primary:disabled,
 .btn-primary.disabled {
-  background-color: var(--primary-soft);
-  border-color: var(--primary-soft);
-  color: #1F2937 !important;
+  background-color: #EFF6FF;
+  border-color: #EFF6FF;
+  color: #6B7280 !important;
   box-shadow: none;
 }
 
@@ -651,10 +651,6 @@ body.dashboard-body {
 
 .admin-table tbody td { border-bottom-color: var(--border-light); }
 .dashboard-body .table-hover tbody tr:hover { background: var(--primary-subtle); }
-
-#sidebar.sidebar {
-  background: linear-gradient(180deg, #0b1f3a 0%, #071426 100%) !important;
-}
 
 .btn-primary {
   --bs-btn-bg: var(--primary);

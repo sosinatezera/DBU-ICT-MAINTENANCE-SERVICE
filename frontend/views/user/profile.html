@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var t = localStorage.getItem( 'theme:requester' ) || localStorage.getItem( 'theme' ); if ( t === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
 <script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
 
 <head>
@@ -46,14 +46,10 @@
           </a>
         </li>
         <li class="nav-item">
+          <a href="feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-square-heart me-2" aria-hidden="true"></i><span data-i18n="side.requesterFeedback">Requester Feedback</span></a>
           <a href="notifications.html" class="nav-link text-white-50">
             <i class="bi bi-bell me-2"></i><span data-i18n="side.notifications">Notifications</span>
             <span class="badge bg-danger ms-1" id="sidebarNotifBadge" style="display:none;"></span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="feedback.html" class="nav-link text-white-50">
-            <i class="bi bi-star me-2"></i><span data-i18n="side.feedback">Feedback</span>
           </a>
         </li>
         <li class="nav-item">
@@ -519,7 +515,7 @@
   <script src="/assets/js/api-config.js?v=16"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/validation.js?v=7"></script>
-  <script src="/assets/js/main.js?v=26"></script>
+  <script src="/assets/js/main.js?v=27"></script>
   <script src="/assets/js/notifications.js?v=10"></script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/lang.js?v=16"></script>

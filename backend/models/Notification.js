@@ -22,9 +22,7 @@ const notificationSchema = new mongoose.Schema({
       'request_resolved',
       'request_reopened',
       'new_comment',
-      'feedback_available',
       'feedback_update',
-      'feedback_submission_user',
       'feedback_submission_technician',
       'feedback_reply',
       // Technician notifications

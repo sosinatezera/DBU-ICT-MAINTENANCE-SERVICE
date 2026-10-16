@@ -50,6 +50,22 @@
   box-shadow: 0 4px 16px -6px rgba(16,24,40,.28);
 }
 
+html[data-theme="dark"] .btn-success,
+html[data-theme="dark"] .btn-outline-success {
+  color: #fff !important;
+  background: #2563EB !important;
+  border-color: #2563EB !important;
+}
+
+html[data-theme="dark"] .btn-success:hover,
+html[data-theme="dark"] .btn-success:focus-visible,
+html[data-theme="dark"] .btn-outline-success:hover,
+html[data-theme="dark"] .btn-outline-success:focus-visible {
+  color: #fff !important;
+  background: #1D4ED8 !important;
+  border-color: #1D4ED8 !important;
+}
+
 /* Switch placed at the top of the left sidebar (dashboard header) */
 .app-theme-switch.app-theme-in-sidebar {
   position: absolute;
@@ -101,7 +117,7 @@ nav.main-navbar.navbar,
 .topbar a:not([href="#home"]):not([href="/"]):not([href="/index.html"]),
 .topbar button {
   transform-origin: center;
-  animation: navbar-gentle-pulse 3.5s cubic-bezier(.4, 0, .2, 1) infinite;
+  animation: none;
   animation-delay: var(--navbar-pulse-delay, 0s);
 }
 
@@ -367,35 +383,43 @@ button:focus:not(:focus-visible),
   box-shadow: none !important;
 }
 
-/* Dark text on blue, not white: white on #3B82F6 is only ~2.1:1 contrast
-   and fails WCAG AA. Near-black on the blue family clears 7:1 in light
-   mode and ~5:1 on the darker hover, and it is what keeps the accent
-   "comfortable" rather than glaring. */
+/* Primary buttons use the requested professional blue and white text for strong
+   contrast and readable action affordance in both light and dark themes. */
 .btn-primary,
 .dashboard-logout-btn {
-  background: #3B82F6 !important;
+  background: #2563EB !important;
   border-color: #2563EB !important;
-  color: #1F2937 !important;
+  color: #FFFFFF !important;
   box-shadow: 0 6px 16px rgba(30, 64, 170, .18);
 }
 
 .btn-primary:hover,
 .btn-primary:focus,
 .dashboard-logout-btn:hover {
-  background: #2563EB !important;
-  border-color: #1E40AF !important;
-  color: #1F2937 !important;
+  background: #1D4ED8 !important;
+  border-color: #1D4ED8 !important;
+  color: #FFFFFF !important;
   box-shadow: 0 8px 20px rgba(30, 64, 170, .26);
 }
 
-/* Dark mode: the brand lifts to #60A5FA, so button text stays dark. */
+.btn-primary:active,
+.btn-primary.active,
+.dashboard-logout-btn:active,
+.dashboard-logout-btn.active {
+  background: #1E40AF !important;
+  border-color: #1E40AF !important;
+  color: #FFFFFF !important;
+}
+
 html[data-theme="dark"] .btn-primary,
 html[data-theme="dark"] .dashboard-logout-btn,
 html[data-theme="dark"] .btn-primary:hover,
-html[data-theme="dark"] .dashboard-logout-btn:hover {
-  background: #60A5FA !important;
-  border-color: #2563EB !important;
-  color: #1F2937 !important;
+html[data-theme="dark"] .dashboard-logout-btn:hover,
+html[data-theme="dark"] .btn-primary:active,
+html[data-theme="dark"] .dashboard-logout-btn:active {
+  background: #2563EB !important;
+  border-color: #1D4ED8 !important;
+  color: #FFFFFF !important;
 }
 
 .btn-warning {
@@ -405,15 +429,23 @@ html[data-theme="dark"] .dashboard-logout-btn:hover {
 }
 
 .btn-outline-primary {
-  color: var(--primary) !important;
-  border-color: var(--primary-border) !important;
+  background: #FFFFFF !important;
+  color: #2563EB !important;
+  border-color: #93C5FD !important;
 }
 
 .btn-outline-primary:hover,
 .btn-outline-primary:focus {
-  background: var(--primary-soft) !important;
-  border-color: var(--primary) !important;
-  color: var(--primary-deeper) !important;
+  background: #EFF6FF !important;
+  border-color: #2563EB !important;
+  color: #1D4ED8 !important;
+}
+
+.btn-outline-primary:active,
+.btn-outline-primary.active {
+  background: #DBEAFE !important;
+  border-color: #1D4ED8 !important;
+  color: #1E40AF !important;
 }
 
 .text-primary { color: var(--primary) !important; }
@@ -424,33 +456,8 @@ html[data-theme="dark"] .dashboard-logout-btn:hover {
   background: linear-gradient(180deg, #fbfcfd 0, var(--bg-body) 25rem);
 }
 
-#sidebar.sidebar {
-  background: linear-gradient(180deg, #202b36 0%, #141c24 100%) !important;
-  border-right: 1px solid rgba(255, 255, 255, .08);
-}
-
-#sidebar .sidebar-brand::after {
-  background: linear-gradient(90deg, transparent, #60A5FA, transparent) !important;
-}
-
-#sidebar .sidebar-brand i,
-#sidebar .nav-link.active i {
-  color: #60A5FA !important;
-}
-
-#sidebar .nav-link.active {
-  background: linear-gradient(90deg, rgba(59, 130, 246, .22), rgba(59, 130, 246, .05)) !important;
-  border-color: rgba(96, 165, 250, .38) !important;
-  box-shadow: inset 3px 0 0 #60A5FA, 0 8px 18px rgba(0, 0, 0, .14) !important;
-}
-
-#sidebar .nav-link:hover:not(.active) {
-  background: rgba(255, 255, 255, .08) !important;
-  border-color: rgba(255, 255, 255, .12) !important;
-}
-
 .dashboard-body:has(#settingsSidebarNav) .topbar {
-  --topbar-background: #F8D7E8;
+  --topbar-background: var(--surface);
 }
 
 .topbar {
@@ -529,6 +536,26 @@ html[data-theme="dark"] .dashboard-logout-btn:hover {
   background: var(--surface) !important;
 }
 
+.dashboard-body .topbar {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+}
+
+.dashboard-body .topbar :is(h1, h2, h3, h4, h5, h6, p, a, label, small, strong, i, svg, span:not(.badge), .text-muted, .text-secondary):not(#adminProfileDropdown *):not(.profile-avatar-initials) {
+  color: inherit !important;
+}
+
+html body .card-header,
+html body .modal-header {
+  background: var(--surface-soft) !important;
+  color: var(--text-primary) !important;
+}
+
+html body .card-header :is(h1, h2, h3, h4, h5, h6, p, a, button, label, small, strong, i, svg, span:not(.badge), .text-muted, .text-secondary, .text-body, .text-dark),
+html body .modal-header :is(h1, h2, h3, h4, h5, h6, p, a, button, label, small, strong, i, svg, span, .text-muted, .text-secondary, .text-body, .text-dark) {
+  color: var(--text-primary) !important;
+}
+
 .ai-support-launcher,
 .ai-support-header,
 .ai-support-send {
@@ -546,13 +573,8 @@ html[data-theme="dark"] .dashboard-logout-btn:hover {
 
 /* Theme tokens are declared once in the dark-mode token block below. */
 
-html[data-theme="dark"] .main-navbar,
 html[data-theme="dark"] .topbar {
   background: var(--surface) !important;
-}
-
-html[data-theme="dark"] #sidebar.sidebar {
-  background: linear-gradient(180deg, #172554 0%, #0f172a 100%) !important;
 }
 
 html[data-theme="dark"] .table thead th { background: #29343d !important; color: #dbe2e8 !important; }
@@ -798,7 +820,7 @@ html[data-theme="dark"] .ai-support-suggestion { background: var(--surface-soft)
    DARK THEME
    ════════════════════════════════════════════════════════════ */
 html[data-theme="dark"] {
-  --primary-rgb: 59, 130, 246;
+  --primary-rgb: 37, 99, 235;
 
   /* Base background / surfaces */
   --bg:              #0f172a;
@@ -820,22 +842,20 @@ html[data-theme="dark"] {
   --border-light:    #263244;
 
   /* Primary and semantic colors */
-  --primary: #3B82F6;
-  --primary-blue: #3B82F6;
-  --primary-hover: #2563EB;
-  --primary-deeper: #1E40AF;
-  --primary-deep: #1E3A8A;
-  --primary-dark: #1E40AF;
+  --primary: #2563EB;
+  --primary-blue: #2563EB;
+  --primary-hover: #1D4ED8;
+  --primary-deeper: #1D4ED8;
+  --primary-deep: #172554;
+  --primary-dark: #1D4ED8;
   --primary-light: #1E3A5F;
   --primary-soft: #1E3A5F;
   --primary-subtle: #14243A;
   --primary-border: #365B8C;
   --accent: #60A5FA;
-  --success: #4ade80;
-  /* Warning moved off #fbbf24: that amber was too close to the new brand
-     blue. Orange keeps "warning" visually distinct from the brand. */
-  --warning: #fb923c;
-  --danger: #f87171;
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --danger: #DC2626;
   --info: #5eead4;
   --background: #0f172a;
   --text: #e2e8f0;
@@ -1370,29 +1390,6 @@ textarea:focus-visible,
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* Keep the sidebar in the same deep-blue family as the brand while preserving
-  enough contrast for white navigation text. */
-#sidebar.sidebar {
-  background: linear-gradient(180deg, #172554 0%, #0f172a 100%) !important;
-  border-right: 1px solid rgba(255, 255, 255, .1) !important;
-}
-
-#sidebar .sidebar-brand::after {
-  background: linear-gradient(90deg, transparent, #60A5FA, transparent) !important;
-}
-
-#sidebar .sidebar-brand i,
-#sidebar .nav-link.active i,
-#sidebar .nav .nav-link.active::after {
-  color: #60A5FA !important;
-}
-
-#sidebar .nav-link.active {
-  background: linear-gradient(90deg, rgba(59, 130, 246, .20), rgba(59, 130, 246, .06)) !important;
-  border-color: rgba(96, 165, 250, .28) !important;
-  box-shadow: inset 3px 0 0 #60A5FA !important;
-}
-
 .app-theme-switch {
   border-color: var(--border) !important;
   color: var(--text-secondary) !important;
@@ -1444,8 +1441,8 @@ textarea:focus-visible,
 .ai-support-send,
 .ai-support-feedback-panel button {
   color: #fff !important;
-  background: var(--primary-hover) !important;
-  border-color: var(--primary-hover) !important;
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
 }
 
 .btn-primary:hover:not(:disabled),
@@ -1454,8 +1451,8 @@ textarea:focus-visible,
 .ai-support-send:hover,
 .ai-support-feedback-panel button:hover {
   color: #fff !important;
-  background: var(--primary-deeper) !important;
-  border-color: var(--primary-deeper) !important;
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
 }
 
 .btn-outline-primary,
@@ -1957,102 +1954,6 @@ html[data-theme="dark"] .btn-outline-info:hover { --bs-btn-color: #fff; --bs-btn
 html[data-theme="dark"] .assistant-header,
 html[data-theme="dark"] .ai-support-header { background: linear-gradient(135deg, #57400A, #A16207) !important; }
 
-/* Requester pages use a light sidebar in light mode; other role sidebars
-   retain their existing dark treatment. */
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar.sidebar {
-  color: #334155 !important;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
-  border-right: 1px solid #e2e8f0 !important;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar .sidebar-brand {
-  border-bottom-color: #e2e8f0;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar .sidebar-brand i {
-  color: var(--primary) !important;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar .sidebar-brand div {
-  color: #1e293b;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar .nav-link {
-  color: #475569 !important;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar .nav-link:hover:not(.active) {
-  color: #1e40af !important;
-  background: #eff6ff !important;
-  border-color: #dbeafe !important;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar .nav-link.active {
-  color: #1e3a8a !important;
-  background: linear-gradient(90deg, #dbeafe, #eff6ff) !important;
-  border-color: #bfdbfe !important;
-  box-shadow: inset 3px 0 0 #2563eb, 0 4px 12px rgba(37, 99, 235, .1) !important;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar .nav-link.active i,
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar .nav-link.active::after {
-  color: #1d4ed8 !important;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar .mt-auto {
-  border-top-color: #e2e8f0 !important;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar .mt-auto .d-flex i {
-  color: #475569;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard #sidebar .mt-auto .small {
-  color: #64748b;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard .app-theme-switch.app-theme-in-sidebar {
-  color: #334155 !important;
-  background: #ffffff !important;
-  border-color: #cbd5e1 !important;
-}
-
-html:not([data-theme="dark"]) body.requester-dashboard .app-theme-switch.app-theme-in-sidebar:hover {
-  color: #1d4ed8 !important;
-  background: #eff6ff !important;
-  border-color: #93c5fd !important;
-}
-
-html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark {
-  color: #e2e8f0 !important;
-  background: #172554 !important;
-  border-right: 1px solid rgba(96, 165, 250, .18) !important;
-}
-
-html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark .sidebar-brand div {
-  color: #f8fafc !important;
-}
-
-html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark .nav-link:not(.active):not(:hover) {
-  color: #cbd5e1 !important;
-}
-
-html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark .mt-auto {
-  border-top-color: rgba(255, 255, 255, .2) !important;
-}
-
-html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark .mt-auto .d-flex i {
-  color: #93c5fd !important;
-}
-
-html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) #sidebar.sidebar.bg-dark .mt-auto .small {
-  color: #cbd5e1 !important;
-}
-
-html body.requester-dashboard:has(#dashboardHome, #requestForm, #searchInput, #dateFrom, #notificationsList, #feedbackSubmissionForm) .topbar {
-  background: #F8D7E8 !important;
-}
-
 html[data-theme="dark"] .assistant-message.is-user .assistant-message-bubble,
 html[data-theme="dark"] .ai-support-message.user { background: linear-gradient(135deg, #1E40AF, #A16207) !important; }
 
@@ -2144,8 +2045,6 @@ html[data-theme="dark"] .certificate-page {
 }
 
 /* Shared header background across the application. */
-html body.dashboard-body .topbar,
-html body.dashboard-body .main-navbar,
 html body.dashboard-body #sidebar .sidebar-brand,
 html body.dashboard-body #sidebar .sidebar-section-header,
 html body.dashboard-body #sidebar .sidebar-section-title,
@@ -2153,11 +2052,6 @@ html body.dashboard-body #sidebar .nav-section-title,
 html body.dashboard-body .dashboard-sidebar-header,
 html body.dashboard-body .dashboard-sidebar-panel-title,
 html body.dashboard-body .technician-feedback-page-header,
-html body .card-header,
-html[data-theme="dark"] body .card-header,
-html[data-theme="dark"] body .card-header.bg-white,
-html body .modal-header,
-html[data-theme="dark"] body .modal-header,
 html body .table thead th,
 html body.dashboard-body .table thead th,
 html[data-theme="dark"] body .table thead th,
@@ -2165,8 +2059,6 @@ html[data-theme="dark"] body.dashboard-body .table thead th,
 html body .admin-table thead th,
 html body.dashboard-body .admin-table thead th,
 html[data-theme="dark"] body .admin-table thead th,
-html body .main-navbar,
-html body:not(.dashboard-body):not(.auth-body) .main-navbar,
 html body .assistant-header,
 html body .ai-support-header,
 html body .masthead,
@@ -2174,6 +2066,960 @@ html body .report-print-header {
   background: #172554 !important;
 }
 
-html body:not(.dashboard-body):not(.auth-body) .main-navbar {
-  background: #E8F5E9 !important;
+/* Shared foregrounds on the dark header surfaces. */
+html body #sidebar .sidebar-brand,
+html body #sidebar .sidebar-section-header,
+html body #sidebar .sidebar-section-title,
+html body #sidebar .nav-section-title,
+html body .dashboard-sidebar-header,
+html body .dashboard-sidebar-panel-title,
+html body .technician-feedback-page-header,
+html body .assistant-header,
+html body .ai-support-header,
+html body .masthead,
+html body .report-print-header,
+html body .table thead th,
+html body .admin-table thead th {
+  color: #FFFFFF !important;
+}
+
+html body #sidebar :is(.sidebar-brand, .sidebar-section-header, .sidebar-section-title, .nav-section-title, .dashboard-sidebar-header, .dashboard-sidebar-panel-title, .nav-link, .nav-link i, .nav-link span, .app-theme-switch),
+html body .technician-feedback-page-header :is(h1, h2, h3, h4, h5, h6, p, a, button, label, small, strong, i, svg),
+html body .assistant-header :is(h1, h2, h3, h4, h5, h6, p, a, button, label, small, strong, i, svg, span),
+html body .ai-support-header :is(h1, h2, h3, h4, h5, h6, p, a, button, label, small, strong, i, svg, span),
+html body .masthead :is(h1, h2, h3, h4, h5, h6, p, a, button, label, small, strong, i, svg, span),
+html body .report-print-header :is(h1, h2, h3, h4, h5, h6, p, a, button, label, small, strong, i, svg, span),
+html body .table thead th :is(a, button, i, svg, span, .text-muted, .text-secondary, .text-body, .text-dark),
+html body .admin-table thead th :is(a, button, i, svg, span, .text-muted, .text-secondary, .text-body, .text-dark) {
+  color: #FFFFFF !important;
+}
+
+html body .technician-feedback-page-header .feedback-form-icon {
+ color: #212121 !important;
+}
+
+html body .masthead .university,
+html body .masthead .department {
+ color: #FFFFFF !important;
+}
+
+html body .modal-header .btn-close {
+ filter: none;
+}
+
+html[data-theme="dark"] body .modal-header .btn-close {
+ filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Shared application polish. Keep semantic success/error colours on status
+   indicators; only action buttons use the primary brand colour. */
+.btn-success,
+.btn-outline-success {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: #2563EB;
+  --bs-btn-border-color: #2563EB;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #1D4ED8;
+  --bs-btn-hover-border-color: #1D4ED8;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #172554;
+  --bs-btn-active-border-color: #172554;
+  color: #fff !important;
+  background: #2563EB !important;
+  border-color: #2563EB !important;
+}
+
+.btn-success:hover,
+.btn-success:focus-visible,
+.btn-outline-success:hover,
+.btn-outline-success:focus-visible {
+  color: #fff !important;
+  background: #1D4ED8 !important;
+  border-color: #1D4ED8 !important;
+}
+
+.btn-success:active,
+.btn-outline-success:active {
+  color: #fff !important;
+  background: #172554 !important;
+  border-color: #172554 !important;
+}
+
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus-visible,
+.btn-primary:active,
+.btn-primary.active {
+  color: #fff !important;
+}
+
+.btn,
+.form-control,
+.form-select,
+.dropdown-menu,
+.card,
+.modal-content {
+  border-radius: var(--radius-md);
+}
+
+.btn {
+  font-weight: 600;
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.btn-primary:hover,
+.btn-success:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0) scale(.985);
+}
+
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.form-check-input:focus-visible,
+.dropdown-item:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .35);
+  outline-offset: 2px;
+}
+
+.dashboard-body {
+  background: var(--bg-body);
+  color: var(--text-primary);
+}
+
+.main-content,
+.dashboard-body > .d-flex,
+.dashboard-body > .d-flex > .flex-grow-1 {
+  min-width: 0;
+}
+
+.topbar {
+  background: var(--surface) !important;
+  border-bottom-color: var(--border) !important;
+  box-shadow: var(--shadow-card);
+}
+
+.topbar h5 {
+  color: var(--ink);
+}
+
+.card,
+.modal-content {
+  background-color: var(--surface);
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.card:hover {
+  border-color: var(--border-strong) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.card-header,
+.card-footer,
+.modal-header,
+.modal-footer {
+  background: var(--surface-soft) !important;
+  border-color: var(--border) !important;
+}
+
+.card-header,
+.modal-header {
+  color: var(--ink) !important;
+}
+
+.card-header :is(h1, h2, h3, h4, h5, h6, .card-title),
+.modal-header .modal-title {
+  color: var(--ink);
+}
+
+.table {
+  --bs-table-color: var(--text-primary);
+  --bs-table-bg: var(--surface);
+  --bs-table-border-color: var(--border);
+}
+
+.table tbody td {
+  color: var(--text-primary);
+  border-bottom-color: var(--border);
+}
+
+.table-hover > tbody > tr:hover > * {
+  --bs-table-bg-state: var(--primary-subtle);
+  color: var(--text-primary);
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+  color: var(--text-primary);
+  background-color: var(--surface);
+  border-color: var(--border-strong);
+}
+
+.form-control::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 .2rem rgba(var(--primary-rgb), .18);
+}
+
+.form-label,
+.form-check-label {
+  color: var(--text-primary);
+}
+
+.dropdown-menu {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.dropdown-item {
+  color: var(--text-primary);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus-visible {
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+}
+
+.sidebar .nav-link {
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+
+.app-theme-switch {
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.ai-support-launcher,
+.ai-support-header,
+.ai-support-send {
+  background: linear-gradient(135deg, #172554, #2563EB) !important;
+}
+
+.ai-support-avatar,
+.ai-support-message-avatar {
+  background: var(--primary);
+  color: #fff;
+}
+
+@media (max-width: 767.98px) {
+  .dashboard-body .topbar {
+    flex-wrap: wrap;
+  }
+
+  .table-responsive {
+    max-width: 100%;
+  }
+
+  .dashboard-body .card-header {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.main-navbar, #sidebar, .topbar) * {
+    animation: none !important;
+  }
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .dropdown-menu {
+  background-color: var(--surface);
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .card-body,
+html[data-theme="dark"] .modal-body {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .card-header,
+html[data-theme="dark"] .card-footer,
+html[data-theme="dark"] .modal-header,
+html[data-theme="dark"] .modal-footer {
+  background: var(--surface-soft) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme="dark"] .card-header :is(h1, h2, h3, h4, h5, h6, .card-title),
+html[data-theme="dark"] .modal-header .modal-title {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .topbar {
+  background: var(--surface) !important;
+}
+
+html[data-theme="dark"] .table {
+  --bs-table-color: var(--text-primary);
+  --bs-table-bg: var(--surface);
+  --bs-table-border-color: var(--border);
+}
+
+html[data-theme="dark"] .table tbody td {
+  color: var(--text-primary);
+  background-color: var(--surface);
+}
+
+html[data-theme="dark"] .table-hover > tbody > tr:hover > * {
+  --bs-table-bg-state: var(--surface-soft);
+}
+
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-select,
+html[data-theme="dark"] .input-group-text {
+  color: var(--text-primary);
+  background-color: #0f172a;
+  border-color: var(--border-strong);
+}
+
+html[data-theme="dark"] .form-control::placeholder {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .dropdown-item {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .dropdown-item:hover,
+html[data-theme="dark"] .dropdown-item:focus-visible {
+  background: var(--primary-soft);
+  color: #bfdbfe;
+}
+
+html[data-theme="dark"] .app-theme-switch {
+  background-color: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .btn-success,
+html[data-theme="dark"] .btn-outline-success,
+html[data-theme="dark"] .btn-success:hover,
+html[data-theme="dark"] .btn-success:focus-visible,
+html[data-theme="dark"] .btn-outline-success:hover,
+html[data-theme="dark"] .btn-outline-success:focus-visible {
+  color: #fff !important;
+  background: #2563EB !important;
+  border-color: #2563EB !important;
+}
+
+html[data-theme="dark"] .btn-success:hover,
+html[data-theme="dark"] .btn-success:focus-visible,
+html[data-theme="dark"] .btn-outline-success:hover,
+html[data-theme="dark"] .btn-outline-success:focus-visible {
+  background: #1D4ED8 !important;
+  border-color: #1D4ED8 !important;
+}
+
+#scrollTopBtn {
+  color: #fff !important;
+}
+
+@media (max-width: 575.98px) {
+  .btn:not(.btn-sm) {
+    min-height: 40px;
+  }
+
+  .dashboard-body .topbar {
+    padding-inline: .75rem !important;
+  }
+
+  .dashboard-body .table-responsive {
+    border-radius: var(--radius-md);
+  }
+}
+
+/* Shared topbar styling is limited to the three role dashboard landing pages. */
+html body.dashboard-body .dashboard-role-header {
+  background: #172554 !important;
+  border-bottom: 1px solid rgba(219, 234, 254, .2) !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .16) !important;
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body .dashboard-role-header :is(h1, h2, h3, h4, h5, h6, #topUserName, #sidebarToggle, #notifBellBtn, #notifBellBtn .bi-bell, .admin-profile-trigger, .admin-profile-trigger-name, .admin-profile-trigger-caret, .topbar-actions i, .topbar-actions svg) {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body .dashboard-role-header :is(.topbar-subtitle, #currentDate, #adminProfileTriggerRole, .admin-profile-trigger-role) {
+  color: #DBEAFE !important;
+}
+
+html body.dashboard-body .dashboard-role-header .admin-profile-menu .admin-profile-trigger-text #adminProfileTriggerRole {
+  color: #DBEAFE !important;
+}
+
+html body.dashboard-body .dashboard-role-header #sidebarToggle {
+  background: transparent !important;
+  border-color: rgba(219, 234, 254, .6) !important;
+}
+
+html body.dashboard-body .dashboard-role-header #notifBadge,
+html body.dashboard-body .dashboard-role-header #pendingBadge {
+  background-color: #DC2626 !important;
+  color: #FFFFFF !important;
+}
+
+/* Dashboard sidebars use one palette across roles and themes. */
+html body.dashboard-body #sidebar.sidebar {
+  background: #172554 !important;
+  background-color: #172554 !important;
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body #sidebar > a:first-of-type,
+html body.dashboard-body #sidebar > a:first-of-type > div,
+html body.dashboard-body #sidebar .sidebar-brand,
+html body.dashboard-body #sidebar .sidebar-section-header,
+html body.dashboard-body #sidebar .sidebar-section-title,
+html body.dashboard-body #sidebar .nav-section-title,
+html body.dashboard-body #sidebar > .nav,
+html body.dashboard-body #sidebar > .nav > li {
+  background: #172554 !important;
+  background-color: #172554 !important;
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body #sidebar > a:first-of-type :is(i, span, div),
+html body.dashboard-body #sidebar .sidebar-brand :is(i, span, div),
+html body.dashboard-body #sidebar .sidebar-section-header,
+html body.dashboard-body #sidebar .sidebar-section-title,
+html body.dashboard-body #sidebar .nav-section-title {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body #sidebar .nav .nav-link {
+  position: relative;
+  border: 1px solid transparent !important;
+  color: #FFFFFF !important;
+  transition: color .16s ease, background-color .16s ease, box-shadow .16s ease;
+}
+
+html body.dashboard-body #sidebar .nav .nav-link :is(i, span:not(.badge)) {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body #sidebar .nav .nav-link::after {
+  color: #BFDBFE !important;
+  opacity: 1;
+}
+
+html body.dashboard-body #sidebar .nav .nav-link:hover {
+  background-color: #DBEAFE !important;
+  background-image: none !important;
+  border-color: #DBEAFE !important;
+  color: #172554 !important;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+html body.dashboard-body #sidebar .nav .nav-link.active,
+html body.dashboard-body #sidebar .nav .nav-link:focus-visible {
+  background-color: #DBEAFE !important;
+  background-image: none !important;
+  border-color: #DBEAFE !important;
+  color: #172554 !important;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+html body.dashboard-body #sidebar .nav .nav-link:hover :is(i, span:not(.badge)),
+html body.dashboard-body #sidebar .nav .nav-link.active :is(i, span:not(.badge)),
+html body.dashboard-body #sidebar .nav .nav-link:focus-visible :is(i, span:not(.badge)) {
+  color: #172554 !important;
+}
+
+html body.dashboard-body #sidebar .nav .nav-link:hover::after,
+html body.dashboard-body #sidebar .nav .nav-link.active::after,
+html body.dashboard-body #sidebar .nav .nav-link:focus-visible::after {
+  color: #172554 !important;
+}
+
+html body.dashboard-body #sidebar .nav .nav-link.active::before {
+  position: absolute;
+  top: .35rem;
+  bottom: .35rem;
+  left: .15rem;
+  width: 3px;
+  border-radius: 999px;
+  background: #2563EB;
+  content: "";
+}
+
+html body.dashboard-body #sidebar .nav .nav-link:focus-visible {
+  outline: 2px solid #93C5FD !important;
+  outline-offset: 2px;
+}
+
+html body.dashboard-body #sidebar .nav .nav-link:is(.disabled, [aria-disabled="true"], :disabled) {
+  background: transparent !important;
+  color: #CBD5E1 !important;
+  cursor: not-allowed;
+  opacity: .7;
+}
+
+html body.dashboard-body #sidebar .nav .nav-link:is(.disabled, [aria-disabled="true"], :disabled) :is(i, span:not(.badge)) {
+  color: #CBD5E1 !important;
+}
+
+html body.dashboard-body #sidebar .nav .nav-link:is(.disabled, [aria-disabled="true"], :disabled)::after {
+  color: #CBD5E1 !important;
+}
+
+html body.dashboard-body #sidebar .mt-auto :is(i, .small, .form-check-label) {
+  color: #FFFFFF !important;
+}
+
+html body.requester-dashboard #sidebar .app-theme-switch.app-theme-in-sidebar {
+  background: rgba(255, 255, 255, .1) !important;
+  border-color: rgba(219, 234, 254, .35) !important;
+  color: #FFFFFF !important;
+}
+
+html body.requester-dashboard #sidebar .app-theme-switch.app-theme-in-sidebar:not(.dashboard-sidebar-theme) {
+  position: static !important;
+  align-self: flex-end;
+  margin: 0 0 .5rem;
+}
+
+html body.requester-dashboard #sidebar .app-theme-switch.app-theme-in-sidebar:hover {
+  background: rgba(219, 234, 254, .2) !important;
+  border-color: #DBEAFE !important;
+  color: #FFFFFF !important;
+}
+
+html body.requester-dashboard #sidebar .app-theme-switch.app-theme-in-sidebar:focus-visible {
+  outline: 2px solid #DBEAFE !important;
+  outline-offset: 3px;
+}
+
+/* Public landing navbar: light-green brand palette for the public site only.
+   Navbar/logo fill #B6F5A8 · accent blue #438BFF · title #17233F ·
+   nav links #64748B · register #2563EB (hover #1D4ED8).
+   Navbar height, positioning, spacing and control dimensions are inherited
+   from the page stylesheet and are intentionally left untouched. */
+html body.public-home-page #mainNavbar {
+  background: #B6F5A8 !important;
+  background-color: #B6F5A8 !important;
+  border-bottom: 1px solid rgba(23, 35, 63, .12) !important;
+  box-shadow: 0 6px 24px -12px rgba(23, 35, 63, .28) !important;
+  color: #17233F !important;
+}
+
+/* Logo container: matches the navbar fill with a bright blue border.
+   Rounded corners, padding and dimensions are left untouched. */
+html body.public-home-page #mainNavbar .navbar-brand {
+  background: #B6F5A8 !important;
+  border: 2px solid #438BFF !important;
+  box-shadow: none !important;
+}
+
+html body.public-home-page #mainNavbar .brand-text-main {
+  color: #17233F !important;
+}
+
+html body.public-home-page #mainNavbar .brand-text-sub {
+  color: #64748B !important;
+}
+
+html body.public-home-page #mainNavbar :is(.nav-link-item, .nav-link-item i) {
+  color: #64748B !important;
+}
+
+html body.public-home-page #mainNavbar .nav-link-item:is(:hover, :focus-visible) {
+  background: rgba(46, 125, 50, .12) !important;
+  color: #64748B !important;
+}
+
+html body.public-home-page #mainNavbar .nav-link-item.active {
+  background: rgba(46, 125, 50, .22) !important;
+  color: #64748B !important;
+}
+
+html body.public-home-page #mainNavbar .nav-link-item.active i,
+html body.public-home-page #mainNavbar .nav-link-item:is(:hover, :focus-visible) i {
+  color: inherit !important;
+}
+
+html body.public-home-page #mainNavbar .nav-link-item::after {
+  background: #2563EB !important;
+}
+
+/* Theme toggle: white circular button with a dark blue-gray icon. */
+html body.public-home-page #mainNavbar .app-theme-switch {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(23, 35, 63, .14) !important;
+  color: #334155 !important;
+}
+
+html body.public-home-page #mainNavbar :is(.app-theme-switch, .app-theme-switch i, .app-theme-switch span) {
+  color: #334155 !important;
+}
+
+html body.public-home-page #mainNavbar .app-theme-switch:is(:hover, :focus-visible) {
+  background: #F1F5F9 !important;
+  border-color: #438BFF !important;
+  color: #17233F !important;
+}
+
+/* Language selector: white, subtle border, dark text, rounded corners. */
+html body.public-home-page #mainNavbar .lang-select-trigger {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(23, 35, 63, .15) !important;
+  color: #17233F !important;
+}
+
+html body.public-home-page #mainNavbar :is(.lang-select-trigger, .lang-select-trigger i, .lang-select-current) {
+  color: #17233F !important;
+}
+
+html body.public-home-page #mainNavbar .lang-select-trigger:is(:hover, :focus-visible) {
+  border-color: #438BFF !important;
+  background: #FFFFFF !important;
+  color: #17233F !important;
+}
+
+html body.public-home-page #mainNavbar .lang-select-menu {
+  border-color: rgba(23, 35, 63, .15) !important;
+  background: #FFFFFF !important;
+}
+
+html body.public-home-page #mainNavbar .lang-select-option {
+  color: #17233F !important;
+}
+
+html body.public-home-page #mainNavbar .lang-select-option:is(:hover, [aria-selected="true"]) {
+  background: rgba(46, 125, 50, .16) !important;
+  color: #17233F !important;
+}
+
+/* Login: white button with a blue border and dark navy text. */
+html body.public-home-page #mainNavbar .btn-nav-login,
+html body.public-home-page #mainNavbar .btn-nav-login:hover,
+html body.public-home-page #mainNavbar .btn-nav-login:focus-visible {
+  border: 1px solid #438BFF !important;
+  background: #FFFFFF !important;
+  color: #244A9A !important;
+}
+
+html body.public-home-page #mainNavbar .btn-nav-login:is(:hover, :focus-visible) {
+  background: #EFF6FF !important;
+  border-color: #438BFF !important;
+  color: #244A9A !important;
+}
+
+/* Register: solid blue. White label keeps AA contrast on #2563EB
+   (dark navy on this blue would be ~3:1 and fail WCAG AA). */
+html body.public-home-page #mainNavbar .btn-nav-register,
+html body.public-home-page #mainNavbar .btn-nav-register:hover,
+html body.public-home-page #mainNavbar .btn-nav-register:focus-visible {
+  border: 1px solid #2563EB !important;
+  background: #2563EB !important;
+  color: #FFFFFF !important;
+}
+
+html body.public-home-page #mainNavbar .btn-nav-register:is(:hover, :focus-visible) {
+  border-color: #1D4ED8 !important;
+  background: #1D4ED8 !important;
+  color: #FFFFFF !important;
+}
+
+/* Mobile toggler: dark icon/border so it stays visible on the light navbar. */
+html body.public-home-page #mainNavbar .navbar-toggler {
+  border: 1px solid rgba(23, 35, 63, .30) !important;
+}
+
+html body.public-home-page #mainNavbar .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%2317233F' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E") !important;
+}
+
+html body.public-home-page #mainNavbar :is(.navbar-toggler, .app-theme-switch, .lang-select-trigger, .btn-nav-login, .btn-nav-register):focus-visible {
+  outline: 2px solid #438BFF !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(67, 139, 255, .35) !important;
+}
+
+@media (max-width: 1199.98px) {
+  html body.public-home-page #mainNavbar .navbar-collapse:is(.show, .collapsing) {
+    background: #B6F5A8 !important;
+    border: 1px solid rgba(23, 35, 63, .12) !important;
+    border-top: 0 !important;
+    box-shadow: 0 14px 28px -16px rgba(23, 35, 63, .35) !important;
+  }
+
+  html body.public-home-page #mainNavbar .navbar-nav .nav-link {
+    color: #64748B !important;
+  }
+
+  html body.public-home-page #mainNavbar .navbar-nav .nav-link:is(:hover, :focus-visible) {
+    color: #64748B !important;
+  }
+}
+
+/* ICT Admin pages share a role marker so their headers and sidebar stay
+   consistent without changing the Requester or Technician dashboards. */
+html body.dashboard-body.admin-dashboard #sidebar.sidebar,
+html body.dashboard-body.admin-dashboard #sidebar > a:first-of-type,
+html body.dashboard-body.admin-dashboard #sidebar > a:first-of-type > div,
+html body.dashboard-body.admin-dashboard #sidebar .sidebar-brand,
+html body.dashboard-body.admin-dashboard #sidebar .sidebar-section-header,
+html body.dashboard-body.admin-dashboard #sidebar .sidebar-section-title,
+html body.dashboard-body.admin-dashboard #sidebar .nav-section-title,
+html body.dashboard-body.admin-dashboard #sidebar > .nav,
+html body.dashboard-body.admin-dashboard #sidebar > .nav > li {
+  background: #172554 !important;
+  background-color: #172554 !important;
+}
+
+html body.dashboard-body.admin-dashboard #sidebar.sidebar {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.admin-dashboard #sidebar > a:first-of-type :is(i, span, div),
+html body.dashboard-body.admin-dashboard #sidebar .sidebar-brand :is(i, span, div),
+html body.dashboard-body.admin-dashboard #sidebar .sidebar-section-header,
+html body.dashboard-body.admin-dashboard #sidebar .sidebar-section-title,
+html body.dashboard-body.admin-dashboard #sidebar .nav-section-title,
+html body.dashboard-body.admin-dashboard #sidebar .mt-auto :is(i, .small, .form-check-label) {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link {
+  position: relative;
+  border: 1px solid transparent !important;
+  color: #FFFFFF !important;
+  transition: color .16s ease, background-color .16s ease, box-shadow .16s ease;
+}
+
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link :is(i, span:not(.badge)) {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link::after {
+  color: #BFDBFE !important;
+  opacity: 1;
+}
+
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link:hover,
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link.active,
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link:focus-visible {
+  background: #DBEAFE !important;
+  background-color: #DBEAFE !important;
+  background-image: none !important;
+  border-color: #DBEAFE !important;
+  color: #172554 !important;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link:hover :is(i, span:not(.badge)),
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link.active :is(i, span:not(.badge)),
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link:focus-visible :is(i, span:not(.badge)),
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link:hover::after,
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link.active::after,
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link:focus-visible::after {
+  color: #172554 !important;
+}
+
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link.active::before {
+  position: absolute;
+  top: .35rem;
+  bottom: .35rem;
+  left: .15rem;
+  width: 3px;
+  border-radius: 999px;
+  background: #2563EB;
+  content: "";
+}
+
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link:focus-visible {
+  outline: 2px solid #93C5FD !important;
+  outline-offset: 2px;
+}
+
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link:is(.disabled, [aria-disabled="true"], :disabled),
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link:is(.disabled, [aria-disabled="true"], :disabled) :is(i, span:not(.badge)),
+html body.dashboard-body.admin-dashboard #sidebar .nav .nav-link:is(.disabled, [aria-disabled="true"], :disabled)::after {
+  background: transparent !important;
+  color: #CBD5E1 !important;
+  cursor: not-allowed;
+  opacity: .7;
+}
+
+html body.dashboard-body.admin-dashboard :is(.topbar, .dashboard-role-header) {
+  background: #172554 !important;
+  background-color: #172554 !important;
+  background-image: none !important;
+  border-bottom: 1px solid rgba(219, 234, 254, .2) !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .16) !important;
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.admin-dashboard .topbar :is(h1, h2, h3, h4, h5, h6, #topUserName, #sidebarToggle, #notifBellContainer, .admin-profile-trigger, .admin-profile-trigger-name, .admin-profile-trigger-caret, .topbar-actions, .topbar-actions i, .topbar-actions svg, .text-primary) {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.admin-dashboard .topbar :is(small, .topbar-subtitle, #currentDate, #adminProfileTriggerRole, .admin-profile-trigger-role, .text-muted, .text-secondary, label) {
+  color: #DBEAFE !important;
+}
+
+html body.dashboard-body.admin-dashboard .topbar :is(.admin-profile-trigger, #sidebarToggle, .btn-outline-secondary) {
+  border-color: rgba(219, 234, 254, .6) !important;
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.admin-dashboard .topbar :is(.admin-profile-trigger, #sidebarToggle, .btn-outline-secondary):is(:hover, :focus-visible) {
+  background: rgba(219, 234, 254, .16) !important;
+  border-color: #DBEAFE !important;
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.admin-dashboard :is(.topbar, #sidebar) :is(.badge.bg-danger, #notifBadge, #pendingBadge, #sidebarNotifBadge) {
+  background-color: #DC2626 !important;
+  color: #FFFFFF !important;
+}
+
+/* Requester pages keep their page headers and full sidebar on the navy palette. */
+html body.dashboard-body.requester-dashboard #sidebar.sidebar,
+html body.dashboard-body.requester-dashboard #sidebar > a:first-of-type,
+html body.dashboard-body.requester-dashboard #sidebar > a:first-of-type > div,
+html body.dashboard-body.requester-dashboard #sidebar .sidebar-brand,
+html body.dashboard-body.requester-dashboard #sidebar .sidebar-section-header,
+html body.dashboard-body.requester-dashboard #sidebar .sidebar-section-title,
+html body.dashboard-body.requester-dashboard #sidebar .nav-section-title,
+html body.dashboard-body.requester-dashboard #sidebar > .nav,
+html body.dashboard-body.requester-dashboard #sidebar > .nav > li {
+  background: #172554 !important;
+  background-color: #172554 !important;
+}
+
+html body.dashboard-body.requester-dashboard #sidebar.sidebar {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.requester-dashboard #sidebar > a:first-of-type :is(i, span, div),
+html body.dashboard-body.requester-dashboard #sidebar .sidebar-brand :is(i, span, div),
+html body.dashboard-body.requester-dashboard #sidebar .sidebar-section-header,
+html body.dashboard-body.requester-dashboard #sidebar .sidebar-section-title,
+html body.dashboard-body.requester-dashboard #sidebar .nav-section-title,
+html body.dashboard-body.requester-dashboard #sidebar .mt-auto :is(i, .small, .form-check-label) {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link {
+  position: relative;
+  border: 1px solid transparent !important;
+  color: #FFFFFF !important;
+  transition: color .16s ease, background-color .16s ease, box-shadow .16s ease;
+}
+
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link :is(i, span:not(.badge)) {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link::after {
+  color: #BFDBFE !important;
+  opacity: 1;
+}
+
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link:hover,
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link.active,
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link:focus-visible {
+  background: #DBEAFE !important;
+  background-color: #DBEAFE !important;
+  background-image: none !important;
+  border-color: #DBEAFE !important;
+  color: #172554 !important;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link:hover :is(i, span:not(.badge)),
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link.active :is(i, span:not(.badge)),
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link:focus-visible :is(i, span:not(.badge)),
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link:hover::after,
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link.active::after,
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link:focus-visible::after {
+  color: #172554 !important;
+}
+
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link.active::before {
+  position: absolute;
+  top: .35rem;
+  bottom: .35rem;
+  left: .15rem;
+  width: 3px;
+  border-radius: 999px;
+  background: #2563EB;
+  content: "";
+}
+
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link:focus-visible {
+  outline: 2px solid #93C5FD !important;
+  outline-offset: 2px;
+}
+
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link:is(.disabled, [aria-disabled="true"], :disabled),
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link:is(.disabled, [aria-disabled="true"], :disabled) :is(i, span:not(.badge)),
+html body.dashboard-body.requester-dashboard #sidebar .nav .nav-link:is(.disabled, [aria-disabled="true"], :disabled)::after {
+  background: transparent !important;
+  color: #CBD5E1 !important;
+  cursor: not-allowed;
+  opacity: .7;
+}
+
+html body.dashboard-body.requester-dashboard :is(.topbar, .university-header) {
+  background: #172554 !important;
+  background-color: #172554 !important;
+  background-image: none !important;
+  border-bottom: 1px solid rgba(219, 234, 254, .2) !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .16) !important;
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.requester-dashboard .topbar :is(h1, h2, h3, h4, h5, h6, #topUserName, #sidebarToggle, #notifBellContainer, .profile-avatar, .topbar-actions, .topbar-actions i, .topbar-actions svg, .text-primary),
+html body.dashboard-body.requester-dashboard .university-header :is(.university-name, .system-title, i, svg) {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.requester-dashboard .topbar :is(small, .topbar-subtitle, .page-subtitle, .feedback-subtitle, #currentDate, .text-muted, .text-secondary, label):not(#adminProfileDropdown *):not(.profile-avatar-initials),
+html body.dashboard-body.requester-dashboard .university-header .system-subtitle {
+  color: #DBEAFE !important;
+}
+
+html body.dashboard-body.requester-dashboard .topbar #topUserName:not(#adminProfileDropdown *):not(.profile-avatar-initials) {
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.requester-dashboard .topbar :is(#sidebarToggle, .btn-outline-secondary) {
+  background: transparent !important;
+  border-color: rgba(219, 234, 254, .6) !important;
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.requester-dashboard .topbar :is(#sidebarToggle, .btn-outline-secondary):is(:hover, :focus-visible) {
+  background: rgba(219, 234, 254, .16) !important;
+  border-color: #DBEAFE !important;
+  color: #FFFFFF !important;
+}
+
+html body.dashboard-body.requester-dashboard :is(.topbar, #sidebar) :is(.badge.bg-danger, #notifBadge, #pendingBadge, #sidebarNotifBadge) {
+  background-color: #DC2626 !important;
+  color: #FFFFFF !important;
 }

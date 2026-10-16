@@ -85,8 +85,19 @@ function initTechActionDelegation() {
         ? openTaskModal(ticketId, btn.dataset.title, btn.dataset.status)
         : openUpdateModal(ticketId, btn.dataset.title, btn.dataset.status);
     }
-    if (btn.dataset.action === "report")
+    if (btn.dataset.action === "report") {
+      const taskModal = document.getElementById("taskModal");
+      if (taskModal?.classList.contains("show")) {
+        taskModal.addEventListener(
+          "hidden.bs.modal",
+          () => openFeedbackModal(ticketId, btn.dataset.title),
+          { once: true },
+        );
+        bootstrap.Modal.getInstance(taskModal)?.hide();
+        return;
+      }
       return openFeedbackModal(ticketId, btn.dataset.title);
+    }
     if (btn.dataset.action === "view-report")
       return viewFeedbackReport(ticketId);
   });
@@ -151,12 +162,11 @@ async function startWork(btn, ticketId) {
   return quickStatusAction(btn, ticketId, "in_progress", "Work started.");
 }
 async function resolveTask(btn, ticketId) {
-  return quickStatusAction(
-    btn,
-    ticketId,
-    "resolved",
-    "Task marked as resolved.",
-  );
+  const title = btn?.dataset.title || "";
+  const status = btn?.dataset.status || "in_progress";
+  return window.location.pathname.includes("technician/assigned-requests")
+    ? openTaskModal(ticketId, title, status)
+    : openUpdateModal(ticketId, title, status);
 }
 
 /* Refresh the list that is currently visible (dashboard or assigned requests)
@@ -300,11 +310,14 @@ async function loadTechFeedbackReports() {
           <div class="d-flex align-items-center gap-2 mb-2">
             <strong class="text-primary small">${escHtml(ticket)}</strong>
             ${statusBadgeHtml}
-            ${report.completionDate ? `<span class="ms-auto small text-muted"><i class="bi bi-calendar-check me-1"></i>${formatDate(report.completionDate)}</span>` : ""}
+            <span class="ms-auto small text-muted"><i class="bi bi-calendar3 me-1"></i>${report.submittedAt ? formatDateTime(report.submittedAt) : "—"}</span>
           </div>
           ${row("Diagnosis", report.diagnosis)}
           ${row("Work Performed", report.workPerformed)}
+          ${row("Parts / Materials", report.partsUsed)}
           ${row("Resolution", report.resolution)}
+          ${row("Time Spent", report.timeSpentMinutes == null ? "" : `${report.timeSpentMinutes} minutes`)}
+          ${row("Technician", report.technicianName || report.technician_name)}
         </div>`;
       })
       .join("");
@@ -546,9 +559,13 @@ function renderAdminFeedbackForTechnician(feedback) {
       <div class="d-flex align-items-center gap-2 mb-2">
         <i class="bi bi-clipboard2-check text-primary"></i>
         <strong class="small">Admin Feedback</strong>
+        ${feedback.reportReviewDecision ? `<span class="badge bg-primary">${escHtml(feedback.reportReviewDecision)}</span>` : ""}
+        ${feedback.evaluationStatus ? `<span class="badge bg-secondary">${escHtml(feedback.evaluationStatus)}</span>` : ""}
         ${feedback.ticketStatus ? statusBadge(feedback.ticketStatus) : ""}
       </div>
       <div class="small p-3 bg-light rounded" style="white-space:pre-wrap;">${escHtml(feedback.adminComment || "No feedback message provided.")}</div>
+      <div class="small text-muted mt-2">Work quality: ${escHtml(feedback.workQuality || "—")} · Technical accuracy: ${escHtml(feedback.technicalAccuracy || "—")} · Repair effectiveness: ${escHtml(feedback.repairEffectiveness || "—")} · Report completeness: ${escHtml(feedback.reportCompleteness || "—")} · Safety compliance: ${escHtml(feedback.safetyProcedureCompliance || "—")}</div>
+      ${feedback.administrativeRecommendation ? `<div class="small mt-2"><strong>Recommendation / required action:</strong> ${escHtml(feedback.administrativeRecommendation)}</div>` : ""}
       <div class="d-flex flex-wrap gap-3 mt-2 text-muted" style="font-size:.75rem;">
         <span><i class="bi bi-person-badge me-1"></i>${escHtml(feedback.admin_name || "ICT Admin")}</span>
         <span><i class="bi bi-ticket-detailed me-1"></i>${escHtml(feedback.ticketId || "Ticket")}</span>
@@ -606,6 +623,7 @@ async function openViewDetails(requestId) {
       ${r.asset_tag ? row("ICT Asset", `<i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}`) : ""}
       ${r.serialNumber ? row("Serial Number", escHtml(r.serialNumber)) : ""}
       ${row("Description", `<div style="white-space:pre-wrap;">${escHtml(r.problemDescription)}</div>`)}
+      ${r.diagnosis ? row("Diagnosis", `<div style="white-space:pre-wrap;">${escHtml(r.diagnosis)}</div>`) : ""}
       ${row("Assigned Technician", escHtml(r.assignedTechnician || "—"))}
       ${row("Priority", priorityBadge(r.priority))}
       ${row("Status", statusBadge(r.status))}
@@ -618,6 +636,16 @@ async function openViewDetails(requestId) {
 }
 
 /* ── Update Task Modal ──────────────────────────────────────── */
+function syncDiagnosisRequirement(statusId, diagnosisId, requiredId) {
+  const required = document.getElementById(statusId)?.value === "resolved";
+  const diagnosis = document.getElementById(diagnosisId);
+  if (!diagnosis) return;
+  diagnosis.required = required;
+  diagnosis.setAttribute("aria-required", String(required));
+  document.getElementById(requiredId)?.classList.toggle("d-none", !required);
+  if (!required) diagnosis.classList.remove("is-invalid");
+}
+
 async function openUpdateModal(requestId, title, currentStatus) {
   requestId = String(requestId || "").trim();
   if (!requestId || !/^[0-9a-f]{24}$/i.test(requestId)) {
@@ -652,6 +680,11 @@ async function openUpdateModal(requestId, title, currentStatus) {
     ? allowed[allowed.length - 1]
     : "unchanged";
   statusSel.onchange = () => {
+    syncDiagnosisRequirement(
+      "modalStatus",
+      "modalDiagnosis",
+      "modalDiagnosisRequired",
+    );
     if (statusSel.value === "unchanged") {
       showAlert(
         "updateTaskAlert",
@@ -664,6 +697,7 @@ async function openUpdateModal(requestId, title, currentStatus) {
   };
 
   document.getElementById("modalAction").value = "";
+  document.getElementById("modalDiagnosis").value = "";
   document.getElementById("modalParts").value = "";
   document.getElementById("modalNotes").value = "";
 
@@ -701,12 +735,18 @@ async function openUpdateModal(requestId, title, currentStatus) {
           <div class="col-12"><span class="text-muted small d-block">Reported problem</span>
             <div class="small p-2 bg-white border rounded" style="max-height:80px;overflow-y:auto;">${escHtml(r.problemDescription)}</div>
           </div>
+          ${r.diagnosis ? `<div class="col-12"><span class="text-muted small d-block">Diagnosis</span><div class="small p-2 bg-white border rounded" style="white-space:pre-wrap;">${escHtml(r.diagnosis)}</div></div>` : ""}
         </div>`;
     } catch (_) {
       info.innerHTML = `<span class="text-muted small">Request #${requestId}</span>`;
     }
   }
 
+  syncDiagnosisRequirement(
+    "modalStatus",
+    "modalDiagnosis",
+    "modalDiagnosisRequired",
+  );
   const saveBtn = document.getElementById("saveUpdateBtn");
   saveBtn.onclick = () => saveTaskUpdate(requestId);
 
@@ -718,6 +758,8 @@ async function openUpdateModal(requestId, title, currentStatus) {
 
 async function saveTaskUpdate(requestId) {
   const status = document.getElementById("modalStatus").value;
+  const diagnosisField = document.getElementById("modalDiagnosis");
+  const diagnosis = diagnosisField.value.trim();
   const action = document.getElementById("modalAction").value.trim();
   const parts = document.getElementById("modalParts").value.trim();
   const notes = document.getElementById("modalNotes").value.trim();
@@ -731,20 +773,34 @@ async function saveTaskUpdate(requestId) {
     return;
   }
 
-  if (!status || !action) {
+  if (!status || action.length < 2) {
     showAlert(
       "updateTaskAlert",
-      !status ? "Please select a status." : "Please describe the action taken.",
+      !status
+        ? "Please select a status."
+        : "Action Taken must be at least 2 characters.",
       "warning",
     );
     return;
   }
+  if (status === "resolved" && !diagnosis) {
+    diagnosisField.classList.add("is-invalid");
+    showAlert(
+      "updateTaskAlert",
+      "Please enter the diagnosis before resolving this request.",
+      "warning",
+    );
+    diagnosisField.focus();
+    return;
+  }
+  diagnosisField.classList.remove("is-invalid");
   if (document.getElementById("saveUpdateBtn").disabled) return;
 
   setLoading("saveUpdateBtn", "saveUpdateSpinner", true);
 
   try {
     await updateTicketStatusWithMaintenanceDetails(requestId, status, {
+      diagnosis,
       actionTaken: action,
       partsUsed: parts || null,
       notes: notes || null,
@@ -831,6 +887,8 @@ async function initAssignedRequests() {
         document.getElementById("taskRequestId").value || ""
       ).trim();
       const status = document.getElementById("newStatus").value;
+      const diagnosisField = document.getElementById("taskDiagnosis");
+      const diagnosis = diagnosisField.value.trim();
       const action = document.getElementById("actionTaken").value.trim();
       const parts = document.getElementById("partsUsed").value.trim();
       const notes = document.getElementById("techNotes").value.trim();
@@ -845,17 +903,31 @@ async function initAssignedRequests() {
         return;
       }
 
-      if (!status || !action) {
+      if (!status || action.length < 2) {
         showAlert(
           "taskUpdateAlert",
-          "Status and action taken are required.",
+          !status
+            ? "Please select a status."
+            : "Action Taken must be at least 2 characters.",
           "warning",
         );
         return;
       }
+      if (status === "resolved" && !diagnosis) {
+        diagnosisField.classList.add("is-invalid");
+        showAlert(
+          "taskUpdateAlert",
+          "Please enter the diagnosis before resolving this request.",
+          "warning",
+        );
+        diagnosisField.focus();
+        return;
+      }
+      diagnosisField.classList.remove("is-invalid");
       setLoading("saveTaskUpdateBtn", "saveTaskSpinner", true);
       try {
         await updateTicketStatusWithMaintenanceDetails(requestId, status, {
+          diagnosis,
           actionTaken: action,
           partsUsed: parts || null,
           notes: notes || null,
@@ -865,9 +937,17 @@ async function initAssignedRequests() {
         bootstrap.Modal.getInstance(
           document.getElementById("taskModal"),
         )?.hide();
-        _assignedAll = await fetchAssignedRequests();
+        try {
+          _assignedAll = await fetchAssignedRequests();
+          document.getElementById("filterBtn")?.click();
+        } catch (refreshError) {
+          showToast(
+            `The update was saved, but the request list could not be refreshed: ${refreshError.message}`,
+            "warning",
+          );
+        }
       } catch (err) {
-        showAlert("taskUpdateAlert", err.message, "danger");
+        showAlert("taskUpdateAlert", taskUpdateErrorMessage(err), "danger");
       } finally {
         setLoading("saveTaskUpdateBtn", "saveTaskSpinner", false);
       }
@@ -1296,6 +1376,7 @@ function openTaskModal(requestId, title, currentStatus) {
     currentStatus === "in_progress" || currentStatus === "accepted"
       ? "resolved"
       : "in_progress";
+  document.getElementById("taskDiagnosis").value = "";
   document.getElementById("actionTaken").value = "";
   document.getElementById("partsUsed").value = "";
   document.getElementById("techNotes").value = "";
@@ -1332,10 +1413,20 @@ function openTaskModal(requestId, title, currentStatus) {
     statusSelect.value = nextStatuses.length
       ? nextStatuses[nextStatuses.length - 1]
       : "unchanged";
+    syncDiagnosisRequirement(
+      "newStatus",
+      "taskDiagnosis",
+      "taskDiagnosisRequired",
+    );
   });
 
   const statusSelect = document.getElementById("newStatus");
   statusSelect.onchange = () => {
+    syncDiagnosisRequirement(
+      "newStatus",
+      "taskDiagnosis",
+      "taskDiagnosisRequired",
+    );
     if (statusSelect.value === "unchanged") {
       showAlert(
         "taskUpdateAlert",
@@ -1347,6 +1438,11 @@ function openTaskModal(requestId, title, currentStatus) {
     }
   };
 
+  syncDiagnosisRequirement(
+    "newStatus",
+    "taskDiagnosis",
+    "taskDiagnosisRequired",
+  );
   const modalEl = document.getElementById("taskModal");
   const m = bootstrap.Modal.getInstance(modalEl);
   if (!m) new bootstrap.Modal(modalEl).show();
@@ -1359,11 +1455,25 @@ async function loadTaskInfoSection(requestId, sectionId) {
   section.innerHTML = `<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>`;
   try {
     const { data: r } = await apiRequest(`/tickets/${requestId}`);
+    const report = r.technician_feedback;
+    const reportResult = feedbackRepairResult(report);
+    const reportAction = `<button type="button" class="btn btn-sm btn-outline-primary mt-2"
+      data-action="report" data-ticket-id="${escHtml(r.id || requestId)}"
+      data-title="${escHtml(r.title || r.ticketId || "")}">${report ? "Edit maintenance report" : "Submit maintenance report"}</button>`;
+    const reportGuidance = !report
+      ? "Submit a confirmed maintenance report before marking this request as resolved."
+      : reportResult === "Resolved"
+        ? "The saved report confirms the issue is resolved."
+        : `The saved report result is "${escHtml(reportResult || "not recorded")}". Update the report before resolving this request.`;
     section.innerHTML = `
       <div class="row g-2">
         <div class="col-6"><span class="text-muted small d-block">Title</span><strong>${escHtml(r.ticketId || r.id)}</strong></div>
         <div class="col-3"><span class="text-muted small d-block">Priority</span>${priorityBadge(r.priority)}</div>
         <div class="col-3"><span class="text-muted small d-block">Status</span>${statusBadge(r.status)}</div>
+        <div class="col-12"><span class="text-muted small d-block">Maintenance report result</span>
+          <strong>${escHtml(reportResult || (report ? "Result not recorded" : "No confirmed report"))}</strong>
+          <div class="small text-muted">${reportGuidance}</div>${reportAction}
+        </div>
         <div class="col-sm-6"><span class="text-muted small d-block">Equipment</span>${escHtml(r.equipmentType || "—")}</div>
         <div class="col-sm-6"><span class="text-muted small d-block">Category</span>${escHtml(r.category || "—")}</div>
         <div class="col-sm-6"><span class="text-muted small d-block">Issue Type / Service Type</span>${escHtml(r.issueType || r.serviceType || "—")}</div>
@@ -1372,10 +1482,11 @@ async function loadTaskInfoSection(requestId, sectionId) {
         <div class="col-12"><span class="text-muted small d-block">Description</span>
           <div class="small p-2 bg-light rounded" style="max-height:70px;overflow-y:auto;">${escHtml(r.problemDescription)}</div>
         </div>
+        ${r.diagnosis ? `<div class="col-12"><span class="text-muted small d-block">Diagnosis</span><div class="small p-2 bg-light rounded" style="white-space:pre-wrap;">${escHtml(r.diagnosis)}</div></div>` : ""}
       </div>`;
     return r;
-  } catch (_) {
-    section.innerHTML = `<span class="text-muted small">Request #${requestId}</span>`;
+  } catch (error) {
+    section.innerHTML = `<div class="alert alert-danger mb-0" role="alert">Unable to load the latest request and maintenance report details: ${escHtml(error.message || "Please try again.")}</div>`;
     return null;
   }
 }
@@ -1400,8 +1511,12 @@ function feedbackRepairResult(report) {
     report?.repairResult ||
     ({
       Fixed: "Resolved",
+      Resolved: "Resolved",
       "In Progress": "Partially Resolved",
+      "Partially Resolved": "Partially Resolved",
       "Not Fixed": "Not Resolved",
+      "Not Resolved": "Not Resolved",
+      Unresolved: "Not Resolved",
     }[report?.status] || "")
   return result === "Unresolved" ? "Not Resolved" : result;
 }
@@ -1433,6 +1548,25 @@ function initFeedbackHandlers() {
       updateFeedbackReasonVisibility();
       updateFeedbackPreview();
     });
+  [
+    "fbDiagnosis",
+    "fbWorkPerformed",
+    "fbResolution",
+    "fbTimeSpent",
+    "fbFollowUpRequired",
+    "fbReasonNotFixed",
+    "fbPartsUsed",
+    "fbRecommendation",
+    "fbTechnicianNotes",
+    "fbConfirmed",
+  ].forEach((id) => {
+    document.getElementById(id)?.addEventListener("input", (event) => {
+      event.currentTarget.classList.remove("is-invalid");
+    });
+    document.getElementById(id)?.addEventListener("change", (event) => {
+      event.currentTarget.classList.remove("is-invalid");
+    });
+  });
 
   // Live preview updates
   ["fbDiagnosis", "fbWorkPerformed", "fbResolution"].forEach((id) => {
@@ -1517,7 +1651,10 @@ function resetFeedbackForm() {
     "fbTechnicianNotes",
   ].forEach((id) => {
     const el = document.getElementById(id);
-    if (el) el.value = "";
+    if (el) {
+      el.value = "";
+      el.classList.remove("is-invalid");
+    }
   });
   const status = getFeedbackStatusSelect();
   if (status) {
@@ -1526,7 +1663,10 @@ function resetFeedbackForm() {
       : status.options[0]?.value || "";
   }
   const confirmed = document.getElementById("fbConfirmed");
-  if (confirmed) confirmed.checked = false;
+  if (confirmed) {
+    confirmed.checked = false;
+    confirmed.classList.remove("is-invalid");
+  }
   const alert = document.getElementById("feedbackAlert");
   if (alert) {
     alert.classList.add("d-none");
@@ -1670,6 +1810,29 @@ async function openEditFeedbackModal(requestId, title, report) {
 async function submitFeedback() {
   if (_fbSubmitting) return;
 
+  const fieldIds = [
+    "fbDiagnosis",
+    "fbWorkPerformed",
+    "fbResolution",
+    "fbTimeSpent",
+    "fbRepairResult",
+    "fbFollowUpRequired",
+    "fbReasonNotFixed",
+    "fbPartsUsed",
+    "fbRecommendation",
+    "fbTechnicianNotes",
+    "fbConfirmed",
+  ];
+  fieldIds.forEach((fieldId) =>
+    document.getElementById(fieldId)?.classList.remove("is-invalid"),
+  );
+  const fieldError = (fieldId, message) => {
+    const field = document.getElementById(fieldId);
+    field?.classList.add("is-invalid");
+    field?.focus();
+    showAlert("feedbackAlert", message, "warning");
+  };
+
   const id = (document.getElementById("feedbackRequestId").value || "").trim();
   if (!id || !/^[0-9a-f]{24}$/i.test(id)) {
     showAlert(
@@ -1683,9 +1846,9 @@ async function submitFeedback() {
   const statusSelect = getFeedbackStatusSelect();
   const confirmation = document.getElementById("fbConfirmed");
   const repairResult = statusSelect?.value || "";
-  const timeSpentMinutes = Number(
-    document.getElementById("fbTimeSpent")?.value,
-  );
+  const timeSpentValue =
+    document.getElementById("fbTimeSpent")?.value.trim() || "";
+  const timeSpentMinutes = Number(timeSpentValue);
   const followUpValue =
     document.getElementById("fbFollowUpRequired")?.value || "";
   const body = {
@@ -1703,62 +1866,52 @@ async function submitFeedback() {
       document.getElementById("fbRecommendation")?.value.trim() || "",
     technicianNotes:
       document.getElementById("fbTechnicianNotes")?.value.trim() || "",
+    technicianConfirmed: confirmation?.checked === true,
   };
 
   if (!body.diagnosis)
-    return showAlert(
-      "feedbackAlert",
+    return fieldError(
+      "fbDiagnosis",
       "Diagnosis / identified problem is required.",
-      "warning",
     );
   if (!body.workPerformed)
-    return showAlert("feedbackAlert", "Work performed is required.", "warning");
+    return fieldError("fbWorkPerformed", "Work performed is required.");
   if (!body.resolution)
-    return showAlert(
-      "feedbackAlert",
-      "Resolution summary is required.",
-      "warning",
-    );
+    return fieldError("fbResolution", "Resolution summary is required.");
   if (!repairResult) {
-    statusSelect?.classList.add("is-invalid");
-    statusSelect?.focus();
-    return showAlert(
-      "feedbackAlert",
+    return fieldError(
+      statusSelect?.id || "fbRepairResult",
       "Current result/status is required.",
-      "warning",
     );
   }
-  statusSelect?.classList.remove("is-invalid");
   if (
     !Number.isInteger(timeSpentMinutes) ||
     timeSpentMinutes < 1 ||
     timeSpentMinutes > 10080
-  )
-    return showAlert(
-      "feedbackAlert",
+  ) {
+    return fieldError(
+      "fbTimeSpent",
       "Enter time spent as a whole number of minutes between 1 and 10080.",
-      "warning",
     );
+  }
   if (!followUpValue)
-    return showAlert(
-      "feedbackAlert",
+    return fieldError(
+      "fbFollowUpRequired",
       "Please select whether follow-up is required.",
-      "warning",
     );
   if (
     ["Not Resolved", "Unresolved"].includes(repairResult) &&
     !body.reasonNotFixed
-  )
-    return showAlert(
-      "feedbackAlert",
+  ) {
+    return fieldError(
+      "fbReasonNotFixed",
       "Please provide a reason why the issue is not fixed.",
-      "warning",
     );
+  }
   if (confirmation && !confirmation.checked)
-    return showAlert(
-      "feedbackAlert",
+    return fieldError(
+      "fbConfirmed",
       "Please confirm that this report accurately reflects the work performed.",
-      "warning",
     );
 
   _fbSubmitting = true;
@@ -1775,10 +1928,20 @@ async function submitFeedback() {
         "Invalid or missing ticket ID. Please reopen the report and try again.",
       );
     }
-    await apiRequest(
+    const response = await apiRequest(
       `/tickets/${encodeURIComponent(ticketId)}/technician-feedback`,
       { method, body },
     );
+    if (
+      response?.success !== true ||
+      !isObjectRecord(response.data) ||
+      response.data.technicianConfirmed !== true
+    ) {
+      throw new Error(
+        "The server did not confirm that the maintenance report was saved.",
+      );
+    }
+    invalidateMyMaintenanceCache();
     showToast(
       _fbMode === "edit"
       ? "Maintenance report updated."
@@ -1795,11 +1958,13 @@ async function submitFeedback() {
     try {
       if (window.location.pathname.includes("technician/dashboard")) {
         await loadDashboardTasks();
+        await loadRecentActivity();
       } else {
         const listEl = document.getElementById("assignedRequestsList");
         const newData = await apiRequest("/technicians/my/assignments");
         if (listEl) renderAssignedCards(newData.data);
       }
+      await loadActivityTimeline();
     } catch (refreshError) {
       console.error(
         "Report saved, but refreshing the list failed:",
@@ -1811,6 +1976,21 @@ async function submitFeedback() {
       );
     }
   } catch (err) {
+    const backendFieldIds = {
+      diagnosis: "fbDiagnosis",
+      workPerformed: "fbWorkPerformed",
+      resolution: "fbResolution",
+      repairResult: statusSelect?.id || "fbRepairResult",
+      timeSpentMinutes: "fbTimeSpent",
+      followUpRequired: "fbFollowUpRequired",
+      reasonNotFixed: "fbReasonNotFixed",
+      partsUsed: "fbPartsUsed",
+      recommendation: "fbRecommendation",
+      technicianNotes: "fbTechnicianNotes",
+      technicianConfirmed: "fbConfirmed",
+    };
+    const fieldId = backendFieldIds[err?.data?.field];
+    if (fieldId) document.getElementById(fieldId)?.classList.add("is-invalid");
     showAlert("feedbackAlert", err.message, "danger");
   } finally {
     _fbSubmitting = false;
@@ -1930,13 +2110,40 @@ function normalizeTicketStatus(status) {
     .replace(/[\s-]+/g, "_");
 }
 
+function taskUpdateErrorMessage(error) {
+  const response = error?.data;
+  if (response?.message !== "Validation failed.") {
+    return error?.message || "The request update could not be saved.";
+  }
+
+  const errors = response.errors;
+  if (errors && typeof errors === "object" && !Array.isArray(errors)) {
+    const fieldMessage =
+      (typeof response.field === "string" &&
+        typeof errors[response.field] === "string" &&
+        errors[response.field]) ||
+      Object.values(errors).find(
+        (message) => typeof message === "string" && message.trim(),
+      );
+    if (fieldMessage) return fieldMessage;
+  }
+
+  return error.message;
+}
+
 async function updateTicketStatusWithMaintenanceDetails(
   requestId,
   status,
   workDetails,
   currentStatus = null,
 ) {
+  const diagnosis = String(workDetails.diagnosis || "").trim();
   const actionTaken = String(workDetails.actionTaken || "").trim();
+  if (normalizeTicketStatus(status) === "resolved" && !diagnosis) {
+    throw new Error("Please enter the diagnosis before resolving this request.");
+  }
+  if (diagnosis.length > 5000)
+    throw new Error("Diagnosis must be no more than 5,000 characters.");
   if (!actionTaken) throw new Error("Action taken is required.");
   if (actionTaken.length > 1000)
     throw new Error("Action taken must be no more than 1,000 characters.");
@@ -1945,17 +2152,28 @@ async function updateTicketStatusWithMaintenanceDetails(
   if (String(workDetails.notes || "").length > 2000)
     throw new Error("Notes must be no more than 2,000 characters.");
 
-  let normalizedCurrentStatus = currentStatus
-    ? normalizeTicketStatus(currentStatus)
-    : "";
-  if (!normalizedCurrentStatus) {
-    const { data: ticket } = await apiRequest(`/tickets/${requestId}`);
-    normalizedCurrentStatus = normalizeTicketStatus(ticket.status);
-  }
+  const { data: ticket } = await apiRequest(`/tickets/${requestId}`);
+  const normalizedCurrentStatus = normalizeTicketStatus(
+    currentStatus || ticket.status,
+  );
   const targetStatus =
     status === "unchanged"
       ? normalizedCurrentStatus
       : normalizeTicketStatus(status);
+  if (["resolved", "closed"].includes(targetStatus)) {
+    const report = ticket.technician_feedback;
+    if (!report || report.technicianConfirmed !== true) {
+      throw new Error(
+        "Submit a confirmed maintenance report before marking this request as resolved.",
+      );
+    }
+    const repairResult = feedbackRepairResult(report);
+    if (repairResult !== "Resolved") {
+      throw new Error(
+        `The saved maintenance report result is "${repairResult || "not recorded"}". Update the report to Resolved only if the repair is complete.`,
+      );
+    }
+  }
   const fromIdx = _TICKET_STATUS_CHAIN.indexOf(normalizedCurrentStatus);
   const toIdx = _TICKET_STATUS_CHAIN.indexOf(targetStatus);
   if (fromIdx < 0 || toIdx < 0 || toIdx < fromIdx) {
@@ -1968,7 +2186,7 @@ async function updateTicketStatusWithMaintenanceDetails(
       method: "PATCH",
       body: {
         status: step,
-        ...(i === toIdx ? workDetails : {}),
+        ...(i === toIdx ? { ...workDetails, diagnosis } : {}),
       },
     });
   }
@@ -1976,7 +2194,7 @@ async function updateTicketStatusWithMaintenanceDetails(
   if (fromIdx === toIdx) {
     return apiRequest(`/tickets/${requestId}/status`, {
       method: "PATCH",
-      body: { status: targetStatus, ...workDetails },
+      body: { status: targetStatus, ...workDetails, diagnosis },
     });
   }
 }
@@ -2209,7 +2427,10 @@ async function loadActivityTimeline() {
             ${statusBadge(a.status)}
           </div>
           <p class="text-muted small mb-1">${escHtml(a.action_taken)}</p>
+          ${a.diagnosis ? `<div class="small text-muted mb-1"><strong>Diagnosis:</strong> ${escHtml(a.diagnosis)}</div>` : ""}
           ${a.parts_used ? `<div class="small text-muted"><i class="bi bi-box me-1"></i>${escHtml(a.parts_used)}</div>` : ""}
+          ${a.time_spent_minutes != null ? `<div class="small text-muted"><i class="bi bi-stopwatch me-1"></i>${escHtml(a.time_spent_minutes)} minutes</div>` : ""}
+          ${a.technician_name ? `<div class="small text-muted"><i class="bi bi-person me-1"></i>${escHtml(a.technician_name)}</div>` : ""}
           ${a.notes ? `<div class="small text-muted fst-italic"><i class="bi bi-chat-left-text me-1"></i>${escHtml(a.notes)}</div>` : ""}
           <div class="text-muted" style="font-size:.72rem;">${formatDateTime(a.created_at)}</div>
         </div>`,
@@ -2290,12 +2511,9 @@ async function initTechHistory() {
       : null;
     setText("avgResolutionTime", avgHours !== null ? `${avgHours}h` : "—");
 
-    // Average rating — placeholder (feedback endpoint not yet available)
-    setText("avgRating", "—");
-
     renderHistoryTable(completed, maintMap);
   } catch (err) {
-    ["totalResolved", "thisMonth", "avgRating", "avgResolutionTime"].forEach(
+    ["totalResolved", "thisMonth", "avgResolutionTime"].forEach(
       (id) => setText(id, "—"),
     );
     const tbody = document.getElementById("historyTableBody");
@@ -2336,7 +2554,7 @@ function renderHistoryTable(completed, maintMap) {
   if (!tbody) return;
 
   if (!completed.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-5">
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5">
       <i class="bi bi-inbox fs-2 text-muted d-block mb-2"></i>
       <span class="text-muted">No completed tasks found.</span>
     </td></tr>`;
@@ -2349,7 +2567,6 @@ function renderHistoryTable(completed, maintMap) {
       const resolvedLog = m?.status === "resolved" ? m : null;
       const completedAt =
         r.completed_at || resolvedLog?.created_at || null;
-      const rating = r.rating ?? r.feedbackRating ?? null;
       return `
       <tr>
         <td><strong class="text-primary">${escHtml(r.ticketId || r.ticket_id)}</strong></td>
@@ -2357,7 +2574,6 @@ function renderHistoryTable(completed, maintMap) {
         <td><span class="badge bg-light text-dark border">${escHtml(r.equipmentType || "N/A")}</span>${r.device ? `<div class="small text-muted">${escHtml(r.device)}</div>` : ""}${r.issueType || r.serviceType ? `<div class="small mt-1"><span class="text-muted">Issue Type:</span> ${escHtml(r.issueType || r.serviceType)}</div>` : ""}</td>
         <td>${escHtml(r.requester_name || "N/A")}</td>
         <td>${completedAt ? escHtml(formatDate(completedAt)) : "N/A"}</td>
-        <td>${rating == null ? "N/A" : `<span class="text-warning" aria-label="${escHtml(rating)} out of 5">${escHtml(rating)} <i class="bi bi-star-fill"></i></span>`}</td>
         <td>
           <button class="btn btn-sm btn-outline-secondary" title="View details"
                   onclick="viewHistoryDetail(${jsAttr(r.ticket_id)}, this)">
@@ -2488,13 +2704,9 @@ async function viewHistoryDetail(requestId, btn) {
       fallbackRow?.completed_at ||
       resolvedLog?.created_at ||
       null;
-    const rating =
-      (isObjectRecord(r.requester_feedback)
-        ? r.requester_feedback.overallRating
-        : null) ??
-      r.feedbackRating ??
-      fallbackRow?.rating ??
-      null;
+    const reportTimeSpent =
+      technicianFeedback?.timeSpentMinutes ??
+      fallbackFeedback?.timeSpentMinutes;
     const detailValue = (value) =>
       value === null || value === undefined || value === ""
         ? "N/A"
@@ -2520,10 +2732,14 @@ async function viewHistoryDetail(requestId, btn) {
           ${field("Issue Type", r.issueType || r.serviceType || fallbackRow?.issueType || fallbackRow?.serviceType)}
           ${field("Requester", r.requester_name || fallbackRow?.requester_name)}
           ${field("Description", r.problemDescription || fallbackRow?.problemDescription)}
+          ${field("Diagnosis", r.diagnosis || fallbackRow?.diagnosis)}
           ${field("Status", r.status || fallbackRow?.status)}
           ${field("Completed Date", completedAt ? formatDateTime(completedAt) : null)}
-          ${field("Rating", rating == null ? null : `${rating} / 5`)}
-          ${field("Technician", r.technician_name || fallbackRow?.technician_name)}
+          ${field("Technician", technicianFeedback?.technician_name || fallbackFeedback?.technician_name || r.technician_name || fallbackRow?.technician_name)}
+          ${field("Work Performed", technicianFeedback?.workPerformed || fallbackFeedback?.workPerformed)}
+          ${field("Parts / Materials", technicianFeedback?.partsUsed || fallbackFeedback?.partsUsed)}
+          ${field("Time Spent", reportTimeSpent == null ? null : `${reportTimeSpent} minutes`)}
+          ${field("Report Submitted", technicianFeedback?.submittedAt ? formatDateTime(technicianFeedback.submittedAt) : fallbackFeedback?.submittedAt ? formatDateTime(fallbackFeedback.submittedAt) : null)}
           ${field("Created", r.created_at)}
           ${field("Last Updated", r.updated_at)}
         </div>
@@ -2538,6 +2754,7 @@ async function viewHistoryDetail(requestId, btn) {
                       (l) => `
             <div class="small border-start border-2 border-success ps-2 mb-2">
               <div class="fw-semibold">${escHtml(detailValue(l.action_taken))}</div>
+              <div class="text-muted" style="white-space:pre-wrap;"><strong>Diagnosis:</strong> ${escHtml(detailValue(l.diagnosis))}</div>
               <div class="text-muted"><i class="bi bi-box me-1"></i><strong>Parts / Materials:</strong> ${escHtml(detailValue(l.parts_used))}</div>
               <div class="text-muted fst-italic"><strong>Notes:</strong> ${escHtml(detailValue(l.notes))}</div>
               <div class="text-muted" style="font-size:.7rem;">${escHtml(l.created_at ? formatDateTime(l.created_at) : "N/A")}</div>

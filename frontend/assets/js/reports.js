@@ -340,17 +340,13 @@ function renderRecentActivityDash(acts) {
     .join("");
 }
 
-/* ── Render the "Service Feedback" panel on the Admin dashboard ──
-   Shows recent tickets that carry feedback, surfacing requester
-   satisfaction, technician performance, resolution quality,
-   follow-up required, and overall service quality. */
+/* ── Render recent Admin and Technician feedback on the dashboard ── */
 function renderServiceFeedbackPanel(tickets) {
   const panel = document.getElementById("serviceFeedbackPanel");
   if (!panel) return;
 
   const items = (tickets || []).filter(
-    (r) =>
-      r.admin_feedback || r.has_requester_feedback || r.has_technician_feedback,
+    (r) => r.admin_feedback || r.has_technician_feedback,
   );
   if (!items.length) {
     panel.innerHTML = `
@@ -367,11 +363,6 @@ function renderServiceFeedbackPanel(tickets) {
       .slice(0, 6)
       .map((r) => {
         const af = r.admin_feedback || {};
-        const rf = r.requester_feedback || {};
-        const stars = rf.overallRating
-          ? `<span class="text-warning">${"★".repeat(rf.overallRating)}</span><span class="text-muted">${"☆".repeat(5 - rf.overallRating)}</span>`
-          : '<span class="text-muted">—</span>';
-
         const badge = (v) =>
           v
             ? `<span class="badge ${clr(v)} me-1 mb-1">${escHtml(v)}</span>`
@@ -384,7 +375,6 @@ function renderServiceFeedbackPanel(tickets) {
       <div class="border-bottom px-3 py-3">
         <div class="d-flex align-items-center gap-2 mb-2">
           <strong class="text-primary small">${escHtml(r.ticketId || r.id)}</strong>
-          <span class="ms-auto">${stars}</span>
         </div>
         <div class="d-flex flex-wrap">
           ${badge(af.technicianPerformance)}
@@ -392,7 +382,6 @@ function renderServiceFeedbackPanel(tickets) {
           ${af.overallServiceQuality ? `<span class="badge bg-success mb-1">${escHtml(af.overallServiceQuality)}</span>` : ""}
           ${followUp}
         </div>
-        ${rf.overallRating && !af.technicianPerformance ? `<div class="small text-muted mt-1">Requester rated ${rf.overallRating}/5</div>` : ""}
       </div>`;
       })
       .join("") +
@@ -1015,7 +1004,6 @@ function renderTechPerformance(data) {
         <td>${t.assigned}</td>
         <td class="text-success fw-semibold">${t.resolved}</td>
         <td>${Number(t.assigned) - Number(t.resolved)}</td>
-        <td class="fw-semibold">${t.avgRating != null ? Number(t.avgRating).toFixed(1) : "—"}</td>
         <td style="min-width:120px;">
           <div class="d-flex align-items-center gap-2">
             <div class="flex-grow-1 rounded-pill overflow-hidden" style="height:8px;background:#e9ecef;">
@@ -1241,7 +1229,6 @@ function exportReportCSV() {
       "Assigned",
       "Resolved",
       "In Progress",
-      "Avg. Rating",
     ]);
     _reportCache.techPerf.forEach((t) =>
       rows.push([
@@ -1249,7 +1236,6 @@ function exportReportCSV() {
         t.assigned,
         t.resolved,
         Number(t.assigned) - Number(t.resolved),
-        t.avgRating != null ? Number(t.avgRating).toFixed(1) : "",
       ]),
     );
     rows.push([""]);

@@ -200,65 +200,6 @@ const ticketSchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
-    feedbackRating: {
-      type: Number,
-      min: 1,
-      max: 5,
-      default: null,
-    },
-    feedbackComments: {
-      type: String,
-      trim: true,
-      default: null,
-    },
-    /* ── Requester Feedback (service experience survey) ─────────
-       Completed by the requester once the ticket is resolved/closed.
-       Purpose: evaluate the ICT SERVICE the requester received.
-       This is kept as a subdocument so the full ticket carries it. */
-    requesterFeedback: {
-      feedbackId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Feedback",
-        default: null,
-      },
-      requesterId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        default: null,
-      },
-      requesterName: { type: String, trim: true, default: null },
-      overallRating: { type: Number, min: 1, max: 5, default: null },
-      serviceQuality: { type: String, trim: true, default: null }, // Excellent/Very Good/Good/Fair/Poor
-      repairQuality: {
-        type: String,
-        enum: ["Fully Fixed", "Partially Fixed", "Not Fixed", null],
-        default: null,
-      },
-      technicianProfessionalism: { type: String, trim: true, default: null },
-      responseTime: { type: String, trim: true, default: null }, // Fast/Normal/Slow
-      responseTimeliness: {
-        type: String,
-        enum: ["Excellent", "Good", "Fair", "Poor", null],
-        default: null,
-      },
-      communication: { type: String, trim: true, default: null },
-      problemResolution: { type: String, trim: true, default: null }, // Completely Resolved/Partially Resolved/Not Resolved
-      satisfactionLevel: { type: String, trim: true, default: null }, // Very Satisfied .. Very Dissatisfied
-      wouldRecommend: {
-        type: String,
-        enum: ["Yes", "No", null],
-        default: null,
-      },
-      comment: { type: String, trim: true, default: null },
-      suggestions: { type: String, trim: true, default: null },
-      followUpRequested: { type: Boolean, default: false },
-      followUpStatus: {
-        type: String,
-        enum: ["Not Requested", "Pending", "In Progress", "Resolved"],
-        default: "Not Requested",
-      },
-      submittedAt: { type: Date, default: null },
-    },
     attachment: {
       type: String,
       default: null,
@@ -285,7 +226,16 @@ const ticketSchema = new mongoose.Schema(
         ],
         default: null,
       },
-      timeSpentMinutes: { type: Number, min: 0, default: null },
+      timeSpentMinutes: {
+        type: Number,
+        min: 1,
+        max: 10080,
+        default: null,
+        validate: {
+          validator: (value) => value === null || Number.isInteger(value),
+          message: "Time spent must be a whole number of minutes.",
+        },
+      },
       followUpRequired: { type: Boolean, default: false },
       status: {
         type: String,
@@ -313,6 +263,41 @@ const ticketSchema = new mongoose.Schema(
        NOT re-record the technical repair and must NOT overwrite the
        requester's original feedback or the technician's original report. */
     adminFeedback: {
+      reportReviewDecision: {
+        type: String,
+        enum: ["Approved", "Needs Correction", "Rejected"],
+        default: null,
+      },
+      workQuality: {
+        type: String,
+        enum: ["Excellent", "Good", "Fair", "Poor"],
+        default: null,
+      },
+      technicalAccuracy: {
+        type: String,
+        enum: ["Excellent", "Good", "Fair", "Poor", "Not Applicable"],
+        default: null,
+      },
+      repairEffectiveness: {
+        type: String,
+        enum: ["Excellent", "Good", "Fair", "Poor", "Not Applicable"],
+        default: null,
+      },
+      reportCompleteness: {
+        type: String,
+        enum: ["Excellent", "Good", "Fair", "Poor", "Not Applicable"],
+        default: null,
+      },
+      safetyProcedureCompliance: {
+        type: String,
+        enum: ["Excellent", "Good", "Fair", "Poor", "Not Applicable"],
+        default: null,
+      },
+      evaluationStatus: {
+        type: String,
+        enum: ["Pending", "Reviewed", "Pending Correction", "Resolved"],
+        default: "Pending",
+      },
       serviceHandlingQuality: { type: String, trim: true, default: null }, // Excellent/Good/Satisfactory/Needs Improvement/Poor
       technicianPerformance: { type: String, trim: true, default: null }, // Excellent/Good/Satisfactory/Needs Improvement
       responseTime: { type: String, trim: true, default: null }, // Excellent/Good/Slow

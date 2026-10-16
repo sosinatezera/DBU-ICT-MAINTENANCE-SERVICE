@@ -739,8 +739,8 @@ document.addEventListener("lang:changed", () => {
 });
 
 /* Restore the authenticated user's display preferences on every app page.
-     localStorage gives an instant first paint; the saved account values remain
-     authoritative after login and when the user changes devices. */
+   The explicit local theme selection wins after the first paint so the
+   shared theme switcher is not undone by a stale account preference. */
 async function loadAccountPreferences(user) {
   if (!user || !["Requester", "Technician"].includes(user.role)) return;
   try {
@@ -749,7 +749,10 @@ async function loadAccountPreferences(user) {
     if (["en", "am"].includes(preferences.language)) {
       window.setLang?.(preferences.language);
     }
-    if (["light", "dark"].includes(preferences.theme)) {
+    if (
+      ["light", "dark"].includes(preferences.theme) &&
+      !window.getExplicitStoredTheme?.()
+    ) {
       window.setTheme?.(preferences.theme);
     }
   } catch (error) {
@@ -1668,30 +1671,42 @@ const NotificationSound = (() => {
   audio.volume = getVolume();
 
   function unlock() {
-    if (unlocked && !pendingSound) return Promise.resolve(true);
-    if (audioContextUnavailable) {
-      unlocked = true;
-      pendingSound = false;
+    if (unlocked && (!audioContext || audioContext.state === "running")) {
       return Promise.resolve(true);
     }
-    if (!pendingSound || !isEnabled()) return Promise.resolve(false);
+    if (audioContextUnavailable) {
+      unlocked = true;
+      if (!pendingSound || !isEnabled()) return Promise.resolve(true);
+      try {
+        const playback = audio.play();
+        if (playback && typeof playback.then === "function") {
+          return playback
+            .then(() => {
+              pendingSound = false;
+              return true;
+            })
+            .catch(() => false);
+        }
+        pendingSound = false;
+        return Promise.resolve(true);
+      } catch (_) {
+        return Promise.resolve(false);
+      }
+    }
+    if (!isEnabled()) return Promise.resolve(false);
     if (audioUnlockPromise) return audioUnlockPromise;
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) {
       audioContextUnavailable = true;
       unlocked = true;
-      pendingSound = false;
       return Promise.resolve(true);
     }
 
     try {
       audioContext ||= new AudioContext();
       if (audioContext.state === "closed") {
-        audioContextUnavailable = true;
-        unlocked = true;
-        pendingSound = false;
-        return Promise.resolve(true);
+        return Promise.resolve(false);
       }
       const resume =
         audioContext.state === "running"
@@ -1700,32 +1715,24 @@ const NotificationSound = (() => {
       audioUnlockPromise = Promise.resolve(resume)
         .then(() => {
           if (audioContext.state !== "running") {
-            audioContextUnavailable = true;
-            unlocked = true;
-            pendingSound = false;
-            return true;
+            return false;
           }
           unlocked = true;
-          if (!pendingSound || !isEnabled()) return true;
-          pendingSound = false;
-          if (!playTone()) audioContextUnavailable = true;
+          if (pendingSound) {
+            pendingSound = false;
+            if (!playTone()) pendingSound = true;
+          }
           return true;
         })
         .catch(() => {
-          audioContextUnavailable = true;
-          unlocked = true;
-          pendingSound = false;
-          return true;
+          return false;
         })
         .finally(() => {
           audioUnlockPromise = null;
         });
       return audioUnlockPromise;
     } catch (_) {
-      audioContextUnavailable = true;
-      unlocked = true;
-      pendingSound = false;
-      return Promise.resolve(true);
+      return Promise.resolve(false);
     }
   }
 
@@ -1823,16 +1830,22 @@ const NotificationSound = (() => {
   }
 
   function setEnabled(enabled) {
+    const isEnabled = Boolean(enabled);
     try {
       localStorage.setItem(
         notificationStorageKey(NOTIFICATION_SOUND_CONFIG.enabledKey),
-        enabled ? "on" : "off",
+        isEnabled ? "on" : "off",
       );
     } catch (_) {}
-    if (!enabled) {
+    if (!isEnabled) {
       pendingSound = false;
       stopSound();
     }
+    window.dispatchEvent(
+      new CustomEvent("notification-sound-change", {
+        detail: { enabled: isEnabled },
+      }),
+    );
   }
 
   return {
@@ -1905,6 +1918,84 @@ function writeSeenNotificationIds(ids) {
   } catch (_) {}
 }
 
+function updateNotificationSoundControls() {
+  if (!window.NotificationSound) return;
+  const enabled = window.NotificationSound.isEnabled();
+  const control = document.getElementById("notificationSoundControl");
+  if (control) {
+    control.setAttribute("aria-pressed", String(enabled));
+    control.setAttribute(
+      "aria-label",
+      `Notification sound is ${enabled ? "on" : "off"}. Click to turn it ${enabled ? "off" : "on"}.`,
+    );
+    control.title = `Notification sound is ${enabled ? "on" : "off"}`;
+    control.innerHTML = `<i class="bi ${enabled ? "bi-volume-up-fill" : "bi-volume-mute-fill"}" aria-hidden="true"></i><span>Sound ${enabled ? "ON" : "OFF"}</span>`;
+  }
+  document.querySelectorAll("#notifSoundToggle").forEach((toggle) => {
+    toggle.checked = enabled;
+  });
+}
+
+function initNotificationSoundControl() {
+  if (
+    !Auth.isLoggedIn() ||
+    !document.body.classList.contains("dashboard-body")
+  ) {
+    return;
+  }
+
+  const topbar = document.querySelector(".topbar");
+  if (!topbar || document.getElementById("notificationSoundControl")) return;
+
+  const control = document.createElement("button");
+  control.type = "button";
+  control.id = "notificationSoundControl";
+  control.className =
+    "btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1";
+  control.addEventListener("click", () => {
+    const enabled = !NotificationSound.isEnabled();
+    NotificationSound.setEnabled(enabled);
+    updateNotificationSoundControls();
+    if (enabled) {
+      void NotificationSound.unlock().then((unlocked) => {
+        if (!unlocked) {
+          showToast(
+            "Sound is enabled, but your browser has not allowed audio yet. Click Sound ON again after interacting with the page.",
+            "warning",
+          );
+        } else {
+          showToast("Notification sound is on.", "success");
+        }
+      });
+    } else {
+      showToast("Notification sound is off.", "info");
+    }
+  });
+
+  const controls =
+    topbar.querySelector("#notifBellContainer")?.parentElement ||
+    topbar.querySelector(".topbar-actions") ||
+    topbar.querySelector(".d-flex.align-items-center.gap-3:last-child") ||
+    topbar.querySelector(".d-flex.align-items-center") ||
+    topbar;
+  const notificationBell = controls.querySelector("#notifBellContainer");
+  const profileMenu = controls.querySelector(".admin-profile-menu");
+  if (notificationBell) {
+    notificationBell.after(control);
+  } else if (profileMenu) {
+    profileMenu.before(control);
+  } else {
+    controls.appendChild(control);
+  }
+
+  updateNotificationSoundControls();
+}
+
+window.addEventListener(
+  "notification-sound-change",
+  updateNotificationSoundControls,
+);
+
 let _globalNotificationTimer = null;
 let _globalNotificationStarted = false;
 let _globalNotificationUserKey = "";
@@ -1948,23 +2039,17 @@ async function monitorGlobalNotifications() {
 
     const newNotifications = [];
     if (!_notificationBaselineReady) {
-      /* Every item in the first successful snapshot predates this page's
-         initialized state, regardless of what an older tab stored locally. */
-      identities.forEach((id) => seen.add(id));
-      writeSeenNotificationIds(seen);
-      _notificationBaselineReady = true;
-
-      /* A real Socket.IO event may race the initial request. Only alert for a
-         queued event missing from the snapshot that established the baseline. */
-      const baselineIds = new Set(identities);
+      /* Live Socket.IO events may arrive while the initial snapshot is in
+         flight. Process those before adding snapshot IDs to the seen set. */
       const pending = Array.from(_pendingRealtimeNotifications.values());
       _pendingRealtimeNotifications.clear();
       pending.forEach((notification) => {
-        if (!baselineIds.has(notificationIdentity(notification))) {
-          if (presentGlobalNotification(notification))
-            newNotifications.push(notification);
-        }
+        if (presentGlobalNotification(notification))
+          newNotifications.push(notification);
       });
+      identities.forEach((id) => seen.add(id));
+      writeSeenNotificationIds(seen);
+      _notificationBaselineReady = true;
       return { identities, unread, newNotifications };
     }
 
@@ -2266,7 +2351,6 @@ const PAGE_TOPBAR_SUBTITLES = {
   "user/request": "Submit a new maintenance request.",
   "user/tracking": "Check the live status of your requests.",
   "user/history": "View your past and completed requests.",
-  "user/feedback": "Rate and review the service you received.",
   "user/notifications": "Updates on your requests.",
   "user/profile": "Your profile and preferences.",
 };
@@ -2700,6 +2784,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       window.AdminProfileMenu?.mount(user);
     }
   }
+
+  initNotificationSoundControl();
 
   // Add toast slide-in animation
   if (!document.getElementById("toastStyle")) {

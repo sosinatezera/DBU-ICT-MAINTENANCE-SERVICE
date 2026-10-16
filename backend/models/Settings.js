@@ -57,7 +57,6 @@ const settingsSchema = new mongoose.Schema(
     notifStatusChange: { type: Boolean, default: true },
     notifCompletion: { type: Boolean, default: true },
     notifSystemSecurity: { type: Boolean, default: true },
-    notifUserFeedback: { type: Boolean, default: true },
     notifTechnicianFeedback: { type: Boolean, default: true },
     notifFeedbackReplies: { type: Boolean, default: true },
     notificationSound: { type: Boolean, default: true },

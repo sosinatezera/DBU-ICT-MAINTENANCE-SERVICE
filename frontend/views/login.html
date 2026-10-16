@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="/assets/css/theme.css" />
   <style>
     html:has(body.auth-body.login-page) {
-      overflow-x: auto !important;
+      overflow-x: hidden !important;
       scroll-behavior: smooth;
       -webkit-overflow-scrolling: touch;
     }
@@ -28,6 +28,8 @@
       position: relative;
       isolation: isolate;
       background: transparent !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
     }
     body.auth-body.login-page::before {
       content: "";
@@ -58,14 +60,16 @@
       }
     }
     body.auth-body.login-page > .min-vh-100 {
-      justify-content: flex-end !important;
+      min-height: 100vh !important;
+      min-height: 100svh !important;
+      justify-content: center !important;
       padding-top: 1rem !important;
       padding-bottom: 1rem !important;
     }
     body.auth-body.login-page > .min-vh-100 > .container {
       width: min(100%, 360px);
       max-width: 360px;
-      margin-right: clamp(1rem, 5vw, 4rem);
+      margin-right: auto;
       margin-left: auto;
       padding-right: 0;
       padding-left: 0;
@@ -76,11 +80,18 @@
       justify-content: flex-end;
     }
     body.auth-body.login-page .row > .col-sm-10 {
+      position: relative;
       flex: 0 0 100%;
       width: 100%;
       max-width: 360px;
       padding-right: 0;
       padding-left: 0;
+    }
+    body.auth-body.login-page .auth-footer {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
     }
     body.auth-body.login-page .card-body {
       padding: 1.125rem !important;
@@ -112,19 +123,23 @@
       opacity: 1;
     }
     body.auth-body.login-page .form-control:focus {
-      border-color: #087BFF !important;
-      box-shadow: 0 0 0 .2rem rgba(8, 123, 255, .22) !important;
+      border-color: #2563EB !important;
+      box-shadow: 0 0 0 .2rem rgba(37, 99, 235, .22) !important;
     }
     body.auth-body.login-page #rememberMe {
-      accent-color: #087BFF;
+      accent-color: #2563EB;
     }
     body.auth-body.login-page #loginBtn,
     body.auth-body.login-page #loginBtn:hover,
     body.auth-body.login-page #loginBtn:focus {
-      background: #087BFF !important;
-      border-color: #087BFF !important;
+      background: #2563EB !important;
+      border-color: #2563EB !important;
       color: #ffffff !important;
       font-weight: 700;
+    }
+    body.auth-body.login-page #loginBtn:hover {
+      background: #1D4ED8 !important;
+      border-color: #1D4ED8 !important;
     }
     body.auth-body.login-page .google-auth-button,
     body.auth-body.login-page #googleSignInMount {
@@ -170,6 +185,10 @@
     @media (max-height: 600px) {
       body.auth-body.login-page > .min-vh-100 {
         align-items: flex-start !important;
+      }
+      body.auth-body.login-page .auth-footer {
+        position: static;
+        width: auto;
       }
     }
   </style>
@@ -703,6 +722,7 @@
     } );
   </script>
   <script src="/assets/js/lang.js?v=16"></script>
+  <script src="/assets/js/theme.js"></script>
 </body>
 
 </html>

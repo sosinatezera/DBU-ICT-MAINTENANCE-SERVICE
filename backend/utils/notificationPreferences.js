@@ -14,7 +14,6 @@ const SYSTEM_NOTIFICATION_TYPES = {
   notifStatusChange: ["request_updated", "priority_changed"],
   notifCompletion: ["request_completed_admin"],
   notifSystemSecurity: ["system_notification"],
-  notifUserFeedback: ["feedback_submission_user"],
   notifTechnicianFeedback: ["feedback_submission_technician"],
   notifFeedbackReplies: ["feedback_reply"],
 };

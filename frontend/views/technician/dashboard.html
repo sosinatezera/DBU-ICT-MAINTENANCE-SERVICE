@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var t = localStorage.getItem( 'theme:technician' ) || localStorage.getItem( 'theme' ); if ( t === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
 <script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
 
 <head>
@@ -68,7 +68,7 @@
 
       <!-- Topbar -->
       <header
-        class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
+        class="topbar dashboard-role-header bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
         <div class="d-flex align-items-center gap-3">
           <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle"><i
               class="bi bi-list"></i></button>
@@ -292,6 +292,16 @@
                     </select>
                   </div>
                   <div class="col-12">
+                    <label for="modalDiagnosis" class="form-label fw-semibold small">
+                      <span data-i18n="tech.diagnosis">Diagnosis</span>
+                      <span class="text-danger d-none" id="modalDiagnosisRequired">*</span>
+                    </label>
+                    <textarea class="form-control" id="modalDiagnosis" rows="4" maxlength="5000"
+                      aria-required="false"
+                      placeholder="Describe the problem identified, its root cause, and your diagnostic findings..."
+                      data-i18n-placeholder="tech.ph.statusDiagnosis"></textarea>
+                  </div>
+                  <div class="col-12">
                     <label class="form-label fw-semibold small"><span data-i18n="tech.actionTaken">Action Taken</span>
                       <span class="text-danger">*</span></label>
                     <textarea class="form-control" id="modalAction" rows="3" maxlength="1000" required
@@ -340,13 +350,13 @@
                 <div class="row g-3">
                   <div class="col-12">
                     <label class="form-label fw-semibold small" for="fbDiagnosis">Technical diagnosis <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="fbDiagnosis" rows="2" maxlength="2000"
+                    <textarea class="form-control" id="fbDiagnosis" rows="2" maxlength="2000" required
                       placeholder="What was the root cause?" data-i18n-placeholder="tech.ph.diagnosis"></textarea>
                   </div>
                   <div class="col-12">
                     <label class="form-label fw-semibold small"><span data-i18n="tech.report.workPerformed">Work
                         Performed</span> <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="fbWorkPerformed" rows="3" maxlength="2000"
+                    <textarea class="form-control" id="fbWorkPerformed" rows="3" maxlength="2000" required
                       placeholder="Describe the work carried out..." data-i18n-placeholder="tech.ph.work"></textarea>
                   </div>
                   <div class="col-md-6">
@@ -383,6 +393,7 @@
                         data-i18n="tech.report.resolutionSummary">Resolution Summary</span> <span
                         class="text-danger">*</span></label>
                     <textarea class="form-control" id="fbResolution" rows="2" maxlength="1000"
+                      required
                       placeholder="Short summary shown to the requester..."
                       data-i18n-placeholder="tech.ph.resolution"></textarea>
                   </div>
@@ -520,7 +531,7 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/api-config.js?v=16"></script>
   <script src="/assets/js/lang.js?v=17"></script>
-  <script src="/assets/js/main.js?v=26"></script>
+  <script src="/assets/js/main.js?v=27"></script>
   <script src="/assets/js/notifications.js?v=10"></script>
   <script src="/assets/js/technicians.js?v=17"></script>
   <script src="/assets/js/profile.js?v=3"></script>

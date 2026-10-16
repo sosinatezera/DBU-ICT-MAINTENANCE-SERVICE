@@ -13,8 +13,7 @@
  *   5. tickets
  *   6. assignments
  *   7. maintenancerecords
- *   8. feedbacks
- *   9. notifications
+ *   8. notifications
  */
 
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
@@ -30,7 +29,6 @@ const ICTAsset          = require('../models/ICTAsset');
 const Ticket            = require('../models/Ticket');
 const Assignment        = require('../models/Assignment');
 const MaintenanceRecord = require('../models/MaintenanceRecord');
-const Feedback          = require('../models/Feedback');
 const Notification      = require('../models/Notification');
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -67,7 +65,6 @@ async function seed() {
       Ticket.deleteMany({}),
       Assignment.deleteMany({}),
       MaintenanceRecord.deleteMany({}),
-      Feedback.deleteMany({}),
       Notification.deleteMany({}),
     ]);
     log('All collections cleared.\n');
@@ -77,7 +74,7 @@ async function seed() {
   // 1. USERS
   // ══════════════════════════════════════════════════════════
   hr();
-  console.log('  [1/9] Seeding users…');
+  console.log('  [1/8] Seeding users…');
 
   const adminPwd = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || 'Admin@1234', 10);
   const techPwd  = await bcrypt.hash(process.env.SEED_TECH_PASSWORD  || 'Tech@1234',  10);
@@ -115,7 +112,7 @@ async function seed() {
   // 2. TECHNICIANS
   // ══════════════════════════════════════════════════════════
   hr();
-  console.log('  [2/9] Seeding technicians…');
+  console.log('  [2/8] Seeding technicians…');
 
   const techsData = [
     { user: tech1User._id, specialization: 'Hardware Repair & Desktop Maintenance', available: true },
@@ -142,7 +139,7 @@ async function seed() {
   // 3. CATEGORIES
   // ══════════════════════════════════════════════════════════
   hr();
-  console.log('  [3/9] Seeding categories…');
+  console.log('  [3/8] Seeding categories…');
 
   const categoriesData = [
     { name: 'Hardware Repair',           description: 'Physical repairs — screens, keyboards, power supplies, components' },
@@ -172,7 +169,7 @@ async function seed() {
   // 4. ICT ASSETS
   // ══════════════════════════════════════════════════════════
   hr();
-  console.log('  [4/9] Seeding ICT assets…');
+  console.log('  [4/8] Seeding ICT assets…');
 
   const assetsData = [
     { asset_name: 'Dell Latitude 5520',      asset_tag: 'ICT-001', category: 'Laptop',     department: 'Finance',         location: 'Admin Block - Room 101', status: 'active',            purchase_date: new Date('2022-03-15'), warranty_expiry: new Date('2025-03-15'), description: 'Staff laptop for finance team' },
@@ -204,7 +201,7 @@ async function seed() {
   // 5. TICKETS
   // ══════════════════════════════════════════════════════════
   hr();
-  console.log('  [5/9] Seeding tickets…');
+  console.log('  [5/8] Seeding tickets…');
 
   const ticketsData = [
     {
@@ -221,8 +218,6 @@ async function seed() {
       identifiedProblem: 'Faulty LCD ribbon cable causing intermittent signal loss.',
       resolutionResponse: 'Replaced faulty LCD screen cable. Reseated GPU heatsink. Screen is now stable.',
       isFixed: true,
-      feedbackRating: 5,
-      feedbackComments: 'Excellent service! Screen fixed within one day. Very professional technician.',
     },
     {
       requester: staff2User._id,
@@ -303,8 +298,6 @@ async function seed() {
       identifiedProblem: 'Keyboard membrane worn out. Keys F9–F12 and Numpad 0–3 non-functional.',
       resolutionResponse: 'Replaced keyboard with new HP USB keyboard. Old unit disposed.',
       isFixed: true,
-      feedbackRating: 4,
-      feedbackComments: 'Quick replacement. Would have been nice to have the same model though.',
     },
     {
       requester: staff2User._id,
@@ -338,7 +331,7 @@ async function seed() {
   // 6. ASSIGNMENTS
   // ══════════════════════════════════════════════════════════
   hr();
-  console.log('  [6/9] Seeding assignments…');
+  console.log('  [6/8] Seeding assignments…');
 
   const assignmentsData = [
     { ticket: ticket1._id, technician: tech1._id, assigned_by: adminUser._id, notes: 'Check display cable and GPU. Replace screen if necessary.',    status: 'completed' },
@@ -366,7 +359,7 @@ async function seed() {
   // 7. MAINTENANCE RECORDS
   // ══════════════════════════════════════════════════════════
   hr();
-  console.log('  [7/9] Seeding maintenance records…');
+  console.log('  [7/8] Seeding maintenance records…');
 
   const recordsData = [
     {
@@ -417,32 +410,10 @@ async function seed() {
   }
 
   // ══════════════════════════════════════════════════════════
-  // 8. FEEDBACK
+  // 8. NOTIFICATIONS
   // ══════════════════════════════════════════════════════════
   hr();
-  console.log('  [8/9] Seeding feedback…');
-
-  const feedbackData = [
-    { request: ticket1._id, user: staff1User._id, rating: 5, comment: 'Excellent service! Screen fixed within one day. Very professional technician.' },
-    { request: ticket6._id, user: staff2User._id, rating: 3, comment: 'Technician was thorough but battery replacement was not possible. Hope procurement sorts it out soon.' },
-    { request: ticket7._id, user: staff1User._id, rating: 4, comment: 'Quick replacement. Would have been nice to have the same wireless model though.' },
-  ];
-
-  for (const f of feedbackData) {
-    const existing = await Feedback.findOne({ request: f.request });
-    if (existing) {
-      warn(`Feedback already exists for request ${f.request} (skipped)`);
-    } else {
-      await Feedback.create(f);
-      log(`Feedback created: ${f.rating}/5 stars`);
-    }
-  }
-
-  // ══════════════════════════════════════════════════════════
-  // 9. NOTIFICATIONS
-  // ══════════════════════════════════════════════════════════
-  hr();
-  console.log('  [9/9] Seeding notifications…');
+  console.log('  [8/8] Seeding notifications…');
 
   const notifCount = await Notification.countDocuments();
   if (notifCount > 0) {
@@ -463,7 +434,7 @@ async function seed() {
       { user: tech3User._id, title: 'New Assignment',             message: 'You have been assigned a monitor artifacts ticket (HIGH).',                                      type: 'info'    },
       // Requester notifications
       { user: staff1User._id, title: 'Ticket Submitted',          message: 'Your ticket for laptop screen flickering has been submitted and is pending review.',              type: 'success' },
-      { user: staff1User._id, title: 'Ticket Resolved',           message: 'Your ticket for laptop screen flickering has been resolved. Please leave feedback.',              type: 'success' },
+      { user: staff1User._id, title: 'Ticket Resolved',           message: 'Your ticket for laptop screen flickering has been resolved.',                                    type: 'success' },
       { user: staff2User._id, title: 'Ticket Submitted',          message: 'Your ticket for desktop slowdown has been submitted and is pending review.',                     type: 'success' },
       { user: staff2User._id, title: 'Ticket In Progress',        message: 'Your ticket for desktop slowdown is now being worked on by a technician.',                       type: 'info'    },
       { user: staff3User._id, title: 'Ticket Submitted',          message: 'Your ticket for Windows update failure has been submitted and is pending review.',               type: 'success' },
@@ -486,7 +457,6 @@ async function seed() {
   console.log(`  ║  Tickets            : ${await Ticket.countDocuments()}`.padEnd(51) + '║');
   console.log(`  ║  Assignments        : ${await Assignment.countDocuments()}`.padEnd(51) + '║');
   console.log(`  ║  Maintenance Records: ${await MaintenanceRecord.countDocuments()}`.padEnd(51) + '║');
-  console.log(`  ║  Feedback           : ${await Feedback.countDocuments()}`.padEnd(51) + '║');
   console.log(`  ║  Notifications      : ${await Notification.countDocuments()}`.padEnd(51) + '║');
   console.log('  ╠══════════════════════════════════════════════════╣');
   console.log('  ║  Login Credentials                              ║');

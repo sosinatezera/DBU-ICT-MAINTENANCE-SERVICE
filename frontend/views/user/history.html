@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
-<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var t = localStorage.getItem( 'theme:requester' ) || localStorage.getItem( 'theme' ); if ( t === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
 
 <head>
   <meta charset="UTF-8" />
@@ -33,10 +33,9 @@
               data-i18n="side.track">Track Request</span></a></li>
         <li><a href="history.html" class="nav-link text-white active bg-white bg-opacity-25 rounded"><i
               class="bi bi-clock-history me-2"></i><span data-i18n="side.history">History</span></a></li>
+        <li><a href="feedback.html" class="nav-link text-white-50"><i class="bi bi-chat-square-heart me-2" aria-hidden="true"></i><span data-i18n="side.requesterFeedback">Requester Feedback</span></a></li>
         <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span
               data-i18n="side.notifications">Notifications</span></a></li>
-        <li><a href="feedback.html" class="nav-link text-white-50"><i class="bi bi-star me-2"></i><span
-              data-i18n="side.feedback">Feedback</span></a></li>
         <li><a href="profile.html" class="nav-link text-white-50" id="profileNavLink"><i
               class="bi bi-person-circle me-2"></i><span data-i18n="side.profile">My Profile</span></a></li>
       </ul>
@@ -100,14 +99,13 @@
                     <th>Issue Type / Service Type</th>
                     <th data-i18n="hist.colTechnician">Technician</th>
                     <th data-i18n="hist.colUpdated">Last Updated</th>
-                    <th data-i18n="udash.rating">Rating</th>
                     <th data-i18n="common.status">Status</th>
                     <th data-i18n="common.actions">Action</th>
                   </tr>
                 </thead>
                 <tbody id="historyTableBody">
                   <tr>
-                    <td colspan="10" class="text-center text-muted py-4" data-i18n="hist.loading">Loading history...
+                    <td colspan="8" class="text-center text-muted py-4" data-i18n="hist.loading">Loading history...
                     </td>
                   </tr>
                 </tbody>
@@ -142,7 +140,7 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/api-config.js?v=16"></script>
   <script src="/assets/js/lang.js?v=16"></script>
-  <script src="/assets/js/main.js?v=25"></script>
+  <script src="/assets/js/main.js?v=27"></script>
   <script src="/assets/js/requests.js?v=20"></script>
   <script src="/assets/js/theme.js"></script>
 </body>

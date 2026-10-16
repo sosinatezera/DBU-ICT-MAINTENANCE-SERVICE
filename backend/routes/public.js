@@ -64,6 +64,7 @@ router.get('/maintenance-mode', async (_req, res, next) => {
         the endpoint stays exactly as cheap as a memory read for repeat hits. */
 const STATS_CACHE_TTL_MS = 30000;
 let _statsCache = { at: 0, data: null };
+let _statsInFlight = null;
 
 async function computePublicStats() {
   const [total_users, total_assets, total_technicians, ticketCounts] =
@@ -107,8 +108,18 @@ router.get('/stats', async (req, res, next) => {
       return res.json({ success: true, data: _statsCache.data });
     }
 
-    const data = await computePublicStats();
-    _statsCache = { at: Date.now(), data };
+    if (!_statsInFlight) {
+      _statsInFlight = computePublicStats()
+        .then((data) => {
+          _statsCache = { at: Date.now(), data };
+          return data;
+        })
+        .finally(() => {
+          _statsInFlight = null;
+        });
+    }
+
+    const data = await _statsInFlight;
     res.set('Cache-Control', 'public, max-age=30');
     res.json({ success: true, data });
   } catch (err) { next(err); }

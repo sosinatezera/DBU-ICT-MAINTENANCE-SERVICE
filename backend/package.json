@@ -14,8 +14,10 @@
     "verify:auth": "node scripts/testAuth.js",
     "verify:email": "node scripts/verify-email-provider.js",
     "verify:smtp": "node scripts/verify-smtp.js",
+    "migrate:remove-requester-feedback": "node scripts/remove-requester-feedback-data.js",
     "test:requester-feedback": "node --test scripts/requesterFeedback.test.js",
-    "test:technician-feedback": "node --test scripts/technicianFeedback.test.js",
+    "test:admin-feedback": "node --test scripts/adminFeedbackEvaluation.test.js",
+    "test:technician-feedback": "node --test scripts/technicianFeedback.test.js scripts/technicianReport.test.js",
     "test:ticket-status": "node --test scripts/ticketStatus.test.js scripts/mongoId.test.js",
     "verify:contact": "node scripts/verify-contact-form.js",
     "diagnose:forgot": "node scripts/diagnose-forgot-password.js",
@@ -45,5 +47,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }

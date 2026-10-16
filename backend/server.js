@@ -14,7 +14,8 @@
  *   /api/categories    — Ticket categories
  *   /api/device-types  — Device Type catalogue (active list + admin CRUD)
  *   /api/notifications — User notifications
- *   /api/feedback      — Requester ratings and technician feedback
+ *   /api/feedback      — Feedback submissions and technician feedback
+ *   /api/requester-feedback — Requester feedback and ICT Admin review
  *   /api/reports       — Analytics and reports
  *   /api/maintenance   — Repair activity logs
  *   /api/networking    — Direct user-to-user messages
@@ -365,6 +366,7 @@ const AUDITED_MOUNTS = {
   "/api/device-types": "deviceType",
   "/api/maintenance": "maintenance",
   "/api/feedback": "feedback",
+  "/api/requester-feedback": "feedback",
   "/api/notifications": "notification",
   "/api/settings": "settings",
 };
@@ -384,6 +386,7 @@ app.use("/api/issue-types", require("./routes/issueTypes"));
 app.use("/api/device-types", require("./routes/deviceTypes"));
 app.use("/api/notifications", require("./routes/notifications"));
 app.use("/api/feedback", require("./routes/feedback"));
+app.use("/api/requester-feedback", require("./routes/requesterFeedback"));
 app.use("/api/reports", require("./routes/reports"));
 app.use("/api/maintenance", require("./routes/maintenance"));
 app.use("/api/networking", require("./routes/networking"));

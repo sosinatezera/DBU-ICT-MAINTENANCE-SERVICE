@@ -8,7 +8,6 @@ const User = require("../models/User");
 const ICTAsset = require("../models/ICTAsset");
 const Technician = require("../models/Technician");
 const Assignment = require("../models/Assignment");
-const Feedback = require("../models/Feedback");
 const Category = require("../models/Category");
 const Settings = require("../models/Settings");
 const { displayTicketId } = require("../utils/ticketId");
@@ -461,21 +460,12 @@ const getDashboardStats = async (req, res, next) => {
     /* Overdue = still-open tickets older than the admin's SLA window
        (slResponseHours from the Settings singleton, default 24h). The date
        filter, when present, narrows the range to what the user selected. */
-    const [settings, userCount, assetCount, technicianCount, avg_feedback] =
+    const [settings, userCount, assetCount, technicianCount] =
       await Promise.all([
         Settings.getInstance(),
         User.countDocuments(),
         ICTAsset.countDocuments(),
         Technician.countDocuments(),
-        Feedback.aggregate([
-          {
-            $group: {
-              _id: null,
-              avg: { $avg: "$rating" },
-              count: { $sum: 1 },
-            },
-          },
-        ]),
       ]);
     const total_users = dashboardCount(userCount, "total_users");
     const total_assets = dashboardCount(assetCount, "total_assets");
@@ -659,13 +649,6 @@ const getDashboardStats = async (req, res, next) => {
         total_tickets,
         overdue: overdue || 0,
         avg_resolution_hours: avgResolutionHours,
-        avg_rating: avg_feedback[0]?.avg
-          ? Math.round(avg_feedback[0].avg * 10) / 10
-          : 0,
-        total_feedback: dashboardCount(
-          avg_feedback[0]?.count,
-          "total_feedback",
-        ),
         network_total,
         network_pending,
         network_in_progress,
@@ -816,25 +799,12 @@ const getTechnicianPerformance = async (req, res, next) => {
               ],
             },
           },
-          resolvedTicketIds: {
-            $push: {
-              $cond: [
-                { $in: ["$t.status", ["resolved", "closed"]] },
-                /* $t._id, NOT $_id: inside $group, $_id is the group key
-                   (the technician name). Using it here silently produced the
-                   wrong ticket ids and emptied every average rating. */
-                { $toString: "$t._id" },
-                "$$REMOVE",
-              ],
-            },
-          },
         },
       },
-      { $project: { _id: 1, assigned: 1, resolved: 1, resolveHours: 1, resolvedTicketIds: 1 } },
+      { $project: { _id: 1, assigned: 1, resolved: 1, resolveHours: 1 } },
     ]);
 
     const map = {};
-    const resolvedTicketIds = [];
     for (const r of rows) {
       const name = r._id || "Unknown";
       map[name] = {
@@ -844,38 +814,11 @@ const getTechnicianPerformance = async (req, res, next) => {
         resolveHours: (r.resolveHours || []).filter(
           (h) => typeof h === "number" && Number.isFinite(h) && h >= 0,
         ),
-        resolvedTicketIds: r.resolvedTicketIds || [],
       };
-      for (const id of map[name].resolvedTicketIds) resolvedTicketIds.push(String(id));
-    }
-
-    /* Real average service-satisfaction rating per technician — pulled from the
-       Feedback records attached to the tickets they resolved. */
-    const ratingsByRequest = {};
-    if (resolvedTicketIds.length) {
-      const feedbackRows = await Feedback.find({
-        request: { $in: resolvedTicketIds },
-      })
-        .select("request rating")
-        .lean();
-      for (const f of feedbackRows) {
-        if (typeof f.rating === "number")
-          ratingsByRequest[String(f.request)] = f.rating;
-      }
     }
 
     const data = Object.values(map)
       .map((row) => {
-        const selfRatings = row.resolvedTicketIds
-          .map((id) => ratingsByRequest[id])
-          .filter((r) => typeof r === "number");
-        const avgRating = selfRatings.length
-          ? Math.round(
-              (selfRatings.reduce((sum, r) => sum + r, 0) /
-                selfRatings.length) *
-                10,
-            ) / 10
-          : null;
         const avgResolvedHours = row.resolveHours.length
           ? Math.round(
               (row.resolveHours.reduce((sum, h) => sum + h, 0) /
@@ -887,7 +830,6 @@ const getTechnicianPerformance = async (req, res, next) => {
           name: row.name,
           assigned: row.assigned,
           resolved: row.resolved,
-          avgRating,
           avgResolvedHours,
         };
       })
@@ -938,29 +880,6 @@ const getRequestsByDepartment = async (req, res, next) => {
       { $sort: { total: -1 } },
     );
     res.json({ success: true, data: await Ticket.aggregate(pipeline) });
-  } catch (err) {
-    next(err);
-  }
-};
-
-/* GET /api/reports/recent-feedback */
-const getRecentFeedback = async (req, res, next) => {
-  try {
-    const feedback = await Feedback.find()
-      .populate("user", "fullName")
-      .populate({
-        path: "request",
-        select: "ticketId equipmentType requester",
-        populate: { path: "requester", select: "fullName" },
-      })
-      .sort({ createdAt: -1 })
-      .limit(20)
-      .lean();
-    feedback.forEach((fb) => {
-      if (fb.request && fb.request.ticketId)
-        fb.request.ticketId = displayTicketId(fb.request.ticketId);
-    });
-    res.json({ success: true, data: feedback });
   } catch (err) {
     next(err);
   }
@@ -1283,7 +1202,6 @@ module.exports = {
   getRequestsByDepartment,
   getRequestsByCategory,
   getRequestsByIssueType,
-  getRecentFeedback,
   getNetworkReports,
   getReportExport,
 };

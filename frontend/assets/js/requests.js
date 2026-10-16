@@ -14,7 +14,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (p.includes("user/tracking")) await initTracking();
     if (p.includes("user/history")) await initUserHistory();
     if (p.includes("admin/requests")) await initAdminRequests();
-    if (p.includes("admin/admin-feedback")) await initAdminFeedbackPage();
+    if (p.includes("admin/admin-feedback"))
+      await initAdminTechnicianFeedbackPage();
     if (p.includes("admin/categories")) await initCategories();
     if (p.includes("admin/users")) await initUserManagement();
   } catch (err) {
@@ -56,9 +57,8 @@ function settleStoppedLoaders() {
   const areas = [
     ["categoriesTableBody", "table", 5],
     ["requestsTableBody", "table", 14],
-    ["adminFeedbackTableBody", "table", 10],
     ["usersTableBody", "table", 8],
-    ["historyTableBody", "table", 8],
+    ["historyTableBody", "table", 9],
     ["recentRequestsBody", "table", 7],
     ["assetsTableBody", "table", 9],
     /* Added — previously uncovered, so these could stick indefinitely. */
@@ -100,15 +100,9 @@ function settleStoppedLoaders() {
     }
   });
 
-  const adminFbWrap =
-    document.getElementById("adminFeedbackWrap") ||
-    document.getElementById("adminFeedbackList");
   const stats = document.getElementById("categoryStats");
   if (stats && isStuckText(stats.textContent)) {
     stats.innerHTML = `<div class="text-center text-muted py-4">Category statistics are unavailable.</div>`;
-  }
-  if (adminFbWrap && isStuckText(adminFbWrap.textContent)) {
-    adminFbWrap.innerHTML = `<div class="text-center text-danger py-4">Failed to load feedback.</div>`;
   }
 
   const trackingList = document.getElementById("requestsList");
@@ -126,32 +120,6 @@ function settleStoppedLoaders() {
         </button>
       </div>`;
     }
-  }
-
-  /* ── Additional placeholders not covered above ─────────────── */
-  const myFeedbackBody = document.getElementById("myFeedbackBody");
-  if (myFeedbackBody && isStuckText(myFeedbackBody.textContent)) {
-    myFeedbackBody.innerHTML = `<tr><td colspan="5" class="text-center py-4">
-      <i class="bi bi-exclamation-triangle text-danger d-block mb-2 fs-3"></i>
-      <p class="text-danger mb-2">Failed to load feedback.</p>
-      <button class="btn btn-sm btn-outline-primary" onclick="initUserDashboard()">
-        <i class="bi bi-arrow-clockwise me-1"></i>Retry
-      </button>
-    </td></tr>`;
-  }
-
-  const pendingFeedbackList = document.getElementById("pendingFeedbackList");
-  if (pendingFeedbackList && isStuckText(pendingFeedbackList.textContent)) {
-    pendingFeedbackList.innerHTML = `<div class="feedback-error">
-      <div class="feedback-error-icon">
-        <i class="bi bi-exclamation-triangle"></i>
-      </div>
-      <h6 class="feedback-error-title" data-i18n="fb.errorTitle">Unable to load feedback requests</h6>
-      <p class="feedback-error-text" data-i18n="fb.errorText">The requests could not be loaded. Please try again.</p>
-      <button class="btn btn-primary" onclick="initFeedback()">
-        <i class="bi bi-arrow-clockwise me-1"></i> <span data-i18n="common.retry">Try Again</span>
-      </button>
-    </div>`;
   }
 
   const notificationsList = document.getElementById("notificationsList");
@@ -263,7 +231,6 @@ async function initUserDashboard() {
   if (w) w.textContent = user?.fullName || "User";
 
   const tbody = document.getElementById("requestsTableBody");
-  const fbBody = document.getElementById("myFeedbackBody");
 
   try {
     const { data } = await apiRequest("/tickets/my");
@@ -286,15 +253,6 @@ async function initUserDashboard() {
     animNum("completedRequests", completed);
 
     if (!tbody) return;
-
-    /* Feedback is a separate presentation concern. A malformed feedback
-       record must never prevent the Requests table from rendering. */
-    try {
-      renderMyFeedback(data);
-    } catch (feedbackError) {
-      console.error("Render My Feedback failed:", feedbackError);
-      renderMyFeedbackError();
-    }
 
     if (!data.length) {
       tbody.innerHTML = `<tr><td colspan="7">
@@ -320,15 +278,12 @@ async function initUserDashboard() {
         <td>${statusBadge(r.status)}</td>
         <td><small class="text-muted">${formatDate(r.created_at)}</small></td>
         <td class="text-nowrap">
-          <div class="d-flex gap-1 align-items-center">
-            <button class="btn btn-sm btn-outline-primary py-0 px-2"
-                    onclick="openDetailModal('${r.id}')"
-                    data-bs-toggle="modal" data-bs-target="#requestDetailModal"
-                    title="View request details">
-              <i class="bi bi-eye"></i>
-            </button>
-            ${requesterFeedbackAction(r)}
-          </div>
+          <button class="btn btn-sm btn-outline-primary py-0 px-2"
+                  onclick="openDetailModal('${r.id}')"
+                  data-bs-toggle="modal" data-bs-target="#requestDetailModal"
+                  title="View request details">
+            <i class="bi bi-eye"></i>
+          </button>
         </td>
       </tr>`,
       )
@@ -336,7 +291,6 @@ async function initUserDashboard() {
   } catch (err) {
     console.error("Load requests failed:", err);
     showToast(err.message, "danger");
-    /* Keep Requests and My Feedback visibly independent on failure. */
     if (tbody) {
       tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">
         <i class="bi bi-exclamation-triangle text-danger d-block mb-2 fs-3"></i>
@@ -345,99 +299,7 @@ async function initUserDashboard() {
           <i class="bi bi-arrow-clockwise me-1"></i>Retry</button>
       </td></tr>`;
     }
-    renderMyFeedbackError();
   }
-}
-
-function renderMyFeedback(feedback) {
-  const body = document.getElementById("myFeedbackBody");
-  if (!body) return;
-
-  const records = Array.isArray(feedback)
-    ? feedback
-    : Array.isArray(feedback?.feedback)
-      ? feedback.feedback
-      : Array.isArray(feedback?.feedbacks)
-        ? feedback.feedbacks
-        : Array.isArray(feedback?.items)
-          ? feedback.items
-          : [];
-  const submitted = records.filter(
-    (record) =>
-      record &&
-      (record.has_requester_feedback ||
-        record.requester_feedback ||
-        (record.feedbackRating !== null &&
-          record.feedbackRating !== undefined)),
-  );
-
-  if (!submitted.length) {
-    body.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">
-      <i class="bi bi-chat-square-text fs-3 d-block mb-2"></i>
-      <span>No feedback submitted yet.</span>
-    </td></tr>`;
-    return;
-  }
-
-  body.innerHTML = submitted
-    .map((record) => {
-      const feedbackRecord = record.requester_feedback || {};
-      const rating = Number(
-        record.feedbackRating ?? feedbackRecord.overallRating,
-      );
-      const ratingLabel =
-        Number.isFinite(rating) && rating > 0
-          ? `<span class="text-warning" aria-label="${rating} out of 5 stars">${"★".repeat(Math.min(rating, 5))}</span>`
-          : "—";
-      const requestLabel = record.ticketId || record.id || "—";
-      const service =
-        record.issueType ||
-        record.serviceType ||
-        record.deviceLabel ||
-        record.equipmentType ||
-        "—";
-      const date =
-        feedbackRecord.submittedAt || record.created_at || record.createdAt;
-
-      return `<tr>
-        <td><strong class="text-primary">${escHtml(requestLabel)}</strong>${record.title ? `<div class="small text-muted text-truncate" title="${escHtml(record.title)}">${escHtml(record.title)}</div>` : ""}</td>
-        <td>${escHtml(service)}</td>
-        <td>${ratingLabel}</td>
-        <td><span class="badge bg-success-subtle text-success border border-success-subtle">Submitted</span></td>
-        <td><small class="text-muted">${date ? formatDate(date) : "—"}</small></td>
-      </tr>`;
-    })
-    .join("");
-}
-
-function renderMyFeedbackError() {
-  const body = document.getElementById("myFeedbackBody");
-  if (!body) return;
-  body.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">
-    <i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>
-    <span>Unable to load feedback.</span>
-  </td></tr>`;
-}
-
-/* ── Dashboard "Submit Feedback" action per completed request ─
-   The button deep-links with the real MongoDB _id in the query string. The
-   visible Ticket ID (e.g. MAU-0019) is display-only and is never used as the
-   API id. When the backend reports feedback exists (has_requester_feedback /
-   feedbackRating) a "Feedback Submitted" badge replaces the button so a
-   request can never be rated twice from the dashboard. */
-function requesterFeedbackAction(r) {
-  if (!r) return "";
-  if (r.has_requester_feedback || r.feedbackRating) {
-    return `<span class="badge bg-success align-self-center" title="Feedback already submitted for ${escHtml(r.ticketId || r.id)}">
-      <i class="bi bi-check2-circle me-1"></i>Feedback Submitted</span>`;
-  }
-  if (["resolved", "closed"].includes(r.status)) {
-    return `<a class="btn btn-sm btn-primary py-0 px-2 submit-feedback-btn"
-            href="feedback.html?ticketId=${encodeURIComponent(r.id)}"
-            title="Submit feedback for ${escHtml(r.ticketId || r.id)}">
-      <i class="bi bi-star me-1"></i>Submit Feedback</a>`;
-  }
-  return "";
 }
 
 const OTHER_ISSUE_OPTION = "Other ICT Issue";
@@ -2476,9 +2338,12 @@ function renderAdminFeedbackSummary(feedback) {
       <div class="d-flex align-items-center gap-2 mb-2">
         <i class="bi bi-clipboard2-check text-primary"></i>
         <strong class="small">Admin Feedback</strong>
+        ${feedback.reportReviewDecision ? `<span class="badge text-bg-primary">${escHtml(feedback.reportReviewDecision)}</span>` : ""}
+        ${feedback.evaluationStatus ? `<span class="badge text-bg-secondary">${escHtml(feedback.evaluationStatus)}</span>` : ""}
         ${feedback.ticketStatus ? statusBadge(feedback.ticketStatus) : ""}
       </div>
       <div class="small p-3 bg-light rounded" style="white-space:pre-wrap;">${escHtml(feedback.adminComment || "No feedback message provided.")}</div>
+      <div class="small text-muted mt-2">Work quality: ${escHtml(feedback.workQuality || "—")} · Technical accuracy: ${escHtml(feedback.technicalAccuracy || "—")} · Repair effectiveness: ${escHtml(feedback.repairEffectiveness || "—")} · Report completeness: ${escHtml(feedback.reportCompleteness || "—")} · Safety compliance: ${escHtml(feedback.safetyProcedureCompliance || "—")}</div>
       <div class="d-flex flex-wrap gap-3 mt-2 text-muted" style="font-size:.75rem;">
         <span><i class="bi bi-person-badge me-1"></i>${escHtml(feedback.admin_name || "ICT Admin")}</span>
         <span><i class="bi bi-ticket-detailed me-1"></i>${escHtml(feedback.ticketId || "Ticket")}</span>
@@ -2624,7 +2489,7 @@ async function initUserHistory() {
     showToast(err.message, "danger");
     const tbody = document.getElementById("historyTableBody");
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4">
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4">
         <i class="bi bi-exclamation-triangle text-danger d-block mb-2 fs-3"></i>
         <p class="text-danger mb-2">Failed to load history: ${escHtml(err.message)}</p>
         <button class="btn btn-sm btn-outline-primary" onclick="initUserHistory()">
@@ -2639,7 +2504,7 @@ function renderHistoryTable(requests) {
   const tbody = document.getElementById("historyTableBody");
   if (!tbody) return;
   if (!requests.length) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="text-center py-5">
+    tbody.innerHTML = `<tr><td colspan="8"><div class="text-center py-5">
       <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i><p class="text-muted">No history yet.</p>
     </div></td></tr>`;
     return;
@@ -2655,7 +2520,6 @@ function renderHistoryTable(requests) {
       <td>${escHtml(r.issueType || r.serviceType || "—")}</td>
       <td>${escHtml(r.assignedTechnician || "—")}</td>
       <td>${formatDate(r.updated_at)}</td>
-      <td>${r.feedbackRating ? '<span class="text-warning">' + "★".repeat(r.feedbackRating) + "</span>" : "—"}</td>
       <td>${statusBadge(r.status)}</td>
       <td>
         <button class="btn btn-sm btn-outline-secondary py-0 px-2"
@@ -2670,744 +2534,13 @@ function renderHistoryTable(requests) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   REQUESTER FEEDBACK — Service Experience Survey
-   ════════════════════════════════════════════════════════════ */
-let _feedbackInitDone = false;
-let _submittingFeedback = false;
-
-function setRequesterFeedbackButtonLoading(isLoading) {
-  const button = document.getElementById("feedbackSubmitBtn");
-  if (button?.dataset.submitted === "1") return;
-  setLoading("feedbackSubmitBtn", "feedbackSpinner", isLoading);
-  const label = document.getElementById("feedbackSubmitLabel");
-  if (label)
-    label.textContent = isLoading ? "Submitting..." : "Submit Feedback";
-}
-
-function lockRequesterFeedbackButton() {
-  const button = document.getElementById("feedbackSubmitBtn");
-  if (!button) return;
-  button.disabled = true;
-  button.dataset.submitted = "1";
-  button.setAttribute("aria-busy", "false");
-  button.innerHTML =
-    '<span>Feedback Submitted</span><i class="bi bi-check2-circle ms-1" aria-hidden="true"></i>';
-}
-
-async function initFeedback() {
-  if (!requireRole("Requester")) return;
-  /* Guard against duplicate initialization (in-page Retry, etc.) — the submit
-     and star handlers must be bound exactly once. */
-  if (_feedbackInitDone) return;
-  /* Claim the guard BEFORE the await. Placed after it, two concurrent init
-     calls would both suspend on the fetch and then both bind a second submit
-     listener on #feedbackForm. */
-  _feedbackInitDone = true;
-  try {
-    const { data } = await apiRequest("/tickets/my");
-    renderSubmittedServiceFeedback(
-      data.filter((ticket) => ticket.has_requester_feedback || ticket.feedbackRating),
-    );
-    renderPendingFeedback(
-      data.filter(
-        (r) =>
-          ["resolved", "closed"].includes(r.status) &&
-          !r.has_requester_feedback &&
-          !r.feedbackRating,
-      ),
-    );
-  } catch (err) {
-    const message = requesterFeedbackErrorMessage(err);
-    showToast(message, "danger");
-    const container = document.getElementById("pendingFeedbackList");
-    if (container) {
-      container.innerHTML = `<div class="text-center py-4">
-        <i class="bi bi-exclamation-triangle text-danger d-block mb-2 fs-3"></i>
-        <p class="text-danger mb-2">${escHtml(message)}</p>
-        <button class="btn btn-sm btn-outline-primary" onclick="window.location.reload()">
-          <i class="bi bi-arrow-clockwise me-1"></i>Retry
-        </button>
-      </div>`;
-    }
-  }
-
-  initStarRating();
-
-  const repairQuality = document.getElementById("fbRepairQuality");
-  const followUpYes = document.getElementById("followUpYes");
-  const followUpNo = document.getElementById("followUpNo");
-  repairQuality?.addEventListener("change", () => {
-    const repairNotFixed = repairQuality.value === "Not Fixed";
-    if (repairNotFixed && followUpYes) followUpYes.checked = true;
-    if (followUpNo) followUpNo.disabled = repairNotFixed;
-  });
-
-  const pendingFeedbackList = document.getElementById("pendingFeedbackList");
-  if (pendingFeedbackList && !pendingFeedbackList.dataset.feedbackBound) {
-    pendingFeedbackList.dataset.feedbackBound = "true";
-    pendingFeedbackList.addEventListener("click", (event) => {
-      const item = event.target.closest(".feedback-request-item");
-      if (!item) return;
-      const id = item.dataset.ticketId || "";
-      if (!id) return;
-      const arrow = event.target.closest(".feedback-request-arrow");
-      if (arrow) arrow.disabled = true;
-      void openFeedbackForm(id).finally(() => {
-        if (arrow?.isConnected) arrow.disabled = false;
-      });
-    });
-  }
-
-  const submittedFeedbackList = document.getElementById(
-    "submittedServiceFeedbackList",
-  );
-  if (submittedFeedbackList && !submittedFeedbackList.dataset.feedbackBound) {
-    submittedFeedbackList.dataset.feedbackBound = "true";
-    submittedFeedbackList.addEventListener("click", async (event) => {
-      const button = event.target.closest("[data-submitted-feedback-ticket]");
-      if (!button) return;
-      button.disabled = true;
-      try {
-        const { data: ticket } = await apiRequest(
-          `/tickets/${encodeURIComponent(button.dataset.submittedFeedbackTicket)}`,
-        );
-        showFeedbackSubmitted(ticket, { justSubmitted: false });
-        document.getElementById("feedbackSubmittedCard")?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      } catch (err) {
-        showAlert("feedbackAlert", requesterFeedbackErrorMessage(err), "danger");
-      } finally {
-        if (button.isConnected) button.disabled = false;
-      }
-    });
-  }
-
-  document
-    .getElementById("feedbackForm")
-    ?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const id = document.getElementById("feedbackRequestId").value;
-      if (!id) {
-        showAlert(
-          "feedbackAlert",
-          "Please select a request to give feedback on.",
-          "warning",
-        );
-        return;
-      }
-
-      const rating = document.getElementById("ratingValue").value;
-      const ratingNum = Number(rating);
-      if (
-        !rating ||
-        !Number.isInteger(ratingNum) ||
-        ratingNum < 1 ||
-        ratingNum > 5
-      ) {
-        showAlert("feedbackAlert", "Please select a rating.", "warning");
-        document.querySelector(".star-rating .star")?.focus();
-        return;
-      }
-
-      /* Required dropdown fields */
-      const requiredSelects = [
-        "fbServiceQuality",
-        "fbProfessionalism",
-        "fbResponseTimeliness",
-        "fbRepairQuality",
-        "fbCommunication",
-        "fbSatisfaction",
-        "fbWouldRecommend",
-      ];
-      for (const fieldId of requiredSelects) {
-        const el = document.getElementById(fieldId);
-        if (el && !el.value) {
-          showAlert(
-            "feedbackAlert",
-            "Please complete the required feedback fields.",
-            "warning",
-          );
-          el.classList.add("is-invalid");
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          el.focus();
-          return;
-        }
-        el?.classList.remove("is-invalid");
-      }
-
-      const comment = (document.getElementById("comment")?.value || "").trim();
-      const suggestions = (
-        document.getElementById("suggestions")?.value || ""
-      ).trim();
-      const commentField = document.getElementById("comment");
-      if (!comment) {
-        commentField?.classList.add("is-invalid");
-        showAlert("feedbackAlert", "Please enter your comments.", "warning");
-        commentField?.focus();
-        return;
-      }
-      commentField?.classList.remove("is-invalid");
-      const followUpSelection = document.querySelector(
-        'input[name="followUpRequested"]:checked',
-      );
-      if (!followUpSelection) {
-        showAlert(
-          "feedbackAlert",
-          "Please choose whether you need a follow-up request.",
-          "warning",
-        );
-        document.getElementById("followUpYes")?.focus();
-        return;
-      }
-      if (comment && comment.length > 1000) {
-        showAlert(
-          "feedbackAlert",
-          "Comment must be 1000 characters or fewer.",
-          "warning",
-        );
-        return;
-      }
-      if (suggestions && suggestions.length > 1000) {
-        showAlert(
-          "feedbackAlert",
-          "Suggestions must be 1000 characters or fewer.",
-          "warning",
-        );
-        return;
-      }
-
-      const payload = {
-        overallRating: ratingNum,
-        serviceQuality: document.getElementById("fbServiceQuality").value,
-        repairQuality: document.getElementById("fbRepairQuality").value,
-        technicianProfessionalism:
-          document.getElementById("fbProfessionalism").value,
-        responseTimeliness: document.getElementById("fbResponseTimeliness").value,
-        communication: document.getElementById("fbCommunication").value,
-        satisfactionLevel: document.getElementById("fbSatisfaction").value,
-        wouldRecommend: document.getElementById("fbWouldRecommend").value,
-        followUpRequested: followUpSelection.value === "true",
-        comment: comment || null,
-        suggestions: suggestions || null,
-      };
-
-      /* One in-flight submission at a time — rapid clicks can never double-post.
-         Never return silently here: a stuck flag would leave the button dead
-         with no explanation, which is indistinguishable from a broken form. */
-      if (_submittingFeedback) {
-        console.warn("[feedback] A submission is already in progress.");
-        return;
-      }
-      _submittingFeedback = true;
-
-      let submissionConfirmed = false;
-      try {
-        /* Inside the try so a failure here still reaches the finally below and
-           releases the in-flight guard instead of wedging the button forever. */
-        setRequesterFeedbackButtonLoading(true);
-        const response = await apiRequest(`/tickets/${id}/requester-feedback`, {
-          method: "POST",
-          body: payload,
-        });
-        if (!response?.success) {
-          const error = new Error("The server did not confirm the submission.");
-          error.status = 500;
-          throw error;
-        }
-        submissionConfirmed = true;
-
-        const feedbackAlert = document.getElementById("feedbackAlert");
-        if (feedbackAlert) {
-          feedbackAlert.classList.add("d-none");
-          feedbackAlert.innerHTML = "";
-        }
-        showToast(
-          response.message || "Feedback submitted successfully.",
-          response.warning ? "warning" : "success",
-        );
-        lockRequesterFeedbackButton();
-
-        const requestSummary = {
-          id,
-          ticketId: document.getElementById("feedbackRequestTitle").value,
-          title: document.getElementById("feedbackRequestService").value,
-          has_requester_feedback: true,
-        };
-        const submittedFeedback = response.data || payload;
-
-        /* Read the saved subdocument back from the authenticated API. The POST
-           response remains the confirmed fallback if this follow-up read fails. */
-        try {
-          const { data: saved } = await apiRequest(
-            `/tickets/${encodeURIComponent(id)}/requester-feedback`,
-          );
-          showFeedbackSubmitted(
-            {
-              ...requestSummary,
-              feedbackRating: saved.overallRating,
-              requester_feedback: saved,
-            },
-            { justSubmitted: true },
-          );
-        } catch (_) {
-          showFeedbackSubmitted(
-            {
-              ...requestSummary,
-              feedbackRating: submittedFeedback.overallRating,
-              requester_feedback: submittedFeedback,
-            },
-            { justSubmitted: true },
-          );
-        }
-
-        /* Refresh the live awaiting list, but never turn a successful POST into
-           a false submission error if this secondary GET is unavailable. */
-        try {
-          const { data } = await apiRequest("/tickets/my");
-          renderPendingFeedback(
-            data.filter(
-              (r) =>
-                ["resolved", "closed"].includes(r.status) &&
-                !r.has_requester_feedback &&
-                !r.feedbackRating,
-            ),
-          );
-          renderSubmittedServiceFeedback(
-            data.filter(
-              (ticket) =>
-                ticket.has_requester_feedback || ticket.feedbackRating,
-            ),
-          );
-        } catch (refreshError) {
-          console.warn(
-            "Feedback was saved, but the request list could not refresh.",
-          );
-        }
-      } catch (err) {
-        if (!submissionConfirmed) {
-          /* Also logged to the console: the on-page alert auto-hides after a
-             few seconds, so a failed submission would otherwise leave no
-             trace of the actual HTTP status or server message. */
-          console.error(
-            `[feedback] Submission failed (HTTP ${
-              err?.status ?? "no response"
-            }):`,
-            err?.message || err,
-          );
-          showAlert(
-            "feedbackAlert",
-            requesterFeedbackErrorMessage(err),
-            "danger",
-          );
-        }
-      } finally {
-        _submittingFeedback = false;
-        const submitBtn = document.getElementById("feedbackSubmitBtn");
-        if (submitBtn?.dataset.submitted === "1") lockRequesterFeedbackButton();
-        else setRequesterFeedbackButtonLoading(false);
-      }
-    });
-
-  /* Deep-link support: feedback.html?ticketId=<MongoId> (compat with the
-     project's ?id= pattern) opens the form for one specific request. */
-  const urlTicketId = (
-    getUrlParam("ticketId") ||
-    getUrlParam("id") ||
-    ""
-  ).trim();
-  if (urlTicketId) await openFeedbackFromUrl(urlTicketId);
-}
-
-function renderPendingFeedback(requests) {
-  const container = document.getElementById("pendingFeedbackList");
-  if (!container) return;
-  if (!requests.length) {
-    container.innerHTML = `
-      <div class="feedback-empty">
-        <div class="feedback-empty-icon">
-          <i class="bi bi-check2-all"></i>
-        </div>
-        <h6 class="feedback-empty-title" data-i18n="fb.emptyTitle">No feedback requests yet</h6>
-        <p class="feedback-empty-text" data-i18n="fb.emptyText">When a completed service request is available, it will appear here for your review.</p>
-      </div>`;
-    return;
-  }
-  container.innerHTML = requests
-    .map((r) => {
-      const ticketId = r && (r._id || r.id || "");
-      const displayTicketId = r.ticketId || r.id || "";
-      const safeId = String(ticketId).replace(/"/g, "&quot;");
-      const safeDisplay = String(displayTicketId).replace(/"/g, "&quot;");
-      return `
-    <div class="feedback-request-item"
-         data-ticket-id="${safeId}"
-         data-ticket-display="${safeDisplay}"
-         aria-label="Give feedback for ${escHtml(displayTicketId)}: ${escHtml(r.problemDescription || "").substring(0, 60)}">
-      <div class="feedback-request-main">
-        <div class="feedback-request-info">
-          <div class="feedback-request-id">${escHtml(displayTicketId)}</div>
-          <div class="feedback-request-description">${escHtml(r.problemDescription || "")}</div>
-        </div>
-        <div class="feedback-request-action">
-          <button type="button" class="feedback-request-arrow"
-              aria-label="Give feedback for ${escHtml(displayTicketId)}" title="Give feedback">
-            <i class="bi bi-chevron-right" style="font-size: 14px;"></i>
-          </button>
-        </div>
-      </div>
-      <div class="feedback-status-row">
-        <span class="feedback-status-badge"><i class="bi bi-check-circle-fill"></i> <span data-i18n="status.resolved">Resolved</span></span>
-        <span class="feedback-resolved-date">${formatDate(r.updated_at)}</span>
-        <span class="feedback-cta" data-i18n="fb.giveFeedback">Give Feedback →</span>
-      </div>
-    </div>`;
-    })
-    .join("");
-}
-
-function renderSubmittedServiceFeedback(tickets) {
-  const container = document.getElementById("submittedServiceFeedbackList");
-  if (!container) return;
-  if (!tickets.length) {
-    container.innerHTML =
-      '<div class="list-group-item text-muted">You have not submitted service feedback yet.</div>';
-    return;
-  }
-  container.innerHTML = tickets
-    .map((ticket) => {
-      const id = ticket && (ticket._id || ticket.id);
-      const displayId = ticket.ticketId || id || "";
-      const feedback = ticket.requester_feedback || {};
-      const rating = Number(feedback.overallRating || ticket.feedbackRating) || 0;
-      const stars = "★".repeat(Math.max(0, Math.min(5, rating)));
-      const submittedAt = feedback.submittedAt || ticket.updated_at;
-      return `
-        <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 text-start"
-          data-submitted-feedback-ticket="${escHtml(id || "")}">
-          <span class="min-w-0">
-            <span class="fw-semibold d-block">${escHtml(displayId)}</span>
-            <span class="small text-muted">${escHtml(ticket.title || ticket.problemDescription || "Maintenance request")}</span>
-            <span class="small text-muted d-block">Submitted ${escHtml(formatDateTime(submittedAt))}</span>
-          </span>
-          <span class="text-warning text-nowrap" aria-label="${rating} out of 5 stars">${escHtml(stars || "—")}</span>
-        </button>`;
-    })
-    .join("");
-}
-
-function requesterFeedbackErrorMessage(error) {
-  if (error?.status === 401)
-    return "Your access token has expired. Please sign in again.";
-  if (error?.status === 403)
-    return "You do not have permission to submit feedback for this request.";
-  if (error?.status === 404) return "The selected request could not be found.";
-  if (error?.status === 409)
-    return "Feedback has already been submitted for this request.";
-  if (error?.status === 422)
-    return "Please complete the required feedback fields and try again.";
-  if (error?.status === 400)
-    return "This request is not eligible for feedback.";
-  if (error?.status >= 500)
-    return "Unable to submit feedback. Please try again.";
-  if (error?.network || !error?.status)
-    return "Unable to reach the server. Check your connection and try again.";
-  return "Unable to process feedback right now. Please try again.";
-}
-
-async function openFeedbackForm(id, loadedTicket = null) {
-  const requestId = String(id || "").trim();
-  if (!requestId) {
-    showAlert(
-      "requestAlert",
-      "The selected request could not be found.",
-      "danger",
-    );
-    return;
-  }
-
-  try {
-    document.getElementById("feedbackForm")?.reset();
-    setStarRating("");
-    const followUpNo = document.getElementById("followUpNo");
-    if (followUpNo) followUpNo.disabled = false;
-    document.getElementById("feedbackAlert")?.classList.add("d-none");
-    const ticket =
-      loadedTicket ||
-      (await apiRequest(`/tickets/${encodeURIComponent(requestId)}`)).data;
-    if (!ticket?.id) {
-      showAlert(
-        "requestAlert",
-        "The selected request could not be found.",
-        "danger",
-      );
-      return;
-    }
-    if (ticket.has_requester_feedback || ticket.feedbackRating) {
-      showFeedbackSubmitted(ticket, { justSubmitted: false });
-      return;
-    }
-    if (!["resolved", "closed"].includes(ticket.status)) {
-      showAlert(
-        "requestAlert",
-        "Feedback is available after a request is resolved or closed.",
-        "warning",
-      );
-      return;
-    }
-
-    const service = [ticket.title, ticket.issueType || ticket.serviceType]
-      .filter(Boolean)
-      .join(" — ");
-    document.getElementById("feedbackRequestId").value = ticket.id;
-    document.getElementById("feedbackRequestTitle").value =
-      ticket.ticketId || ticket.id;
-    document.getElementById("feedbackRequestService").value =
-      service || ticket.problemDescription || "Request details unavailable";
-    document.getElementById("feedbackRequestTechnician").value =
-      ticket.assignedTechnician || ticket.technician_name || "Not assigned";
-    document.getElementById("feedbackRequesterId").value =
-      ticket.requester_id || "";
-    document.getElementById("feedbackRequesterName").value =
-      ticket.requester_name || "";
-    document.getElementById("feedbackEquipment").value =
-      [ticket.deviceLabel || ticket.asset_name || ticket.equipmentType,
-       ticket.asset_tag ? `Asset ${ticket.asset_tag}` : null]
-        .filter(Boolean)
-        .join(" · ") || "Not specified";
-    document.getElementById("feedbackGeneratedId").value = "";
-    document.getElementById("feedbackSubmittedAt").value = "";
-    document.getElementById("feedbackRequestStatus").value = String(
-      ticket.status || "Unavailable",
-    )
-      .replaceAll("_", " ")
-      .replace(/\b\w/g, (letter) => letter.toUpperCase());
-    document.getElementById("feedbackRequestResolution").value =
-      ticket.resolutionResponse ||
-      ticket.reasonIfNotFixed ||
-      "No resolution details provided";
-
-    const card = document.getElementById("feedbackFormCard");
-    if (card) {
-      card.style.removeProperty("display");
-      card.classList.remove("d-none");
-      card.scrollIntoView({ behavior: "smooth" });
-    }
-  } catch (error) {
-    showAlert("requestAlert", requesterFeedbackErrorMessage(error), "danger");
-  }
-}
-
-/* ── URL query-string helper ─────────────────────────────── */
-function getUrlParam(name) {
-  return new URLSearchParams(window.location.search).get(name);
-}
-
-/* ── Deep-link: open the feedback form for one specific ticket ──
-   Used when the dashboard (or the project's ?id= pattern) links to
-   feedback.html?ticketId=<MongoId>. The ticket is re-fetched from the backend
-   so ownership and eligibility are always enforced server-side: if feedback
-   already exists we show the read-only "Feedback Submitted" view instead of
-   the editable form, and POST can never be reached twice for the same ticket. */
-async function openFeedbackFromUrl(ticketId) {
-  const id = (ticketId || "").trim();
-  if (!id) return;
-  try {
-    const { data: ticket } = await apiRequest(
-      `/tickets/${encodeURIComponent(id)}`,
-    );
-    if (!ticket || !ticket.id) {
-      showAlert(
-        "feedbackAlert",
-        "The selected request could not be found.",
-        "danger",
-      );
-      return;
-    }
-    if (ticket.has_requester_feedback || ticket.feedbackRating) {
-      showFeedbackSubmitted(ticket, { justSubmitted: false });
-      return;
-    }
-    if (!["resolved", "closed"].includes(ticket.status)) {
-      showAlert(
-        "feedbackAlert",
-        "Feedback can only be submitted for resolved or closed requests. This request is currently: " +
-          escHtml(ticket.status) +
-          ".",
-        "danger",
-      );
-      return;
-    }
-    await openFeedbackForm(ticket.id, ticket);
-  } catch (err) {
-    showAlert("feedbackAlert", requesterFeedbackErrorMessage(err), "danger");
-  }
-}
-
-/* ── Read-only "Feedback Submitted" view ────────────────────
-   Shown when a ticket already has requester feedback (or right after a
-   successful POST): hides the editable form and summarises what was saved.
-   The green banner distinguishes a just-completed submission from a ticket
-   that was opened pre-submitted. */
-function showFeedbackSubmitted(ticket, opts) {
-  const fb = (ticket && ticket.requester_feedback) || {};
-  const title = ticket ? ticket.ticketId || ticket.id || "" : "";
-  const rating =
-    Number(fb.overallRating) || Number(ticket && ticket.feedbackRating) || 0;
-  const ratingLabel =
-    ["", "Very Poor", "Poor", "Average", "Good", "Excellent"][rating] || "";
-  const stars = rating
-    ? '<span class="text-warning">' +
-      "★".repeat(rating) +
-      '</span><span class="text-muted">' +
-      "☆".repeat(5 - rating) +
-      "</span>"
-    : "—";
-
-  const formCard = document.getElementById("feedbackFormCard");
-  if (formCard) formCard.style.display = "none";
-
-  const card = document.getElementById("feedbackSubmittedCard");
-  const body = document.getElementById("feedbackSubmittedBody");
-  if (!card || !body) return;
-
-  const justSubmitted = !!opts && !!opts.justSubmitted;
-  const msg = justSubmitted
-    ? `Feedback submitted successfully for request <strong>${escHtml(title)}</strong>.`
-    : `Feedback for request <strong>${escHtml(title)}</strong> has already been submitted. You cannot submit it again.`;
-
-  const rows = [
-    ["Requester ID", ticket.requester_id],
-    ["Requester Name", fb.requester_name || ticket.requester_name],
-    ["Technician", ticket.assignedTechnician || ticket.technician_name],
-    ["Equipment / Asset", [ticket.deviceLabel || ticket.asset_name || ticket.equipmentType, ticket.asset_tag ? `Asset ${ticket.asset_tag}` : null].filter(Boolean).join(" · ")],
-    [
-      "Overall Service Rating",
-      stars + '<span class="ms-1">' + escHtml(ratingLabel) + "</span>",
-    ],
-    ["Feedback ID", fb.feedbackId],
-    ["Repair Quality", fb.repairQuality],
-    ["Response and Timeliness", fb.responseTimeliness],
-    ["Service Quality", fb.serviceQuality],
-    ["Technician Professionalism", fb.technicianProfessionalism],
-    ["Response Time", fb.responseTime],
-    ["Communication", fb.communication],
-    ["Problem Resolution", fb.problemResolution],
-    ["Satisfaction Level", fb.satisfactionLevel],
-    ["Would Recommend Service", fb.wouldRecommend],
-    ["Follow-up Requested", fb.followUpRequested ? `Yes — ${fb.followUpStatus || "Pending"}` : "No"],
-    ["Comment", fb.comment],
-    ["Suggestions", fb.suggestions],
-  ].filter(([, v]) => v != null && v !== "" && v !== "—");
-
-  card.classList.remove("d-none");
-  body.innerHTML = `
-    <div class="alert ${justSubmitted ? "alert-success" : "alert-info"} d-flex align-items-start gap-2 mb-4">
-      <i class="bi ${justSubmitted ? "bi-check-circle-fill" : "bi-info-circle-fill"} fs-4 flex-shrink-0"></i>
-      <div>${msg}</div>
-    </div>
-    <div class="row g-3">
-      ${rows
-        .map(
-          ([k, v]) => `
-        <div class="col-md-6">
-          <div class="p-3 rounded bg-light h-100">
-            <div class="small fw-semibold text-muted mb-1">${escHtml(k)}</div>
-            <div>${k === "Overall Service Rating" ? v : escHtml(v)}</div>
-          </div>
-        </div>`,
-        )
-        .join("")}
-    </div>
-    ${fb.submittedAt ? `<div class="small text-muted mt-3"><i class="bi bi-clock me-1"></i>Submitted ${formatDateTime(fb.submittedAt)}</div>` : ""}`;
-  if (justSubmitted) {
-    body.insertAdjacentHTML(
-      "beforeend",
-      '<a class="btn btn-outline-primary mt-4" href="dashboard.html#my-feedback"><i class="bi bi-arrow-left me-1"></i>Return to Dashboard</a>',
-    );
-  }
-}
-
-/* Single source of truth for the star rating: the hidden #ratingValue input.
-   Every interaction routes through setStarRating() so the stored value, the
-   filled stars and the label can never disagree. Values are clamped to the
-   valid 1-5 range; anything else clears the rating entirely rather than ever
-   persisting a bad value (which previously let the request reach the backend
-   and fail with "Overall service rating (1-5) is required."). */
-function setStarRating(value, clearAlert = true) {
-  const input = document.getElementById("ratingValue");
-  const label = document.getElementById("ratingLabel");
-  const stars = document.querySelectorAll(".star-rating .star");
-  const labels = ["", "Very Poor", "Poor", "Average", "Good", "Excellent"];
-
-  const n = parseInt(value, 10);
-  const valid = Number.isInteger(n) && n >= 1 && n <= 5;
-
-  if (input) input.value = valid ? String(n) : "";
-  if (label)
-    label.textContent = valid ? labels[n] : "How would you rate the service?";
-  stars.forEach((s, i) => {
-    s.className =
-      valid && i < n
-        ? "bi bi-star-fill text-warning star"
-        : "bi bi-star text-warning star";
-    s.setAttribute("aria-checked", String(valid && i === n - 1));
-  });
-
-  /* Selecting a rating clears any outstanding validation error immediately. */
-  if (clearAlert) {
-    const alert = document.getElementById("feedbackAlert");
-    if (alert && !alert.classList.contains("d-none")) {
-      alert.classList.add("d-none");
-      alert.innerHTML = "";
-    }
-  }
-}
-
-function initStarRating() {
-  document.querySelectorAll(".star-rating .star").forEach((star) => {
-    /* Clicks (and keyboard Enter/Space triggered via click()) only update the
-       rating state. Stars are not submit controls, so no form submission is
-       ever triggered from them. */
-    star.addEventListener("click", () => {
-      setStarRating(star.dataset && star.dataset.value);
-    });
-    star.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        star.click();
-        return;
-      }
-      if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"].includes(e.key)) {
-        e.preventDefault();
-        const stars = Array.from(
-          document.querySelectorAll(".star-rating .star"),
-        );
-        const direction = ["ArrowRight", "ArrowDown"].includes(e.key) ? 1 : -1;
-        const next = Math.max(
-          0,
-          Math.min(stars.length - 1, stars.indexOf(star) + direction),
-        );
-        stars[next]?.focus();
-        setStarRating(stars[next]?.dataset.value);
-      }
-    });
-  });
-
-  /* Establish a clean baseline (value cleared, stars outlined, label reset). */
-  setStarRating(0, false);
-}
-
-/* ═══════════════════════════════════════════════════════════
    ADMIN REQUESTS PAGE
    ═══════════════════════════════════════════════════════════ */
-async function initAdminFeedbackPage() {
+async function initAdminTechnicianFeedbackPage() {
   if (!requireRole("ICT Admin")) return;
-  initAdminFeedbackModal();
   initTechnicianFeedbackReview();
   initAdminTechnicianFeedbackFilters();
-  await Promise.all([loadAdminFeedbackPage(), loadAdminTechnicianFeedback()]);
+  await loadAdminTechnicianFeedback();
 }
 
 let _adminTechnicianFeedbackRecords = [];
@@ -3482,8 +2615,8 @@ function initTechnicianFeedbackReview() {
 
 async function loadAdminTechnicianFeedback() {
   const tbody = document.getElementById("adminTechnicianFeedbackBody");
-  const ratingSummary = document.getElementById(
-    "adminTechnicianFeedbackRatingSummary",
+  const summary = document.getElementById(
+    "adminTechnicianFeedbackSummary",
   );
   if (!tbody) return;
   tbody.innerHTML =
@@ -3506,14 +2639,14 @@ async function loadAdminTechnicianFeedback() {
     if (result?.success !== true || !Array.isArray(result.data)) {
       throw new Error(result?.message || "Unable to load technician feedback.");
     }
-    if (ratingSummary) {
-      ratingSummary.textContent = `${result.data.length} technician feedback item${result.data.length === 1 ? "" : "s"} match the selected category and status.`;
+    if (summary) {
+      summary.textContent = `${result.data.length} technician feedback item${result.data.length === 1 ? "" : "s"} match the selected category and status.`;
     }
     _adminTechnicianFeedbackRecords = result.data;
     renderAdminTechnicianFeedbackRows();
   } catch (err) {
-    if (ratingSummary) {
-      ratingSummary.textContent = `Unable to load technician feedback rating summary: ${err.message || "Please try again."}`;
+    if (summary) {
+      summary.textContent = `Unable to load technician feedback summary: ${err.message || "Please try again."}`;
     }
     tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-4">
       Unable to load technician feedback: ${escHtml(err.message || "Please try again.")}
@@ -3605,365 +2738,6 @@ function renderAdminTechnicianFeedbackRows() {
           <textarea id="technician-feedback-review-${escHtml(feedbackId)}" class="form-control form-control-sm mb-2" rows="3" maxlength="2000" placeholder="Add review comments" data-admin-feedback-response>${escHtml(item.reviewComments || item.adminResponse || "")}</textarea>
           <button type="button" class="btn btn-sm btn-primary" data-save-technician-feedback="${escHtml(feedbackId)}">
             <i class="bi bi-send me-1" aria-hidden="true"></i>Save review
-          </button>
-        </td>
-      </tr>`;
-    })
-    .join("");
-}
-
-/* Cached feedback records + current filter/page state for this page. */
-let _allAdminFeedback = [];
-let _adminFbFilters = {
-  search: "",
-  status: "",
-  rating: "",
-  department: "",
-  technician: "",
-  from: "",
-  to: "",
-};
-let _adminFbPage = 1;
-let _adminFbSummary = null;
-const _ADMIN_FB_PAGE_SIZE = 8;
-
-/* Map the current filter state to the backend query string. The select/date
-   filters are applied on the server (status/department/technician live on the
-   ticket); free-text search stays client-side over the populated results. */
-function buildAdminFbQuery() {
-  const parts = [];
-  if (_adminFbFilters.status)
-    parts.push(`status=${encodeURIComponent(_adminFbFilters.status)}`);
-  if (_adminFbFilters.rating) {
-    if (_adminFbFilters.rating === "low") parts.push("minRating=1&maxRating=2");
-    else parts.push(`rating=${encodeURIComponent(_adminFbFilters.rating)}`);
-  }
-  if (_adminFbFilters.department)
-    parts.push(`department=${encodeURIComponent(_adminFbFilters.department)}`);
-  if (_adminFbFilters.technician)
-    parts.push(`technician=${encodeURIComponent(_adminFbFilters.technician)}`);
-  if (_adminFbFilters.from)
-    parts.push(`from=${encodeURIComponent(_adminFbFilters.from)}`);
-  if (_adminFbFilters.to)
-    parts.push(`to=${encodeURIComponent(_adminFbFilters.to)}`);
-  return parts.length ? `?${parts.join("&")}` : "";
-}
-
-async function loadAdminFeedbackPage() {
-  const tbody = document.getElementById("adminFeedbackTableBody");
-  if (tbody) {
-    /* Professional loading state: replace the static placeholder so the page
-       can never be left on a frozen "Loading requests..." message. */
-    tbody.innerHTML = `
-      <tr><td colspan="10" class="text-center text-muted py-4">
-        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Loading service requests...
-      </td></tr>`;
-  }
-
-  try {
-    const res = await apiRequest(`/feedback${buildAdminFbQuery()}`);
-    _allAdminFeedback = Array.isArray(res.data) ? res.data : [];
-    _adminFbSummary = res.summary || null;
-    _adminFbPage = 1;
-    populateAdminFbFilterOptions(_allAdminFeedback);
-    renderAdminFeedbackKPIs(_adminFbSummary);
-    renderAdminFeedbackTable();
-    wireAdminFeedbackFilters();
-  } catch (err) {
-    console.error("Load admin service feedback failed:", err);
-    showToast(err.message, "danger");
-    if (tbody) {
-      tbody.innerHTML = `
-        <tr><td colspan="10" class="text-center py-4">
-          <i class="bi bi-exclamation-triangle text-danger d-block mb-2 fs-3"></i>
-          <p class="text-danger mb-2">Failed to load service feedback.</p>
-          <p class="text-muted small mb-3">${escHtml(err.message || "Unknown error")}</p>
-          <button class="btn btn-sm btn-outline-primary" onclick="loadAdminFeedbackPage()">
-            <i class="bi bi-arrow-clockwise me-1"></i>Retry
-          </button>
-        </td></tr>`;
-    }
-  }
-}
-
-/* Rebuild the Department / Technician filter dropdowns from the current data.
-   A currently-selected value that no longer appears in the set is kept so an
-   active filter never silently disappears. */
-function fillAdminFbSelect(id, values, placeholder, selected) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  let opts = [...new Set(values)].sort((a, b) =>
-    String(a).localeCompare(String(b)),
-  );
-  if (selected && !opts.includes(selected)) opts = [selected, ...opts];
-  el.innerHTML =
-    `<option value="">${escHtml(placeholder)}</option>` +
-    opts
-      .map((v) => `<option value="${escHtml(v)}">${escHtml(v)}</option>`)
-      .join("");
-  el.value = selected || "";
-}
-
-function populateAdminFbFilterOptions(data) {
-  const depts = new Set();
-  const techs = new Set();
-  data.forEach((fb) => {
-    const r = fb.request || {};
-    if (r.department) depts.add(r.department);
-    if (r.assignedTechnician?.fullName)
-      techs.add(r.assignedTechnician.fullName);
-  });
-  fillAdminFbSelect(
-    "adminFbDept",
-    depts,
-    "All Departments",
-    _adminFbFilters.department,
-  );
-  fillAdminFbSelect(
-    "adminFbTech",
-    techs,
-    "All Technicians",
-    _adminFbFilters.technician,
-  );
-}
-
-/* Feedback summary KPIs computed by the backend — never hard-coded here. */
-function renderAdminFeedbackKPIs(summary) {
-  const s = summary || {};
-  const setNum = (id, v) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = v;
-  };
-  setNum("fbKpiTotal", s.totalFeedback ?? 0);
-  const avgEl = document.getElementById("fbKpiAvg");
-  if (avgEl)
-    avgEl.textContent = s.totalFeedback
-      ? Number(s.averageRating || 0).toFixed(1)
-      : "—";
-  setNum("fbKpiFiveStar", s.fiveStarFeedback ?? 0);
-  setNum("fbKpiLow", s.lowRatings ?? 0);
-  setNum("fbKpiPending", s.pendingReview ?? 0);
-  const pendingEl = document.getElementById("fbKpiPending");
-  const pendingCard = pendingEl ? pendingEl.closest(".card") : null;
-  if (pendingCard)
-    pendingCard.classList.toggle("border-danger", (s.pendingReview || 0) > 0);
-}
-
-/* Idempotent wiring (guarded so repeat loads never stack listeners). */
-let _adminFbWired = false;
-function wireAdminFeedbackFilters() {
-  if (_adminFbWired) return;
-  _adminFbWired = true;
-
-  const search = document.getElementById("adminFbSearch");
-  if (search) {
-    search.addEventListener("input", () => {
-      _adminFbFilters.search = search.value;
-      _adminFbPage = 1;
-      renderAdminFeedbackTable();
-    });
-  }
-
-  /* Server-side filters: a select or date change reloads from the backend. */
-  const reloadFromServer = () => {
-    _adminFbFilters.search =
-      document.getElementById("adminFbSearch")?.value || "";
-    loadAdminFeedbackPage();
-  };
-  const bindFilter = (id, key) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener("change", () => {
-      _adminFbFilters[key] = el.value.trim();
-      reloadFromServer();
-    });
-  };
-  bindFilter("adminFbStatus", "status");
-  bindFilter("adminFbRating", "rating");
-  bindFilter("adminFbDept", "department");
-  bindFilter("adminFbTech", "technician");
-  bindFilter("adminFbFrom", "from");
-  bindFilter("adminFbTo", "to");
-
-  const reset = document.getElementById("adminFbReset");
-  if (reset) {
-    reset.addEventListener("click", () => {
-      _adminFbFilters = {
-        search: "",
-        status: "",
-        rating: "",
-        department: "",
-        technician: "",
-        from: "",
-        to: "",
-      };
-      [
-        "adminFbSearch",
-        "adminFbStatus",
-        "adminFbRating",
-        "adminFbDept",
-        "adminFbTech",
-        "adminFbFrom",
-        "adminFbTo",
-      ].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.value = "";
-      });
-      loadAdminFeedbackPage();
-    });
-  }
-
-  document.getElementById("adminFbPrevBtn")?.addEventListener("click", () => {
-    if (_adminFbPage > 1) {
-      _adminFbPage--;
-      renderAdminFeedbackTable();
-    }
-  });
-  document.getElementById("adminFbNextBtn")?.addEventListener("click", () => {
-    if (_adminFbPage < _adminFbMaxPages()) _adminFbPage++;
-    renderAdminFeedbackTable();
-  });
-}
-
-/* Free-text search applies over the populated, server-filtered records. */
-function _adminFbFiltered() {
-  const q = normalizeSearchTerm(_adminFbFilters.search);
-  if (!q) return _allAdminFeedback;
-  return _allAdminFeedback.filter((fb) => {
-    const req = fb.request || {};
-    return (
-      (req.ticketId || "") +
-      " " +
-      (req.requester?.fullName || "") +
-      " " +
-      (req.problemDescription || "") +
-      " " +
-      (req.equipmentType || "") +
-      " " +
-      (req.department || "") +
-      " " +
-      (req.assignedTechnician?.fullName || "")
-    )
-      .toLowerCase()
-      .includes(q);
-  });
-}
-
-function _adminFbMaxPages() {
-  return Math.max(
-    1,
-    Math.ceil(_adminFbFiltered().length / _ADMIN_FB_PAGE_SIZE),
-  );
-}
-
-function renderAdminFeedbackTable() {
-  const tbody = document.getElementById("adminFeedbackTableBody");
-  if (!tbody) return;
-
-  const filtered = _adminFbFiltered();
-
-  const countEl = document.getElementById("adminFbCount");
-  if (countEl) {
-    const serverCount = _allAdminFeedback.length;
-    const total = _adminFbSummary ? _adminFbSummary.totalFeedback : serverCount;
-    countEl.textContent =
-      filtered.length === total
-        ? `${total} feedback ${total === 1 ? "entry" : "entries"}`
-        : `${filtered.length} of ${total} feedback ${total === 1 ? "entry" : "entries"}`;
-  }
-
-  const filtersActive = Object.values(_adminFbFilters).some(
-    (v) => String(v).trim() !== "",
-  );
-  const filtersInfo = document.getElementById("adminFbFiltersInfo");
-  if (filtersInfo) filtersInfo.classList.toggle("d-none", !filtersActive);
-
-  const pageInfo = document.getElementById("adminFbPageInfo");
-  const pageWrap = document.getElementById("adminFbPaginationWrap");
-  const totalItems = filtered.length;
-  const maxPages = Math.ceil(totalItems / _ADMIN_FB_PAGE_SIZE) || 1; // totalPages = ceil(totalItems / pageSize)
-  if (_adminFbPage > maxPages) _adminFbPage = maxPages;
-  const start = (_adminFbPage - 1) * _ADMIN_FB_PAGE_SIZE;
-  const page = filtered.slice(start, start + _ADMIN_FB_PAGE_SIZE);
-
-  /* Always show the pagination footer so the "Showing X–Y of Z" text and the
-     < > controls are visible — with the buttons correctly disabled on a single
-     page (or with no data). Previously the whole footer was hidden whenever a
-     single page held every record, which hid the disabled controls and the
-     "Showing …" readout the requirements/UI expect. */
-  if (pageWrap) pageWrap.style.display = "";
-  if (pageInfo) {
-    pageInfo.textContent = totalItems
-      ? `Showing ${start + 1}–${Math.min(start + _ADMIN_FB_PAGE_SIZE, totalItems)} of ${totalItems}`
-      : "Showing 0–0 of 0";
-  }
-
-  const prevBtn = document.getElementById("adminFbPrevBtn");
-  const nextBtn = document.getElementById("adminFbNextBtn");
-  if (prevBtn) prevBtn.disabled = _adminFbPage <= 1;
-  if (nextBtn) nextBtn.disabled = _adminFbPage >= maxPages;
-
-  if (!filtered.length) {
-    const resetAction = filtersActive
-      ? `<button class="btn btn-sm btn-outline-secondary mt-2" onclick="document.getElementById('adminFbReset').click()">
-           <i class="bi bi-arrow-counterclockwise me-1"></i>Reset filters
-         </button>`
-      : "";
-    tbody.innerHTML = `<tr><td colspan="10"><div class="text-center py-5">
-      <i class="bi bi-star fs-1 text-muted d-block mb-2"></i>
-      <p class="text-muted mb-2">${
-        _allAdminFeedback.length
-          ? "No feedback matches your search."
-          : filtersActive
-            ? "No feedback matches the current filters."
-            : "No service feedback submitted yet."
-      }</p>
-      ${resetAction}
-    </div></td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = page
-    .map((fb, i) => {
-      const req = fb.request || {};
-      const reqId = req._id || req.id || "";
-      const stars = Math.max(1, Math.min(5, Number(fb.rating) || 1));
-      const low = stars <= 2;
-      const starsHtml =
-        '<span class="text-warning text-nowrap">' +
-        "★".repeat(stars) +
-        '<span class="text-muted">' +
-        "☆".repeat(5 - stars) +
-        "</span></span>";
-      const comment = (fb.comment || "").trim();
-      const technician = req.assignedTechnician?.fullName || "—";
-      const hasAdminFb = !!(req.adminFeedback && req.adminFeedback.adminId);
-      return `
-      <tr class="${low ? "low-rating-row" : ""}">
-        <td class="text-muted">${escHtml(start + i + 1)}</td>
-        <td><strong class="text-primary text-nowrap">${escHtml(req.ticketId || "—")}</strong></td>
-        <td>${escHtml(req.requester?.fullName || "—")}</td>
-        <td>${req.department ? `<span class="badge bg-light text-dark border">${escHtml(req.department)}</span>` : '<span class="text-muted">—</span>'}</td>
-        <td>${escHtml(technician)}</td>
-        <td><small class="text-muted text-nowrap">${fb.createdAt ? formatDateTime(fb.createdAt) : "—"}</small></td>
-        <td><span class="badge bg-light text-dark border">${escHtml(req.equipmentType || "—")}</span>${req.category ? `<div class="small text-muted">${escHtml(req.category)}</div>` : ""}</td>
-        <td>${req.status ? statusBadge(req.status) : '<span class="text-muted">—</span>'}</td>
-        <td>
-          <div class="small text-nowrap">${starsHtml} <span class="text-muted">(${stars}/5)</span>
-            ${low ? '<span class="badge bg-danger-subtle text-danger border ms-1">Low</span>' : ""}
-          </div>
-          ${comment ? `<div class="small text-muted text-truncate" style="max-width:240px;" title="${escHtml(comment)}">${escHtml(comment)}</div>` : ""}
-        </td>
-        <td class="text-nowrap">
-          <button class="btn btn-sm btn-outline-secondary btn-review-feedback"
-                  data-id="${escHtml(reqId)}" data-title="${escHtml(req.ticketId || "")}"
-                  data-bs-toggle="modal" data-bs-target="#reviewFeedbackModal" title="Review full maintenance lifecycle">
-            <i class="bi bi-eye me-1"></i>Review
-          </button>
-          <button class="btn btn-sm btn-primary btn-admin-feedback"
-                  data-id="${escHtml(reqId)}" data-title="${escHtml(req.ticketId || "")}"
-                  data-bs-toggle="modal" data-bs-target="#adminFeedbackModal">
-            <i class="bi bi-clipboard2-check me-1"></i>${hasAdminFb ? "Edit Feedback" : "Add Feedback"}
           </button>
         </td>
       </tr>`;
@@ -4573,6 +3347,13 @@ function renderAdminFeedbackCard(report) {
     <div class="border-top pt-3 mt-3">
       ${base()}
       ${metaLine}
+      ${report.reportReviewDecision ? field("Report Review Decision", report.reportReviewDecision) : ""}
+      ${report.evaluationStatus ? field("Feedback Status", report.evaluationStatus) : ""}
+      ${field("Work Quality", report.workQuality)}
+      ${field("Technical Accuracy", report.technicalAccuracy)}
+      ${field("Repair Effectiveness", report.repairEffectiveness)}
+      ${field("Report Completeness", report.reportCompleteness)}
+      ${field("Safety & Procedure Compliance", report.safetyProcedureCompliance)}
       ${field("Technician Performance", report.technicianPerformance)}
       ${field("Resolution Quality", report.resolutionQuality)}
       ${field("Documentation Quality", report.documentationQuality)}
@@ -4591,60 +3372,25 @@ function renderAdminFeedbackCard(report) {
     </div>`;
 }
 
-/* ── Render requester service feedback for admin review ───────
-   Shown read-only to the ICT Admin. The admin is never allowed to
-   overwrite the requester's original service experience survey. */
-function renderRequesterFeedbackView(fb) {
-  if (!fb) return "";
-  const stars = Number(fb.overallRating) || 0;
-  let starsHtml = "";
-  for (let i = 1; i <= 5; i++) {
-    starsHtml += `<i class="bi ${i <= stars ? "bi-star-fill" : "bi-star"} text-warning"></i>`;
-  }
-  const field = (label, value) =>
-    value
-      ? `
-    <div class="mb-2">
-      <div class="text-muted small fw-semibold mb-1">${escHtml(label)}</div>
-      <div class="small p-2 bg-light rounded">${escHtml(value)}</div>
-    </div>`
-      : "";
-
-  return `
-    <div class="border rounded p-2 mb-3 bg-white">
-      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-        <span class="fs-5">${starsHtml}</span>
-        <span class="text-muted small">(${escHtml(fb.overallRating != null ? fb.overallRating : "—")}/5)</span>
-        ${fb.requester_name ? `<span class="small text-muted ms-auto"><i class="bi bi-person me-1"></i>${escHtml(fb.requester_name)}</span>` : ""}
-        ${fb.submittedAt ? `<span class="small text-muted">· ${formatDateTime(fb.submittedAt)}</span>` : ""}
-        ${fb.wouldRecommend ? `<span class="badge ${fb.wouldRecommend === "Yes" ? "bg-success" : "bg-danger"} ms-1">${escHtml(fb.wouldRecommend)} recommend</span>` : ""}
-      </div>
-      ${field("Service Quality", fb.serviceQuality)}
-      ${field("Technician Professionalism", fb.technicianProfessionalism)}
-      ${field("Response Time", fb.responseTime)}
-      ${field("Communication", fb.communication)}
-      ${field("Problem Resolution", fb.problemResolution)}
-      ${field("Satisfaction Level", fb.satisfactionLevel)}
-      ${field("Requester Comment", fb.comment)}
-      ${field("Suggestions for Improvement", fb.suggestions)}
-    </div>`;
-}
-
 /* ── Open the Admin Service Feedback form (add or edit) ────── */
 async function openAdminFeedbackForm(id) {
   const body = document.getElementById("adminFbRequestId");
   const info = document.getElementById("adminFbTaskInfo");
   if (body) body.value = id;
+  const evaluationModal = document.getElementById("adminFeedbackModal");
+  if (evaluationModal && window.bootstrap?.Modal) {
+    window.bootstrap.Modal.getOrCreateInstance(evaluationModal).show();
+  }
 
   /* Reset the form */
   [
-    "afServiceHandlingQuality",
-    "afTechnicianPerformance",
-    "afResponseTime",
-    "afResolutionQuality",
-    "afDocumentationQuality",
-    "afPolicyCompliance",
-    "afOverallServiceQuality",
+    "afReportReviewDecision",
+    "afWorkQuality",
+    "afTechnicalAccuracy",
+    "afRepairEffectiveness",
+    "afReportCompleteness",
+    "afSafetyCompliance",
+    "afFeedbackStatus",
     "afAdminComment",
     "afFollowUpNotes",
     "afAdminRecommendation",
@@ -4653,9 +3399,9 @@ async function openAdminFeedbackForm(id) {
     if (node) node.value = "";
   });
   const fbReq = document.getElementById("afFollowUpRequired");
-  const fbConf = document.getElementById("afConfirmed");
-  if (fbReq) fbReq.checked = false;
-  if (fbConf) fbConf.checked = false;
+  if (fbReq) fbReq.value = "No";
+  const statusSelect = document.getElementById("afFeedbackStatus");
+  if (statusSelect) statusSelect.value = "Pending";
   const wrap = document.getElementById("afFollowUpWrap");
   if (wrap) wrap.classList.add("d-none");
   const alert = document.getElementById("adminFbAlert");
@@ -4664,8 +3410,21 @@ async function openAdminFeedbackForm(id) {
     alert.innerHTML = "";
   }
 
-  document.getElementById("saveAdminFbBtn").innerHTML =
-    `<span class="spinner-border spinner-border-sm me-2 d-none" id="saveAdminFbSpinner"></span><i class="bi bi-clipboard-check me-1"></i>Submit Admin Feedback`;
+  const saveButton = document.getElementById("saveAdminFbBtn");
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.dataset.reportAvailable = "loading";
+  }
+  const saveLabel = document.getElementById("saveAdminFbLabel");
+  if (saveLabel) saveLabel.textContent = "Save Evaluation";
+  const requestDisplay = document.getElementById("afMaintenanceRequest");
+  if (requestDisplay) requestDisplay.value = "Loading request…";
+  const reportDisplay = document.getElementById("afTechnicianReport");
+  if (reportDisplay) reportDisplay.textContent = "Loading technician report…";
+  const reviewerDisplay = document.getElementById("afReviewedBy");
+  if (reviewerDisplay) reviewerDisplay.value = Auth.getUser()?.fullName || "Authenticated administrator";
+  const dateDisplay = document.getElementById("afFeedbackDate");
+  if (dateDisplay) dateDisplay.value = "Set by server on save";
 
   if (info) {
     info.innerHTML = `<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>`;
@@ -4673,6 +3432,12 @@ async function openAdminFeedbackForm(id) {
 
   try {
     const { data: r } = await apiRequest(`/tickets/${id}`);
+    if (requestDisplay) requestDisplay.value = r.ticketId || r.id || id;
+    const hasTechnicianReport = Boolean(r.technician_feedback);
+    if (saveButton) {
+      saveButton.dataset.reportAvailable = String(hasTechnicianReport || Boolean(r.admin_feedback));
+      saveButton.disabled = !hasTechnicianReport && !r.admin_feedback;
+    }
     if (info) {
       /* Build a read-only REVIEW panel so the admin can evaluate the full
          maintenance lifecycle without modifying the original records. */
@@ -4680,14 +3445,13 @@ async function openAdminFeedbackForm(id) {
         <strong>${escHtml(r.ticketId || r.id)}</strong>
         ${r.requester_name ? ` — ${escHtml(r.requester_name)}` : ""}
         ${r.equipmentType ? `<span class="ms-2"><i class="bi bi-laptop me-1"></i>${escHtml(r.equipmentType)}</span>` : ""}
+        ${r.asset_tag ? `<span class="ms-2"><i class="bi bi-pc-display me-1"></i>${escHtml(r.asset_tag)}${r.asset_name ? ` — ${escHtml(r.asset_name)}` : ""}</span>` : ""}
+        ${r.assignedTechnician ? `<span class="ms-2"><i class="bi bi-wrench me-1"></i>${escHtml(r.assignedTechnician)}</span>` : ""}
         ${r.device ? `<span class="ms-2"><i class="bi bi-pc-display-horizontal me-1"></i>${escHtml(r.device)}</span>` : ""}
         ${r.category ? `<span class="ms-2"><i class="bi bi-tags me-1"></i>${escHtml(r.category)}</span>` : ""}
         <span class="ms-2">${statusBadge(r.status)}</span>
       </div>`;
 
-      const requesterPanel = r.requester_feedback
-        ? renderRequesterFeedbackView(r.requester_feedback)
-        : `<div class="small p-2 bg-light rounded mb-2 text-muted">No requester service feedback submitted yet.</div>`;
       const technicianPanel = r.technician_feedback
         ? renderAdminReport(r.technician_feedback)
         : `<div class="small p-2 bg-light rounded text-muted">No technician maintenance report submitted yet.</div>`;
@@ -4696,32 +3460,33 @@ async function openAdminFeedbackForm(id) {
         ${metaLine}
         <div class="border-top pt-2 mt-2">
           <div class="small fw-bold text-uppercase text-muted mb-1 mt-3">
-            <i class="bi bi-star text-warning me-1"></i>Requester Service Feedback (review only)
-          </div>
-          ${requesterPanel}
-          <div class="small fw-bold text-uppercase text-muted mb-1 mt-3">
             <i class="bi bi-clipboard2-check text-primary me-1"></i>Technician Maintenance Report (review only)
           </div>
           ${technicianPanel}
         </div>`;
     }
+    if (reportDisplay) {
+      reportDisplay.innerHTML = hasTechnicianReport
+        ? renderAdminReport(r.technician_feedback)
+        : `<span class="text-danger">No technician maintenance report is available. Submit an evaluation after the assigned technician has completed the report.</span>`;
+    }
 
     if (r.admin_feedback) {
       /* Prefill for editing */
-      document.getElementById("afServiceHandlingQuality").value =
-        r.admin_feedback.serviceHandlingQuality || "";
-      document.getElementById("afTechnicianPerformance").value =
-        r.admin_feedback.technicianPerformance || "";
-      document.getElementById("afResponseTime").value =
-        r.admin_feedback.responseTime || "";
-      document.getElementById("afResolutionQuality").value =
-        r.admin_feedback.resolutionQuality || "";
-      document.getElementById("afDocumentationQuality").value =
-        r.admin_feedback.documentationQuality || "";
-      document.getElementById("afPolicyCompliance").value =
-        r.admin_feedback.policyCompliance || "";
-      document.getElementById("afOverallServiceQuality").value =
-        r.admin_feedback.overallServiceQuality || "";
+      document.getElementById("afReportReviewDecision").value =
+        r.admin_feedback.reportReviewDecision || "";
+      document.getElementById("afWorkQuality").value =
+        r.admin_feedback.workQuality || r.admin_feedback.serviceHandlingQuality || "";
+      document.getElementById("afTechnicalAccuracy").value =
+        r.admin_feedback.technicalAccuracy || "";
+      document.getElementById("afRepairEffectiveness").value =
+        r.admin_feedback.repairEffectiveness || r.admin_feedback.resolutionQuality || "";
+      document.getElementById("afReportCompleteness").value =
+        r.admin_feedback.reportCompleteness || r.admin_feedback.documentationQuality || "";
+      document.getElementById("afSafetyCompliance").value =
+        r.admin_feedback.safetyProcedureCompliance || "";
+      document.getElementById("afFeedbackStatus").value =
+        r.admin_feedback.evaluationStatus || "Pending";
       document.getElementById("afAdminComment").value =
         r.admin_feedback.adminComment || "";
       document.getElementById("afFollowUpNotes").value =
@@ -4730,13 +3495,12 @@ async function openAdminFeedbackForm(id) {
         r.admin_feedback.administrativeRecommendation || "";
       const fbReq2 = document.getElementById("afFollowUpRequired");
       if (fbReq2) {
-        fbReq2.checked = !!r.admin_feedback.followUpRequired;
-        document
-          .getElementById("afFollowUpWrap")
-          .classList.toggle("d-none", !fbReq2.checked);
+        fbReq2.value = r.admin_feedback.followUpRequired ? "Yes" : "No";
+        wrap?.classList.toggle("d-none", fbReq2.value !== "Yes");
       }
-      document.getElementById("saveAdminFbBtn").innerHTML =
-        `<span class="spinner-border spinner-border-sm me-2 d-none" id="saveAdminFbSpinner"></span><i class="bi bi-clipboard-check me-1"></i>Update Admin Feedback`;
+      if (saveLabel) saveLabel.textContent = "Update Evaluation";
+      if (reviewerDisplay) reviewerDisplay.value = r.admin_feedback.admin_name || "Previously reviewed";
+      if (dateDisplay) dateDisplay.value = r.admin_feedback.submittedAt ? formatDateTime(r.admin_feedback.submittedAt) : "Set by server on save";
     }
   } catch (err) {
     if (info)
@@ -4752,66 +3516,48 @@ async function submitAdminFeedback() {
     return;
   }
 
-  const serviceHandlingQuality = document.getElementById(
-    "afServiceHandlingQuality",
-  ).value;
-  const technicianPerformance = document.getElementById(
-    "afTechnicianPerformance",
-  ).value;
-  const responseTime = document.getElementById("afResponseTime").value;
-  const resolutionQuality = document.getElementById(
-    "afResolutionQuality",
-  ).value;
-  const documentationQuality = document.getElementById(
-    "afDocumentationQuality",
-  ).value;
-  const policyCompliance = document.getElementById("afPolicyCompliance").value;
-  const overallServiceQuality = document.getElementById(
-    "afOverallServiceQuality",
-  ).value;
+  const reportReviewDecision = document.getElementById("afReportReviewDecision").value;
+  const workQuality = document.getElementById("afWorkQuality").value;
+  const technicalAccuracy = document.getElementById("afTechnicalAccuracy").value;
+  const repairEffectiveness = document.getElementById("afRepairEffectiveness").value;
+  const reportCompleteness = document.getElementById("afReportCompleteness").value;
+  const safetyProcedureCompliance = document.getElementById("afSafetyCompliance").value;
+  const evaluationStatus = document.getElementById("afFeedbackStatus").value;
   const adminComment = document.getElementById("afAdminComment").value.trim();
-  const followUpRequired =
-    document.getElementById("afFollowUpRequired").checked;
+  const followUpRequired = document.getElementById("afFollowUpRequired").value === "Yes";
   const followUpNotes = document.getElementById("afFollowUpNotes").value.trim();
   const administrativeRecommendation = document
     .getElementById("afAdminRecommendation")
     .value.trim();
-  const confirmed = document.getElementById("afConfirmed").checked;
-
-  if (!serviceHandlingQuality) {
-    showAlert(
-      "adminFbAlert",
-      "Service handling quality is required.",
-      "warning",
-    );
+  const saveButton = document.getElementById("saveAdminFbBtn");
+  const failValidation = (message) => {
+    showAlert("adminFbAlert", message, "warning");
+    document.getElementById("adminFbAlert")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  };
+  if (saveButton?.dataset.reportAvailable !== "true" && saveButton?.dataset.reportAvailable !== "false") {
+    failValidation("Wait for the maintenance request and technician report to finish loading.");
     return;
   }
-  if (!overallServiceQuality) {
-    showAlert(
-      "adminFbAlert",
-      "Overall service quality is required.",
-      "warning",
-    );
+  if (saveButton?.dataset.reportAvailable === "false") {
+    failValidation("A technician report is required before this evaluation can be saved.");
     return;
   }
-  if (!adminComment) {
-    showAlert("adminFbAlert", "Admin comment is required.", "warning");
+  if (!reportReviewDecision || !workQuality || !technicalAccuracy ||
+      !repairEffectiveness || !reportCompleteness || !safetyProcedureCompliance ||
+      !evaluationStatus || !adminComment) {
+    failValidation("Complete the report decision, all evaluation ratings, feedback status, and required Admin Comments.");
     return;
   }
-  if (followUpRequired && !followUpNotes) {
-    showAlert(
-      "adminFbAlert",
-      "Please explain what the follow-up requires.",
-      "warning",
-    );
+  if (reportReviewDecision === "Needs Correction" && !administrativeRecommendation && !followUpNotes) {
+    failValidation("Provide a clear corrective action or recommendation for a report that needs correction.");
     return;
   }
-  if (!confirmed) {
-    showAlert(
-      "adminFbAlert",
-      "Please confirm that this service evaluation is accurate.",
-      "warning",
-    );
+  if (reportReviewDecision === "Rejected" && !adminComment) {
+    failValidation("Explain why the technician report was rejected in Admin Comments.");
+    return;
+  }
+  if (followUpRequired && !followUpNotes && !administrativeRecommendation) {
+    failValidation("Provide a follow-up recommendation or required action.");
     return;
   }
 
@@ -4822,23 +3568,19 @@ async function submitAdminFeedback() {
   }
 
   try {
-    /* The save button text tells us whether we are adding or editing */
-    const isEdit = /update/i.test(
-      document.getElementById("saveAdminFbBtn").textContent,
-    );
+    const isEdit = document.getElementById("saveAdminFbLabel").textContent.includes("Update");
     const payload = {
-      serviceHandlingQuality,
-      technicianPerformance,
-      responseTime,
-      resolutionQuality,
-      documentationQuality,
-      policyCompliance,
-      overallServiceQuality,
+      reportReviewDecision,
+      workQuality,
+      technicalAccuracy,
+      repairEffectiveness,
+      reportCompleteness,
+      safetyProcedureCompliance,
+      evaluationStatus,
       adminComment,
       followUpRequired,
       followUpNotes: followUpNotes || null,
       administrativeRecommendation: administrativeRecommendation || null,
-      adminConfirmed: confirmed,
     };
     const res = await apiRequest(`/tickets/${id}/admin-feedback`, {
       method: isEdit ? "PUT" : "POST",
@@ -4846,20 +3588,16 @@ async function submitAdminFeedback() {
     });
     showToast(
       res.message ||
-        (isEdit
-          ? "Service feedback updated."
-          : "Admin service feedback submitted."),
+        (isEdit ? "Evaluation updated." : "Evaluation saved."),
       "success",
     );
+    if (res.data?.admin_name) document.getElementById("afReviewedBy").value = res.data.admin_name;
+    if (res.data?.submittedAt) document.getElementById("afFeedbackDate").value = formatDateTime(res.data.submittedAt);
     const modal = document.getElementById("adminFeedbackModal");
     if (modal && bootstrap.Modal.getInstance(modal))
       bootstrap.Modal.getInstance(modal).hide();
     /* refresh the detail modal so the new feedback card appears */
-    if (window.location.pathname.includes("admin/requests")) {
-      openAdminRequestModal(id);
-    } else {
-      await loadAdminFeedbackPage();
-    }
+    openAdminRequestModal(id);
   } catch (err) {
     showAlert("adminFbAlert", err.message, "danger");
   } finally {
@@ -4886,94 +3624,47 @@ async function deleteAdminFeedback(id, title) {
       { method: "DELETE" },
     );
     showToast(res.message || "Admin service feedback deleted.", "success");
-    await loadAdminFeedbackPage();
+    openAdminRequestModal(id);
   } catch (err) {
     showToast(err.message, "danger");
   }
 }
 
-/* ── Open the read-only review of the full maintenance lifecycle ──
-   Shows the requester's service feedback + technician report + any
-   existing admin evaluation. Admins can REVIEW but cannot overwrite the
-   original requester/technician records from here. */
-async function openReviewFeedback(id) {
-  const body = document.getElementById("reviewFeedbackBody");
-  if (body)
-    body.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>`;
-  try {
-    const { data: r } = await apiRequest(`/tickets/${id}`);
-    if (!body) return;
-    const requesterPanel = r.requester_feedback
-      ? renderRequesterFeedbackView(r.requester_feedback)
-      : `<div class="small p-2 bg-light rounded text-muted mb-3">No requester service feedback submitted yet.</div>`;
-    const technicianPanel = r.technician_feedback
-      ? renderAdminReport(r.technician_feedback)
-      : `<div class="small p-2 bg-light rounded text-muted mb-3">No technician maintenance report submitted yet.</div>`;
-    const adminPanel = r.admin_feedback
-      ? renderAdminFeedbackCard(r.admin_feedback)
-      : "";
-    body.innerHTML = `
-      <div class="mb-3">
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <h6 class="fw-bold mb-0">${escHtml(r.ticketId || r.id)}</h6>
-          <span>${statusBadge(r.status)}</span>
-          ${r.requester_name ? `<span class="small text-muted"><i class="bi bi-person me-1"></i>${escHtml(r.requester_name)}</span>` : ""}
-          ${r.equipmentType ? `<span class="small text-muted"><i class="bi bi-laptop me-1"></i>${escHtml(r.equipmentType)}</span>` : ""}
-          ${r.device ? `<span class="small text-muted"><i class="bi bi-hdd-stack me-1"></i>${escHtml(r.device)}</span>` : ""}
-          ${r.category ? `<span class="small text-muted"><i class="bi bi-tag me-1"></i>${escHtml(r.category)}</span>` : ""}
-        </div>
-        <div class="small text-muted mt-1">${escHtml(r.problemDescription || "")}</div>
-      </div>
-      <div class="small fw-bold text-uppercase text-muted mb-1">
-        <i class="bi bi-star text-warning me-1"></i>Requester Service Feedback
-      </div>
-      ${requesterPanel}
-      <div class="small fw-bold text-uppercase text-muted mb-1 mt-3">
-        <i class="bi bi-clipboard2-check text-primary me-1"></i>Technician Maintenance Report
-      </div>
-      ${technicianPanel}
-      ${
-        adminPanel
-          ? `
-        <div class="small fw-bold text-uppercase text-muted mb-1 mt-3">
-          <i class="bi bi-person-badge text-info me-1"></i>Admin Service Feedback
-        </div>
-        ${adminPanel}`
-          : ""
-      }`;
-  } catch (err) {
-    if (body)
-      body.innerHTML = `<div class="alert alert-danger py-2 small mb-0">${escHtml(err.message)}</div>`;
-  }
-}
-
 /* ── Wire up the Admin Service Feedback modal ──────────────── */
 function initAdminFeedbackModal() {
-  document
-    .getElementById("afFollowUpRequired")
-    ?.addEventListener("change", (e) => {
-      document
-        .getElementById("afFollowUpWrap")
-        ?.classList.toggle("d-none", !e.target.checked);
-    });
+  document.getElementById("afFollowUpRequired")?.addEventListener("change", (event) => {
+    const required = event.target.value === "Yes";
+    document.getElementById("afFollowUpWrap")?.classList.toggle("d-none", !required);
+    document.getElementById("afFollowUpNotes").required = required;
+  });
+  document.getElementById("afReportReviewDecision")?.addEventListener("change", (event) => {
+    const showCorrectiveAction = event.target.value === "Needs Correction";
+    document.getElementById("afAdminRecommendation")?.setAttribute(
+      "aria-required",
+      String(showCorrectiveAction),
+    );
+  });
+  document.getElementById("createAdminFeedbackAction")?.addEventListener("click", () => {
+    const requestId = document.getElementById("modalRequestId")?.value;
+    if (!requestId) {
+      showToast("Open a maintenance request before creating its evaluation.", "warning");
+      return;
+    }
+    const requestModal = document.getElementById("requestDetailModal");
+    const openEvaluation = () => void openAdminFeedbackForm(requestId);
+    if (requestModal?.classList.contains("show")) {
+      requestModal.addEventListener("hidden.bs.modal", openEvaluation, { once: true });
+      bootstrap.Modal.getInstance(requestModal)?.hide();
+    } else {
+      openEvaluation();
+    }
+  });
   document
     .getElementById("saveAdminFbBtn")
     ?.addEventListener("click", submitAdminFeedback);
 
   /* Event delegation so dynamically rendered buttons work */
   document.addEventListener("click", (e) => {
-    const reviewBtn = e.target.closest(".btn-review-feedback");
-    if (reviewBtn) {
-      const id = reviewBtn.getAttribute("data-id");
-      if (!id) {
-        console.error("Review feedback: missing ticket id.");
-        showToast("Could not identify the request.", "danger");
-        return;
-      }
-      openReviewFeedback(id);
-      return;
-    }
-
     const delBtn = e.target.closest(".btn-admin-feedback-delete");
     if (delBtn) {
       const id = delBtn.getAttribute("data-id");

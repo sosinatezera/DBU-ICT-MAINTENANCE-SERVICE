@@ -5,6 +5,21 @@
  */
 
 const errorHandler = (err, req, res, next) => {
+  const databaseUnavailable =
+    err.name === "MongoWaitQueueTimeoutError" ||
+    err.name === "MongoServerSelectionError" ||
+    err.name === "MongoNetworkError" ||
+    err.name === "MongooseServerSelectionError";
+
+  if (databaseUnavailable) {
+    console.error(`[ERROR] ${err.name}: database unavailable or saturated`);
+    res.set("Retry-After", "5");
+    return res.status(503).json({
+      success: false,
+      message: "The service is temporarily unavailable. Please retry shortly.",
+    });
+  }
+
   console.error(`[ERROR] ${err.name}: ${err.message}`);
 
   /* ── Mongoose CastError (invalid ObjectId, bad type) ──── */
@@ -21,9 +36,13 @@ const errorHandler = (err, req, res, next) => {
     Object.keys(err.errors).forEach((key) => {
       errors[key] = err.errors[key].message;
     });
+    const firstError = Object.values(errors)[0];
     return res.status(400).json({
       success: false,
-      message: "Validation failed.",
+      message: firstError || "Validation failed.",
+      ...(Object.keys(errors).length > 0 && {
+        field: Object.keys(errors)[0],
+      }),
       errors,
     });
   }

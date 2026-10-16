@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
+<script>( function () { try { var t = localStorage.getItem( 'theme:requester' ) || localStorage.getItem( 'theme' ); if ( t === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
 <script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
 
 <head>
@@ -19,7 +19,7 @@
   <!-- -- Sidebar -- -->
   <div class="d-flex">
     <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3" style="min-height:100vh;width:240px;">
-      <a href="/" class="text-decoration-none">
+    <a href="/" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-tools fs-3"></i>
           <div class="small fw-bold mt-1" data-i18n="auth.brand">Smart ICT Maintenance Management System</div>
@@ -48,14 +48,14 @@
           </a>
         </li>
         <li class="nav-item">
-          <a href="notifications.html" class="nav-link text-white-50">
-            <i class="bi bi-bell me-2"></i><span data-i18n="side.notifications">Notifications</span>
-            <span class="badge bg-danger ms-1" id="sidebarNotifBadge" style="display:none;"></span>
+          <a href="feedback.html" class="nav-link text-white-50">
+            <i class="bi bi-chat-square-heart me-2" aria-hidden="true"></i><span data-i18n="side.requesterFeedback">Requester Feedback</span>
           </a>
         </li>
         <li class="nav-item">
-          <a href="feedback.html" class="nav-link text-white-50">
-            <i class="bi bi-star me-2"></i><span data-i18n="side.feedback">Feedback</span>
+          <a href="notifications.html" class="nav-link text-white-50">
+            <i class="bi bi-bell me-2"></i><span data-i18n="side.notifications">Notifications</span>
+            <span class="badge bg-danger ms-1" id="sidebarNotifBadge" style="display:none;"></span>
           </a>
         </li>
         <li class="nav-item">
@@ -76,7 +76,7 @@
     <div class="flex-grow-1">
       <!-- Topbar -->
       <header
-        class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
+        class="topbar dashboard-role-header bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
         <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle">
           <i class="bi bi-list"></i>
         </button>
@@ -172,38 +172,6 @@
           </div>
         </div>
 
-        <!-- My Feedback -->
-        <div class="card border-0 shadow-sm mb-4" id="my-feedback">
-          <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-            <h6 class="mb-0 fw-bold"><i class="bi bi-star text-warning me-1"></i><span data-i18n="udash.myFeedback">My
-                Feedback</span></h6>
-            <a href="feedback.html" class="btn btn-outline-primary btn-sm">
-              <i class="bi bi-pencil me-1"></i><span data-i18n="udash.submitFeedback">Submit Feedback</span>
-            </a>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th data-i18n="udash.request">Request</th>
-                    <th data-i18n="udash.service">Service</th>
-                    <th data-i18n="udash.rating">Rating</th>
-                    <th data-i18n="common.status">Status</th>
-                    <th data-i18n="common.date">Date</th>
-                  </tr>
-                </thead>
-                <tbody id="myFeedbackBody">
-                  <tr>
-                    <td colspan="5" class="text-center text-muted py-4" data-i18n="udash.loadingFeedback">Loading
-                      feedback...</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
         <!-- Quick Actions -->
         <div class="row g-3">
           <div class="col-md-4">
@@ -227,18 +195,6 @@
               <div>
                 <div class="fw-semibold" data-i18n="side.track">Track Request</div>
                 <small class="text-muted" data-i18n="udash.viewStatus">View current status</small>
-              </div>
-            </a>
-          </div>
-          <div class="col-md-4">
-            <a href="feedback.html"
-              class="card border-0 shadow-sm text-decoration-none text-dark p-3 d-flex flex-row align-items-center gap-3">
-              <div class="bg-success bg-opacity-10 p-3 rounded">
-                <i class="bi bi-star fs-4 text-success"></i>
-              </div>
-              <div>
-                <div class="fw-semibold" data-i18n="udash.giveFeedback">Give Feedback</div>
-                <small class="text-muted" data-i18n="udash.rateRequests">Rate resolved requests</small>
               </div>
             </a>
           </div>
@@ -315,7 +271,7 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/api-config.js?v=16"></script>
   <script src="/assets/js/lang.js?v=17"></script>
-  <script src="/assets/js/main.js?v=26"></script>
+  <script src="/assets/js/main.js?v=27"></script>
   <script src="/assets/js/notifications.js?v=10"></script>
   <script src="/assets/js/requests.js?v=20"></script>
   <script src="/assets/js/profile.js?v=3"></script>

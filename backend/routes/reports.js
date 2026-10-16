@@ -7,7 +7,7 @@ const router  = express.Router();
 const {
   getDashboardStats, getRequestsByStatus, getRequestsByEquipment,
   getTechnicianPerformance, getRequestsByDepartment, getRequestsByCategory,
-  getRequestsByIssueType, getRecentFeedback, getNetworkReports,
+  getRequestsByIssueType, getNetworkReports,
   getReportExport,
 } = require('../controllers/reportController');
 const { authenticate } = require('../middleware/auth');
@@ -20,7 +20,6 @@ router.get('/technician-performance', authenticate, authorize('ICT Admin'), getT
 router.get('/requests-by-department', authenticate, authorize('ICT Admin'), getRequestsByDepartment);
 router.get('/requests-by-category',   authenticate, authorize('ICT Admin'), getRequestsByCategory);
 router.get('/requests-by-issue-type', authenticate, authorize('ICT Admin'), getRequestsByIssueType);
-router.get('/recent-feedback',        authenticate, authorize('ICT Admin'), getRecentFeedback);
 router.get('/network',                authenticate, authorize('ICT Admin'), getNetworkReports);
 router.get('/export',                 authenticate, authorize('ICT Admin'), getReportExport);
 

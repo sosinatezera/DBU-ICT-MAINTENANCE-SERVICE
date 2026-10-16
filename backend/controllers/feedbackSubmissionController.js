@@ -6,14 +6,13 @@ const path = require("path");
 const crypto = require("crypto");
 const Notification = require("../models/Notification");
 const User = require("../models/User");
-const Technician = require("../models/Technician");
 const Assignment = require("../models/Assignment");
+const Technician = require("../models/Technician");
 const Ticket = require("../models/Ticket");
 const { broadcastNotification } = require("../services/notificationService");
 const { validateObjectId } = require("../middleware/validation");
 const {
-  ALL_FEEDBACK_CATEGORIES,
-  FEEDBACK_CATEGORIES_BY_ROLE,
+  TECHNICIAN_FEEDBACK_CATEGORIES,
 } = require("../utils/feedbackCategories");
 
 const FEEDBACK_STATUSES = [
@@ -28,7 +27,6 @@ const PAGE_SIZE_MAX = 50;
 const PRIVATE_FEEDBACK_DIR = path.join(__dirname, "..", "private_uploads", "feedback");
 const FEEDBACK_POPULATES = [
   { path: "sender", select: "fullName email department" },
-  { path: "technician", select: "user", populate: { path: "user", select: "fullName" } },
   { path: "relatedRequest", select: "ticketId title" },
   { path: "messages.sender", select: "fullName role" },
   { path: "statusHistory.changedBy", select: "fullName role" },
@@ -188,9 +186,11 @@ function sendValidationError(res, message) {
 const submitFeedbackSubmission = async (req, res, next) => {
   let savedAttachmentPath;
   try {
+    if (req.user.role !== "Technician") {
+      return res.status(403).json({ success: false, message: "Only Technicians may submit feedback." });
+    }
     const { category, subject, description } = req.body;
-    const allowedCategories = FEEDBACK_CATEGORIES_BY_ROLE[req.user.role] || [];
-    if (typeof category !== "string" || !allowedCategories.includes(category)) {
+    if (typeof category !== "string" || !TECHNICIAN_FEEDBACK_CATEGORIES.includes(category)) {
       return sendValidationError(res, "Choose a valid feedback category.");
     }
     if (typeof subject !== "string" || !subject.trim()) {
@@ -205,33 +205,9 @@ const submitFeedbackSubmission = async (req, res, next) => {
     if (description.trim().length > 5000) {
       return sendValidationError(res, "Feedback description must be 5,000 characters or fewer.");
     }
-    let rating = null;
-    if (req.body.rating !== undefined && req.body.rating !== null && req.body.rating !== "") {
-      if (
-        !["number", "string"].includes(typeof req.body.rating) ||
-        (typeof req.body.rating === "string" && !/^[1-5]$/.test(req.body.rating))
-      ) {
-        return sendValidationError(res, "Rating must be a whole number from 1 to 5.");
-      }
-      rating = Number(req.body.rating);
-      if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-        return sendValidationError(res, "Rating must be a whole number from 1 to 5.");
-      }
-    }
-    if (!["Requester", "Technician"].includes(req.user.role)) {
-      return res.status(403).json({ success: false, message: "Only Requesters and Technicians may submit feedback." });
-    }
-    let priority = null;
-    if (req.user.role === "Technician") {
-      priority = typeof req.body.priority === "string" ? req.body.priority.trim() : "";
-      if (!["Low", "Medium", "High"].includes(priority)) {
-        return sendValidationError(res, "Choose a valid feedback priority.");
-      }
-    } else if (req.body.priority !== undefined && req.body.priority !== "") {
-      priority = typeof req.body.priority === "string" ? req.body.priority.trim() : "";
-      if (!["Low", "Medium", "High"].includes(priority)) {
-        return sendValidationError(res, "Choose a valid feedback priority.");
-      }
+    const priority = typeof req.body.priority === "string" ? req.body.priority.trim() : "";
+    if (!["Low", "Medium", "High"].includes(priority)) {
+      return sendValidationError(res, "Choose a valid feedback priority.");
     }
 
     const sender = await User.findById(req.user.id).select("fullName department role status");
@@ -239,27 +215,11 @@ const submitFeedbackSubmission = async (req, res, next) => {
       return res.status(403).json({ success: false, message: "Your active user profile could not be verified." });
     }
 
-    let technician = null;
-    if (req.user.role === "Requester") {
-      const technicianId = typeof req.body.technicianId === "string" ? req.body.technicianId.trim() : "";
-      if (technicianId) {
-        const idError = validateObjectId(technicianId, "Technician");
-        if (idError) return sendValidationError(res, idError);
-        technician = await Technician.findById(technicianId).populate("user", "role status");
-        if (!technician || technician.user?.role !== "Technician" || technician.user.status !== "active") {
-          return sendValidationError(res, "Choose an active technician from the list.");
-        }
-      }
-    }
-
     let relatedRequest = null;
     const relatedRequestId = typeof req.body.relatedRequestId === "string"
       ? req.body.relatedRequestId.trim()
       : "";
     if (relatedRequestId) {
-      if (req.user.role !== "Technician") {
-        return sendValidationError(res, "Only Technicians may attach a service request reference.");
-      }
       const isObjectId = mongoose.isValidObjectId(relatedRequestId);
       if (!isObjectId && !/^MAU-\d{4,}$/i.test(relatedRequestId)) {
         return sendValidationError(res, "Enter a valid service request ID.");
@@ -270,17 +230,15 @@ const submitFeedbackSubmission = async (req, res, next) => {
       if (!relatedRequest) {
         return sendValidationError(res, "The referenced service request was not found.");
       }
-      if (req.user.role === "Technician") {
-        const technicianProfile = await Technician.findOne({ user: req.user.id }).select("_id");
-        const assigned = relatedRequest.assignedTechnician &&
-          String(relatedRequest.assignedTechnician) === String(req.user.id);
-        const historicalAssignment = technicianProfile && await Assignment.exists({
-          ticket: relatedRequest._id,
-          technician: technicianProfile._id,
-        });
-        if (!assigned && !historicalAssignment) {
-          return sendValidationError(res, "You may reference only a service request assigned to your technician account.");
-        }
+      const technicianProfile = await Technician.findOne({ user: req.user.id }).select("_id");
+      const assigned = relatedRequest.assignedTechnician &&
+        String(relatedRequest.assignedTechnician) === String(req.user.id);
+      const historicalAssignment = technicianProfile && await Assignment.exists({
+        ticket: relatedRequest._id,
+        technician: technicianProfile._id,
+      });
+      if (!assigned && !historicalAssignment) {
+        return sendValidationError(res, "You may reference only a service request assigned to your technician account.");
       }
     }
 
@@ -304,16 +262,14 @@ const submitFeedbackSubmission = async (req, res, next) => {
     const submission = await FeedbackSubmission.create({
       feedbackNumber: await nextFeedbackNumber(),
       sender: req.user.id,
-      senderRole: req.user.role,
+      senderRole: "Technician",
       department: sender.department || null,
       category,
       subject: subject.trim(),
       description: description.trim(),
-      technician: technician?._id || null,
       relatedRequest: relatedRequest?._id || null,
       priority,
       attachment,
-      rating,
       statusHistory: [
         {
           changedBy: req.user.id,
@@ -329,9 +285,7 @@ const submitFeedbackSubmission = async (req, res, next) => {
       submission,
       "New feedback submitted",
       `${sender.fullName || req.user.role} submitted ${submission.feedbackNumber}.`,
-      req.user.role === "Technician"
-        ? "feedback_submission_technician"
-        : "feedback_submission_user",
+      "feedback_submission_technician",
     );
 
     return res.status(201).json({
@@ -353,7 +307,7 @@ const getMyFeedbackSubmissions = async (req, res, next) => {
   try {
     const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
     const limit = Math.min(PAGE_SIZE_MAX, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
-    const filter = { sender: req.user.id };
+    const filter = { sender: req.user.id, senderRole: "Technician" };
     if (req.query.status) {
       if (!FEEDBACK_STATUSES.includes(req.query.status)) {
         return sendValidationError(res, "Choose a valid feedback status.");
@@ -361,8 +315,7 @@ const getMyFeedbackSubmissions = async (req, res, next) => {
       filter.status = statusFilter(req.query.status);
     }
     if (req.query.category) {
-      const allowedCategories = FEEDBACK_CATEGORIES_BY_ROLE[req.user.role] || [];
-      if (!allowedCategories.includes(req.query.category)) {
+      if (!TECHNICIAN_FEEDBACK_CATEGORIES.includes(req.query.category)) {
         return sendValidationError(res, "Choose a valid feedback category.");
       }
       filter.category = req.query.category;
@@ -427,7 +380,7 @@ const getAdminFeedbackSubmissions = async (req, res, next) => {
   try {
     const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
     const limit = Math.min(PAGE_SIZE_MAX, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
-    const filter = {};
+    const filter = { senderRole: "Technician" };
     if (req.query.status) {
       if (!FEEDBACK_STATUSES.includes(req.query.status)) {
         return sendValidationError(res, "Choose a valid feedback status.");
@@ -435,10 +388,9 @@ const getAdminFeedbackSubmissions = async (req, res, next) => {
       filter.status = statusFilter(req.query.status);
     }
     if (req.query.role) {
-      if (!["Requester", "Technician"].includes(req.query.role)) {
+      if (req.query.role !== "Technician") {
         return sendValidationError(res, "Choose a valid sender role.");
       }
-      filter.senderRole = req.query.role;
     }
     if (req.query.technician) {
       if (req.query.role && req.query.role !== "Technician") {
@@ -467,7 +419,7 @@ const getAdminFeedbackSubmissions = async (req, res, next) => {
       filter.priority = req.query.priority;
     }
     if (req.query.category) {
-      if (!ALL_FEEDBACK_CATEGORIES.includes(req.query.category)) {
+      if (!TECHNICIAN_FEEDBACK_CATEGORIES.includes(req.query.category)) {
         return sendValidationError(res, "Choose a valid feedback category.");
       }
       filter.category = req.query.category;
@@ -531,14 +483,15 @@ const getAdminFeedbackSubmissions = async (req, res, next) => {
           .skip((page - 1) * limit)
           .limit(limit),
       ).lean();
-    const [total, records, groupedStatuses, groupedRoles] = await Promise.all([
+    const [total, records, groupedStatuses] = await Promise.all([
       FeedbackSubmission.countDocuments(filter),
       recordsQuery,
-      FeedbackSubmission.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
-      FeedbackSubmission.aggregate([{ $group: { _id: "$senderRole", count: { $sum: 1 } } }]),
+      FeedbackSubmission.aggregate([
+        { $match: filter },
+        { $group: { _id: "$status", count: { $sum: 1 } } },
+      ]),
     ]);
     const byStatus = Object.fromEntries(groupedStatuses.map((entry) => [entry._id, entry.count]));
-    const byRole = Object.fromEntries(groupedRoles.map((entry) => [entry._id, entry.count]));
     return res.json({
       success: true,
       data: records.map(normalizeSubmission),
@@ -550,10 +503,9 @@ const getAdminFeedbackSubmissions = async (req, res, next) => {
         replied: (byStatus.Replied || 0) + (byStatus.Responded || 0) + (byStatus.Reopened || 0),
         resolved: byStatus.Resolved || 0,
         closed: byStatus.Closed || 0,
-        requesters: byRole.Requester || 0,
-        technicians: byRole.Technician || 0,
+        technicians: total,
       },
-      categories: ALL_FEEDBACK_CATEGORIES,
+      categories: TECHNICIAN_FEEDBACK_CATEGORIES,
     });
   } catch (err) {
     next(err);
@@ -565,7 +517,7 @@ const getFeedbackSubmission = async (req, res, next) => {
     const idError = validateObjectId(req.params.id, "Feedback");
     if (idError) return sendValidationError(res, idError);
     const submission = normalizeSubmission(await populatedSubmission(
-      FeedbackSubmission.findById(req.params.id),
+      FeedbackSubmission.findOne({ _id: req.params.id, senderRole: "Technician" }),
     ).lean());
     if (!submission) return res.status(404).json({ success: false, message: "Feedback was not found." });
     if (req.user.role !== "ICT Admin" && String(submission.sender?._id) !== String(req.user.id)) {
@@ -592,7 +544,10 @@ const addFeedbackReply = async (req, res, next) => {
       return sendValidationError(res, "Choose a valid reply status.");
     }
 
-    const submission = await FeedbackSubmission.findById(req.params.id);
+    const submission = await FeedbackSubmission.findOne({
+      _id: req.params.id,
+      senderRole: "Technician",
+    });
     if (!submission) return res.status(404).json({ success: false, message: "Feedback was not found." });
     const isAdmin = req.user.role === "ICT Admin";
     if (!isAdmin && String(submission.sender) !== String(req.user.id)) {
@@ -658,9 +613,7 @@ const addFeedbackReply = async (req, res, next) => {
         submission,
         "Feedback updated",
         `${req.user.name || submission.senderRole} replied to ${submission.feedbackNumber}.`,
-        submission.senderRole === "Technician"
-          ? "feedback_submission_technician"
-          : "feedback_submission_user",
+        "feedback_submission_technician",
       );
     }
     return res.status(201).json({ success: true, data: { id: submission._id } });
@@ -684,7 +637,10 @@ const updateFeedbackSubmission = async (req, res, next) => {
     const actionTaken = typeof req.body.actionTaken === "string" ? req.body.actionTaken.trim() : "";
     if (actionTaken.length > 2000) return sendValidationError(res, "Action taken must be 2,000 characters or fewer.");
 
-    const submission = await FeedbackSubmission.findById(req.params.id);
+    const submission = await FeedbackSubmission.findOne({
+      _id: req.params.id,
+      senderRole: "Technician",
+    });
     if (!submission) return res.status(404).json({ success: false, message: "Feedback was not found." });
     submission.status = LEGACY_STATUS_MAP[submission.status] || submission.status;
     const statusChanged = submission.status !== status;
@@ -720,7 +676,10 @@ const downloadFeedbackAttachment = async (req, res, next) => {
   try {
     const idError = validateObjectId(req.params.id, "Feedback");
     if (idError) return sendValidationError(res, idError);
-    const submission = await FeedbackSubmission.findById(req.params.id).select("sender attachment");
+    const submission = await FeedbackSubmission.findOne({
+      _id: req.params.id,
+      senderRole: "Technician",
+    }).select("sender senderRole attachment");
     if (!submission?.attachment?.storageName) {
       return res.status(404).json({ success: false, message: "Feedback attachment was not found." });
     }

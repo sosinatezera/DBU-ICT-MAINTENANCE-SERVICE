@@ -3,6 +3,13 @@
 **Database:** `ict_maintenance_db`
 **Connection:** MongoDB Atlas (configured in `.env`)
 
+For an existing database, preview and then apply the targeted removal with
+`npm run migrate:remove-requester-feedback` and
+`npm run migrate:remove-requester-feedback -- --apply` from `backend/`. This
+unsets only the legacy requester-rating fields on tickets, removes the
+dedicated `feedbacks` collection, and strips its prompt from matching
+notifications; it preserves the tickets and notifications themselves.
+
 ---
 
 ## Collections Overview
@@ -16,7 +23,6 @@
 | `tickets`             | Ticket              | Maintenance tickets (core model)     |
 | `assignments`         | Assignment          | Technician-to-ticket assignments     |
 | `maintenancerecords`  | MaintenanceRecord   | Work logs per ticket                 |
-| `feedbacks`           | Feedback            | User ratings after resolution                 |
 | `technicianfeedbacks` | TechnicianFeedback  | Technician maintenance feedback and review workflow |
 | `notifications`       | Notification        | In-app notifications per user                 |
 | `inquiries`           | Inquiry             | Public contact/support inquiries              |
@@ -128,11 +134,18 @@
 | `resolutionResponse`| String   | no       | Resolution details                                                |
 | `isFixed`           | Boolean  | no       | default: false                                                    |
 | `reasonIfNotFixed`  | String   | no       | Reason when not fixed                                             |
-| `feedbackRating`    | Number   | no       | 1–5 stars                                                         |
-| `feedbackComments`  | String   | no       |                                                                   |
 | `attachment`        | String   | no       | Filename in uploads/                                              |
 | `createdAt`         | Date     | auto     |                                                                   |
 | `updatedAt`         | Date     | auto     |                                                                   |
+
+The technician's maintenance report is embedded in `Ticket.technicianFeedback`
+and saved with the ticket. It contains diagnosis, work performed, parts used,
+resolution, result, follow-up, internal notes, technician identity, submission
+time, and completion time. `timeSpentMinutes` is a whole number from 1 to
+10,080. Submitting a report marks a ticket resolved only when its repair result
+is `Resolved`; other results leave it in progress. The technician-feedback API
+returns the saved report, while `GET /api/maintenance/my` includes it alongside
+standalone maintenance activity records for activity and history views.
 
 ### Status Lifecycle
 
@@ -165,6 +178,7 @@ submitted → under_review → assigned → accepted → in_progress → resolve
 | `request`      | ObjectId | yes      | ref → tickets._id                            |
 | `technician`   | ObjectId | yes      | ref → technicians._id                        |
 | `action_taken` | String   | yes      | Description of work done                     |
+| `diagnosis`    | String   | no       | Technician diagnosis for this activity (required when resolving a ticket) |
 | `parts_used`   | String   | no       | e.g. RAM 8GB, HDMI Cable                     |
 | `notes`        | String   | no       | Additional notes                             |
 | `status`       | String   | yes      | `accepted` \| `in_progress` \| `resolved`   |
@@ -173,21 +187,7 @@ submitted → under_review → assigned → accepted → in_progress → resolve
 
 ---
 
-## 8. feedbacks
-
-| Field      | Type     | Required | Notes                              |
-|------------|----------|----------|------------------------------------|
-| `_id`      | ObjectId | auto     |                                    |
-| `request`  | ObjectId | yes      | ref → tickets._id (unique per request) |
-| `user`     | ObjectId | yes      | ref → users._id (who gave feedback)|
-| `rating`   | Number   | yes      | 1–5 stars                          |
-| `comment`  | String   | no       |                                    |
-| `createdAt`| Date     | auto     |                                    |
-| `updatedAt`| Date     | auto     |                                    |
-
----
-
-## 8a. technicianfeedbacks
+## 8. technicianfeedbacks
 
 Separate from the technician maintenance report embedded in a ticket. Feedback
 records are stored in their own collection and linked to the submitting user,
@@ -305,7 +305,6 @@ users ──────────────────┐
   │     │
   │     ├── assignments  │  (ticket → tickets._id)
   │     ├── maintenancerecords
-  │     └── feedbacks
   │
   ├── notifications      │  (user → users._id)
   │

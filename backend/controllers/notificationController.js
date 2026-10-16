@@ -13,6 +13,15 @@ const {
 } = require("../utils/notificationPreferences");
 const Settings = require("../models/Settings");
 
+const REQUESTER_FEEDBACK_NOTIFICATION_TYPES = [
+  "feedback_available",
+  "request_feedback_available",
+  "request_feedback_review",
+  "feedback_update",
+  "feedback_submission_user",
+  "feedback_reply",
+];
+
 // GET /api/notifications
 const getMyNotifications = async (req, res, next) => {
   try {
@@ -26,6 +35,7 @@ const getMyNotifications = async (req, res, next) => {
     const mandatoryTypes = Array.from(MANDATORY_NOTIFICATION_TYPES);
     const excludedTypes = [
       ...disabledTypes,
+      ...(user?.role === "Requester" ? REQUESTER_FEEDBACK_NOTIFICATION_TYPES : []),
       ...(user?.role === "Technician" &&
       preferences.maintenanceAlerts === false
         ? Array.from(TECHNICIAN_MAINTENANCE_ALERT_TYPES)
@@ -51,7 +61,9 @@ const getMyNotifications = async (req, res, next) => {
       if (
         (preferences.inAppNotifications === false ||
           disabledTypes.includes(type) ||
-          (user?.role === "Technician" &&
+        (user?.role === "Requester" &&
+          REQUESTER_FEEDBACK_NOTIFICATION_TYPES.includes(type)) ||
+        (user?.role === "Technician" &&
             preferences.maintenanceAlerts === false &&
             TECHNICIAN_MAINTENANCE_ALERT_TYPES.has(type))) &&
         !MANDATORY_NOTIFICATION_TYPES.has(type)
@@ -129,6 +141,7 @@ const getUnreadCount = async (req, res, next) => {
     const disabledTypes = getDisabledSystemNotificationTypes(settings);
     const excludedTypes = [
       ...disabledTypes,
+      ...(user?.role === "Requester" ? REQUESTER_FEEDBACK_NOTIFICATION_TYPES : []),
       ...(user?.role === "Technician" &&
       preferences.maintenanceAlerts === false
         ? Array.from(TECHNICIAN_MAINTENANCE_ALERT_TYPES)

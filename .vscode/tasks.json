@@ -97,7 +97,7 @@
 			"command": "node",
 			"args": [
 				"-e",
-				"const cp=require(\"node:child_process\");const files=cp.execFileSync(\"git\",[\"diff\",\"--name-only\"],{encoding:\"utf8\"}).split(/\\r?\\n/).filter(f=>/\\.js$/.test(f));files.push(\"backend/scripts/googleIdToken.test.js\");for(const file of new Set(files)){cp.execFileSync(process.execPath,[\"--check\",file],{stdio:\"inherit\"});console.log(\"PASS node --check \"+file)}cp.execFileSync(\"git\",[\"diff\",\"--check\"],{stdio:\"inherit\"});console.log(\"PASS git diff --check\")"
+				"const cp=require(\"node:child_process\");const files=cp.execFileSync(\"git\",[\"diff\",\"--name-only\",\"--diff-filter=ACMR\"],{encoding:\"utf8\"}).split(/\\r?\\n/).filter(f=>/\\.js$/.test(f));files.push(\"backend/scripts/googleIdToken.test.js\",\"backend/scripts/remove-requester-feedback-data.js\");for(const file of new Set(files)){cp.execFileSync(process.execPath,[\"--check\",file],{stdio:\"inherit\"});console.log(\"PASS node --check \"+file)}cp.execFileSync(\"git\",[\"diff\",\"--check\"],{stdio:\"inherit\"});console.log(\"PASS git diff --check\")"
 			],
 			"isBackground": false,
 			"problemMatcher": []
@@ -180,6 +180,15 @@
 			],
 			"isBackground": true,
 			"problemMatcher": []
-		}
+		},
+		{
+			"label": "Run frontend server",
+			"type": "shell",
+			"command": "node frontend/server.js",
+			"args": [],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
 	]
 }

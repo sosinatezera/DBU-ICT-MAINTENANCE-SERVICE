@@ -4,28 +4,6 @@
    ============================================================ */
 
 /* ── Technician Sidebar ────────────────────────────────────── */
-#sidebar.sidebar {
-  background: linear-gradient(180deg, #101c31 0%, #0b1220 100%) !important;
-  border-right: 1px solid rgba(255,255,255,.06);
-}
-
-#sidebar .nav-link {
-  color: rgba(226,232,240,.74) !important;
-}
-
-#sidebar .nav-link.active {
-  background: linear-gradient(90deg, rgba(30,64,170,.32), rgba(30,64,170,.07)) !important;
-  color: #fff !important;
-  font-weight: 600;
-  border: 1px solid rgba(96,165,250,.35);
-  box-shadow: inset 3px 0 0 0 var(--primary), 0 6px 16px -10x rgba(30,64,170,.85);
-}
-
-#sidebar .nav-link:hover:not(.active) {
-  background: rgba(255,255,255,.06) !important;
-  color: #fff !important;
-}
-
 #sidebar.technician-work-sidebar .technician-sidebar-scroll {
   flex: 1 1 auto;
   min-height: 0;
@@ -42,8 +20,6 @@
   background: rgba(255,255,255,.2);
   border-radius: 4px;
 }
-
-#sidebar .sidebar-brand i { color: var(--primary-border); }
 
 /* ── Task Cards ────────────────────────────────────────────── */
 .task-card {
@@ -169,18 +145,9 @@
 .request-detail-label { color: var(--muted); }
 .request-detail-value { color: var(--text); }
 
-#sidebar.sidebar {
-  background: linear-gradient(180deg, #0b1f3a 0%, #071426 100%) !important;
-}
-
 /* Technician-only header palette. This stylesheet is loaded by technician
    pages only, so these shared component selectors cannot affect other roles. */
 html body.dashboard-body .topbar,
-html body.dashboard-body #sidebar > a:first-of-type > div,
-html body.dashboard-body #sidebar .sidebar-brand,
-html body.dashboard-body #sidebar .sidebar-section-header,
-html body.dashboard-body #sidebar .sidebar-section-title,
-html body.dashboard-body #sidebar .nav-section-title,
 html body.dashboard-body .card-header,
 html body.dashboard-body .modal-header,
 html body.dashboard-body .technician-feedback-page-header {
@@ -195,13 +162,6 @@ html body.dashboard-body .topbar h4,
 html body.dashboard-body .topbar h5,
 html body.dashboard-body .topbar h6,
 html body.dashboard-body .topbar .text-muted,
-html body.dashboard-body #sidebar > a:first-of-type > div,
-html body.dashboard-body #sidebar > a:first-of-type > div i,
-html body.dashboard-body #sidebar .sidebar-brand,
-html body.dashboard-body #sidebar .sidebar-brand i,
-html body.dashboard-body #sidebar .sidebar-section-header,
-html body.dashboard-body #sidebar .sidebar-section-title,
-html body.dashboard-body #sidebar .nav-section-title,
 html body.dashboard-body .card-header h1,
 html body.dashboard-body .card-header h2,
 html body.dashboard-body .card-header h3,

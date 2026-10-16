@@ -1,1041 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>( function () { try { var l = localStorage.getItem( 'ict_lang' ); if ( l === 'am' || l === 'en' || l === 'om' ) { document.documentElement.setAttribute( 'lang', l ); } } catch ( e ) { } } )();</script>
-<script>( function () { try { if ( localStorage.getItem( 'theme' ) === 'dark' ) { document.documentElement.setAttribute( 'data-theme', 'dark' ); } } catch ( e ) { } } )();</script>
-
+<script>(function(){try{var theme=localStorage.getItem("theme:requester")||localStorage.getItem("theme");if(theme==="dark")document.documentElement.setAttribute("data-theme","dark");var lang=localStorage.getItem("ict_lang");if(["am","en","om"].includes(lang))document.documentElement.setAttribute("lang",lang)}catch(_){}})();</script>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="page.userFeedback">Feedback — Smart ICT Maintenance Management System</title>
+  <title>Requester Feedback — Smart ICT Maintenance Management System</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/responsive.css" />
-  <style>
-    /* ── Design Tokens for Feedback Page ───────────────────────── */
-    :root {
-      --navy-900: #0B2A4A;
-      --navy-800: #123F6D;
-      --blue-600: #1E40AF;
-      --blue-500: #3B82F6;
-      --blue-100: #EFF6FF;
-      --blue-50: #F8FAFC;
-      --bg-page: #F4F7FB;
-      --bg-card: #FFFFFF;
-      --bg-header: #F7FAFC;
-      --border-color: #D9E2EC;
-      --border-hover: #BFDBFE;
-      --border-focus: #3B82F6;
-      --text-primary: #102A43;
-      --text-secondary: #52667A;
-      --text-muted: #718096;
-      --success: #16A34A;
-      --success-bg: #ECFDF3;
-      --success-border: #BBF7D0;
-      --shadow-card: 0 8px 24px rgba(15, 42, 67, 0.08);
-      --shadow-card-hover: 0 10px 28px rgba(15, 42, 67, 0.12);
-      --shadow-focus: 0 0 0 3px rgba(30, 64, 175, 0.10);
-      --radius-card: 16px;
-      --radius-badge: 999px;
-      --radius-input: 10px;
-      --transition-base: all 0.18s ease;
-    }
-
-    /* ── Page Background ──────────────────────────────────────── */
-    .feedback-page-bg {
-      background: linear-gradient(180deg, #F8FAFC 0%, #EEF4FA 100%);
-      min-height: 100vh;
-    }
-
-    /* ── Feedback Container ───────────────────────────────────── */
-    .feedback-container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px 20px 32px;
-    }
-
-    .feedback-rating-row {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-
-    .feedback-star {
-      color: #adb5bd;
-      cursor: pointer;
-      font-size: 1.6rem;
-      line-height: 1;
-    }
-
-    .feedback-star.is-selected {
-      color: #f0ad00;
-    }
-
-    .feedback-rating-input:focus-visible + .feedback-star {
-      border-radius: 0.25rem;
-      outline: 2px solid #0d6efd;
-      outline-offset: 2px;
-    }
-
-    /* ── Page Header ──────────────────────────────────────────── */
-    .feedback-header {
-      margin-bottom: 28px;
-      text-align: center;
-    }
-
-    .feedback-title {
-      font-size: 30px;
-      font-weight: 750;
-      color: var(--text-primary);
-      letter-spacing: -0.5px;
-      margin-bottom: 8px;
-    }
-
-    .feedback-subtitle {
-      font-size: 15px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    /* ── Feedback Card ────────────────────────────────────────── */
-    .feedback-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-card);
-      box-shadow: var(--shadow-card);
-      overflow: hidden;
-    }
-
-    /* ── Card Header ──────────────────────────────────────────── */
-    .feedback-card-header {
-      background: var(--bg-header);
-      border-bottom: 1px solid #E2E8F0;
-      padding: 20px 24px;
-    }
-
-    .feedback-card-header-content {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .feedback-card-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: var(--blue-100);
-      color: var(--primary-deep);
-      font-size: 1.1rem;
-    }
-
-    .feedback-card-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text-primary);
-      letter-spacing: -0.3px;
-      margin: 0;
-    }
-
-    /* ── Request Item ─────────────────────────────────────────── */
-    .feedback-request-item {
-      display: flex;
-      flex-direction: column;
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--border-color);
-      transition: background var(--transition-base), border-color var(--transition-base);
-      cursor: pointer;
-    }
-
-    .feedback-request-item:last-child {
-      border-bottom: none;
-    }
-
-    .feedback-request-item:hover {
-      background: #F8FAFC;
-      border-color: var(--border-hover);
-    }
-
-    .feedback-request-item:focus-visible {
-      outline: 2px solid var(--primary-deep);
-      outline-offset: -2px;
-    }
-
-    .feedback-request-main {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 12px;
-    }
-
-    .feedback-request-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .feedback-request-id {
-      font-size: 19px;
-      font-weight: 700;
-      color: var(--navy-900);
-      letter-spacing: -0.2px;
-      margin-bottom: 4px;
-    }
-
-    .feedback-request-description {
-      font-size: 14.5px;
-      color: var(--text-secondary);
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .feedback-request-action {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .feedback-request-arrow {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      padding: 0;
-      border-radius: 50%;
-      background: #FFFFFF;
-      border: 1px solid var(--border-color);
-      color: var(--text-muted);
-      cursor: pointer;
-      font: inherit;
-      transition: var(--transition-base);
-    }
-
-    .feedback-request-arrow:hover {
-      background: var(--blue-50);
-      border-color: var(--primary-deep);
-      color: var(--primary-deep);
-      transform: translateX(2px);
-    }
-
-    .feedback-request-arrow:focus-visible {
-      outline: 3px solid rgba(30, 64, 175, .28);
-      outline-offset: 3px;
-    }
-
-    .feedback-request-arrow:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .feedback-request-item:hover .feedback-request-arrow {
-      background: var(--blue-50);
-      border-color: var(--primary-deep);
-      color: var(--primary-deep);
-      transform: translateX(2px);
-    }
-
-    /* ── Status Row ───────────────────────────────────────────── */
-    .feedback-status-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .feedback-status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 5px 12px;
-      border-radius: var(--radius-badge);
-      font-size: 12px;
-      font-weight: 600;
-      background: var(--success-bg);
-      color: var(--success);
-      border: 1px solid var(--success-border);
-    }
-
-    .feedback-status-badge i {
-      font-size: 11px;
-    }
-
-    .feedback-resolved-date {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    .feedback-cta {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--blue-600);
-      margin-left: auto;
-      padding: 4px 8px;
-      border-radius: var(--radius-badge);
-      transition: var(--transition-base);
-    }
-
-    .feedback-request-item:hover .feedback-cta {
-      background: var(--blue-50);
-    }
-
-    /* ── Empty State ──────────────────────────────────────────── */
-    .feedback-empty {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 24px;
-      text-align: center;
-    }
-
-    .feedback-empty-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: var(--blue-50);
-      color: var(--blue-600);
-      font-size: 2rem;
-      margin-bottom: 16px;
-    }
-
-    .feedback-empty-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-    }
-
-    .feedback-empty-text {
-      font-size: 14.5px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      max-width: 320px;
-    }
-
-    /* ── Loading State ────────────────────────────────────────── */
-    .feedback-loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 24px;
-      gap: 12px;
-    }
-
-    .feedback-loading .spinner-border {
-      width: 32px;
-      height: 32px;
-      border-width: 3px;
-    }
-
-    .feedback-loading-text {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-
-    /* ── Error State ──────────────────────────────────────────── */
-    .feedback-error {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 24px;
-      text-align: center;
-      gap: 16px;
-    }
-
-    .feedback-error-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: #FEF2F2;
-      color: #DC3545;
-      font-size: 1.5rem;
-    }
-
-    .feedback-error-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .feedback-error-text {
-      font-size: 14px;
-      color: var(--text-secondary);
-      max-width: 340px;
-    }
-
-    /* ── Submitted Feedback Card ───────────────────────────────── */
-    .feedback-submitted-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-card);
-      box-shadow: var(--shadow-card);
-      overflow: hidden;
-    }
-
-    .feedback-submitted-header {
-      background: var(--bg-header);
-      border-bottom: 1px solid #E2E8F0;
-      padding: 20px 24px;
-    }
-
-    .feedback-submitted-body {
-      padding: 24px;
-    }
-
-    .feedback-submitted-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .feedback-submitted-row:last-child {
-      border-bottom: none;
-    }
-
-    .feedback-submitted-label {
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-
-    .feedback-submitted-value {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .feedback-submitted-stars {
-      display: flex;
-      gap: 4px;
-    }
-
-    .feedback-submitted-stars i {
-      color: #F59E0B;
-      font-size: 1.1rem;
-    }
-
-    /* ── Feedback Form ────────────────────────────────────────── */
-    .feedback-form-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-card);
-      box-shadow: var(--shadow-card);
-      overflow: hidden;
-    }
-
-    .feedback-form-header {
-      background: var(--bg-header);
-      border-bottom: 1px solid #E2E8F0;
-      padding: 20px 24px;
-    }
-
-    .feedback-form-body {
-      padding: 28px 24px;
-    }
-
-    /* ── Form Controls ────────────────────────────────────────── */
-    .form-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 6px;
-    }
-
-    .form-label .text-danger {
-      font-weight: 500;
-      font-size: 0.9em;
-    }
-
-    .form-control,
-    .form-select {
-      border-radius: var(--radius-input);
-      font-size: 15px;
-      color: var(--text-primary);
-      background-color: #FFFFFF;
-      border: 1px solid var(--border-color);
-      padding: 0.65rem 0.85rem;
-      min-height: 48px;
-      transition: var(--transition-base);
-    }
-
-    .form-control:hover,
-    .form-select:hover {
-      border-color: #B8C5D6;
-    }
-
-    .form-control:focus,
-    .form-select:focus {
-      border-color: var(--border-focus);
-      box-shadow: var(--shadow-focus);
-      outline: none;
-    }
-
-    .form-text {
-      color: var(--text-muted);
-      font-size: 13px;
-    }
-
-    /* ── Star Rating ──────────────────────────────────────────── */
-    .star-rating {
-      display: flex;
-      gap: 8px;
-    }
-
-    .star-rating .star {
-      font-size: 28px;
-      color: #E2E8F0;
-      cursor: pointer;
-      transition: transform 0.15s ease, color 0.15s ease;
-    }
-
-    .star-rating .star:hover,
-    .star-rating .star.active {
-      color: #F59E0B;
-      transform: scale(1.15);
-    }
-
-    .star-rating .star:focus-visible {
-      outline: 2px solid var(--blue-600);
-      outline-offset: 2px;
-      border-radius: 4px;
-    }
-
-    /* ── Buttons ──────────────────────────────────────────────── */
-    .btn-primary {
-      background: var(--blue-600);
-      border-color: var(--blue-600);
-      border-radius: var(--radius-input);
-      font-weight: 600;
-      padding: 0.75rem 1.5rem;
-      min-height: 50px;
-      font-size: 15px;
-      box-shadow: 0 2px 8px rgba(20, 110, 245, 0.2);
-      transition: var(--transition-base);
-    }
-
-    .btn-primary:hover,
-    .btn-primary:focus {
-      background: #0F5BD7;
-      border-color: #0F5BD7;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(20, 110, 245, 0.3);
-    }
-
-    .btn-outline-secondary {
-      border-radius: var(--radius-input);
-      font-weight: 600;
-      padding: 0.75rem 1.25rem;
-      min-height: 50px;
-      font-size: 15px;
-      border-width: 1.5px;
-      color: var(--text-secondary);
-      border-color: var(--border-color);
-    }
-
-    .btn-outline-secondary:hover {
-      background: var(--bg-header);
-      border-color: var(--blue-600);
-      color: var(--blue-600);
-    }
-
-    /* ── Responsive ───────────────────────────────────────────── */
-    @media (max-width: 767.98px) {
-      .feedback-container {
-        padding: 16px 12px 24px;
-      }
-
-      .feedback-title {
-        font-size: 24px;
-      }
-
-      .feedback-card-header {
-        padding: 16px 18px;
-      }
-
-      .feedback-request-item {
-        padding: 18px;
-      }
-
-      .feedback-request-id {
-        font-size: 17px;
-      }
-
-      .feedback-request-description {
-        font-size: 14px;
-      }
-
-      .feedback-cta {
-        font-size: 12px;
-      }
-
-      .feedback-status-row {
-        gap: 8px;
-      }
-    }
-  </style>
   <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/requester-feedback.css" />
 </head>
-
-<body class="dashboard-body requester-dashboard feedback-page-bg">
-
+<body class="dashboard-body requester-dashboard">
   <div class="d-flex">
-
-    <!-- Sidebar -->
-    <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3"
-      style="min-height:100vh;width:240px;flex-shrink:0;">
+    <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3" style="min-height:100vh;width:240px;">
       <a href="/" class="text-decoration-none">
         <div class="sidebar-brand mb-4 text-center">
           <i class="bi bi-tools fs-3"></i>
-          <div class="small fw-bold mt-1" data-i18n="auth.brand">Smart ICT Maintenance Management System</div>
+          <div class="small fw-bold mt-1">Smart ICT Maintenance Management System</div>
         </div>
       </a>
       <ul class="nav flex-column gap-1">
-        <li><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i><span
-              data-i18n="side.dashboard">Dashboard</span></a></li>
-        <li><a href="request.html" class="nav-link text-white-50"><i class="bi bi-plus-circle me-2"></i><span
-              data-i18n="side.new">New Request</span></a></li>
-        <li><a href="tracking.html" class="nav-link text-white-50"><i class="bi bi-search me-2"></i><span
-              data-i18n="side.track">Track Request</span></a></li>
-        <li><a href="history.html" class="nav-link text-white-50"><i class="bi bi-clock-history me-2"></i><span
-              data-i18n="side.history">History</span></a></li>
-        <li><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span
-              data-i18n="side.notifications">Notifications</span></a></li>
-        <li><a href="feedback.html" class="nav-link text-white active bg-white bg-opacity-25 rounded"><i
-              class="bi bi-star me-2"></i><span data-i18n="side.feedback">Feedback</span></a></li>
-        <li><a href="profile.html" class="nav-link text-white-50" id="profileNavLink"><i
-              class="bi bi-person-circle me-2"></i><span data-i18n="side.profile">My Profile</span></a></li>
+        <li class="nav-item"><a href="dashboard.html" class="nav-link text-white-50"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a></li>
+        <li class="nav-item"><a href="request.html" class="nav-link text-white-50"><i class="bi bi-plus-circle me-2"></i><span>New Request</span></a></li>
+        <li class="nav-item"><a href="tracking.html" class="nav-link text-white-50"><i class="bi bi-search me-2"></i><span>Track Request</span></a></li>
+        <li class="nav-item"><a href="history.html" class="nav-link text-white-50"><i class="bi bi-clock-history me-2"></i><span>History</span></a></li>
+        <li class="nav-item"><a href="feedback.html" class="nav-link text-white active bg-white bg-opacity-25 rounded" aria-current="page"><i class="bi bi-chat-square-heart me-2" aria-hidden="true"></i><span data-i18n="side.requesterFeedback">Requester Feedback</span></a></li>
+        <li class="nav-item"><a href="notifications.html" class="nav-link text-white-50"><i class="bi bi-bell me-2"></i><span>Notifications</span><span class="badge bg-danger ms-1" id="sidebarNotifBadge" style="display:none;"></span></a></li>
+        <li class="nav-item"><a href="profile.html" class="nav-link text-white-50" id="profileNavLink"><i class="bi bi-person-circle me-2"></i><span>My Profile</span></a></li>
       </ul>
       <div class="mt-auto pt-3 border-top border-white border-opacity-25">
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <i class="bi bi-person-circle fs-5"></i>
-          <span class="small" id="sidebarUserName" class="text-white-50"></span>
-        </div>
+        <div class="d-flex align-items-center gap-2 mb-2"><i class="bi bi-person-circle fs-5"></i><span class="small" id="sidebarUserName">User</span></div>
       </div>
     </nav>
-
-    <!-- Main -->
     <div class="flex-grow-1">
-      <header
-        class="topbar bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
-        <div class="d-flex align-items-center gap-3">
-          <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle"><i
-              class="bi bi-list"></i></button>
-          <div>
-            <h5 class="mb-0 fw-bold feedback-title">My Feedback</h5>
-            <div class="text-muted small feedback-subtitle">Send feedback to ICT Administration and follow the conversation.</div>
-          </div>
-        </div>
-        <div class="d-flex align-items-center gap-3">
-        </div>
+      <header class="topbar dashboard-role-header bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between shadow-sm">
+        <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggle" aria-label="Toggle navigation"><i class="bi bi-list"></i></button>
+        <h1 class="h5 mb-0 fw-bold"><i class="bi bi-chat-square-heart text-primary me-1" aria-hidden="true"></i>Requester Feedback</h1>
+        <div class="d-flex align-items-center gap-3"><div id="notifBellContainer"></div><span class="text-muted small" id="topUserName"></span></div>
       </header>
-
-      <main class="p-3 p-md-4">
-        <div class="feedback-container">
-          <!-- Alert -->
-          <div id="requestAlert" class="alert d-none mb-4" role="alert"></div>
-
-          <div class="row g-3 mb-4">
-            <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Total</div><strong class="fs-4" data-own-feedback-stat="total">0</strong></div></div>
-            <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Pending</div><strong class="fs-4" data-own-feedback-stat="pending">0</strong></div></div>
-            <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">In Progress</div><strong class="fs-4" data-own-feedback-stat="inProgress">0</strong></div></div>
-            <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Replied</div><strong class="fs-4" data-own-feedback-stat="replied">0</strong></div></div>
-            <div class="col-6 col-lg"><div class="card border-0 shadow-sm p-3"><div class="small text-muted">Closed</div><strong class="fs-4" data-own-feedback-stat="closed">0</strong></div></div>
-          </div>
-
-          <section class="card shadow-sm border-0 mb-4" aria-labelledby="newFeedbackTitle">
-            <div class="card-header bg-white py-3">
-              <h2 class="h5 fw-bold mb-1" id="newFeedbackTitle">Submit feedback</h2>
-              <p class="small text-muted mb-0">Your feedback will be reviewed by ICT Administration.</p>
-            </div>
-            <div class="card-body">
-              <div id="feedbackSubmissionNotice" class="alert d-none" role="status" aria-live="polite"></div>
-              <form id="feedbackSubmissionForm" novalidate>
-                <div class="row g-3 mb-3">
-                  <div class="col-md-6"><label class="form-label" for="feedbackSubmissionUser">User name</label>
-                    <input class="form-control" id="feedbackSubmissionUser" readonly aria-readonly="true"></div>
-                  <div class="col-md-6"><label class="form-label" for="feedbackSubmissionDepartment">Department</label>
-                    <input class="form-control" id="feedbackSubmissionDepartment" readonly aria-readonly="true"
-                      placeholder="Not provided in your profile"></div>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label" for="feedbackSubmissionCategory">Category <span class="text-danger">*</span></label>
-                  <select class="form-select" id="feedbackSubmissionCategory" required>
-                    <option value="">Choose a category</option>
-                    <option>Service Quality</option>
-                    <option>Technician Performance</option>
-                    <option>System Improvement</option>
-                    <option>Complaint</option>
-                    <option>Suggestion</option>
-                    <option>Other</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label" for="feedbackSubmissionTechnician">Technician (optional)</label>
-                  <select class="form-select" id="feedbackSubmissionTechnician">
-                    <option value="">Not about a specific technician</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label" for="feedbackSubmissionSubject">Subject <span class="text-danger">*</span></label>
-                  <input class="form-control" id="feedbackSubmissionSubject" maxlength="160" required />
-                  <div class="form-text">Maximum 160 characters.</div>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label" for="feedbackSubmissionDescription">Description <span class="text-danger">*</span></label>
-                  <textarea class="form-control" id="feedbackSubmissionDescription" rows="5" maxlength="5000" required
-                    aria-describedby="feedbackSubmissionDescriptionHelp"></textarea>
-                  <div class="form-text" id="feedbackSubmissionDescriptionHelp">Maximum 5,000 characters. Do not include passwords or other sensitive credentials.</div>
-                </div>
-                <fieldset class="mb-3 border-0 p-0">
-                  <legend class="form-label">Service rating <span class="text-muted fw-normal">(optional)</span></legend>
-                  <div class="feedback-rating-row" role="radiogroup" aria-describedby="feedbackRatingDescription">
-                    <input class="visually-hidden feedback-rating-input" type="radio" name="feedbackRating" id="feedbackRating1" value="1" aria-label="1 star">
-                    <label class="feedback-star" for="feedbackRating1" title="1 star" aria-hidden="true">★</label>
-                    <input class="visually-hidden feedback-rating-input" type="radio" name="feedbackRating" id="feedbackRating2" value="2" aria-label="2 stars">
-                    <label class="feedback-star" for="feedbackRating2" title="2 stars" aria-hidden="true">★</label>
-                    <input class="visually-hidden feedback-rating-input" type="radio" name="feedbackRating" id="feedbackRating3" value="3" aria-label="3 stars">
-                    <label class="feedback-star" for="feedbackRating3" title="3 stars" aria-hidden="true">★</label>
-                    <input class="visually-hidden feedback-rating-input" type="radio" name="feedbackRating" id="feedbackRating4" value="4" aria-label="4 stars">
-                    <label class="feedback-star" for="feedbackRating4" title="4 stars" aria-hidden="true">★</label>
-                    <input class="visually-hidden feedback-rating-input" type="radio" name="feedbackRating" id="feedbackRating5" value="5" aria-label="5 stars">
-                    <label class="feedback-star" for="feedbackRating5" title="5 stars" aria-hidden="true">★</label>
-                  </div>
-                  <div class="form-text" id="feedbackRatingDescription" aria-live="polite">No rating selected. Rating is optional.</div>
-                  <button class="btn btn-sm btn-link px-0" type="button" id="clearFeedbackRating">Clear rating</button>
-                </fieldset>
-                <div class="mb-3">
-                  <label class="form-label" for="feedbackSubmissionAttachment">Attachment <span class="text-muted fw-normal">(optional, max 5 MB)</span></label>
-                  <input class="form-control" type="file" id="feedbackSubmissionAttachment"
-                    accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt">
-                  <div class="form-text">Images, PDF, Office documents, or plain text files only.</div>
-                </div>
-                <button class="btn btn-primary" type="submit" data-feedback-submit>
-                  <i class="bi bi-send me-1" aria-hidden="true"></i>Submit Feedback
-                </button>
-              </form>
-            </div>
-          </section>
-          <section class="card shadow-sm border-0 mb-4" aria-labelledby="myFeedbackTitle">
-            <div class="card-header bg-white py-3">
-              <h2 class="h5 fw-bold mb-0" id="myFeedbackTitle">My feedback history</h2>
-            </div>
-            <div class="card-body border-bottom">
-              <div class="row g-2">
-                <div class="col-md-8">
-                  <label class="form-label small mb-1" for="feedbackHistorySearch">Search my feedback</label>
-                  <input class="form-control form-control-sm" id="feedbackHistorySearch" type="search"
-                    placeholder="Feedback ID, subject, category, or description" />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small mb-1" for="feedbackHistoryStatus">Filter by status</label>
-                  <select class="form-select form-select-sm" id="feedbackHistoryStatus">
-                    <option value="">All statuses</option>
-                    <option>Pending</option><option>In Progress</option><option>Replied</option>
-                    <option>Resolved</option><option>Closed</option>
-                  </select>
-                </div>
-                <div class="col-md-4"><label class="form-label small mb-1" for="feedbackHistoryCategory">Category</label>
-                  <select class="form-select form-select-sm" id="feedbackHistoryCategory">
-                    <option value="">All categories</option>
-                    <option>Service Quality</option><option>Technician Performance</option>
-                    <option>System Improvement</option><option>Complaint</option><option>Suggestion</option><option>Other</option>
-                  </select>
-                </div>
-                <div class="col-md-2"><label class="form-label small mb-1" for="feedbackHistoryFrom">From</label>
-                  <input class="form-control form-control-sm" id="feedbackHistoryFrom" type="date"></div>
-                <div class="col-md-2"><label class="form-label small mb-1" for="feedbackHistoryTo">To</label>
-                  <input class="form-control form-control-sm" id="feedbackHistoryTo" type="date"></div>
-              </div>
-            </div>
-            <div class="card-footer bg-white d-flex justify-content-between align-items-center gap-2">
-              <small id="feedbackHistoryPageInfo" class="text-muted"> </small>
-              <div class="btn-group btn-group-sm">
-                <button type="button" class="btn btn-outline-secondary" id="feedbackHistoryPrev" aria-label="Previous feedback page">&laquo;</button>
-                <button type="button" class="btn btn-outline-secondary" id="feedbackHistoryNext" aria-label="Next feedback page">&raquo;</button>
-              </div>
-            </div>
-            <div class="card-body" id="feedbackSubmissionHistory" aria-live="polite" aria-busy="true">
-              <p class="text-muted mb-0">Loading your feedback...</p>
-            </div>
-          </section>
-
-          <!-- Pending Feedback Requests Card -->
-          <div class="feedback-card mb-4 d-none" id="pendingFeedbackCard">
-            <div class="feedback-card-header">
-              <div class="feedback-card-header-content">
-                <div class="feedback-card-icon">
-                  <i class="bi bi-list-check"></i>
-                </div>
-                <h6 class="feedback-card-title" data-i18n="fb.awaiting">Requests Awaiting Feedback</h6>
-              </div>
-            </div>
-            <div class="feedback-card-body" id="pendingFeedbackList">
-              <div class="feedback-loading" data-i18n="common.loading">
-                <div class="spinner-border text-primary" role="status"></div>
-                <span class="feedback-loading-text">Loading...</span>
-              </div>
-            </div>
-          </div>
-
-          <section class="card shadow-sm border-0 mb-4" id="submittedServiceFeedbackCard"
-            aria-labelledby="submittedServiceFeedbackTitle">
-            <div class="card-header bg-white py-3">
-              <h2 class="h5 fw-bold mb-0" id="submittedServiceFeedbackTitle">My submitted service feedback</h2>
-            </div>
-            <div class="list-group list-group-flush" id="submittedServiceFeedbackList" aria-live="polite">
-              <div class="list-group-item text-muted">Loading your submitted feedback...</div>
-            </div>
-          </section>
-
-          <!-- Feedback Already Submitted (read-only) -->
-          <div class="feedback-submitted-card mb-4 d-none" id="feedbackSubmittedCard">
-            <div class="feedback-submitted-header">
-              <div class="feedback-card-header-content">
-                <div class="feedback-card-icon" style="background: var(--success-bg); color: var(--success);">
-                  <i class="bi bi-check-circle-fill"></i>
-                </div>
-                <h6 class="feedback-card-title" data-i18n="fb.submitted">Feedback Submitted</h6>
-              </div>
-            </div>
-            <div class="feedback-submitted-body" id="feedbackSubmittedBody"></div>
-          </div>
-
-          <!-- Feedback Form -->
-          <div class="feedback-form-card d-none" id="feedbackFormCard">
-            <div class="feedback-form-header">
-              <div class="feedback-card-header-content">
-                <div class="feedback-card-icon" style="background: #FFF3CD; color: #F59E0B;">
-                  <i class="bi bi-star"></i>
-                </div>
-                <h6 class="feedback-card-title" data-i18n="fb.rateExperience">Rate Your Service Experience</h6>
-              </div>
-            </div>
-            <div class="feedback-form-body">
-              <div id="feedbackAlert" class="alert d-none" role="alert"></div>
-
-              <form id="feedbackForm" novalidate>
-                <input type="hidden" id="feedbackRequestId" />
-
-                <div class="mb-4">
-                  <h6 class="fw-bold mb-3">Request Information</h6>
-                  <div class="row g-3">
-                    <div class="col-md-6">
-                      <label for="feedbackGeneratedId" class="form-label fw-semibold">Feedback ID</label>
-                      <input type="text" class="form-control" id="feedbackGeneratedId" readonly
-                        placeholder="Generated after submission" />
-                    </div>
-                    <div class="col-md-6">
-                      <label for="feedbackRequestTitle" class="form-label fw-semibold">Request ID</label>
-                      <input type="text" class="form-control" id="feedbackRequestTitle" readonly />
-                    </div>
-                    <div class="col-md-6">
-                      <label for="feedbackRequestService" class="form-label fw-semibold">Request title / service</label>
-                      <input type="text" class="form-control" id="feedbackRequestService" readonly />
-                    </div>
-                    <div class="col-md-6">
-                      <label for="feedbackRequestTechnician" class="form-label fw-semibold">Technician</label>
-                      <input type="text" class="form-control" id="feedbackRequestTechnician" readonly />
-                    </div>
-                    <div class="col-md-6">
-                      <label for="feedbackRequesterId" class="form-label fw-semibold">Requester ID</label>
-                      <input type="text" class="form-control" id="feedbackRequesterId" readonly />
-                    </div>
-                    <div class="col-md-6">
-                      <label for="feedbackRequesterName" class="form-label fw-semibold">Requester Name</label>
-                      <input type="text" class="form-control" id="feedbackRequesterName" readonly />
-                    </div>
-                    <div class="col-md-6">
-                      <label for="feedbackEquipment" class="form-label fw-semibold">Equipment / Asset</label>
-                      <input type="text" class="form-control" id="feedbackEquipment" readonly />
-                    </div>
-                    <div class="col-md-6">
-                      <label for="feedbackRequestStatus" class="form-label fw-semibold">Status</label>
-                      <input type="text" class="form-control" id="feedbackRequestStatus" readonly />
-                    </div>
-                    <div class="col-12">
-                      <label for="feedbackRequestResolution" class="form-label fw-semibold">Resolution</label>
-                      <textarea class="form-control" id="feedbackRequestResolution" rows="2" readonly></textarea>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Star Rating -->
-                <div class="mb-3">
-                  <label class="form-label fw-semibold"><span data-i18n="fb.overallRating">Overall Service
-                      Rating</span> <span class="text-danger">*</span></label>
-                  <div class="star-rating d-flex gap-2 fs-2" id="starRating" role="radiogroup"
-                    aria-label="Overall service rating">
-                    <i class="bi bi-star text-warning star" data-value="1" style="cursor:pointer;" tabindex="0"
-                      role="radio" aria-checked="false" aria-label="1 Star — Very Poor"></i>
-                    <i class="bi bi-star text-warning star" data-value="2" style="cursor:pointer;" tabindex="0"
-                      role="radio" aria-checked="false" aria-label="2 Stars — Poor"></i>
-                    <i class="bi bi-star text-warning star" data-value="3" style="cursor:pointer;" tabindex="0"
-                      role="radio" aria-checked="false" aria-label="3 Stars — Average"></i>
-                    <i class="bi bi-star text-warning star" data-value="4" style="cursor:pointer;" tabindex="0"
-                      role="radio" aria-checked="false" aria-label="4 Stars — Good"></i>
-                    <i class="bi bi-star text-warning star" data-value="5" style="cursor:pointer;" tabindex="0"
-                      role="radio" aria-checked="false" aria-label="5 Stars — Excellent"></i>
-                  </div>
-                  <input type="hidden" id="ratingValue" name="overallRating" value="" required />
-                  <div class="form-text" id="ratingLabel" aria-live="polite">How would you rate the service?</div>
-                </div>
-
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold small"><span data-i18n="fb.serviceQuality">Service
-                        Quality</span> <span class="text-danger">*</span></label>
-                    <select class="form-select" id="fbServiceQuality">
-                      <option value="" data-i18n="fb.select">-- Select --</option>
-                      <option data-i18n="fb.opt.excellent">Excellent</option>
-                      <option data-i18n="fb.opt.veryGood">Very Good</option>
-                      <option data-i18n="fb.opt.good">Good</option>
-                      <option data-i18n="fb.opt.fair">Fair</option>
-                      <option data-i18n="fb.opt.poor">Poor</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold small"><span data-i18n="fb.professionalism">Technician
-                        Professionalism</span> <span class="text-danger">*</span></label>
-                    <select class="form-select" id="fbProfessionalism">
-                      <option value="" data-i18n="fb.select">-- Select --</option>
-                      <option data-i18n="fb.opt.excellent">Excellent</option>
-                      <option data-i18n="fb.opt.veryGood">Very Good</option>
-                      <option data-i18n="fb.opt.good">Good</option>
-                      <option data-i18n="fb.opt.fair">Fair</option>
-                      <option data-i18n="fb.opt.poor">Poor</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold small" for="fbResponseTimeliness"><span>Response and Timeliness</span>
-                      <span class="text-danger">*</span></label>
-                    <select class="form-select" id="fbResponseTimeliness">
-                      <option value="">-- Select --</option>
-                      <option>Excellent</option>
-                      <option>Good</option>
-                      <option>Fair</option>
-                      <option>Poor</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold small"><span data-i18n="fb.communication">Communication</span>
-                      <span class="text-danger">*</span></label>
-                    <select class="form-select" id="fbCommunication">
-                      <option value="" data-i18n="fb.select">-- Select --</option>
-                      <option data-i18n="fb.opt.excellent">Excellent</option>
-                      <option data-i18n="fb.opt.veryGood">Very Good</option>
-                      <option data-i18n="fb.opt.good">Good</option>
-                      <option data-i18n="fb.opt.fair">Fair</option>
-                      <option data-i18n="fb.opt.poor">Poor</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold small" for="fbRepairQuality">Repair Quality
-                      <span class="text-danger">*</span></label>
-                    <select class="form-select" id="fbRepairQuality">
-                      <option value="">-- Select --</option>
-                      <option>Fully Fixed</option>
-                      <option>Partially Fixed</option>
-                      <option>Not Fixed</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold small"><span data-i18n="fb.satisfaction">Satisfaction
-                        Level</span> <span class="text-danger">*</span></label>
-                    <select class="form-select" id="fbSatisfaction">
-                      <option value="" data-i18n="fb.select">-- Select --</option>
-                      <option data-i18n="fb.opt.verySatisfied">Very Satisfied</option>
-                      <option data-i18n="fb.opt.satisfied">Satisfied</option>
-                      <option data-i18n="fb.opt.neutral">Neutral</option>
-                      <option data-i18n="fb.opt.dissatisfied">Dissatisfied</option>
-                      <option data-i18n="fb.opt.veryDissatisfied">Very Dissatisfied</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold small"><span data-i18n="fb.recommend">Would Recommend
-                        Service</span> <span class="text-danger">*</span></label>
-                    <select class="form-select" id="fbWouldRecommend">
-                      <option value="" data-i18n="fb.select">-- Select --</option>
-                      <option data-i18n="fb.opt.yes">Yes</option>
-                      <option data-i18n="fb.opt.no">No</option>
-                    </select>
-                  </div>
-                </div>
-
-                <fieldset class="mt-3 mb-3">
-                  <legend class="form-label fw-semibold small">Reopen / Follow-up Request <span class="text-danger">*</span></legend>
-                  <div class="d-flex gap-3">
-                    <div class="form-check">
-                      <input class="form-check-input" type="radio" name="followUpRequested" id="followUpYes" value="true" required />
-                      <label class="form-check-label" for="followUpYes">Yes, please follow up</label>
-                    </div>
-                    <div class="form-check">
-                      <input class="form-check-input" type="radio" name="followUpRequested" id="followUpNo" value="false" required />
-                      <label class="form-check-label" for="followUpNo">No</label>
-                    </div>
-                  </div>
-                  <div class="form-text">Choose Yes if the problem remains or has happened again. This sends a follow-up request without changing the ticket status.</div>
-                </fieldset>
-
-                <div class="mb-3">
-                  <label for="feedbackSubmittedAt" class="form-label fw-semibold">Submission Date and Time</label>
-                  <input type="text" class="form-control" id="feedbackSubmittedAt" readonly
-                    placeholder="Recorded automatically when submitted" />
-                </div>
-
-                <div class="mb-3 mt-3">
-                  <label for="comment" class="form-label fw-semibold">Comment / Feedback <span
-                      class="text-danger">*</span></label>
-                  <textarea class="form-control" id="comment" rows="3" maxlength="1000" required
-                    aria-describedby="commentFeedback"
-                    placeholder="Tell us about your experience with the maintenance service..."></textarea>
-                  <div class="invalid-feedback" id="commentFeedback">Please enter your comments.</div>
-                </div>
-                <div class="mb-4">
-                  <label for="suggestions" class="form-label fw-semibold" data-i18n="fb.suggestions">Suggestions for
-                    Improvement</label>
-                  <textarea class="form-control" id="suggestions" rows="2" data-i18n-placeholder="fb.ph.suggestions"
-                    placeholder="How can we improve our service?"></textarea>
-                </div>
-
-                <button type="submit" class="btn btn-primary px-4" id="feedbackSubmitBtn">
-                  <span class="spinner-border spinner-border-sm me-2 d-none" id="feedbackSpinner"></span>
-                  <i class="bi bi-send me-1" aria-hidden="true"></i><span id="feedbackSubmitLabel"
-                    data-i18n="fb.title">Submit Feedback</span>
-                </button>
-              </form>
-            </div>
-          </div>
-
+      <main class="container-fluid p-3 p-lg-4">
+        <div class="alert alert-info border-0" role="note">
+          Share your experience after a maintenance request is completed. Each request can receive feedback once.
         </div>
+        <div id="requesterFeedbackNotice" class="alert d-none" role="status" aria-live="polite"></div>
+        <section class="card border-0 shadow-sm mb-4" aria-labelledby="requesterFeedbackFormTitle">
+          <div class="card-header bg-white py-3">
+            <h2 class="h5 fw-bold mb-1" id="requesterFeedbackFormTitle">Tell us about your service</h2>
+            <p class="small text-muted mb-0">Only your completed maintenance requests are available.</p>
+          </div>
+          <div class="card-body">
+            <form id="requesterFeedbackForm" novalidate>
+              <div class="row g-3">
+                <div class="col-lg-7">
+                  <label class="form-label" for="requesterFeedbackRequestSelect">Completed maintenance request <span class="text-danger">*</span></label>
+                  <select class="form-select" id="requesterFeedbackRequestSelect" required>
+                    <option value="">Loading your completed requests…</option>
+                  </select>
+                  <div class="form-text">Choose the request you are reviewing.</div>
+                </div>
+                <div class="col-lg-5">
+                  <label class="form-label" for="requesterFeedbackTicketId">Maintenance Request ID <span class="text-danger">*</span></label>
+                  <input class="form-control" id="requesterFeedbackTicketId" readonly required aria-readonly="true" placeholder="Select a completed request" />
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="requesterFeedbackTechnician">Assigned technician</label>
+                  <input class="form-control" id="requesterFeedbackTechnician" readonly aria-readonly="true" placeholder="Selected request technician" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="requesterFeedbackFixed">Was the problem fixed? <span class="text-danger">*</span></label>
+                  <select class="form-select" id="requesterFeedbackFixed" required>
+                    <option value="">Choose an answer</option><option>Yes</option><option>Partially</option><option>No</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="requesterFeedbackEquipment">Is the equipment working properly? <span class="text-danger">*</span></label>
+                  <select class="form-select" id="requesterFeedbackEquipment" required>
+                    <option value="">Choose an answer</option><option>Yes</option><option>No</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <fieldset class="rating-fieldset">
+                    <legend class="form-label">Technician Rating <span class="text-danger">*</span></legend>
+                    <div class="star-rating" role="radiogroup" aria-label="Technician rating from 1 to 5 stars" data-rating-name="technicianRating">
+                      <input type="radio" id="technicianRating5" name="technicianRating" value="5"><label for="technicianRating5" aria-label="5 stars">★</label>
+                      <input type="radio" id="technicianRating4" name="technicianRating" value="4"><label for="technicianRating4" aria-label="4 stars">★</label>
+                      <input type="radio" id="technicianRating3" name="technicianRating" value="3"><label for="technicianRating3" aria-label="3 stars">★</label>
+                      <input type="radio" id="technicianRating2" name="technicianRating" value="2"><label for="technicianRating2" aria-label="2 stars">★</label>
+                      <input type="radio" id="technicianRating1" name="technicianRating" value="1" required><label for="technicianRating1" aria-label="1 star">★</label>
+                    </div>
+                    <span class="visually-hidden" id="technicianRatingValue" aria-live="polite">No rating selected</span>
+                  </fieldset>
+                </div>
+                <div class="col-md-6">
+                  <fieldset class="rating-fieldset">
+                    <legend class="form-label">Overall Satisfaction <span class="text-danger">*</span></legend>
+                    <div class="star-rating" role="radiogroup" aria-label="Overall satisfaction from 1 to 5 stars" data-rating-name="satisfactionRating">
+                      <input type="radio" id="satisfactionRating5" name="satisfactionRating" value="5"><label for="satisfactionRating5" aria-label="5 stars">★</label>
+                      <input type="radio" id="satisfactionRating4" name="satisfactionRating" value="4"><label for="satisfactionRating4" aria-label="4 stars">★</label>
+                      <input type="radio" id="satisfactionRating3" name="satisfactionRating" value="3"><label for="satisfactionRating3" aria-label="3 stars">★</label>
+                      <input type="radio" id="satisfactionRating2" name="satisfactionRating" value="2"><label for="satisfactionRating2" aria-label="2 stars">★</label>
+                      <input type="radio" id="satisfactionRating1" name="satisfactionRating" value="1" required><label for="satisfactionRating1" aria-label="1 star">★</label>
+                    </div>
+                    <span class="visually-hidden" id="satisfactionRatingValue" aria-live="polite">No rating selected</span>
+                  </fieldset>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="requesterFeedbackComments">Comments <span id="requesterFeedbackCommentsRequired" class="text-danger d-none" aria-hidden="true">*</span></label>
+                  <textarea class="form-control" id="requesterFeedbackComments" rows="3" maxlength="2000" placeholder="Describe anything that was not resolved or is not working as expected."></textarea>
+                  <div class="form-text" id="requesterFeedbackCommentsHint">Required if the problem was not fully fixed or the equipment is not working properly.</div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="requesterFeedbackSuggestions">Improvement Suggestions <span class="text-muted">(optional)</span></label>
+                  <textarea class="form-control" id="requesterFeedbackSuggestions" rows="3" maxlength="2000" placeholder="Suggestions about technician performance, response time, procedures, communication, equipment handling, or service quality."></textarea>
+                </div>
+                <div class="col-12 d-flex flex-wrap align-items-center gap-3">
+                  <button class="btn btn-primary" id="requesterFeedbackSubmit" type="submit" disabled><i class="bi bi-send me-1" aria-hidden="true"></i>Submit Feedback</button>
+                  <span class="small text-muted" id="requesterFeedbackSubmitHelp">Select an eligible request to begin.</span>
+                </div>
+              </div>
+            </form>
+          </div>
+        </section>
+        <section class="card border-0 shadow-sm" aria-labelledby="requesterFeedbackHistoryTitle">
+          <div class="card-header bg-white py-3">
+            <h2 class="h5 fw-bold mb-0" id="requesterFeedbackHistoryTitle">My Submitted Feedback</h2>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light"><tr><th>Request</th><th>Technician</th><th>Your feedback</th><th>Ratings</th><th>Submitted</th><th>Status</th><th>Admin update</th></tr></thead>
+              <tbody id="requesterFeedbackHistory"><tr><td colspan="7" class="text-center text-muted py-4">Loading your feedback…</td></tr></tbody>
+            </table>
+          </div>
+        </section>
       </main>
     </div>
   </div>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/js/api-config.js?v=16"></script>
-  <script src="/assets/js/lang.js?v=16"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="/assets/js/main.js?v=25"></script>
-  <script src="/assets/js/requests.js?v=21"></script>
-  <script src="/assets/js/feedback.js?v=5"></script>
+  <script src="/assets/js/api-config.js?v=16"></script>
+  <script src="/assets/js/lang.js?v=17"></script>
+  <script src="/assets/js/main.js?v=27"></script>
+  <script src="/assets/js/notifications.js?v=10"></script>
+  <script src="/assets/js/requester-feedback.js?v=2"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
-
 </html>

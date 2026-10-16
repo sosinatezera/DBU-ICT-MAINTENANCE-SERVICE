@@ -20,6 +20,12 @@ const maintenanceRecordSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Action taken is required.'],
     },
+    diagnosis: {
+      type: String,
+      trim: true,
+      maxlength: [5000, 'Diagnosis must be no more than 5,000 characters.'],
+      default: null,
+    },
     parts_used: {
       type: String,
       default: null,

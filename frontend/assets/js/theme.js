@@ -5,26 +5,62 @@
    Single source of truth for the application-wide theme.
    Exposes: getTheme, setTheme, toggleTheme, initTheme.
 
-   Persistence: localStorage['theme'] = 'light' | 'dark'
+   Persistence: role-specific dashboard keys, or localStorage['theme']
+                on public and Admin pages.
    Marker:      <html data-theme="dark"> (absence = light)
    ============================================================ */
 
 const THEME_STORAGE_KEY = "theme";
 
-function getTheme() {
+function getThemeStorageKey() {
+  const path = window.location.pathname;
+  if (/^\/views\/user\//i.test(path)) return "theme:requester";
+  if (/^\/views\/technician\//i.test(path)) return "theme:technician";
+  return THEME_STORAGE_KEY;
+}
+
+function getExplicitStoredTheme() {
   try {
-    return localStorage.getItem(THEME_STORAGE_KEY) || "light";
+    const theme = localStorage.getItem(getThemeStorageKey());
+    return theme === "dark" || theme === "light" ? theme : null;
   } catch (_) {
-    return document.documentElement.getAttribute("data-theme") === "dark"
-      ? "dark"
-      : "light";
+    return null;
   }
+}
+
+function getStoredTheme() {
+  const savedTheme = getExplicitStoredTheme();
+  if (savedTheme) return savedTheme;
+
+  const storageKey = getThemeStorageKey();
+  if (storageKey === THEME_STORAGE_KEY) return null;
+
+  try {
+    const legacyTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    return legacyTheme === "dark" || legacyTheme === "light"
+      ? legacyTheme
+      : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function getTheme() {
+  return (
+    getStoredTheme() ||
+    (document.documentElement.getAttribute("data-theme") === "dark"
+      ? "dark"
+      : "light")
+  );
 }
 
 /* Apply the theme to <html>, persist when asked, and sync any
    switcher controls already present in the DOM. */
+let themeApplicationVersion = 0;
+
 function applyTheme(theme, save) {
   const value = theme === "dark" ? "dark" : "light";
+  themeApplicationVersion += 1;
   if (value === "dark") {
     document.documentElement.setAttribute("data-theme", "dark");
   } else {
@@ -32,7 +68,7 @@ function applyTheme(theme, save) {
   }
   if (save) {
     try {
-      localStorage.setItem(THEME_STORAGE_KEY, value);
+      localStorage.setItem(getThemeStorageKey(), value);
     } catch (_) {}
   }
   syncThemeSwitchers(value);
@@ -82,6 +118,19 @@ function buildThemeSwitch() {
 /* Inject the switcher into the page at the best available spot. */
 function injectThemeSwitch() {
   if (document.body?.classList.contains("assistant-page")) return;
+
+  const isAuthLoginOrRegister =
+    document.body &&
+    (document.body.classList.contains("login-page") ||
+      document.body.classList.contains("register-page"));
+
+  if (isAuthLoginOrRegister) {
+    document.querySelectorAll(".app-theme-switch").forEach((button) => {
+      button.remove();
+    });
+    return;
+  }
+
   const existing = document.querySelector(".app-theme-switch");
   const sidebarThemeSlot = document.querySelector(
     ".dashboard-sidebar-theme-slot",
@@ -245,10 +294,7 @@ function initContentRevealAnimations() {
 
 /* Initialise: apply the persisted theme and set up controls. */
 function initTheme() {
-  let savedTheme = null;
-  try {
-    savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-  } catch (_) {}
+  const savedTheme = getStoredTheme();
   const theme = savedTheme || "light";
   applyTheme(theme, false);
   injectThemeSwitch();
@@ -258,14 +304,17 @@ function initTheme() {
   bindThemeSwitchers();
   pauseNavbarAnimationsWhenHidden();
   initContentRevealAnimations();
+  const initializationVersion = themeApplicationVersion;
   if (!savedTheme && typeof apiRequest === "function") {
     apiRequest("/public/settings")
       .then((response) => {
+        const defaultTheme = response?.data?.defaultTheme;
         if (
-          response?.data?.defaultTheme &&
-          !localStorage.getItem(THEME_STORAGE_KEY)
+          (defaultTheme === "light" || defaultTheme === "dark") &&
+          themeApplicationVersion === initializationVersion &&
+          !getStoredTheme()
         ) {
-          applyTheme(response.data.defaultTheme, false);
+          applyTheme(defaultTheme, false);
         }
       })
       .catch((error) => {
@@ -275,5 +324,7 @@ function initTheme() {
 }
 
 if (typeof window !== "undefined") {
+  window.getStoredTheme = getStoredTheme;
+  window.getExplicitStoredTheme = getExplicitStoredTheme;
   document.addEventListener("DOMContentLoaded", initTheme);
 }

@@ -61,7 +61,7 @@
   border: 1px solid rgba(59, 130, 246, .7);
   border-radius: 12px;
   background: var(--primary);
-  color: #1F2937;
+  color: #fff;
   font-size: 1.15rem;
 }
 
@@ -310,7 +310,7 @@ html[data-theme="dark"] .assistant-header-actions .theme-moon {
 .assistant-message.is-user .assistant-message-bubble {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   border-bottom-right-radius: 5px;
-  color: #1F2937;
+  color: #fff;
 }
 
 .assistant-message-content {
@@ -337,7 +337,7 @@ html[data-theme="dark"] .assistant-header-actions .theme-moon {
 .assistant-message.is-user .assistant-message-content h3,
 .assistant-message.is-user .assistant-message-content h4,
 .assistant-message.is-user .assistant-message-content h5 {
-  color: #1F2937;
+  color: #fff;
 }
 
 .assistant-message-content ul {

@@ -76,7 +76,6 @@ const NOTIFICATION_VISUALS = {
   request_reassigned: { icon: "bi-arrow-left-right", colour: "#D97706" },
   request_reassigned_admin: { icon: "bi-arrow-left-right", colour: "#D97706" },
   new_comment: { icon: "bi-chat-left-text", colour: "#2563EB" },
-  feedback_available: { icon: "bi-star", colour: "#D97706" },
   feedback_update: { icon: "bi-chat-square-text", colour: "#2563EB" },
   priority_changed: { icon: "bi-flag", colour: "#D97706" },
   high_priority_request: { icon: "bi-exclamation-triangle", colour: "#EA580C" },
@@ -279,9 +278,7 @@ function renderNotificationDetailsButton(notification) {
         ? "../admin/admin-feedback.html"
         : role === "Technician"
           ? "../technician/technician-feedback.html"
-          : role === "Requester"
-            ? "../user/feedback.html"
-            : "";
+          : "";
     if (!page) return "";
     return `<div class="notif-view-actions">
       <a class="btn btn-sm btn-outline-primary" href="${page}?feedback=${encodeURIComponent(feedbackId)}">

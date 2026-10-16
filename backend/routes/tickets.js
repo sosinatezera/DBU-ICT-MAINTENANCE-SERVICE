@@ -16,20 +16,21 @@ const {
   submitTechnicianFeedback,
   editTechnicianFeedback,
   getTechnicianFeedback,
-  submitRequesterFeedback,
-  getRequesterFeedback,
   submitAdminFeedback,
   editAdminFeedback,
   getAdminFeedback,
+  getAdminFeedbackEvaluations,
   deleteAdminFeedback,
 } = require("../controllers/ticketController");
 const { authenticate } = require("../middleware/auth");
 const { authorize } = require("../middleware/authorize");
+const {
+  authorizeTicketTracking,
+} = require("../middleware/authorizeTicketTracking");
 const { rateLimit } = require("../middleware/rateLimiter");
 const upload = require("../config/multer");
 
-/* Public tracking is open to anyone, so throttle it tightly to prevent
-   brute-force enumeration of the sequential ticket codes. */
+/* Keep tracking attempts throttled, including unauthenticated requests. */
 const trackRateLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 60 });
 
 /* ICT Admin — all tickets */
@@ -38,8 +39,25 @@ router.get("/", authenticate, authorize("ICT Admin"), getAllTickets);
 /* Requester — own tickets */
 router.get("/my", authenticate, getMyTickets);
 
-/* Public tracking by ticket code (no auth required, rate-limited) */
-router.get("/track/:ticketId", trackRateLimit, trackTicket);
+/* Tracking is limited to the requester, assigned technician, or ICT Admin. */
+router.get(
+  "/track/:ticketId",
+  trackRateLimit,
+  authenticate,
+  authorize("Requester", "Technician", "ICT Admin"),
+  authorizeTicketTracking,
+  trackTicket,
+);
+
+/* Saved admin feedback evaluations list (Feedback page).
+   Static path — must stay before "/:id" so "admin-feedback" is never
+   interpreted as a ticket id. */
+router.get(
+  "/admin-feedback",
+  authenticate,
+  authorize("ICT Admin"),
+  getAdminFeedbackEvaluations,
+);
 
 /* Single ticket detail */
 router.get("/:id", authenticate, getTicketById);
@@ -84,11 +102,6 @@ router.get(
   authorize("ICT Admin", "Technician", "Requester"),
   getTechnicianFeedback,
 );
-
-/* Requester Service Feedback (Requester owner + ICT Admin)
-   Purpose: the requester's evaluation of the ICT SERVICE they received. */
-router.post("/:id/requester-feedback", authenticate, submitRequesterFeedback);
-router.get("/:id/requester-feedback", authenticate, getRequesterFeedback);
 
 /* Admin Service Feedback (ICT Admin only — no technicians/requesters)
    Purpose: management / service quality evaluation. */

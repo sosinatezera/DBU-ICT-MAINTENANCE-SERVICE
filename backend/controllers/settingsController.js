@@ -40,7 +40,6 @@ const NOTIF_FIELDS = [
   "notifStatusChange",
   "notifCompletion",
   "notifSystemSecurity",
-  "notifUserFeedback",
   "notifTechnicianFeedback",
   "notifFeedbackReplies",
   "notificationSound",

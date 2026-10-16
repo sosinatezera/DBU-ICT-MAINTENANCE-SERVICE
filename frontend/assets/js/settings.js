@@ -550,7 +550,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     setCheck("notifStatusChange", settings.notifStatusChange !== false);
     setCheck("notifCompletion", settings.notifCompletion !== false);
     setCheck("notifSystemSecurity", settings.notifSystemSecurity !== false);
-    setCheck("notifUserFeedback", settings.notifUserFeedback !== false);
     setCheck("notifTechnicianFeedback", settings.notifTechnicianFeedback !== false);
     setCheck("notifFeedbackReplies", settings.notifFeedbackReplies !== false);
     setCheck("notificationSound", settings.notificationSound !== false);
@@ -581,7 +580,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       notifStatusChange: getCheck("notifStatusChange"),
       notifCompletion: getCheck("notifCompletion"),
       notifSystemSecurity: getCheck("notifSystemSecurity"),
-      notifUserFeedback: getCheck("notifUserFeedback"),
       notifTechnicianFeedback: getCheck("notifTechnicianFeedback"),
       notifFeedbackReplies: getCheck("notifFeedbackReplies"),
       notificationSound: getCheck("notificationSound"),
@@ -1679,6 +1677,7 @@ async function initPersonalSettings(user) {
   const fileUploadButton = document.getElementById("uploadProfileFileBtn");
   let selectedPhoto = null;
   let photoPreviewUrl = null;
+  let photoUploading = false;
   let selectedProfileFile = null;
 
   const showUploadAlert = (id, message, type = "danger") => {
@@ -1720,10 +1719,13 @@ async function initPersonalSettings(user) {
     photoSaveButton?.classList.add("d-none");
     photoCancelButton?.classList.add("d-none");
     if (photoSaveButton) photoSaveButton.disabled = false;
-    if (photoAvatar) applyProfileAvatar(Auth.getUser(), photoAvatar);
+    if (photoAvatar) {
+      applyProfileAvatar(Auth.getUser() || user || null, photoAvatar);
+    }
   };
 
   photoInput?.addEventListener("change", () => {
+    if (photoUploading) return;
     const file = photoInput.files?.[0];
     if (!file) return;
     clearUploadAlert("profilePhotoAlert");
@@ -1747,6 +1749,7 @@ async function initPersonalSettings(user) {
       );
       return;
     }
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
     selectedPhoto = file;
     photoPreviewUrl = URL.createObjectURL(file);
     photoPreviewImage.src = photoPreviewUrl;
@@ -1772,8 +1775,12 @@ async function initPersonalSettings(user) {
   });
 
   photoSaveButton?.addEventListener("click", async () => {
-    if (!selectedPhoto) return;
+    if (photoUploading || !selectedPhoto) return;
+    photoUploading = true;
     photoSaveButton.disabled = true;
+    photoSaveButton.setAttribute("aria-busy", "true");
+    if (photoInput) photoInput.disabled = true;
+    if (photoCancelButton) photoCancelButton.disabled = true;
     document
       .getElementById("saveProfilePhotoSpinner")
       ?.classList.remove("d-none");
@@ -1781,16 +1788,21 @@ async function initPersonalSettings(user) {
     try {
       const formData = new FormData();
       formData.append("profileImage", selectedPhoto);
-      const { data } = await apiRequest("/users/profile-image", {
+      const response = await apiRequest("/users/profile-image", {
         method: "POST",
         body: formData,
         isFormData: true,
       });
-      if (!data?.profileImage) {
+      const savedProfileImage = response?.data?.profileImage;
+      if (
+        response?.success !== true ||
+        typeof savedProfileImage !== "string" ||
+        !savedProfileImage.trim()
+      ) {
         throw new Error("Profile photo upload returned no saved image.");
       }
       const updatedUser = await Auth.refresh();
-      if (updatedUser.profileImage !== data.data.profileImage) {
+      if (!updatedUser || updatedUser.profileImage !== savedProfileImage) {
         throw new Error("The saved profile photo could not be reloaded.");
       }
       applyProfileAvatar(updatedUser, photoAvatar);
@@ -1814,7 +1826,11 @@ async function initPersonalSettings(user) {
         error.message || "Could not upload the profile photo.",
       );
     } finally {
+      photoUploading = false;
       photoSaveButton.disabled = false;
+      photoSaveButton.removeAttribute("aria-busy");
+      if (photoInput) photoInput.disabled = false;
+      if (photoCancelButton) photoCancelButton.disabled = false;
       document
         .getElementById("saveProfilePhotoSpinner")
         ?.classList.add("d-none");
@@ -2006,7 +2022,7 @@ async function initPersonalSettings(user) {
 
   const signedInUser = Auth.getUser() || user;
   if (photoAvatar) applyProfileAvatar(signedInUser, photoAvatar);
-  if (signedInUser.profileImage && photoChooseLabel) {
+  if (signedInUser?.profileImage && photoChooseLabel) {
     photoChooseLabel.textContent = "Change Photo";
   }
   loadProfileFiles();
@@ -2301,6 +2317,7 @@ async function initPersonalSettings(user) {
           : Promise.resolve({ data: null }),
       ]);
       const preferences = preferencesResult.data || {};
+      const storedTheme = window.getStoredTheme?.() || null;
       /* This snapshot MUST have the same keys, in the same order, as
          captureForm() — the unsaved-changes marker compares the two with
          JSON.stringify, which omits undefined values. A Requester gets
@@ -2314,7 +2331,8 @@ async function initPersonalSettings(user) {
           ? preferences.maintenanceAlerts !== false
           : undefined,
         language: preferences.language === "am" ? "am" : "en",
-        theme: preferences.theme === "dark" ? "dark" : "light",
+        theme:
+          storedTheme || (preferences.theme === "dark" ? "dark" : "light"),
         availability: isTechnician
           ? technicianResult.data?.availability ||
             (technicianResult.data?.available === false
@@ -2323,9 +2341,8 @@ async function initPersonalSettings(user) {
           : undefined,
       };
       applyForm(original);
-      /* The server is the source of truth for language/theme, so mirror it into
-         localStorage. Without this, every OTHER page would keep booting from a
-         stale local value and appear to ignore the change made here. */
+      /* A saved local theme reflects a newer choice made with the shared
+         switcher; otherwise, use the server preference as the initial value. */
       if (typeof setLang === "function") setLang(original.language);
       if (typeof setTheme === "function") setTheme(original.theme);
       if (isTechnician && !technicianResult.data) {
@@ -2441,6 +2458,20 @@ async function initPersonalSettings(user) {
   });
   themeSelect.addEventListener("change", () => {
     if (typeof applyTheme === "function") applyTheme(themeSelect.value, false);
+    syncDirtyBadge();
+  });
+  document.addEventListener("click", (event) => {
+    if (
+      !(event.target instanceof Element) ||
+      !event.target.closest("[data-theme-switch]") ||
+      typeof getTheme !== "function"
+    ) {
+      return;
+    }
+    const theme = getTheme();
+    if (theme !== "dark" && theme !== "light") return;
+    themeSelect.value = theme;
+    if (original) original = { ...original, theme };
     syncDirtyBadge();
   });
 

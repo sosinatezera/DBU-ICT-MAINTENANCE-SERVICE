@@ -15,7 +15,6 @@ const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const AIConversation = require("../models/AIConversation");
 const AIFeedback = require("../models/AIFeedback");
-const Feedback = require("../models/Feedback");
 const AuditLog = require("../models/AuditLog");
 const Settings = require("../models/Settings");
 const ProfileFile = require("../models/ProfileFile");
@@ -415,7 +414,6 @@ const permanentDeleteUser = async (req, res, next) => {
         await Notification.deleteMany({ user: id }, { session });
         await AIConversation.deleteMany({ user: id }, { session });
         await AIFeedback.deleteMany({ user: id }, { session });
-        await Feedback.deleteMany({ user: id }, { session });
 
         await Assignment.updateMany(
           { assigned_by: id },

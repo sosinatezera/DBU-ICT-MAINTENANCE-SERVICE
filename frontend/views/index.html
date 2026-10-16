@@ -30,7 +30,7 @@
       /* card surface           */
       --home-surface-hover: #EFF6FF;
       /* card hover             */
-      --home-text: #1f2937;
+      --home-text: #0F172A;
       /* main headings          */
       --home-text-soft: #475569;
       /* body text              */
@@ -38,8 +38,8 @@
       /* secondary text         */
       --home-text-dim: #9ca3af;
       /* tertiary / meta text   */
-      --home-primary: #3B82F6;
-      --home-primary-strong: #1E40AF;
+      --home-primary: #2563EB;
+      --home-primary-strong: #1D4ED8;
       --home-accent: #60A5FA;
       --home-border: #e2e8f0;
       /* card / hairline border */
@@ -95,9 +95,9 @@
       overflow: visible !important;
     }
 
-    /* ── Home Page header background white green ──────────────────────── */
+    /* Keep the public navigation consistent with the light application shell. */
     body:not(.dashboard-body):not(.auth-body) .main-navbar {
-      background: #E8F5E9;
+      background: #172554;
     }
 
     .main-navbar .container {
@@ -139,7 +139,7 @@
     }
 
     .main-navbar .navbar-toggler {
-      border-color: var(--home-border-strong);
+      border-color: rgba(219, 234, 254, .65);
     }
 
     .main-navbar .navbar-toggler:focus {
@@ -147,7 +147,7 @@
     }
 
     .main-navbar .navbar-toggler-icon {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%231f2933' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%23ffffff' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
     }
 
     @media (max-width: 1199.98px) {
@@ -156,7 +156,7 @@
       .main-navbar .collapsing {
         margin-top: .5rem;
         padding: .65rem 1rem 1rem;
-        background: rgba(255, 255, 255, .99);
+        background: #172554;
         border-bottom: 1px solid var(--home-border);
         border-radius: 0 0 14px 14px;
         box-shadow: 0 14px 28px -16px rgba(15, 23, 42, .28);
@@ -214,12 +214,12 @@
 
     .navbar-brand .brand-text-main,
     .navbar-brand .brand-text-sub {
-      color: #0f172a;
+      color: #FFFFFF;
     }
 
     /* ── Navigation links: evenly spaced, vertically centred ── */
     .nav-link-item {
-      color: #1f2937 !important;
+      color: #FFFFFF !important;
       font-weight: 500;
       font-size: .95rem;
       padding: .75rem .9rem !important;
@@ -239,15 +239,15 @@
       left: 50%;
       width: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--home-primary), var(--home-accent));
+      background: #2563EB;
       border-radius: 999px;
       transition: width .3s cubic-bezier(.4, 0, .2, 1);
       transform: translateX(-50%);
     }
 
     .nav-link-item:hover {
-      color: #1E3A8A !important;
-      background: rgba(59, 130, 246, .12);
+      color: #BFDBFE !important;
+      background: rgba(37, 99, 235, .16);
     }
 
     .nav-link-item:hover::after,
@@ -256,8 +256,8 @@
     }
 
     .nav-link-item.active {
-      color: #1E3A8A !important;
-      background: rgba(59, 130, 246, .18);
+      color: #FFFFFF !important;
+      background: #2563EB;
       font-weight: 600;
     }
 
@@ -269,8 +269,8 @@
     /* ── Login: elegant outlined button ── */
     .btn-nav-login {
       border: 1.5px solid #BFDBFE;
-      color: #1E3A8A !important;
-      background: #fff;
+      color: #FFFFFF !important;
+      background: rgba(255, 255, 255, .08);
       border-radius: 10px;
       padding: .6rem 1.3rem !important;
       font-size: .95rem;
@@ -284,16 +284,16 @@
     }
 
     .btn-nav-login:hover {
-      background: #EFF6FF;
-      border-color: #3B82F6;
-      color: #1E3A8A !important;
+      background: rgba(219, 234, 254, .16);
+      border-color: #BFDBFE;
+      color: #FFFFFF !important;
       box-shadow: 0 4px 14px -8px rgba(30, 64, 175, .55);
     }
 
     /* ── Register: primary blue button ── */
     .btn-nav-register {
-      background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
-      color: #1F2937 !important;
+      background: #2563EB;
+      color: #FFFFFF !important;
       border: none;
       border-radius: 10px;
       padding: .6rem 1.4rem !important;
@@ -311,7 +311,7 @@
     }
 
     .btn-nav-register:hover {
-      background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+      background: #1D4ED8;
       box-shadow: 0 10px 22px -12px rgba(30, 64, 175, .75);
     }
 
@@ -354,7 +354,7 @@
 
       .main-navbar .collapse.show,
       .main-navbar .collapsing {
-        background: rgba(255, 255, 255, .99);
+        background: #172554;
         border-radius: 0 0 14px 14px;
         border-bottom: 1px solid var(--home-border);
         box-shadow: 0 14px 28px -16px rgba(15, 23, 42, .28);
@@ -369,7 +369,7 @@
       }
 
       .nav-link-item.active {
-        background: rgba(59, 130, 246, .2);
+        background: #2563EB;
       }
 
       .nav-link-item.active::after {
@@ -377,13 +377,13 @@
       }
 
       .navbar-nav .nav-link {
-        color: var(--home-text) !important;
+        color: #FFFFFF !important;
         width: 100%;
         text-align: center;
       }
 
       .navbar-nav .nav-link:hover {
-        color: var(--home-primary) !important;
+        color: #BFDBFE !important;
       }
 
       .lang-switch,
@@ -818,9 +818,9 @@
       transition: all .25s cubic-bezier(.4, 0, .2, 1);
     }
 
-    .hero-cta .btn-request {
+    body:not(.dashboard-body):not(.auth-body) .hero-section .hero-cta .btn-request {
       background: linear-gradient(135deg, var(--home-primary) 0%, var(--home-primary-strong) 100%);
-      color: #1F2937 !important;
+      color: #FFFFFF !important;
     }
 
     .hero-cta .btn-request:hover {
@@ -1572,86 +1572,6 @@
     html body:not(.dashboard-body):not(.auth-body) {
       color: var(--home-text-soft);
       background-color: var(--home-bg);
-    }
-
-    /* ── Navbar text & icons (professional navy + blue accent) ──
-       Keeps the landing navbar consistent with the clean white
-       university-service bar in light mode. Dark mode is handled in
-       theme.css with a matching navy surface. */
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .brand-text-main {
-      color: var(--home-text) !important;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .brand-text-sub {
-      color: var(--home-text-muted) !important;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item {
-      color: var(--home-text-muted) !important;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item i,
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-login i {
-      color: var(--home-text-muted) !important;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item:hover i,
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active i {
-      color: #1E3A8A !important;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item:hover,
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active {
-      background: rgba(59, 130, 246, .14);
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active {
-      background: rgba(59, 130, 246, .2);
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .nav-link-item.active::after {
-      background: linear-gradient(90deg, var(--home-primary), var(--home-accent)) !important;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-login {
-      color: #1E3A8A !important;
-      border-color: #3B82F6 !important;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-register,
-    body:not(.dashboard-body):not(.auth-body) .main-navbar .btn-nav-register i {
-      color: #1F2937 !important;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .main-navbar {
-      background: #B8F5A8 !important;
-      background-color: #B8F5A8 !important;
-      border-bottom-color: rgba(226, 232, 240, .9);
-    }
-
-    body:not(.dashboard-body):not(.auth-body) #mainNavbar .lang-select {
-      background-color: #fff;
-      color: var(--home-text);
-      border-color: var(--home-border-strong);
-    }
-
-    body:not(.dashboard-body):not(.auth-body) #mainNavbar .app-theme-switch {
-      background-color: #fff;
-      color: var(--home-text);
-      border-color: var(--home-border-strong);
-    }
-
-    /* ── Floating theme/language controls, if rendered on Home ── */
-    body:not(.dashboard-body):not(.auth-body) .app-theme-switch,
-    body:not(.dashboard-body):not(.auth-body) .app-theme-switch i,
-    body:not(.dashboard-body):not(.auth-body) .app-theme-switch .theme-moon,
-    body:not(.dashboard-body):not(.auth-body) .app-theme-switch .theme-sun {
-      color: var(--home-text-soft) !important;
-    }
-
-    body:not(.dashboard-body):not(.auth-body) .lang-switch .lang-select,
-    body:not(.dashboard-body):not(.auth-body) .lang-switch .lang-select i {
-      color: var(--home-text-muted) !important;
     }
 
     /* ── Hero: keep gradient tint behind the slideshow for readability ── */
@@ -2549,7 +2469,7 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="/assets/css/theme.css?v=14" />
+  <link rel="stylesheet" href="/assets/css/theme.css?v=16" />
   <script src="/assets/js/lang.js?v=16"></script>
 </head>
 
@@ -2999,7 +2919,7 @@
                   tracking code and creates a
                   maintenance ticket in the queue.</span></div>
             </div>
-            <span class="badge ms-auto" style="background:#3B82F6;color:#1F2937;"><span
+            <span class="badge ms-auto" style="background:#2563EB;color:#FFFFFF;"><span
                 data-i18n="wf.badge2">Generated</span></span>
           </div>
           <div class="workflow-connector"><i class="fa-solid fa-arrow-down"></i></div>
@@ -3031,10 +2951,8 @@
           <div class="workflow-step mb-1">
             <div class="step-num" style="background:#d1e7dd;color:#198754;">5</div>
             <div>
-              <div class="fw-semibold"><span data-i18n="wf.step5">Resolution &amp; Feedback</span></div>
-              <div class="text-muted small"><span data-i18n="wf.step5.desc">The user confirms the issue is resolved and
-                  provides a star rating to close
-                  the maintenance cycle.</span></div>
+              <div class="fw-semibold"><span data-i18n="wf.step5">Resolution</span></div>
+              <div class="text-muted small"><span data-i18n="wf.step5.desc">The technician records the work completed and the request is resolved.</span></div>
             </div>
             <span class="badge bg-success ms-auto"><span data-i18n="wf.badge5">Resolved</span></span>
           </div>
@@ -3346,7 +3264,7 @@
                       Please try again.</span>
                   </div>
                   <button type="submit" id="contactSubmitBtn" class="btn fw-semibold px-4 py-2"
-                    style="border-radius:10px;background:linear-gradient(135deg,#3B82F6,#1E40AF);color:#1F2937;border:none;box-shadow:0 8px 20px -8px rgba(30, 64, 175,.6);transition:transform .2s,box-shadow .2s;">
+                    style="border-radius:10px;background:#2563EB;color:#FFFFFF;border:none;box-shadow:0 8px 20px -8px rgba(30, 64, 175,.6);transition:transform .2s,box-shadow .2s;">
                     <i class="fa-solid fa-paper-plane me-2"></i><span data-i18n="contact.form.submit">Send
                       Message</span>
                   </button>

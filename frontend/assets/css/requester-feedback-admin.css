@@ -1,0 +1,10 @@
+.requester-feedback-admin-table {
+  min-width: 1150px;
+}
+
+.requester-feedback-text {
+  min-width: 180px;
+  max-width: 260px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
 
-<body class="dashboard-body">
+<body class="dashboard-body admin-dashboard">
 
   <div class="d-flex">
     <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3" style="min-height:100vh;width:250px;">
@@ -68,78 +68,11 @@
       </header>
 
       <main class="p-4">
-        <section class="card border-0 shadow-sm mb-4" id="requesterServiceFeedbackPanel"
-          aria-labelledby="requesterServiceFeedbackTitle">
-          <div class="card-header bg-white py-3">
-            <h2 class="h5 fw-bold mb-1" id="requesterServiceFeedbackTitle">Requester Service Ratings</h2>
-            <p class="small text-muted mb-0">Review submitted service feedback and follow-up requests. Technician maintenance reports are managed separately.</p>
-          </div>
-          <div class="card-body border-bottom">
-            <div class="row g-3">
-              <div class="col-6 col-lg-3"><div class="small text-muted">Total responses</div><strong class="fs-4" id="serviceFeedbackTotal">0</strong></div>
-              <div class="col-6 col-lg-3"><div class="small text-muted">Average satisfaction</div><strong class="fs-4" id="serviceFeedbackAverage">0</strong></div>
-              <div class="col-6 col-lg-3"><div class="small text-muted">Low ratings (1–2)</div><strong class="fs-4" id="serviceFeedbackLowRatings">0</strong></div>
-              <div class="col-6 col-lg-3"><div class="small text-muted">Follow-up requested</div><strong class="fs-4" id="serviceFeedbackFollowUps">0</strong></div>
-            </div>
-            <div class="small text-muted mt-2" id="serviceFeedbackQualitySummary" aria-live="polite"></div>
-          </div>
-          <div class="card-body border-bottom">
-            <div class="row g-2 align-items-end">
-              <div class="col-6 col-md-3">
-                <label class="form-label small mb-1" for="serviceFeedbackFrom">From</label>
-                <input class="form-control form-control-sm" id="serviceFeedbackFrom" type="date" />
-              </div>
-              <div class="col-6 col-md-3">
-                <label class="form-label small mb-1" for="serviceFeedbackTo">To</label>
-                <input class="form-control form-control-sm" id="serviceFeedbackTo" type="date" />
-              </div>
-              <div class="col-6 col-md-2">
-                <label class="form-label small mb-1" for="serviceFeedbackRating">Rating</label>
-                <select class="form-select form-select-sm" id="serviceFeedbackRating">
-                  <option value="">All ratings</option><option value="5">5 stars</option><option value="4">4 stars</option>
-                  <option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option>
-                </select>
-              </div>
-              <div class="col-6 col-md-2">
-                <label class="form-label small mb-1" for="serviceFeedbackRepairQuality">Repair quality</label>
-                <select class="form-select form-select-sm" id="serviceFeedbackRepairQuality">
-                  <option value="">All outcomes</option><option>Fully Fixed</option>
-                  <option>Partially Fixed</option><option>Not Fixed</option>
-                </select>
-              </div>
-              <div class="col-6 col-md-2">
-                <label class="form-label small mb-1" for="serviceFeedbackFollowUp">Follow-up</label>
-                <select class="form-select form-select-sm" id="serviceFeedbackFollowUp">
-                  <option value="">All</option><option value="true">Requested</option><option value="false">Not requested</option>
-                </select>
-              </div>
-              <div class="col-12 d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-primary" id="serviceFeedbackApplyFilters">Apply filters</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="serviceFeedbackClearFilters">Clear filters</button>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <div id="serviceFeedbackLoadError" class="alert alert-danger d-none" role="alert" aria-live="polite"></div>
-            <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0">
-                <thead><tr>
-                  <th>Feedback / Request</th><th>Requester</th><th>Technician</th><th>Equipment / Asset</th>
-                  <th>Rating</th><th>Repair quality</th><th>Response</th><th>Follow-up</th><th>Comments</th><th>Submitted</th>
-                </tr></thead>
-                <tbody id="requesterServiceFeedbackRows">
-                  <tr><td colspan="10" class="text-center text-muted py-4">Loading requester service feedback...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
         <section class="card border-0 shadow-sm mb-4" id="feedbackSubmissionManager"
           aria-labelledby="feedbackSubmissionManagerTitle">
           <div class="card-header bg-white py-3">
             <h2 class="h5 fw-bold mb-1" id="feedbackSubmissionManagerTitle">Feedback Management</h2>
-            <p class="small text-muted mb-0">Review feedback from Requesters and Technicians, record actions, and manage replies and status.</p>
+            <p class="small text-muted mb-0">Review feedback from Requesters and Technicians, record responses, and manage status.</p>
           </div>
           <div class="card-body border-bottom">
             <div class="row g-3">
@@ -149,8 +82,8 @@
               <div class="col-6 col-md-3"><div class="small text-muted">Replied</div><strong class="fs-4" data-feedback-stat="replied">0</strong></div>
               <div class="col-6 col-md-3"><div class="small text-muted">Resolved</div><strong class="fs-4" data-feedback-stat="resolved">0</strong></div>
               <div class="col-6 col-md-3"><div class="small text-muted">Closed</div><strong class="fs-4" data-feedback-stat="closed">0</strong></div>
-              <div class="col-6 col-md-3"><div class="small text-muted">Requesters</div><strong class="fs-4" data-feedback-stat="requesters">0</strong></div>
-              <div class="col-6 col-md-3"><div class="small text-muted">Technicians</div><strong class="fs-4" data-feedback-stat="technicians">0</strong></div>
+              <div class="col-6 col-md-3"><div class="small text-muted">Technician feedback</div><strong class="fs-4" data-feedback-stat="technicians">0</strong></div>
+              <div class="col-6 col-md-3"><div class="small text-muted">Requester feedback</div><strong class="fs-4" data-feedback-stat="requesters">0</strong></div>
             </div>
           </div>
           <div class="card-body border-bottom">
@@ -167,7 +100,8 @@
               <div class="col-6 col-lg-2">
                 <label class="form-label small mb-1" for="feedbackAdminRole">Sender role</label>
                 <select class="form-select form-select-sm" id="feedbackAdminRole">
-                  <option value="">All roles</option><option>Requester</option><option>Technician</option>
+                  <option value="">All roles</option>
+                  <option>Requester</option><option>Technician</option>
                 </select>
               </div>
               <div class="col-6 col-lg-2">
@@ -185,8 +119,9 @@
                 <label class="form-label small mb-1" for="feedbackAdminStatus">Status</label>
                 <select class="form-select form-select-sm" id="feedbackAdminStatus">
                   <option value="">All statuses</option>
-                  <option>Pending</option><option>In Progress</option><option>Replied</option>
-                  <option>Resolved</option><option>Closed</option>
+                  <option>Pending</option><option>Submitted</option><option>In Progress</option>
+                  <option>Under Review</option><option>Action Required</option><option>Follow-up Required</option>
+                  <option>Replied</option><option>Reviewed</option><option>Resolved</option><option>Closed</option>
                 </select>
               </div>
               <div class="col-6 col-lg-2">
@@ -228,12 +163,12 @@
               <thead class="table-light">
                 <tr>
                   <th>Feedback ID</th><th>Sender</th><th>Role</th><th>Department</th>
-                  <th>Category / Subject</th><th>Priority</th><th>Submitted</th>
+                  <th>Category / Subject</th><th>Message</th><th>Priority</th><th>Submitted</th>
                   <th>Last Reply</th><th>Status</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="feedbackAdminRows">
-                <tr><td colspan="10" class="text-center text-muted py-4">Loading feedback submissions...</td></tr>
+                <tr><td colspan="11" class="text-center text-muted py-4">Loading feedback submissions...</td></tr>
               </tbody>
             </table>
           </div>
@@ -242,6 +177,86 @@
             <div class="btn-group btn-group-sm">
               <button type="button" class="btn btn-outline-secondary" id="feedbackAdminPrev" aria-label="Previous page">&laquo;</button>
               <button type="button" class="btn btn-outline-secondary" id="feedbackAdminNext" aria-label="Next page">&raquo;</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4 d-none" id="adminEvaluationsSection"
+          aria-labelledby="adminEvaluationsTitle">
+          <div class="card-header bg-white py-3">
+            <h2 class="h5 fw-bold mb-1" id="adminEvaluationsTitle">
+              <i class="bi bi-clipboard2-check text-primary me-1" aria-hidden="true"></i>Admin Evaluations
+            </h2>
+            <p class="small text-muted mb-0">Administrative evaluations of technician maintenance reports. Separate from requester and technician feedback submissions.</p>
+          </div>
+          <div class="card-body border-bottom">
+            <div id="adminEvalLoadError" class="alert alert-danger d-none mb-3" role="alert" aria-live="polite">
+              <span id="adminEvalLoadErrorMessage"></span>
+              <button class="btn btn-sm btn-outline-danger ms-2" type="button" id="adminEvalRetry">Retry</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-12 col-lg-3">
+                <label class="form-label small mb-1" for="adminEvalSearch">Search</label>
+                <input class="form-control form-control-sm" id="adminEvalSearch" type="search"
+                  placeholder="Request ID, equipment, technician, or reviewer" />
+              </div>
+              <div class="col-6 col-lg-2">
+                <label class="form-label small mb-1" for="adminEvalDecision">Review decision</label>
+                <select class="form-select form-select-sm" id="adminEvalDecision">
+                  <option value="">All decisions</option>
+                  <option>Approved</option><option>Needs Correction</option><option>Rejected</option>
+                </select>
+              </div>
+              <div class="col-6 col-lg-2">
+                <label class="form-label small mb-1" for="adminEvalWorkQuality">Work quality</label>
+                <select class="form-select form-select-sm" id="adminEvalWorkQuality">
+                  <option value="">All ratings</option>
+                  <option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option>
+                </select>
+              </div>
+              <div class="col-6 col-lg-2">
+                <label class="form-label small mb-1" for="adminEvalStatus">Feedback status</label>
+                <select class="form-select form-select-sm" id="adminEvalStatus">
+                  <option value="">All statuses</option>
+                  <option>Pending</option><option>Reviewed</option>
+                  <option>Pending Correction</option><option>Resolved</option>
+                </select>
+              </div>
+              <div class="col-6 col-lg-1">
+                <label class="form-label small mb-1" for="adminEvalSort">Sort</label>
+                <select class="form-select form-select-sm" id="adminEvalSort">
+                  <option value="newest">Newest</option><option value="oldest">Oldest</option>
+                </select>
+              </div>
+              <div class="col-6 col-lg-1">
+                <label class="form-label small mb-1" for="adminEvalFrom">From</label>
+                <input class="form-control form-control-sm" id="adminEvalFrom" type="date" aria-label="Evaluations from date" />
+              </div>
+              <div class="col-6 col-lg-1">
+                <label class="form-label small mb-1" for="adminEvalTo">To</label>
+                <input class="form-control form-control-sm" id="adminEvalTo" type="date" aria-label="Evaluations to date" />
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Maintenance Request ID</th><th>Equipment Name</th><th>Technician</th>
+                  <th>Review Decision</th><th>Work Quality</th><th>Feedback Status</th>
+                  <th>Reviewed By</th><th>Feedback Date</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminEvalRows">
+                <tr><td colspan="9" class="text-center text-muted py-4">Loading admin evaluations…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer bg-white d-flex justify-content-between align-items-center gap-2">
+            <small id="adminEvalPageInfo" class="text-muted"> </small>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-secondary" id="adminEvalPrev" aria-label="Previous evaluations page">&laquo;</button>
+              <button type="button" class="btn btn-outline-secondary" id="adminEvalNext" aria-label="Next evaluations page">&raquo;</button>
             </div>
           </div>
         </section>
@@ -266,400 +281,175 @@
           </div>
         </div>
 
-        <!-- Feedback Summary KPIs (computed by the backend, never hard-coded) -->
-        <div class="row g-3 mb-4">
-          <div class="col-6 col-xl">
-            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
-              <div class="bg-primary bg-opacity-10 p-3 rounded"><i class="bi bi-chat-dots fs-4 text-primary"></i></div>
-              <div>
-                <h4 class="fw-bold mb-0" id="fbKpiTotal">0</h4>
-                <small class="text-muted"><span data-i18n="admin.feedback.kpi.totalFeedback">Total
-                    Feedback</span></small>
+        <!-- Dedicated Admin Feedback Evaluation form -->
+        <div class="modal fade" id="adminEvalModal" tabindex="-1" aria-labelledby="adminEvalModalTitle"
+          aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h2 class="modal-title fs-5 fw-bold" id="adminEvalModalTitle">
+                  <i class="bi bi-clipboard2-check text-primary me-1" aria-hidden="true"></i>Admin Feedback Evaluation
+                </h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
-            </div>
-          </div>
-          <div class="col-6 col-xl">
-            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
-              <div class="bg-warning bg-opacity-10 p-3 rounded"><i class="bi bi-star fs-4 text-warning"></i></div>
-              <div>
-                <h4 class="fw-bold mb-0" id="fbKpiAvg">—</h4>
-                <small class="text-muted"><span data-i18n="admin.feedback.kpi.avgRating">Average Rating</span></small>
-              </div>
-            </div>
-          </div>
-          <div class="col-6 col-xl">
-            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
-              <div class="bg-success bg-opacity-10 p-3 rounded"><i class="bi bi-star-fill fs-4 text-success"></i></div>
-              <div>
-                <h4 class="fw-bold mb-0" id="fbKpiFiveStar">0</h4>
-                <small class="text-muted"><span data-i18n="admin.feedback.kpi.fiveStar">5-Star Feedback</span></small>
-              </div>
-            </div>
-          </div>
-          <div class="col-6 col-xl">
-            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
-              <div class="bg-danger bg-opacity-10 p-3 rounded"><i
-                  class="bi bi-exclamation-triangle fs-4 text-danger"></i></div>
-              <div>
-                <h4 class="fw-bold mb-0" id="fbKpiLow">0</h4>
-                <small class="text-muted"><span data-i18n="admin.feedback.kpi.lowRatings">Low Ratings
-                    (1–2)</span></small>
-              </div>
-            </div>
-          </div>
-          <div class="col-6 col-xl">
-            <a href="#adminFbTable" class="text-decoration-none">
-              <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
-                <div class="bg-info bg-opacity-10 p-3 rounded"><i class="bi bi-hourglass-split fs-4 text-info"></i>
-                </div>
-                <div>
-                  <h4 class="fw-bold mb-0" id="fbKpiPending">0</h4>
-                  <small class="text-muted"><span data-i18n="admin.feedback.kpi.pendingReview">Pending
-                      Review</span></small>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
+              <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+                <div id="adminEvalAlert" class="alert d-none" role="alert" aria-live="polite"></div>
+                <form id="adminEvalForm" novalidate>
+                  <h3 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">A. Maintenance Information</h3>
+                  <div class="row g-3">
+                    <div class="col-md-7">
+                      <label class="form-label" for="afeRequestSelect">Maintenance Request ID <span class="text-danger">*</span></label>
+                      <select class="form-select" id="afeRequestSelect" required aria-describedby="afeRequestSelectError">
+                        <option value="">Loading maintenance requests…</option>
+                      </select>
+                      <div class="invalid-feedback" id="afeRequestSelectError"></div>
+                      <div class="form-text">Only maintenance requests with a completed technician report can be evaluated.</div>
+                    </div>
+                    <div class="col-md-5">
+                      <label class="form-label" for="afeTicketId">Selected request</label>
+                      <input class="form-control" id="afeTicketId" readonly aria-readonly="true"
+                        placeholder="Select a maintenance request" />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="afeEquipmentName">Equipment Name</label>
+                      <input class="form-control" id="afeEquipmentName" readonly aria-readonly="true"
+                        placeholder="Loaded from the maintenance request" />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="afeTechnicianName">Technician Name</label>
+                      <input class="form-control" id="afeTechnicianName" readonly aria-readonly="true"
+                        placeholder="Assigned technician" />
+                    </div>
+                    <div class="col-12">
+                      <div class="small fw-bold text-uppercase text-muted mb-1">Technician Report</div>
+                      <div id="afeTechnicianReport" class="small p-3 bg-light rounded" aria-live="polite">Select a maintenance request to load its report.</div>
+                      <div class="invalid-feedback d-block d-none" id="afeTechnicianReportError"></div>
+                    </div>
+                  </div>
 
-        <!-- Feedback Table -->
-        <div class="card border-0 shadow-sm" id="adminFbTable">
-          <div class="card-body p-3">
-            <div class="d-flex flex-column flex-xl-row gap-2 align-items-xl-center justify-content-between mb-2">
-              <div class="input-group input-group-sm" style="max-width:320px;">
-                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control" id="adminFbSearch"
-                  data-i18n-placeholder="admin.feedback.search.placeholder"
-                  placeholder="Search request / requester / equipment..." />
+                  <h3 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mt-4 mb-3">B. Review Decision &amp; C. Work Quality</h3>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label" for="afeDecision">Review Decision <span class="text-danger">*</span></label>
+                      <select class="form-select" id="afeDecision" required aria-describedby="afeDecisionError">
+                        <option value="">-- Select --</option>
+                        <option>Approved</option><option>Needs Correction</option><option>Rejected</option>
+                      </select>
+                      <div class="invalid-feedback" id="afeDecisionError"></div>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="afeWorkQuality">Work Quality <span class="text-danger">*</span></label>
+                      <select class="form-select" id="afeWorkQuality" required aria-describedby="afeWorkQualityError">
+                        <option value="">-- Select --</option>
+                        <option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option>
+                      </select>
+                      <div class="invalid-feedback" id="afeWorkQualityError"></div>
+                    </div>
+                  </div>
+
+                  <h3 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mt-4 mb-3">D. Technical Evaluation Criteria</h3>
+                  <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                      <label class="form-label" for="afeTechnicalAccuracy">Technical Accuracy</label>
+                      <select class="form-select" id="afeTechnicalAccuracy">
+                        <option value="">-- Select --</option>
+                        <option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option><option>Not Applicable</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                      <label class="form-label" for="afeRepairEffectiveness">Repair Effectiveness</label>
+                      <select class="form-select" id="afeRepairEffectiveness">
+                        <option value="">-- Select --</option>
+                        <option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option><option>Not Applicable</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                      <label class="form-label" for="afeReportCompleteness">Report Completeness</label>
+                      <select class="form-select" id="afeReportCompleteness">
+                        <option value="">-- Select --</option>
+                        <option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option><option>Not Applicable</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                      <label class="form-label" for="afeSafetyCompliance">Safety &amp; Procedure Compliance</label>
+                      <select class="form-select" id="afeSafetyCompliance">
+                        <option value="">-- Select --</option>
+                        <option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option><option>Not Applicable</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <h3 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mt-4 mb-3">E. Administrative Comments</h3>
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <label class="form-label" for="afeAdminComment">Admin Comments <span class="text-danger">*</span></label>
+                      <textarea class="form-control" id="afeAdminComment" rows="3" maxlength="2000" required
+                        aria-describedby="afeAdminCommentError"
+                        placeholder="Explain the evaluation. Required for every review, including rejections."></textarea>
+                      <div class="invalid-feedback" id="afeAdminCommentError"></div>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" for="afeRecommendation">Recommendation / Required Action</label>
+                      <textarea class="form-control" id="afeRecommendation" rows="2" maxlength="1000"
+                        aria-describedby="afeRecommendationError"
+                        placeholder="Corrective actions, recommendations, or required follow-up work."></textarea>
+                      <div class="invalid-feedback" id="afeRecommendationError"></div>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="afeFollowUpRequired">Follow-up Required</label>
+                      <select class="form-select" id="afeFollowUpRequired">
+                        <option value="No">No</option><option value="Yes">Yes</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="afeFeedbackStatus">Feedback Status</label>
+                      <select class="form-select" id="afeFeedbackStatus">
+                        <option>Pending</option><option>Reviewed</option>
+                        <option>Pending Correction</option><option>Resolved</option>
+                      </select>
+                    </div>
+                    <div class="col-12 d-none" id="afeFollowUpWrap">
+                      <label class="form-label" for="afeFollowUpNotes">Follow-up Action <span class="text-danger">*</span></label>
+                      <textarea class="form-control" id="afeFollowUpNotes" rows="2" maxlength="1000"
+                        aria-describedby="afeFollowUpNotesError"
+                        placeholder="Describe what the follow-up requires."></textarea>
+                      <div class="invalid-feedback" id="afeFollowUpNotesError"></div>
+                    </div>
+                  </div>
+
+                  <h3 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mt-4 mb-3">F. Automatically Generated Information</h3>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label" for="afeReviewedBy">Reviewed By</label>
+                      <input class="form-control" id="afeReviewedBy" readonly aria-readonly="true"
+                        value="Loaded from authenticated account" />
+                      <div class="form-text">Taken from the authenticated ICT Admin session by the server.</div>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label" for="afeFeedbackDate">Feedback Date</label>
+                      <input class="form-control" id="afeFeedbackDate" readonly aria-readonly="true"
+                        value="Set by server on save" />
+                      <div class="form-text">Generated by the server when the evaluation is saved.</div>
+                    </div>
+                  </div>
+                </form>
               </div>
-              <div class="d-flex gap-2 align-items-center flex-wrap">
-                <select class="form-select form-select-sm admin-fb-filter" id="adminFbStatus" style="width:auto;">
-                  <option value=""><span data-i18n="admin.requests.filter.allStatuses">All Statuses</span>
-                  <option value="submitted"><span data-i18n="admin.requests.filter.submitted">Submitted</span>
-                  <option value="under_review"><span data-i18n="admin.requests.filter.underReview">Under Review</span>
-                  <option value="assigned"><span data-i18n="admin.requests.filter.assigned">Assigned</span>
-                  <option value="accepted"><span data-i18n="admin.requests.filter.accepted">Accepted</span>
-                  <option value="in_progress"><span data-i18n="admin.requests.filter.inProgress">In Progress</span>
-                  <option value="resolved"><span data-i18n="admin.requests.filter.resolved">Resolved</span>
-                  <option value="closed"><span data-i18n="admin.requests.filter.closed">Closed</span>
-                </select>
-                <select class="form-select form-select-sm admin-fb-filter" id="adminFbRating" style="width:auto;">
-                  <option value=""><span data-i18n="admin.feedback.filter.allRatings">All Ratings</span>
-                  <option value="5"><span data-i18n="admin.feedback.filter.stars5">5 Stars</span>
-                  <option value="4"><span data-i18n="admin.feedback.filter.stars4">4 Stars</span>
-                  <option value="3"><span data-i18n="admin.feedback.filter.stars3">3 Stars</span>
-                  <option value="2"><span data-i18n="admin.feedback.filter.stars2">2 Stars</span>
-                  <option value="1"><span data-i18n="admin.feedback.filter.stars1">1 Star</span>
-                  <option value="low"><span data-i18n="admin.feedback.filter.low">Low (1–2 stars)</span>
-                </select>
-                <select class="form-select form-select-sm admin-fb-filter" id="adminFbDept" style="width:auto;">
-                  <option value=""><span data-i18n="admin.feedback.filter.allDepartments">All Departments</span>
-                </select>
-                <select class="form-select form-select-sm admin-fb-filter" id="adminFbTech" style="width:auto;">
-                  <option value=""><span data-i18n="admin.feedback.filter.allTechnicians">All Technicians</span>
-                </select>
-                <div class="input-group input-group-sm" style="width:auto;">
-                  <span class="input-group-text bg-white"><span
-                      data-i18n="admin.feedback.filter.from">From</span></span>
-                  <input type="date" class="form-control admin-fb-filter" id="adminFbFrom" />
-                </div>
-                <div class="input-group input-group-sm" style="width:auto;">
-                  <span class="input-group-text bg-white"><span data-i18n="admin.feedback.filter.to">To</span></span>
-                  <input type="date" class="form-control admin-fb-filter" id="adminFbTo" />
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="adminFbReset"
-                  data-i18n-title="admin.feedback.filter.resetTitle" title="Reset all filters">
-                  <i class="bi bi-arrow-counterclockwise"></i>
+              <div class="modal-footer">
+                <span class="small text-muted me-auto text-start" id="afeSaveHint" role="status" aria-live="polite"></span>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-primary d-none" id="afeEditBtn">
+                  <i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit
+                </button>
+                <button type="button" class="btn btn-primary px-4" id="afeSaveBtn" aria-describedby="afeSaveHint">
+                  <span class="spinner-border spinner-border-sm me-1 d-none" id="afeSaveSpinner" role="status" aria-hidden="true"></span>
+                  <i class="bi bi-clipboard-check me-1" aria-hidden="true"></i><span id="afeSaveLabel">Save Evaluation</span>
                 </button>
               </div>
             </div>
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-              <div class="text-muted small" id="adminFbCount"></div>
-              <div class="text-muted small d-none" id="adminFbFiltersInfo">
-                <i class="bi bi-funnel me-1"></i><span data-i18n="admin.feedback.filtersApplied">Filters applied</span>
-              </div>
-            </div>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                  <tr>
-                    <th class="text-nowrap"><span data-i18n="admin.feedback.table.num">#</span></th>
-                    <th class="text-nowrap"><span data-i18n="admin.feedback.table.requestId">Request ID</span></th>
-                    <th><span data-i18n="admin.feedback.table.requester">Requester</span></th>
-                    <th class="text-nowrap"><span data-i18n="admin.feedback.table.department">Department</span></th>
-                    <th class="text-nowrap"><span data-i18n="admin.feedback.table.technician">Technician</span></th>
-                    <th class="text-nowrap"><span data-i18n="admin.feedback.table.submitted">Submitted</span></th>
-                    <th><span data-i18n="admin.feedback.table.equipment">Equipment</span></th>
-                    <th><span data-i18n="admin.feedback.table.status">Status</span></th>
-                    <th><span data-i18n="admin.feedback.table.feedback">Feedback</span></th>
-                    <th class="text-nowrap"><span data-i18n="admin.feedback.table.actions">Actions</span></th>
-                  </tr>
-                </thead>
-                <tbody id="adminFeedbackTableBody">
-                  <tr>
-                    <td colspan="10" class="text-center text-muted py-4"><span
-                        data-i18n="admin.feedback.loading">Loading requests...</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="card-footer bg-white d-flex align-items-center justify-content-between flex-wrap gap-2"
-            id="adminFbPaginationWrap">
-            <small class="text-muted" id="adminFbPageInfo"></small>
-            <div class="btn-group btn-group-sm">
-              <button type="button" class="btn btn-outline-secondary" id="adminFbPrevBtn"><i
-                  class="bi bi-chevron-left"></i></button>
-              <button type="button" class="btn btn-outline-secondary" id="adminFbNextBtn"><i
-                  class="bi bi-chevron-right"></i></button>
-            </div>
           </div>
         </div>
 
-        <section class="card border-0 shadow-sm mt-4" aria-labelledby="adminTechnicianFeedbackTitle">
-          <div class="card-header bg-white py-3">
-            <h2 class="h6 fw-bold mb-0" id="adminTechnicianFeedbackTitle">
-              <i class="bi bi-chat-square-text text-primary me-2" aria-hidden="true"></i>Technician Feedback
-            </h2>
-          </div>
-          <div class="card-body border-bottom small" id="adminTechnicianFeedbackRatingSummary" role="status" aria-live="polite">
-            Review technical difficulties, recurring faults, resource shortages, safety concerns, and service improvement ideas.
-          </div>
-          <div class="card-body border-bottom">
-            <div class="row g-2">
-              <div class="col-md-6">
-                <label class="form-label small mb-1" for="adminTechnicianFeedbackSearch">Search technician feedback</label>
-                <input class="form-control form-control-sm" id="adminTechnicianFeedbackSearch" type="search" placeholder="Technician, request, asset, or description">
-              </div>
-              <div class="col-md-3">
-                <label class="form-label small mb-1" for="adminTechnicianFeedbackCategoryFilter">Filter by category</label>
-                <select class="form-select form-select-sm" id="adminTechnicianFeedbackCategoryFilter">
-                  <option value="">All categories</option>
-                  <option>Technical Difficulty</option>
-                  <option>Spare Parts Shortage</option>
-                  <option>Recurring Fault</option>
-                  <option>Resource Problem</option>
-                  <option>Safety Concern</option>
-                  <option>Improvement Suggestion</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label small mb-1" for="adminTechnicianFeedbackStatusFilter">Filter by status</label>
-                <select class="form-select form-select-sm" id="adminTechnicianFeedbackStatusFilter">
-                  <option value="">All statuses</option>
-                  <option>Submitted</option>
-                  <option>Under Review</option>
-                  <option>Action Required</option>
-                  <option>Resolved</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th scope="col">Technician</th>
-                  <th scope="col">Category</th>
-                  <th scope="col">Request / Asset</th>
-                  <th scope="col">Description</th>
-                  <th scope="col">Recommendation</th>
-                  <th scope="col">Follow-up</th>
-                  <th scope="col">Submitted</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Review comments</th>
-                </tr>
-              </thead>
-              <tbody id="adminTechnicianFeedbackBody">
-                <tr><td colspan="9" class="text-center text-muted py-4">Loading technician feedback...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
       </main>
-    </div>
-  </div>
-
-  <!-- Admin Service Feedback Modal -->
-  <div class="modal fade" id="adminFeedbackModal" tabindex="-1" aria-labelledby="adminFeedbackModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="adminFeedbackModalLabel">
-            <i class="bi bi-clipboard2-check text-primary me-1"></i><span data-i18n="admin.requests.fb.addFeedback">Add
-              Service Feedback</span>
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body" style="max-height:90vh;overflow-y:auto;">
-          <div id="adminFbTaskInfo" class="mb-3 p-3 bg-light rounded"></div>
-          <div id="adminFbAlert" class="alert d-none" role="alert"></div>
-          <input type="hidden" id="adminFbRequestId" />
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span
-                  data-i18n="admin.requests.fb.serviceHandlingQuality">Service Handling Quality</span> <span
-                  class="text-danger">*</span></label>
-              <select class="form-select" id="afServiceHandlingQuality">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
-                    Improvement</span>
-                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span
-                  data-i18n="admin.requests.fb.technicianPerformance">Technician Performance Evaluation</span></label>
-              <select class="form-select" id="afTechnicianPerformance">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
-                    Improvement</span>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.responseTime">Response Time
-                  Evaluation</span></label>
-              <select class="form-select" id="afResponseTime">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Slow"><span data-i18n="admin.requests.fb.slow">Slow</span>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span
-                  data-i18n="admin.requests.fb.resolutionQuality">Resolution Quality</span></label>
-              <select class="form-select" id="afResolutionQuality">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
-                    Improvement</span>
-                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span
-                  data-i18n="admin.requests.fb.documentationQuality">Documentation Quality</span></label>
-              <select class="form-select" id="afDocumentationQuality">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
-                    Improvement</span>
-                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.policyCompliance">Policy /
-                  Procedure Compliance</span></label>
-              <select class="form-select" id="afPolicyCompliance">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Compliant"><span data-i18n="admin.requests.fb.compliant">Compliant</span>
-                <option value="Partial"><span data-i18n="admin.requests.fb.partial">Partial</span>
-                <option value="Non-Compliant"><span data-i18n="admin.requests.fb.nonCompliant">Non-Compliant</span>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.overallQuality">Overall
-                  Service Quality</span> <span class="text-danger">*</span></label>
-              <select class="form-select" id="afOverallServiceQuality">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
-                    Improvement</span>
-                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
-              </select>
-            </div>
-            <div class="col-12">
-              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.adminComment">Admin
-                  Comment</span> <span class="text-danger">*</span></label>
-              <textarea class="form-control" id="afAdminComment" rows="3" maxlength="2000"
-                data-i18n-placeholder="admin.requests.fb.adminComment.placeholder"
-                placeholder="Evaluation of this request / service..."></textarea>
-            </div>
-            <div class="col-12">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="afFollowUpRequired" />
-                <label class="form-check-label small" for="afFollowUpRequired"
-                  data-i18n="admin.requests.fb.followUpRequired">Follow-up Required</label>
-              </div>
-            </div>
-            <div class="col-12 d-none" id="afFollowUpWrap">
-              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.followUpNotes">Follow-up
-                  Notes</span></label>
-              <textarea class="form-control" id="afFollowUpNotes" rows="2" maxlength="1000"
-                data-i18n-placeholder="admin.requests.fb.followUpNotes.placeholder"
-                placeholder="What follow-up is required..."></textarea>
-            </div>
-            <div class="col-12">
-              <label class="form-label fw-semibold small"><span
-                  data-i18n="admin.requests.fb.adminRecommendation">Administrative Recommendation</span></label>
-              <textarea class="form-control" id="afAdminRecommendation" rows="2" maxlength="1000"
-                data-i18n-placeholder="admin.requests.fb.adminRecommendation.placeholder"
-                placeholder="Management recommendation..."></textarea>
-            </div>
-            <div class="col-12">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="afConfirmed" />
-                <label class="form-check-label small" for="afConfirmed">
-                  <span data-i18n="admin.requests.fb.confirm">I confirm that this service evaluation is accurate.</span>
-                  <span class="text-danger">*</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><span
-              data-i18n="admin.requests.fb.cancel">Cancel</span></button>
-          <button type="button" class="btn btn-primary px-4" id="saveAdminFbBtn">
-            <span class="spinner-border spinner-border-sm me-2 d-none" id="saveAdminFbSpinner"></span>
-            <i class="bi bi-clipboard-check me-1"></i><span data-i18n="admin.requests.fb.submitFeedback">Submit Admin
-              Feedback</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Review Full Maintenance Lifecycle Modal (read-only) -->
-  <div class="modal fade" id="reviewFeedbackModal" tabindex="-1" aria-labelledby="reviewFeedbackModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title fw-bold" id="reviewFeedbackModalLabel">
-            <i class="bi bi-eye text-primary me-1"></i><span data-i18n="admin.feedback.reviewLifecycle">Review
-              Maintenance Lifecycle</span>
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body" style="max-height:85vh;overflow-y:auto;">
-          <div id="reviewFeedbackBody">
-            <div class="text-center py-4">
-              <div class="spinner-border text-primary" role="status"></div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
-            data-i18n="common.close">Close</button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -668,10 +458,9 @@
   <script src="/assets/js/lang.js?v=16"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/assets/js/admin-profile-menu.js?v=3"></script>
-  <script src="/assets/js/main.js?v=25"></script>
+  <script src="/assets/js/main.js?v=27"></script>
   <script src="/assets/js/notifications.js?v=10"></script>
-  <script src="/assets/js/requests.js?v=26"></script>
-  <script src="/assets/js/feedback.js?v=5"></script>
+  <script src="/assets/js/feedback.js?v=12"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 

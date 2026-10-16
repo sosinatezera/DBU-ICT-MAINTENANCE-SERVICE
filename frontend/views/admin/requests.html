@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="/assets/css/theme.css" />
 </head>
 
-<body class="dashboard-body">
+<body class="dashboard-body admin-dashboard">
 
   <div class="d-flex">
     <nav id="sidebar" class="sidebar bg-dark text-white d-flex flex-column p-3" style="min-height:100vh;width:250px;">
@@ -298,6 +298,9 @@
         </div>
         <div class="modal-footer">
           <input type="hidden" id="modalRequestId" />
+          <button type="button" class="btn btn-primary" id="createAdminFeedbackAction">
+            <i class="bi bi-clipboard2-check me-1"></i>Evaluate Admin Feedback
+          </button>
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><span
               data-i18n="admin.requests.detail.close">Close</span></button>
         </div>
@@ -312,8 +315,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title fw-bold" id="adminFeedbackModalLabel">
-            <i class="bi bi-clipboard2-check text-primary me-1"></i><span data-i18n="admin.requests.fb.addFeedback">Add
-              Service Feedback</span>
+            <i class="bi bi-clipboard2-check text-primary me-1"></i>Admin Feedback Evaluation
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -323,136 +325,93 @@
           <input type="hidden" id="adminFbRequestId" />
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span
-                  data-i18n="admin.requests.fb.serviceHandlingQuality">Service Handling Quality</span> <span
-                  class="text-danger">*</span></label>
-              <select class="form-select" id="afServiceHandlingQuality">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
-                    Improvement</span>
-                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
-              </select>
+              <label class="form-label fw-semibold small" for="afMaintenanceRequest">Maintenance Request ID</label>
+              <input class="form-control" id="afMaintenanceRequest" readonly />
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span
-                  data-i18n="admin.requests.fb.technicianPerformance">Technician Performance Evaluation</span></label>
-              <select class="form-select" id="afTechnicianPerformance">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
-                    Improvement</span>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.responseTime">Response Time
-                  Evaluation</span></label>
-              <select class="form-select" id="afResponseTime">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Slow"><span data-i18n="admin.requests.fb.slow">Slow</span>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span
-                  data-i18n="admin.requests.fb.resolutionQuality">Resolution Quality</span></label>
-              <select class="form-select" id="afResolutionQuality">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
-                    Improvement</span>
-                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span
-                  data-i18n="admin.requests.fb.documentationQuality">Documentation Quality</span></label>
-              <select class="form-select" id="afDocumentationQuality">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
-                    Improvement</span>
-                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.policyCompliance">Policy /
-                  Procedure Compliance</span></label>
-              <select class="form-select" id="afPolicyCompliance">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Compliant"><span data-i18n="admin.requests.fb.compliant">Compliant</span>
-                <option value="Partial"><span data-i18n="admin.requests.fb.partial">Partial</span>
-                <option value="Non-Compliant"><span data-i18n="admin.requests.fb.nonCompliant">Non-Compliant</span>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.overallQuality">Overall
-                  Service Quality</span> <span class="text-danger">*</span></label>
-              <select class="form-select" id="afOverallServiceQuality">
-                <option value=""><span data-i18n="admin.requests.fb.select">-- Select --</span></option>
-                <option value="Excellent"><span data-i18n="admin.requests.fb.excellent">Excellent</span>
-                <option value="Good"><span data-i18n="admin.requests.fb.good">Good</span>
-                <option value="Satisfactory"><span data-i18n="admin.requests.fb.satisfactory">Satisfactory</span>
-                <option value="Needs Improvement"><span data-i18n="admin.requests.fb.needsImprovement">Needs
-                    Improvement</span>
-                <option value="Poor"><span data-i18n="admin.requests.fb.poor">Poor</span>
+              <label class="form-label fw-semibold small" for="afFeedbackStatus">Feedback Status</label>
+              <select class="form-select" id="afFeedbackStatus" required>
+                <option value="Pending">Pending</option>
+                <option value="Reviewed">Reviewed</option>
+                <option value="Pending Correction">Pending Correction</option>
+                <option value="Resolved">Resolved</option>
               </select>
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.adminComment">Admin
-                  Comment</span> <span class="text-danger">*</span></label>
-              <textarea class="form-control" id="afAdminComment" rows="3" maxlength="2000"
-                data-i18n-placeholder="admin.requests.fb.adminComment.placeholder"
-                placeholder="Evaluation of this request / service..."></textarea>
-            </div>
-            <div class="col-12">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="afFollowUpRequired" />
-                <label class="form-check-label small" for="afFollowUpRequired"><span
-                    data-i18n="admin.requests.fb.followUpRequired">Follow-up Required</span></label>
+              <div class="small fw-bold text-uppercase text-muted mb-1">Technician Report</div>
+              <div id="afTechnicianReport" class="small p-3 bg-light rounded" aria-live="polite">
+                Select a maintenance request to load its report.
               </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small" for="afReportReviewDecision">Report Review Decision <span class="text-danger">*</span></label>
+              <select class="form-select" id="afReportReviewDecision" required>
+                <option value="">-- Select --</option><option>Approved</option><option>Needs Correction</option><option>Rejected</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small" for="afWorkQuality">Work Quality <span class="text-danger">*</span></label>
+              <select class="form-select" id="afWorkQuality" required>
+                <option value="">-- Select --</option><option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small" for="afTechnicalAccuracy">Technical Accuracy <span class="text-danger">*</span></label>
+              <select class="form-select" id="afTechnicalAccuracy" required>
+                <option value="">-- Select --</option><option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option><option>Not Applicable</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small" for="afRepairEffectiveness">Repair Effectiveness <span class="text-danger">*</span></label>
+              <select class="form-select" id="afRepairEffectiveness" required>
+                <option value="">-- Select --</option><option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option><option>Not Applicable</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small" for="afReportCompleteness">Report Completeness <span class="text-danger">*</span></label>
+              <select class="form-select" id="afReportCompleteness" required>
+                <option value="">-- Select --</option><option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option><option>Not Applicable</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small" for="afSafetyCompliance">Safety &amp; Procedure Compliance <span class="text-danger">*</span></label>
+              <select class="form-select" id="afSafetyCompliance" required>
+                <option value="">-- Select --</option><option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option><option>Not Applicable</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small" for="afFollowUpRequired">Follow-up Required</label>
+              <select class="form-select" id="afFollowUpRequired" required>
+                <option value="No">No</option><option value="Yes">Yes</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold small" for="afAdminComment">Admin Comments <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="afAdminComment" rows="3" maxlength="2000" required placeholder="Explain the evaluation, especially if the report is rejected..."></textarea>
             </div>
             <div class="col-12 d-none" id="afFollowUpWrap">
-              <label class="form-label fw-semibold small"><span data-i18n="admin.requests.fb.followUpNotes">Follow-up
-                  Notes</span></label>
-              <textarea class="form-control" id="afFollowUpNotes" rows="2" maxlength="1000"
-                data-i18n-placeholder="admin.requests.fb.followUpNotes.placeholder"
-                placeholder="What follow-up is required..."></textarea>
+              <label class="form-label fw-semibold small" for="afFollowUpNotes">Follow-up Recommendation / Required Action <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="afFollowUpNotes" rows="2" maxlength="1000" placeholder="Describe the corrective action or follow-up..."></textarea>
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold small"><span
-                  data-i18n="admin.requests.fb.adminRecommendation">Administrative Recommendation</span></label>
-              <textarea class="form-control" id="afAdminRecommendation" rows="2" maxlength="1000"
-                data-i18n-placeholder="admin.requests.fb.adminRecommendation.placeholder"
-                placeholder="Management recommendation..."></textarea>
+              <label class="form-label fw-semibold small" for="afAdminRecommendation">Recommendation / Required Action</label>
+              <textarea class="form-control" id="afAdminRecommendation" rows="2" maxlength="1000" placeholder="Corrective actions or recommendations..."></textarea>
             </div>
-            <div class="col-12">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="afConfirmed" />
-                <label class="form-check-label small" for="afConfirmed">
-                  <span data-i18n="admin.requests.fb.confirm">I confirm that this service evaluation is accurate.</span>
-                  <span class="text-danger">*</span>
-                </label>
-              </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small" for="afReviewedBy">Reviewed By</label>
+              <input class="form-control" id="afReviewedBy" readonly value="Loaded from authenticated account" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small" for="afFeedbackDate">Feedback Date</label>
+              <input class="form-control" id="afFeedbackDate" readonly value="Set by server on save" />
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><span
-              data-i18n="admin.requests.fb.cancel">Cancel</span></button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-primary px-4" id="saveAdminFbBtn">
             <span class="spinner-border spinner-border-sm me-2 d-none" id="saveAdminFbSpinner"></span>
-            <i class="bi bi-clipboard-check me-1"></i><span data-i18n="admin.requests.fb.submitFeedback">Submit Admin
-              Feedback</span>
+            <i class="bi bi-clipboard-check me-1"></i><span id="saveAdminFbLabel">Save Evaluation</span>
           </button>
         </div>
       </div>
@@ -464,7 +423,7 @@
   <script src="/assets/js/api-config.js?v=16"></script>
   <script src="/assets/js/lang.js?v=16"></script>
   <script src="/assets/js/admin-profile-menu.js?v=3"></script>
-  <script src="/assets/js/main.js?v=25"></script>
+  <script src="/assets/js/main.js?v=27"></script>
   <script src="/assets/js/notifications.js?v=10"></script>
   <script src="/assets/js/requests.js?v=25"></script>
   <script src="/assets/js/theme.js"></script>
